@@ -52,6 +52,12 @@ local HTTP server, or expose arbitrary native capabilities.
 - IPC: bounded JSON request-response over direct WebView2 messages.
 - Packaging: portable directory and deterministic ZIP.
 
+`internal/webview2` owns the host-facing adapter contract. The executable may
+depend on that package but must not import a third-party WebView wrapper
+directly. The checked-in M0 implementation is intentionally capability-poor;
+it is replaced behind the same package boundary rather than expanded into the
+CLI or runtime-configuration layers.
+
 ## Contract Sources
 
 - Product scope: docs/product/02-spec.md

@@ -1,16 +1,15 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 
-	webview2 "github.com/jchv/go-webview2"
-
 	"github.com/0disoft/velox/internal/benchmarker"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/webview2"
 )
 
 func main() {
@@ -37,45 +36,32 @@ func run(args []string) int {
 		dataPath = filepath.Join(os.TempDir(), "velox-m0", cfg.App.ID)
 	}
 
-	view := webview2.NewWithOptions(webview2.WebViewOptions{
-		Debug:     *debug,
+	var runtime *webview2.M0Runtime
+	runtime, err = webview2.OpenM0(webview2.Config{
+		Title:     cfg.App.Name,
+		Width:     cfg.Window.Width,
+		Height:    cfg.Window.Height,
 		DataPath:  dataPath,
-		AutoFocus: true,
-		WindowOptions: webview2.WindowOptions{
-			Title:  cfg.App.Name,
-			Width:  cfg.Window.Width,
-			Height: cfg.Window.Height,
-			Center: true,
-		},
-	})
-	if view == nil {
-		fmt.Fprintln(os.Stderr, "velox-host: WebView2 Runtime is unavailable or initialization failed")
-		return 5
-	}
-	defer view.Destroy()
-
-	if err := view.Bind("__veloxM0Ready", func(phase string) error {
+		EntryPath: cfg.EntryPath,
+		Debug:     *debug,
+	}, func(phase string) error {
 		if err := benchmarker.NotifyReady(phase); err != nil {
 			return err
 		}
 		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {
-			view.Terminate()
+			runtime.Close()
 		}
 		return nil
-	}); err != nil {
-		fmt.Fprintf(os.Stderr, "velox-host: bind ready marker: %v\n", err)
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+		if errors.Is(err, webview2.ErrRuntimeUnavailable) {
+			return 5
+		}
 		return 6
 	}
+	defer runtime.Close()
 
-	view.Navigate(fileURL(cfg.EntryPath))
-	view.Run()
+	runtime.Run()
 	return 0
-}
-
-func fileURL(path string) string {
-	slashed := filepath.ToSlash(path)
-	if len(slashed) >= 2 && slashed[1] == ':' {
-		slashed = "/" + slashed
-	}
-	return (&url.URL{Scheme: "file", Path: slashed}).String()
 }

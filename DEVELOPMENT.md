@@ -111,6 +111,18 @@ virtual-origin, navigation, permission, message-origin, and shutdown contracts.
 The C++23/Pixi path remains reference-only and is removed or moved after the Go
 adapter has a stable pinned-CI lifecycle baseline.
 
+The first repository-owned adapter boundary now lives in `internal/webview2`.
+`cmd/velox-host` no longer imports the external wrapper directly. The current
+`M0Runtime` still delegates to that wrapper and reports every production
+security and clean-shutdown capability as unsupported. This is an isolation
+step, not the production adapter implementation.
+
+The M0 startup smoke reaches the ready marker and exits, but WebView2 may keep
+the profile's BrowserMetrics file locked for more than ten seconds afterward.
+The smoke records that condition without treating startup readiness as clean
+shutdown proof. Replacing the wrapper must add explicit controller and
+environment release behavior before `CleanShutdown` can become true.
+
 ## M0 Completion
 
 M0 development setup is complete only when:

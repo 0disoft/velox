@@ -64,6 +64,11 @@ and a lower-level repository-owned pure-Go WebView2 adapter.
 6. Move or retire C++23/Pixi reference infrastructure after the Go lifecycle
    baseline is stable on pinned CI.
 
+The first migration step is complete: `cmd/velox-host` now consumes the
+repository-owned `internal/webview2` package, while its M0 implementation still
+delegates to the isolated wrapper. Virtual-origin security policy and explicit
+COM shutdown remain required before the wrapper can be removed.
+
 Rollback before the adapter becomes a public runtime contract means returning
 to the isolated M0 wrapper while fixing the repository-owned adapter. Rollback
 does not change the selected production language.

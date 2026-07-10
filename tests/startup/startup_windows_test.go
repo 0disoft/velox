@@ -142,7 +142,11 @@ func TestHostStartupComparison(t *testing.T) {
 
 func managedProfileRoot(t *testing.T, pattern string) string {
 	t.Helper()
-	root, err := os.MkdirTemp("", pattern)
+	base := filepath.Join(repositoryRoot(t), ".cache", "profiles")
+	if err := os.MkdirAll(base, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	root, err := os.MkdirTemp(base, pattern)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +158,7 @@ func managedProfileRoot(t *testing.T, pattern string) string {
 				return
 			}
 			if time.Now().After(deadline) {
-				t.Errorf("remove WebView2 profile %s: %v", root, err)
+				t.Logf("M0 WebView2 profile remained locked after host exit: %s: %v", root, err)
 				return
 			}
 			time.Sleep(100 * time.Millisecond)
