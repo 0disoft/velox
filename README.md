@@ -1,6 +1,6 @@
 # Velox
 
-- Status: Design and feasibility stage
+- Status: M0 feasibility spike
 - Scope: general
 - Repository type: cli-tool
 
@@ -9,8 +9,10 @@ packager. It is designed to turn static HTML, CSS, and JavaScript into a
 portable WebView2 application without compiling application-specific native
 code.
 
-The repository currently contains product and architecture contracts, not a
-working implementation.
+The repository now contains pure-Go and direct C++23 WebView2 host spikes, a
+strict external runtime configuration parser, a dependency-free hello fixture,
+and a named-pipe startup benchmark harness. These are comparison evidence, not
+a secure alpha runtime; see `DEVELOPMENT.md` for the current limitations.
 
 ## Priorities
 
@@ -25,8 +27,9 @@ runtime surface. Startup is a hypothesis to measure, not a proven advantage.
 
 - A standalone Go CLI validates and packages projects.
 - A separate prebuilt generic host opens static assets through WebView2.
-- The first host candidate is pure Go with no CGo or C++ shim.
-- A minimal C++23 host is the benchmark and fallback reference.
+- The production host is pure Go with no CGo or C++ shim.
+- A minimal C++23 host remains an M0 benchmark reference, not a product
+  fallback selected by startup numbers alone.
 - Consumer builds copy an unchanged host, external configuration, and assets.
 - Consumer builds require no compiler, Node.js, or frontend package manager.
 
@@ -68,8 +71,9 @@ M0 is a feasibility and kill test. It must compare a pure-Go WebView2 host with
 a minimal C++23 reference host and determine whether Velox has a meaningful
 advantage over Wails, existing compile-free wrappers, and a PWA.
 
-No installation, build, or release command is documented yet because no
-implementation or executable runner exists.
+No consumer installation, packaging, or release command is documented yet.
+The parent workspace exposes bounded maintainer-only build, smoke, and
+benchmark intents documented in `DEVELOPMENT.md` and `VALIDATION.md`.
 
 ## Repository Workflow
 

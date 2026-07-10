@@ -36,7 +36,10 @@ directory.
 ### Warm-profile startup
 
 The same ready measurement after five unrecorded warmups while reusing the
-WebView2 user-data directory.
+WebView2 user-data directory. A settled warm run and an immediate relaunch are
+different lifecycle conditions and must be reported separately after M0. A
+delay caused by the previous browser process releasing the profile is not
+discarded as an outlier.
 
 ### Cache footprint
 
@@ -58,12 +61,13 @@ These are go-or-kill targets, not published performance claims.
 | Surviving intermediate files | 0 files outside declared output |
 | Hello build-command cold | p95 at or below 2 seconds on the pinned runner |
 | End-to-end cold build | At least 3x faster than the pinned Wails fixture |
-| Go host versus C++23 reference startup | No more than 10 ms or 10% slower at p95 |
+| Go host startup | Record regressions against its pinned Go baseline; C++23 remains diagnostic only |
 | Startup claim | Publish only when the advantage exceeds noise and 10% |
 
-If the Go host exceeds its startup allowance or cannot safely maintain WebView2
-COM lifetimes, the fallback is a C++23 host while retaining the Go CLI and
-compile-free consumer build.
+If the Go host exceeds its startup allowance, investigate the repository-owned
+adapter and WebView2 lifecycle before changing languages. ADR 0005 permits
+reopening the language decision only if a bounded pure-Go adapter cannot safely
+represent the required COM lifecycle or WebView2 security controls.
 
 ## Benchmark Rules
 
@@ -128,5 +132,17 @@ Window creation alone is never the ready event.
 
 ## Current Evidence
 
-No Velox implementation or baseline exists yet. Every numeric threshold in this
-document is provisional until M0 records reproducible raw data.
+The first local M0 comparison used ten fresh runs and ten warm runs after five
+warmups per host. It measured process creation through the shared fixture's
+DOMContentLoaded-plus-two-animation-frame marker.
+
+| Host | Distributed native files | Fresh p50 | Fresh p95 | Immediate warm p50 | Immediate warm p95 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Go M0 | 2,863,616 bytes | 965.79 ms | 1,208.99 ms | 982.38 ms | 1,193.03 ms |
+| C++23 reference | 175,968 bytes | 925.82 ms | 1,001.82 ms | 7,057.81 ms | 7,140.33 ms |
+
+The C++23 size includes the 11,776-byte executable and 164,192-byte
+`WebView2Loader.dll`. The Go executable embeds its loader. These are local,
+directional results, not a release baseline: runner and WebView2 metadata are
+not yet captured, run order is fixed, and the C++ immediate-warm delay requires
+lifecycle diagnosis. No startup winner is selected from this run.

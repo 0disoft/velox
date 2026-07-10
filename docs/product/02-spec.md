@@ -13,7 +13,7 @@ build.
 The first product is a narrow CLI and runtime pair:
 
 - A prebuilt Go CLI validates and packages a project.
-- A prebuilt generic native host opens the project through WebView2.
+- A prebuilt generic pure-Go host opens the project through WebView2.
 - An external manifest and asset directory remain separate from the unchanged
   host executable.
 

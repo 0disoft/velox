@@ -1,0 +1,15 @@
+{
+  "runtimeVersion": 1,
+  "app": {
+    "id": "dev.velox.hello",
+    "name": "Velox M0 Hello"
+  },
+  "assets": {
+    "root": "web",
+    "entry": "index.html"
+  },
+  "window": {
+    "width": 720,
+    "height": 480
+  }
+}

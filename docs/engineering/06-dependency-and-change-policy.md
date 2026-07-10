@@ -88,6 +88,21 @@ Reject a dependency that:
 
 ## Current State
 
-No implementation dependency manifest exists yet. Exact Go, Windows SDK,
-WebView2 SDK, and test-tool versions remain UNDECIDED until M0 selects the
-smallest viable toolchain.
+M0 pins `github.com/jchv/go-webview2` to commit `56598839c808` through pseudo
+version `v0.0.0-20260205173254-56598839c808`. It is MIT licensed, pure Go, and
+loads its embedded WebView2 loader through `go-winloader`. Wails also uses this
+binding on Windows, so the dependency itself is not a performance moat.
+
+The binding is acceptable for a startup feasibility spike but not yet for the
+product host. Its public API does not expose all virtual-origin and browser
+policy controls required by the security baseline, and its constructor enables
+clipboard-read permission. Removal cost is limited because all usage is
+confined to `cmd/velox-host` during M0.
+
+The C++23 reference environment uses Pixi 0.72.2 with a committed lockfile for
+Clang 21, CMake 4, lld 21, and Ninja 1.13. It consumes
+Microsoft.Web.WebView2 1.0.4078.44 and redistributes its x64 loader DLL in the
+local reference output. Pixi does not currently pin the Visual Studio C++
+headers or Windows SDK, so the reference build is reproducible only within the
+documented system-toolset boundary. None of these maintainer dependencies may
+enter the consumer application build path.

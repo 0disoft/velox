@@ -1,6 +1,6 @@
 # Validation
 
-- Status: Draft
+- Status: Active for M0
 
 ## Validation Source of Truth
 
@@ -24,9 +24,20 @@ Final responses must list executed validations, passed validations, skipped vali
 
 ## Runner Policy
 
-Task runner files are optional. Runner `none` means no executable task runner is generated.
-If a runner is generated, runner command names must match this document.
-Unconfigured runner commands must fail, not pass with a fake success.
+Task runner files are optional. This repository still uses runner `none`.
+The parent workspace command contract currently provides these bounded intents:
+
+- `velox_format` maps to format.
+- `velox_lint` maps to lint.
+- `velox_test` maps to test.
+- `velox_build` maps to the M0 host build.
+- `velox_startup_smoke` maps to smoke.
+- `velox_cpp_build` maps to the C++23 reference build.
+- `velox_cpp_startup_smoke` maps to the C++23 startup smoke.
+- `velox_startup_benchmark` maps to the repeated Go/C++23 comparison.
+
+Unconfigured validation names remain skipped and must not pass with a fake
+success.
 
 ## Hygiene Validation
 

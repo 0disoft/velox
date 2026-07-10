@@ -15,8 +15,11 @@ choice inside that scope and cannot silently add a product capability.
 
 | ADR | Status | Decision |
 | --- | --- | --- |
-| 0001 | Accepted for M0 | Windows x64, Go CLI, experiment-gated pure-Go host, unchanged generic host, WebView2, no local server |
+| 0001 | Superseded by 0005 | Windows x64, Go CLI, experiment-gated pure-Go host, unchanged generic host, WebView2, no local server |
 | 0002 | Accepted | One primary source for each product, architecture, CLI, performance, validation, and scaffold contract |
+| 0003 | Accepted for M0 | Pin go-webview2 for startup feasibility only; do not treat the wrapper as the production security boundary |
+| 0004 | Accepted for M0 | Keep a direct C++23 WebView2 host as the security, lifecycle, and startup reference |
+| 0005 | Accepted | Use Go for both the CLI and production host; keep the WebView2 adapter repository-owned |
 
 ## Lifecycle
 

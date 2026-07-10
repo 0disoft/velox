@@ -21,3 +21,6 @@ coverage/
 tmp/
 *.tsbuildinfo
 # <<< ssealed ignore patterns <<<
+
+# Project-owned maintainer tool environment.
+.pixi/

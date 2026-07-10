@@ -43,8 +43,10 @@ local HTTP server, or expose arbitrary native capabilities.
 
 - Platform: Windows x64.
 - CLI: Go.
-- Host candidate: pure Go with no CGo.
-- Host fallback: C++23 after an explicit M0 gate.
+- Production host: pure Go with no CGo or C++ shim.
+- WebView2 binding: repository-owned adapter; fork versus lower-level direct
+  implementation remains an M1 decision.
+- C++23 host: M0 benchmark and lifecycle reference only.
 - Web runtime: installed Evergreen WebView2.
 - Frontend bridge: dependency-free JavaScript.
 - IPC: bounded JSON request-response over direct WebView2 messages.

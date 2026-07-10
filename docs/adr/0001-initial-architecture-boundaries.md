@@ -1,6 +1,6 @@
 # ADR-0001: Initial Architecture Boundaries
 
-- Status: Accepted for M0
+- Status: Superseded by ADR 0005
 - Date: 2026-07-10
 - Owner: Project maintainer
 
@@ -43,8 +43,9 @@ The candidate must:
 - Expose only the fixed MVP method table.
 - Contain no packaging or CLI implementation.
 
-This is an experiment-gated decision, not a claim that Go is automatically
-faster.
+ADR 0005 subsequently made Go the accepted production host language. The
+constraints below remain historical M0 gates rather than an automatic language
+fallback policy.
 
 ### Reference Implementation
 
