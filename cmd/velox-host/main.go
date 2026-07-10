@@ -39,9 +39,11 @@ func run(args []string) int {
 	var runtime *webview2.M0Runtime
 	runtime, err = webview2.OpenM0(webview2.Config{
 		Title:     cfg.App.Name,
+		AppID:     cfg.App.ID,
 		Width:     cfg.Window.Width,
 		Height:    cfg.Window.Height,
 		DataPath:  dataPath,
+		AssetRoot: cfg.AssetRoot,
 		EntryPath: cfg.EntryPath,
 		Debug:     *debug,
 	}, func(phase string) error {

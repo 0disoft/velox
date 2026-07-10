@@ -20,7 +20,8 @@ Do not infer additional commands from `go.mod` or `pixi.toml`.
 - Windows x64 development machine or CI runner.
 - Go 1.26 toolchain for the pure-Go host candidate.
 - Installed Evergreen WebView2 Runtime.
-- `github.com/jchv/go-webview2` pinned to commit `56598839c808`.
+- A narrow local fork of `github.com/jchv/go-webview2`, pinned to commit
+  `56598839c808` under `third_party/go-webview2`.
 - Pixi 0.72.2 for the maintainer-only C++23 reference environment.
 - Locked Clang 21, CMake 4, lld 21, and Ninja 1.13 through `pixi.lock`.
 - Installed Visual Studio C++ headers and Windows SDK 10.0.26100.0.
@@ -91,11 +92,10 @@ reach the two-frame ready marker. It does not expose enough policy surface to
 implement the production security contract without a maintained patch or a
 lower-level host implementation:
 
-- The spike navigates to `file://` instead of an application-specific virtual
-  HTTPS origin.
-- The binding does not expose top-level navigation, popup, download, frame, or
-  permission policy hooks through its public `WebView` interface.
-- The binding enables clipboard-read permission during construction.
+- The host now maps assets to an application-specific virtual HTTPS origin.
+- The fork denies all WebView2 permission requests by default.
+- Top-level navigation, popup, download, frame, and message-source policies are
+  not implemented yet.
 
 Treat the current executable as benchmark evidence only. It is not an alpha
 runtime and must not be distributed as a secure application host.
@@ -104,24 +104,25 @@ runtime and must not be distributed as a secure application host.
 
 ADR 0005 selects Go for both the CLI and production host. This reduces the
 normal product build, test, debugging, and release path to one maintainer
-language. The decision does not select the current M0 wrapper. Production work
-must introduce a repository-owned pure-Go WebView2 adapter that can enforce the
-virtual-origin, navigation, permission, message-origin, and shutdown contracts.
+language. The repository now owns a narrow fork behind the pure-Go WebView2
+adapter. Production work must continue enforcing navigation, message-origin,
+popup, download, and shutdown contracts at that boundary.
 
 The C++23/Pixi path remains reference-only and is removed or moved after the Go
 adapter has a stable pinned-CI lifecycle baseline.
 
-The first repository-owned adapter boundary now lives in `internal/webview2`.
-`cmd/velox-host` no longer imports the external wrapper directly. The current
-`M0Runtime` still delegates to that wrapper and reports every production
-security and clean-shutdown capability as unsupported. This is an isolation
-step, not the production adapter implementation.
+The repository-owned adapter boundary lives in `internal/webview2`.
+`cmd/velox-host` does not import the fork directly. `M0Runtime` now reports
+virtual HTTPS asset loading and default-denied permissions as implemented. It
+continues to report trusted-origin messaging, navigation, popup, download, and
+clean shutdown as unsupported.
 
-The M0 startup smoke reaches the ready marker and exits, but WebView2 may keep
-the profile's BrowserMetrics file locked for more than ten seconds afterward.
-The smoke records that condition without treating startup readiness as clean
-shutdown proof. Replacing the wrapper must add explicit controller and
-environment release behavior before `CleanShutdown` can become true.
+The fork explicitly closes and releases controller, webview, queried extension,
+and environment COM interfaces. The startup smoke reaches the ready marker,
+exits normally, and no longer exceeds the ten-second profile cleanup window.
+Profile release is still asynchronous and took several seconds in the first
+local smoke, so `CleanShutdown` remains false until repeated same-profile
+relaunch proves a tighter lifecycle contract.
 
 ## M0 Completion
 

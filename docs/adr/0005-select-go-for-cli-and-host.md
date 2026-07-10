@@ -32,10 +32,10 @@ The production host must remain pure Go from the repository's perspective:
   are explicit and covered by focused tests;
 - WebView2 remains behind a repository-owned adapter boundary.
 
-This decision selects the implementation language. It does not promote the
-current `github.com/jchv/go-webview2` M0 wrapper to the production security
-boundary. The project must separately choose between a narrow maintained fork
-and a lower-level repository-owned pure-Go WebView2 adapter.
+This decision selects the implementation language. The project uses a narrow
+maintained fork of `github.com/jchv/go-webview2` behind a repository-owned
+adapter; neither the upstream wrapper nor the fork's convenience API defines
+the production security contract.
 
 ## Consequences
 
@@ -53,7 +53,7 @@ and a lower-level repository-owned pure-Go WebView2 adapter.
 
 ## Migration
 
-1. Keep the current Go wrapper confined to the M0 executable.
+1. Keep WebView2 implementation details confined behind `internal/webview2`.
 2. Define the minimum WebView2 adapter interface from the security and runtime
    contracts, not from the wrapper's existing API.
 3. Implement one vertical slice covering virtual HTTPS assets, trusted-origin
@@ -64,10 +64,11 @@ and a lower-level repository-owned pure-Go WebView2 adapter.
 6. Move or retire C++23/Pixi reference infrastructure after the Go lifecycle
    baseline is stable on pinned CI.
 
-The first migration step is complete: `cmd/velox-host` now consumes the
-repository-owned `internal/webview2` package, while its M0 implementation still
-delegates to the isolated wrapper. Virtual-origin security policy and explicit
-COM shutdown remain required before the wrapper can be removed.
+The first two slices are complete: `cmd/velox-host` consumes
+`internal/webview2`, and the pinned local fork provides virtual HTTPS mapping,
+default-denied permissions, and explicit COM close/release. Trusted message
+origin, remote navigation, popup, download, and tighter same-profile shutdown
+contracts remain required before the adapter can be treated as production.
 
 Rollback before the adapter becomes a public runtime contract means returning
 to the isolated M0 wrapper while fixing the repository-owned adapter. Rollback

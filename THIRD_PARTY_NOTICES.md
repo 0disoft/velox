@@ -8,7 +8,14 @@ regenerate and verify this notice before distributing binaries.
 - Version: `v0.0.0-20260205173254-56598839c808`
 - License: MIT
 - Copyright: John Chadwick and contributors; portions Serge Zaitsev
-- Purpose: Pure-Go WebView2 and Windows host binding for the M0 spike
+- Source: vendored narrow fork in `third_party/go-webview2`
+- Purpose: Pure-Go WebView2 and Windows host binding for the Go host
+- Local changes: default-denied permissions, virtual HTTPS folder mapping,
+  explicit COM close/release, and native window-context cleanup
+
+The upstream MIT license is preserved at
+`third_party/go-webview2/LICENSE`. Fork maintenance notes are recorded in
+`third_party/go-webview2/VELOX_FORK.md`.
 
 ## github.com/jchv/go-winloader
 

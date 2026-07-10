@@ -5,8 +5,6 @@ package webview2
 import (
 	"errors"
 	"fmt"
-	"net/url"
-	"path/filepath"
 	"sync"
 
 	webview "github.com/jchv/go-webview2"
@@ -26,11 +24,16 @@ func OpenM0(config Config, onReady ReadyHandler) (*M0Runtime, error) {
 	if onReady == nil {
 		return nil, errors.New("ready handler is required")
 	}
+	entryURL, err := virtualEntryURL(config.AppID, config.AssetRoot, config.EntryPath)
+	if err != nil {
+		return nil, err
+	}
 
 	view := webview.NewWithOptions(webview.WebViewOptions{
-		Debug:     config.Debug,
-		DataPath:  config.DataPath,
-		AutoFocus: true,
+		Debug:              config.Debug,
+		DataPath:           config.DataPath,
+		AutoFocus:          true,
+		DenyAllPermissions: true,
 		WindowOptions: webview.WindowOptions{
 			Title:  config.Title,
 			Width:  config.Width,
@@ -43,11 +46,15 @@ func OpenM0(config Config, onReady ReadyHandler) (*M0Runtime, error) {
 	}
 
 	runtime := &M0Runtime{view: view}
+	if err := view.SetVirtualHostNameToFolderMapping(trustedHost(config.AppID), config.AssetRoot); err != nil {
+		destroyBeforeRun(view)
+		return nil, fmt.Errorf("map virtual asset host: %w", err)
+	}
 	if err := view.Bind("__veloxM0Ready", onReady); err != nil {
-		view.Destroy()
+		destroyBeforeRun(view)
 		return nil, fmt.Errorf("bind M0 ready marker: %w", err)
 	}
-	view.Navigate(fileURL(config.EntryPath))
+	view.Navigate(entryURL)
 	return runtime, nil
 }
 
@@ -60,13 +67,16 @@ func (r *M0Runtime) Terminate() {
 }
 
 func (r *M0Runtime) Close() {
-	r.closeOnce.Do(r.view.Destroy)
+	r.closeOnce.Do(func() {
+		// Bind callbacks enqueue their RPC response after returning. Two dispatch
+		// turns let that response drain before Destroy releases WebView2 COM state.
+		r.view.Dispatch(func() {
+			r.view.Dispatch(r.view.Destroy)
+		})
+	})
 }
 
-func fileURL(path string) string {
-	slashed := filepath.ToSlash(path)
-	if len(slashed) >= 2 && slashed[1] == ':' {
-		slashed = "/" + slashed
-	}
-	return (&url.URL{Scheme: "file", Path: slashed}).String()
+func destroyBeforeRun(view webview.WebView) {
+	view.Destroy()
+	view.Run()
 }

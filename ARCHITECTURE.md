@@ -53,10 +53,11 @@ local HTTP server, or expose arbitrary native capabilities.
 - Packaging: portable directory and deterministic ZIP.
 
 `internal/webview2` owns the host-facing adapter contract. The executable may
-depend on that package but must not import a third-party WebView wrapper
-directly. The checked-in M0 implementation is intentionally capability-poor;
-it is replaced behind the same package boundary rather than expanded into the
-CLI or runtime-configuration layers.
+depend on that package but must not import the checked-in WebView2 fork
+directly. The fork lives under `third_party/go-webview2`, is pinned through a
+Go module replacement, and exposes only the low-level behavior needed by the
+adapter. Security policy remains in `internal/webview2`, not in CLI or runtime
+configuration layers.
 
 ## Contract Sources
 
