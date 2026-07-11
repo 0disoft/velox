@@ -65,6 +65,10 @@ build path. It accepts a smaller feature set in exchange.
 - A machine-readable build report.
 - A deterministic portable ZIP archive.
 
+The first M1 vertical slice implements these outputs for `windows-x64`. It does
+not yet publish a consumer release bundle or cryptographically verify host ABI
+metadata; it records and preserves the selected host digest instead.
+
 ### Runtime
 
 - Windows x64.
@@ -83,6 +87,9 @@ build path. It accepts a smaller feature set in exchange.
 - build
 - inspect
 - version
+
+`validate`, `build`, and `version` are currently implemented. The other listed
+commands remain MVP scope, not current capability.
 
 The command contract is defined in docs/cli/command-contract.md.
 

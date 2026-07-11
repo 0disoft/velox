@@ -13,6 +13,13 @@
 - Paths in diagnostics are project-relative when possible.
 - Output never includes source file contents, secrets, or environment dumps.
 
+## Implementation Status
+
+`validate`, `build`, and `version` are implemented in the M1 vertical slice.
+`init`, `doctor`, `run`, and `inspect` remain specified but unimplemented. The
+release bundle must place the unchanged prebuilt `velox-host.exe` beside the
+CLI; there is intentionally no public flag that substitutes an arbitrary host.
+
 ## MVP Commands
 
 ### velox init [directory]
@@ -47,6 +54,20 @@ Validate the project and create a portable application directory,
 machine-readable build report, and deterministic ZIP through an atomic staging
 flow.
 
+The current output names are derived from the last segment of `app.id`:
+
+    dist/<app>/<app>.exe
+    dist/<app>/velox.runtime.json
+    dist/<app>/web/**
+    dist/<app>/build-result.json
+    dist/<app>.zip
+
+The ZIP contains one top-level `<app>/` directory. File order, timestamps, and
+portable file modes are normalized. The deterministic report contains contract
+versions, identity, permissions, host and asset digests, and counts; it omits
+wall-clock timings and absolute paths. Build duration belongs to benchmark
+evidence rather than reproducible artifact bytes.
+
 ### velox inspect PATH
 
 Read an output directory or archive and report its Velox release, contract
@@ -70,6 +91,9 @@ IPC versions, and bundled targets.
 | --verbose | Add bounded diagnostics without secrets or source contents |
 | --help | Print command help and exit successfully |
 | --version | Alias the version command |
+
+`--out` is resolved relative to the manifest's project root. The output root
+and asset root may not contain each other.
 
 Command-specific options must be added to this document before implementation
 is considered stable.
@@ -162,3 +186,5 @@ bind, dev-server, or shell-completion commands.
   process data.
 - A build command performs an undeclared network request.
 - A consumer command invokes a compiler or frontend package manager.
+- A release puts the CLI and host in different directories without defining a
+  new immutable host-discovery contract.

@@ -13,15 +13,17 @@ import (
 const Version = 1
 
 type Config struct {
-	RuntimeVersion int    `json:"runtimeVersion"`
-	App            App    `json:"app"`
-	Assets         Assets `json:"assets"`
-	Window         Window `json:"window"`
+	RuntimeVersion int      `json:"runtimeVersion"`
+	App            App      `json:"app"`
+	Assets         Assets   `json:"assets"`
+	Window         Window   `json:"window"`
+	Security       Security `json:"security"`
 }
 
 type App struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Version string `json:"version,omitempty"`
 }
 
 type Assets struct {
@@ -32,6 +34,10 @@ type Assets struct {
 type Window struct {
 	Width  uint `json:"width"`
 	Height uint `json:"height"`
+}
+
+type Security struct {
+	Permissions []string `json:"permissions"`
 }
 
 type Resolved struct {

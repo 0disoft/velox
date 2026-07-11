@@ -59,6 +59,19 @@ Go module replacement, and exposes only the low-level behavior needed by the
 adapter. Security policy remains in `internal/webview2`, not in CLI or runtime
 configuration layers.
 
+The M1 build path is split across `internal/manifest`, `internal/assettree`,
+`internal/buildplan`, `internal/builder`, and `internal/archive`. Parsing and
+filesystem discovery complete before the builder mutates the output root. The
+builder copies the release-bundled host without patching it, emits a separate
+runtime configuration, assembles an owned sibling staging directory, writes a
+normalized ZIP, and then promotes the directory and archive while preserving
+recoverable previous outputs on handled failures.
+
+The C++23 source under `host/reference-cpp`, root Pixi manifest, and Pixi lock
+exist only to reproduce the M0 comparison. No package under `cmd/velox`,
+`cmd/velox-host`, or `internal/` imports or invokes that toolchain. Normal Go
+product validation and consumer packaging do not require Pixi.
+
 ## Contract Sources
 
 - Product scope: docs/product/02-spec.md
@@ -78,6 +91,8 @@ configuration layers.
 
 ## Evidence Boundary
 
-This document describes intended architecture. It does not claim that the host,
-CLI, deterministic build, security controls, or performance targets have been
-implemented. M0 evidence determines whether the design proceeds.
+This document distinguishes implemented slices from intended architecture. The
+Go host security boundary and the M1 validate/build path are implemented and
+covered by local tests. Host release metadata, end-to-end consumer release
+bundling, remaining CLI commands, full IPC, and pinned-runner performance gates
+remain incomplete.

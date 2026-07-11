@@ -1,6 +1,6 @@
 # Velox
 
-- Status: Go runtime feasibility proven; packaging MVP not implemented
+- Status: Go runtime feasibility proven; packaging M1 vertical slice implemented
 - Scope: general
 - Repository type: cli-tool
 
@@ -9,11 +9,12 @@ packager. It is designed to turn static HTML, CSS, and JavaScript into a
 portable WebView2 application without compiling application-specific native
 code.
 
-The repository now contains a policy-enforcing pure-Go WebView2 host, a direct
-C++23 benchmark reference, a strict external runtime configuration parser, a
-dependency-free hello fixture, and a named-pipe startup benchmark harness. It
-is not an alpha distribution; packaging commands and the broader IPC contract
-are still design work.
+The repository now contains a policy-enforcing pure-Go WebView2 host, manifest
+validation, an immutable build plan, atomic portable-directory assembly, a
+deterministic ZIP writer, `validate` and `build` CLI commands, a direct C++23
+benchmark reference, and startup benchmark fixtures. It is not an alpha
+distribution; release bundling, host compatibility metadata, the broader IPC
+contract, and the remaining CLI commands are still incomplete.
 
 ## Priorities
 
@@ -66,15 +67,36 @@ Explicitly deferred:
 - CLI contract: docs/cli/command-contract.md
 - Performance budget: docs/engineering/03-performance-budget.md
 
+## Current CLI Slice
+
+The CLI expects an unchanged prebuilt `velox-host.exe` beside `velox.exe` in a
+release bundle. Maintainer source builds can exercise the same boundary through
+the test dependency injection; consumer builds never invoke Go, C++, Node.js,
+Pixi, or a package manager.
+
+```powershell
+velox validate --config .\velox.json --json
+velox build --config .\velox.json --out .\dist --json
+```
+
+`build` produces `dist/<app>/`, `dist/<app>.zip`, and a deterministic
+`build-result.json` inside the portable directory and archive. The host bytes
+are copied unchanged. Output assembly occurs in an owned sibling staging path;
+an occupied staging or recovery path fails closed instead of deleting it.
+
+See `examples/hello/velox.json` and `schema/velox-v1.schema.json` for the v1
+authoring contract.
+
 ## Development State
 
 M0 is a feasibility and kill test. It must compare a pure-Go WebView2 host with
 a minimal C++23 reference host and determine whether Velox has a meaningful
 advantage over Wails, existing compile-free wrappers, and a PWA.
 
-No consumer installation, packaging, or release command is documented yet.
-The parent workspace exposes bounded maintainer-only build, smoke, and
-benchmark intents documented in `DEVELOPMENT.md` and `VALIDATION.md`.
+Consumer release packaging is not published yet. `init`, `doctor`, `run`, and
+`inspect` remain unimplemented. The parent workspace exposes bounded
+maintainer-only validation, host build, smoke, and benchmark intents documented
+in `DEVELOPMENT.md` and `VALIDATION.md`.
 
 ## Repository Workflow
 

@@ -1,7 +1,7 @@
 {
   "tool": "ssealed",
   "version": "0.6.11",
-  "generatedAt": "2026-07-11T06:25:21.628Z",
+  "generatedAt": "2026-07-11T07:25:48.225Z",
   "scope": "general",
   "profile": "cli-tool",
   "addons": [],
@@ -318,13 +318,13 @@
     },
     {
       "path": "ARCHITECTURE.md",
-      "checksum": "sha256:ca732458707e0d40c944ce3acec791e0e2cb6936709204280089fa00067f35fe",
+      "checksum": "sha256:898fdf4a8fc77b65f07d78c1861005eb573ca96eff3328348be49300d58a2abc",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:a86e55bbe34ad31ae5421d013af2d5e5273d4a4dbdf9d5fd0ab563d2ef7fe193",
-      "acceptedChecksum": "sha256:ca732458707e0d40c944ce3acec791e0e2cb6936709204280089fa00067f35fe",
+      "acceptedChecksum": "sha256:898fdf4a8fc77b65f07d78c1861005eb573ca96eff3328348be49300d58a2abc",
       "generatedChecksum": "sha256:a86e55bbe34ad31ae5421d013af2d5e5273d4a4dbdf9d5fd0ab563d2ef7fe193"
     },
     {
@@ -516,13 +516,13 @@
     },
     {
       "path": "docs/cli/command-contract.md",
-      "checksum": "sha256:e346f426d41a2d04f4d0dbe4ef8e19013b2d551de19948d4348feba09555acfe",
+      "checksum": "sha256:c22d7fa8426fe785b46a164f8592cc462aac1f8cd72d1e686f0ded2ffcff5f92",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:27c3b100ca1684d15c735acbfeafa98f00c1efc64d164fa961074a1b5ffc4a74",
-      "acceptedChecksum": "sha256:e346f426d41a2d04f4d0dbe4ef8e19013b2d551de19948d4348feba09555acfe",
+      "acceptedChecksum": "sha256:c22d7fa8426fe785b46a164f8592cc462aac1f8cd72d1e686f0ded2ffcff5f92",
       "generatedChecksum": "sha256:27c3b100ca1684d15c735acbfeafa98f00c1efc64d164fa961074a1b5ffc4a74"
     },
     {
@@ -769,13 +769,13 @@
     },
     {
       "path": "docs/product/02-spec.md",
-      "checksum": "sha256:bf0a34c8650978401d7206e4e12438248562865f30836b1dd662068a359404b9",
+      "checksum": "sha256:1ba80a7cb2e053b343b7ee2e34389a2aebff0cf7cb1a81af8f18804bac1fe510",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:a4b9ccd412af5252824341199977718a3cfddf59d3ebf2bc293ef3ffea3a862b",
-      "acceptedChecksum": "sha256:bf0a34c8650978401d7206e4e12438248562865f30836b1dd662068a359404b9",
+      "acceptedChecksum": "sha256:1ba80a7cb2e053b343b7ee2e34389a2aebff0cf7cb1a81af8f18804bac1fe510",
       "generatedChecksum": "sha256:a4b9ccd412af5252824341199977718a3cfddf59d3ebf2bc293ef3ffea3a862b"
     },
     {
@@ -802,24 +802,24 @@
     },
     {
       "path": "README.md",
-      "checksum": "sha256:9d38f9a039291b5cc6dc797ea2ea6595fef7f254732122106852b6607b6d512c",
+      "checksum": "sha256:10ec9ed74d13c52f0efbf69a3e8173cfb1969546daba4de31bd6924f6f1caaad",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:3b0734cb416b8e81a5135af41492dc68290baa161a4c68ddbacc53fa61022487",
-      "acceptedChecksum": "sha256:9d38f9a039291b5cc6dc797ea2ea6595fef7f254732122106852b6607b6d512c",
+      "acceptedChecksum": "sha256:10ec9ed74d13c52f0efbf69a3e8173cfb1969546daba4de31bd6924f6f1caaad",
       "generatedChecksum": "sha256:3b0734cb416b8e81a5135af41492dc68290baa161a4c68ddbacc53fa61022487"
     },
     {
       "path": "VALIDATION.md",
-      "checksum": "sha256:ec4c2271836ca4d07da6ba4cba6bc1ac8bb4aa28e4b646555e83518c9f9940e7",
+      "checksum": "sha256:ab0895a2e838a55b242aff3330ef5932e2e5b772175f7aa28d3425b6e9fcdb0a",
       "kind": "validation",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:50bab16dbcab9b518430c03386904ed923b776ebc11279375797fc0ca07b62a6",
-      "acceptedChecksum": "sha256:ec4c2271836ca4d07da6ba4cba6bc1ac8bb4aa28e4b646555e83518c9f9940e7",
+      "acceptedChecksum": "sha256:ab0895a2e838a55b242aff3330ef5932e2e5b772175f7aa28d3425b6e9fcdb0a",
       "generatedChecksum": "sha256:50bab16dbcab9b518430c03386904ed923b776ebc11279375797fc0ca07b62a6"
     }
   ]

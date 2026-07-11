@@ -1,6 +1,6 @@
 # Validation
 
-- Status: Active for M0
+- Status: Active for M1
 
 ## Validation Source of Truth
 
@@ -30,11 +30,17 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_format` maps to format.
 - `velox_lint` maps to lint.
 - `velox_test` maps to test.
-- `velox_build` maps to the M0 host build.
+- `velox_build` maps to the production Go host build. The standalone CLI binary
+  does not yet have a configured build intent; its packages are compiled and
+  exercised by `velox_test`.
 - `velox_startup_smoke` maps to smoke.
 - `velox_cpp_build` maps to the C++23 reference build.
 - `velox_cpp_startup_smoke` maps to the C++23 startup smoke.
 - `velox_startup_benchmark` maps to the repeated Go/C++23 comparison.
+
+The C++ and Pixi intents validate reference evidence only. They are not
+required after CLI packaging changes that do not touch the reference host,
+benchmark harness, or reference toolchain.
 
 Unconfigured validation names remain skipped and must not pass with a fake
 success.
