@@ -2,7 +2,8 @@
   "runtimeVersion": 1,
   "app": {
     "id": "dev.velox.hello",
-    "name": "Velox Hello"
+    "name": "Velox Hello",
+    "version": "0.1.0"
   },
   "assets": {
     "root": "web",
@@ -11,5 +12,8 @@
   "window": {
     "width": 720,
     "height": 480
+  },
+  "security": {
+    "permissions": []
   }
 }

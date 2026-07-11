@@ -30,9 +30,11 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_format` maps to format.
 - `velox_lint` maps to lint.
 - `velox_test` maps to test.
-- `velox_build` maps to the production Go host build. The standalone CLI binary
-  does not yet have a configured build intent; its packages are compiled and
-  exercised by `velox_test`.
+- `velox_build` maps to the production Go host build.
+- `velox_release_bundle` builds the Go CLI and host and assembles the unsigned,
+  deterministic Windows x64 release bundle.
+- `velox_consumer_build_smoke` invokes only the assembled release CLI, builds
+  the hello fixture twice, and checks byte-identical archive hashes.
 - `velox_startup_smoke` maps to smoke.
 - `velox_cpp_build` maps to the C++23 reference build.
 - `velox_cpp_startup_smoke` maps to the C++23 startup smoke.

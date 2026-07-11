@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/build-result/v1.json",
+  "title": "Velox build result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "releaseVersion", "app", "target", "contracts", "host", "assets", "permissions", "outputs"],
+  "properties": {
+    "schemaVersion": { "const": "velox.build-result/v1" },
+    "releaseVersion": { "type": "string", "minLength": 1 },
+    "app": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "target": { "const": "windows-x64" },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest", "runtime", "host"],
+      "properties": {
+        "manifest": { "const": 1 },
+        "runtime": { "const": 1 },
+        "host": { "const": 1 }
+      }
+    },
+    "host": { "$ref": "#/$defs/file" },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files", "bytes", "sha256"],
+      "properties": {
+        "files": { "type": "integer", "minimum": 1 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["app.info", "window.basic"] }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["portableFiles"],
+      "properties": { "portableFiles": { "type": "integer", "minimum": 3 } }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "bytes", "sha256"],
+      "properties": {
+        "file": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

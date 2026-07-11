@@ -3,7 +3,9 @@ package builder
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -129,7 +131,9 @@ func fixture(t *testing.T) (string, string, string) {
 	root := t.TempDir()
 	manifestPath := filepath.Join(root, "velox.json")
 	hostPath := filepath.Join(root, "release", "velox-host.exe")
-	writeFixture(t, hostPath, []byte("prebuilt-host\x00bytes"))
+	host := []byte("prebuilt-host\x00bytes")
+	writeFixture(t, hostPath, host)
+	writeFixture(t, filepath.Join(filepath.Dir(hostPath), "velox-host.json"), hostMetadata(host))
 	writeFixture(t, filepath.Join(root, "web", "index.html"), []byte("<!doctype html><title>Hello</title>"))
 	writeFixture(t, filepath.Join(root, "web", "app.js"), []byte("console.log('hello')\n"))
 	writeFixture(t, manifestPath, []byte(`{
@@ -140,6 +144,11 @@ func fixture(t *testing.T) (string, string, string) {
   "security": {"permissions": ["app.info"]}
 }`))
 	return root, manifestPath, hostPath
+}
+
+func hostMetadata(host []byte) []byte {
+	digest := sha256.Sum256(host)
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.1.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {

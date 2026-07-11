@@ -1,12 +1,14 @@
 # Release
 
-- Status: Pre-implementation
+- Status: Unsigned local bundle implemented
 - Owner: Project maintainer
 
 ## Current State
 
-Velox has no implementation release, package registry entry, signing process,
-or stable version policy. Design documents are not a software release.
+Velox has no published release, package registry entry, signing process, or
+stable version policy. A maintainer-only local command now builds the Go CLI
+and host and assembles a deterministic unsigned Windows x64 bundle for M1
+consumer smoke tests. That local artifact is not a public software release.
 
 ## Proposed Release Unit
 
@@ -19,7 +21,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
-policy remain UNDECIDED until M1 creates public contracts.
+policy remain UNDECIDED before public alpha. Local artifacts currently identify
+the development release as `0.1.0-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 
@@ -34,6 +37,11 @@ Nightly distribution is not planned during the initial project stage.
 - Third-party notices.
 - Compatibility and known-limitation notes.
 - Provenance before public alpha.
+
+The current local bundle includes the CLI, unchanged host, strict host
+metadata, JSON schemas, release manifest, and third-party notices. SBOM,
+signatures, provenance, compatibility notes, and public checksums remain alpha
+gates rather than claimed M1 output.
 
 ## Release Gates
 

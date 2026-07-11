@@ -65,9 +65,11 @@ build path. It accepts a smaller feature set in exchange.
 - A machine-readable build report.
 - A deterministic portable ZIP archive.
 
-The first M1 vertical slice implements these outputs for `windows-x64`. It does
-not yet publish a consumer release bundle or cryptographically verify host ABI
-metadata; it records and preserves the selected host digest instead.
+The M1 implementation produces these outputs for `windows-x64`. An unsigned,
+deterministic consumer release bundle now carries strict host metadata and the
+CLI verifies its release, target, contract versions, size, and SHA-256 before a
+build. Public distribution, signatures, and provenance remain later release
+work; sidecar metadata alone is not a trust anchor.
 
 ### Runtime
 

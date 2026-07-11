@@ -67,6 +67,12 @@ runtime configuration, assembles an owned sibling staging directory, writes a
 normalized ZIP, and then promotes the directory and archive while preserving
 recoverable previous outputs on handled failures.
 
+The release bundle binds the CLI and host through `velox-host.json`. The CLI
+rejects a host when release version, target, host contract, runtime contract,
+file size, or SHA-256 differs. The sidecar is not a signature and does not make
+an untrusted download trustworthy; users must acquire the complete bundle by a
+pinned external checksum until signed release provenance exists.
+
 The C++23 source under `host/reference-cpp`, root Pixi manifest, and Pixi lock
 exist only to reproduce the M0 comparison. No package under `cmd/velox`,
 `cmd/velox-host`, or `internal/` imports or invokes that toolchain. Normal Go

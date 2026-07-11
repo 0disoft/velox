@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/release-manifest/v1.json",
+  "title": "Velox release manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "releaseVersion", "target", "contracts", "artifacts"],
+  "properties": {
+    "schemaVersion": { "const": "velox.release/v1" },
+    "releaseVersion": { "type": "string", "minLength": 1 },
+    "target": { "const": "windows-x64" },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest", "runtime", "host", "buildResult"],
+      "properties": {
+        "manifest": { "const": 1 },
+        "runtime": { "const": 1 },
+        "host": { "const": 1 },
+        "buildResult": { "const": 1 }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "bytes", "sha256"],
+        "properties": {
+          "file": { "type": "string", "minLength": 1 },
+          "bytes": { "type": "integer", "minimum": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    }
+  }
+}

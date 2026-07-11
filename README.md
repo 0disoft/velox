@@ -11,10 +11,11 @@ code.
 
 The repository now contains a policy-enforcing pure-Go WebView2 host, manifest
 validation, an immutable build plan, atomic portable-directory assembly, a
-deterministic ZIP writer, `validate` and `build` CLI commands, a direct C++23
+deterministic ZIP writer, `validate` and `build` CLI commands, an unsigned
+deterministic Windows x64 release bundle, a direct C++23
 benchmark reference, and startup benchmark fixtures. It is not an alpha
-distribution; release bundling, host compatibility metadata, the broader IPC
-contract, and the remaining CLI commands are still incomplete.
+distribution; public release provenance, the broader IPC contract, and the
+remaining CLI commands are still incomplete.
 
 ## Priorities
 
@@ -69,10 +70,11 @@ Explicitly deferred:
 
 ## Current CLI Slice
 
-The CLI expects an unchanged prebuilt `velox-host.exe` beside `velox.exe` in a
-release bundle. Maintainer source builds can exercise the same boundary through
-the test dependency injection; consumer builds never invoke Go, C++, Node.js,
-Pixi, or a package manager.
+The CLI expects an unchanged prebuilt `velox-host.exe` and strict
+`velox-host.json` beside `velox.exe` in a release bundle. It verifies release,
+target, host-contract, runtime-contract, file-size, and SHA-256 agreement before
+building. Consumer builds never invoke Go, C++, Node.js, Pixi, or a package
+manager.
 
 ```powershell
 velox validate --config .\velox.json --json
@@ -95,8 +97,8 @@ advantage over Wails, existing compile-free wrappers, and a PWA.
 
 Consumer release packaging is not published yet. `init`, `doctor`, `run`, and
 `inspect` remain unimplemented. The parent workspace exposes bounded
-maintainer-only validation, host build, smoke, and benchmark intents documented
-in `DEVELOPMENT.md` and `VALIDATION.md`.
+maintainer-only release-bundle, compiler-free consumer smoke, host smoke, and
+benchmark intents documented in `DEVELOPMENT.md` and `VALIDATION.md`.
 
 ## Repository Workflow
 

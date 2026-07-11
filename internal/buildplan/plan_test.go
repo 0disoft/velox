@@ -1,6 +1,8 @@
 package buildplan
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +12,7 @@ func TestSnapshotCannotMutatePlan(t *testing.T) {
 	root := t.TempDir()
 	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
 	writePlanFile(t, filepath.Join(root, "velox-host.exe"), "host")
+	writePlanHostMetadata(t, root, "host")
 	writePlanFile(t, filepath.Join(root, "velox.json"), `{
   "schemaVersion": 1,
   "app": {"id": "com.example.hello", "name": "Hello", "version": "1"},
@@ -36,6 +39,7 @@ func TestCreateRejectsOutputContainingAssets(t *testing.T) {
 	root := t.TempDir()
 	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
 	writePlanFile(t, filepath.Join(root, "velox-host.exe"), "host")
+	writePlanHostMetadata(t, root, "host")
 	writePlanFile(t, filepath.Join(root, "velox.json"), `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1"}}`)
 	_, err := Create(Options{
 		ManifestPath: filepath.Join(root, "velox.json"),
@@ -51,6 +55,7 @@ func TestCreateRejectsRedirectedOutputRoot(t *testing.T) {
 	root := t.TempDir()
 	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
 	writePlanFile(t, filepath.Join(root, "velox-host.exe"), "host")
+	writePlanHostMetadata(t, root, "host")
 	writePlanFile(t, filepath.Join(root, "velox.json"), `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1"}}`)
 	redirect := filepath.Join(root, "redirect")
 	if err := os.Symlink(t.TempDir(), redirect); err != nil {
@@ -64,6 +69,13 @@ func TestCreateRejectsRedirectedOutputRoot(t *testing.T) {
 	if err == nil {
 		t.Fatal("Create() accepted redirected output root")
 	}
+}
+
+func writePlanHostMetadata(t *testing.T, root, host string) {
+	t.Helper()
+	digest := sha256.Sum256([]byte(host))
+	body := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.1.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
+	writePlanFile(t, filepath.Join(root, "velox-host.json"), body)
 }
 
 func writePlanFile(t *testing.T, path, value string) {

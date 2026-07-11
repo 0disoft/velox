@@ -20,6 +20,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0003 | Accepted for M0 | Pin go-webview2 for startup feasibility only; do not treat the wrapper as the production security boundary |
 | 0004 | Accepted for M0 | Keep a direct C++23 WebView2 host as the security, lifecycle, and startup reference |
 | 0005 | Accepted | Use Go for both the CLI and production host; keep the WebView2 adapter repository-owned |
+| 0006 | Accepted | Bind the CLI and host with strict release metadata |
 
 ## Lifecycle
 

@@ -2,7 +2,9 @@ package cli
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,6 +77,30 @@ func TestFailureJSONDoesNotExposeAbsolutePath(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsHostTampering(t *testing.T) {
+	root, config, host := cliFixture(t)
+	if err := os.WriteFile(host, []byte("tampered-host"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"validate", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+	})
+	if exitCode != 4 || stderr.Len() != 0 {
+		t.Fatalf("exit=%d stderr=%q", exitCode, stderr.String())
+	}
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if envelope.OK || envelope.Error == nil || envelope.Error.Code != "HOST_INCOMPATIBLE" {
+		t.Fatalf("unexpected envelope: %+v", envelope)
+	}
+	if _, err := os.Stat(filepath.Join(root, "dist")); !os.IsNotExist(err) {
+		t.Fatalf("validation failure created output: %v", err)
+	}
+}
+
 func TestSubcommandHelpSucceeds(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	exitCode := Run([]string{"validate", "--help"}, Dependencies{Stdout: &stdout, Stderr: &stderr})
@@ -112,6 +138,8 @@ func cliFixture(t *testing.T) (string, string, string) {
 	config := filepath.Join(root, "velox.json")
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
+	digest := sha256.Sum256([]byte("host"))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.1.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

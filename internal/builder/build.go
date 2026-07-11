@@ -18,14 +18,15 @@ import (
 const ReportSchema = "velox.build-result/v1"
 
 type Report struct {
-	SchemaVersion string             `json:"schemaVersion"`
-	App           ReportApp          `json:"app"`
-	Target        string             `json:"target"`
-	Contracts     ReportContracts    `json:"contracts"`
-	Host          ReportFile         `json:"host"`
-	Assets        ReportAssets       `json:"assets"`
-	Permissions   []string           `json:"permissions"`
-	Outputs       ReportOutputCounts `json:"outputs"`
+	SchemaVersion  string             `json:"schemaVersion"`
+	ReleaseVersion string             `json:"releaseVersion"`
+	App            ReportApp          `json:"app"`
+	Target         string             `json:"target"`
+	Contracts      ReportContracts    `json:"contracts"`
+	Host           ReportFile         `json:"host"`
+	Assets         ReportAssets       `json:"assets"`
+	Permissions    []string           `json:"permissions"`
+	Outputs        ReportOutputCounts `json:"outputs"`
 }
 
 type ReportApp struct {
@@ -37,6 +38,7 @@ type ReportApp struct {
 type ReportContracts struct {
 	Manifest int `json:"manifest"`
 	Runtime  int `json:"runtime"`
+	Host     int `json:"host"`
 }
 
 type ReportFile struct {
@@ -109,14 +111,15 @@ func Build(plan buildplan.Plan) (Result, error) {
 		return Result{}, err
 	}
 	report := Report{
-		SchemaVersion: ReportSchema,
-		App:           ReportApp{ID: snapshot.Manifest.App.ID, Name: snapshot.Manifest.App.Name, Version: snapshot.Manifest.App.Version},
-		Target:        snapshot.Target,
-		Contracts:     ReportContracts{Manifest: 1, Runtime: runtimeconfig.Version},
-		Host:          ReportFile{File: hostName, Bytes: snapshot.HostSize, SHA256: snapshot.HostSHA256},
-		Assets:        ReportAssets{Files: len(snapshot.Assets.Files), Bytes: snapshot.Assets.TotalBytes, SHA256: snapshot.Assets.Digest},
-		Permissions:   append([]string(nil), snapshot.Manifest.Security.Permissions...),
-		Outputs:       ReportOutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
+		SchemaVersion:  ReportSchema,
+		ReleaseVersion: snapshot.HostMetadata.ReleaseVersion,
+		App:            ReportApp{ID: snapshot.Manifest.App.ID, Name: snapshot.Manifest.App.Name, Version: snapshot.Manifest.App.Version},
+		Target:         snapshot.Target,
+		Contracts:      ReportContracts{Manifest: 1, Runtime: runtimeconfig.Version, Host: snapshot.HostMetadata.Contracts.Host},
+		Host:           ReportFile{File: hostName, Bytes: snapshot.HostSize, SHA256: snapshot.HostSHA256},
+		Assets:         ReportAssets{Files: len(snapshot.Assets.Files), Bytes: snapshot.Assets.TotalBytes, SHA256: snapshot.Assets.Digest},
+		Permissions:    append([]string(nil), snapshot.Manifest.Security.Permissions...),
+		Outputs:        ReportOutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
 	}
 	if err := writeJSON(filepath.Join(stageDirectory, "build-result.json"), report); err != nil {
 		return Result{}, err

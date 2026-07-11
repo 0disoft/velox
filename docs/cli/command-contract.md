@@ -17,8 +17,10 @@
 
 `validate`, `build`, and `version` are implemented in the M1 vertical slice.
 `init`, `doctor`, `run`, and `inspect` remain specified but unimplemented. The
-release bundle must place the unchanged prebuilt `velox-host.exe` beside the
-CLI; there is intentionally no public flag that substitutes an arbitrary host.
+release bundle must place the unchanged prebuilt `velox-host.exe` and its
+`velox-host.json` beside the CLI. The CLI verifies release, target, contract,
+size, and digest agreement; there is intentionally no public flag that
+substitutes an arbitrary host.
 
 ## MVP Commands
 
@@ -64,7 +66,8 @@ The current output names are derived from the last segment of `app.id`:
 
 The ZIP contains one top-level `<app>/` directory. File order, timestamps, and
 portable file modes are normalized. The deterministic report contains contract
-versions, identity, permissions, host and asset digests, and counts; it omits
+versions, release version, identity, permissions, host and asset digests, and
+counts; it omits
 wall-clock timings and absolute paths. Build duration belongs to benchmark
 evidence rather than reproducible artifact bytes.
 

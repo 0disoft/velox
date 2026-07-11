@@ -119,6 +119,9 @@ func validate(cfg Config) error {
 	if strings.TrimSpace(cfg.App.Name) == "" {
 		return errors.New("app.name is required")
 	}
+	if strings.TrimSpace(cfg.App.Version) == "" {
+		return errors.New("app.version is required")
+	}
 	if cfg.Assets.Root == "" {
 		return errors.New("assets.root is required")
 	}
@@ -127,6 +130,19 @@ func validate(cfg Config) error {
 	}
 	if cfg.Window.Width < 320 || cfg.Window.Height < 240 {
 		return errors.New("window dimensions must be at least 320x240")
+	}
+	if cfg.Security.Permissions == nil {
+		return errors.New("security.permissions is required")
+	}
+	seen := make(map[string]struct{}, len(cfg.Security.Permissions))
+	for _, permission := range cfg.Security.Permissions {
+		if permission != "app.info" && permission != "window.basic" {
+			return fmt.Errorf("unsupported permission %q", permission)
+		}
+		if _, exists := seen[permission]; exists {
+			return fmt.Errorf("duplicate permission %q", permission)
+		}
+		seen[permission] = struct{}{}
 	}
 	return nil
 }

@@ -19,7 +19,8 @@ environment-derived application permissions.
 
 ## Proposed Manifest Shape
 
-The exact JSON Schema will be created in M1. The intended top-level shape is:
+The machine-readable contract is `schema/velox-v1.schema.json`. Its top-level
+shape is:
 
     {
       "schemaVersion": 1,

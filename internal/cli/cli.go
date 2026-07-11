@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	"github.com/0disoft/velox/internal/builder"
+	"github.com/0disoft/velox/internal/buildinfo"
 	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
-
-const Version = "0.1.0-dev"
 
 type Dependencies struct {
 	Stdout   io.Writer
@@ -47,29 +47,32 @@ type Diagnostic struct {
 }
 
 type ValidateResult struct {
-	AppID       string   `json:"appId"`
-	AppVersion  string   `json:"appVersion"`
-	Target      string   `json:"target"`
-	AssetFiles  int      `json:"assetFiles"`
-	AssetBytes  int64    `json:"assetBytes"`
-	AssetSHA256 string   `json:"assetSha256"`
-	HostSHA256  string   `json:"hostSha256"`
-	Permissions []string `json:"permissions"`
+	ReleaseVersion string   `json:"releaseVersion"`
+	AppID          string   `json:"appId"`
+	AppVersion     string   `json:"appVersion"`
+	Target         string   `json:"target"`
+	AssetFiles     int      `json:"assetFiles"`
+	AssetBytes     int64    `json:"assetBytes"`
+	AssetSHA256    string   `json:"assetSha256"`
+	HostSHA256     string   `json:"hostSha256"`
+	Permissions    []string `json:"permissions"`
 }
 
 type BuildResult struct {
-	AppID         string `json:"appId"`
-	Target        string `json:"target"`
-	Directory     string `json:"directory"`
-	Archive       string `json:"archive"`
-	ArchiveBytes  int64  `json:"archiveBytes"`
-	ArchiveSHA256 string `json:"archiveSha256"`
+	ReleaseVersion string `json:"releaseVersion"`
+	AppID          string `json:"appId"`
+	Target         string `json:"target"`
+	Directory      string `json:"directory"`
+	Archive        string `json:"archive"`
+	ArchiveBytes   int64  `json:"archiveBytes"`
+	ArchiveSHA256  string `json:"archiveSha256"`
 }
 
 type VersionResult struct {
 	Version          string   `json:"version"`
 	ManifestVersions []int    `json:"manifestVersions"`
 	RuntimeVersions  []int    `json:"runtimeVersions"`
+	HostContracts    []int    `json:"hostContracts"`
 	Targets          []string `json:"targets"`
 }
 
@@ -85,7 +88,7 @@ func Run(args []string, dependencies Dependencies) int {
 		return 2
 	}
 	if args[0] == "--version" {
-		fmt.Fprintln(dependencies.Stdout, Version)
+		fmt.Fprintln(dependencies.Stdout, buildinfo.Version)
 		return 0
 	}
 	switch args[0] {
@@ -178,7 +181,7 @@ func runBuild(args []string, dependencies Dependencies) int {
 	}
 	snapshot := plan.Snapshot()
 	presented := BuildResult{
-		AppID: result.Report.App.ID, Target: result.Report.Target,
+		ReleaseVersion: result.Report.ReleaseVersion, AppID: result.Report.App.ID, Target: result.Report.Target,
 		Directory:    safePath(snapshot.Manifest.ProjectRoot, result.DirectoryPath),
 		Archive:      safePath(snapshot.Manifest.ProjectRoot, result.ArchivePath),
 		ArchiveBytes: result.ArchiveSize, ArchiveSHA256: result.ArchiveSHA256,
@@ -209,13 +212,13 @@ func runVersion(args []string, dependencies Dependencies) int {
 		return emitFailure(dependencies, "version", *jsonOutput, 2, "USAGE_INVALID", "Version does not accept positional arguments.", errors.New("unexpected positional arguments"))
 	}
 	result := VersionResult{
-		Version: Version, ManifestVersions: []int{manifest.Version},
-		RuntimeVersions: []int{runtimeconfig.Version}, Targets: []string{buildplan.TargetWindowsX64},
+		Version: buildinfo.Version, ManifestVersions: []int{manifest.Version},
+		RuntimeVersions: []int{runtimeconfig.Version}, HostContracts: []int{hostmeta.ContractVersion}, Targets: []string{buildplan.TargetWindowsX64},
 	}
 	if *jsonOutput {
 		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "version", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !*quiet {
-		fmt.Fprintf(dependencies.Stdout, "Velox %s\nManifest: v%d\nRuntime: v%d\nTarget: %s\n", Version, manifest.Version, runtimeconfig.Version, buildplan.TargetWindowsX64)
+		fmt.Fprintf(dependencies.Stdout, "Velox %s\nManifest: v%d\nRuntime: v%d\nTarget: %s\n", buildinfo.Version, manifest.Version, runtimeconfig.Version, buildplan.TargetWindowsX64)
 	}
 	return 0
 }
@@ -229,17 +232,18 @@ func createPlan(options commonOptions, hostPath string) (buildplan.Plan, error) 
 		hostPath = filepath.Join(filepath.Dir(executable), "velox-host.exe")
 	}
 	return buildplan.Create(buildplan.Options{
-		ManifestPath: options.config,
-		HostPath:     hostPath,
-		OutputRoot:   options.out,
-		Target:       options.target,
+		ManifestPath:     options.config,
+		HostPath:         hostPath,
+		HostMetadataPath: filepath.Join(filepath.Dir(hostPath), "velox-host.json"),
+		OutputRoot:       options.out,
+		Target:           options.target,
 	})
 }
 
 func validateResult(plan buildplan.Plan) ValidateResult {
 	snapshot := plan.Snapshot()
 	return ValidateResult{
-		AppID: snapshot.Manifest.App.ID, AppVersion: snapshot.Manifest.App.Version, Target: snapshot.Target,
+		ReleaseVersion: snapshot.HostMetadata.ReleaseVersion, AppID: snapshot.Manifest.App.ID, AppVersion: snapshot.Manifest.App.Version, Target: snapshot.Target,
 		AssetFiles: len(snapshot.Assets.Files), AssetBytes: snapshot.Assets.TotalBytes,
 		AssetSHA256: snapshot.Assets.Digest, HostSHA256: snapshot.HostSHA256,
 		Permissions: append([]string(nil), snapshot.Manifest.Security.Permissions...),

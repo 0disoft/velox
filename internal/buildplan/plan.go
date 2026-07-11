@@ -12,16 +12,20 @@ import (
 	"strings"
 
 	"github.com/0disoft/velox/internal/assettree"
+	"github.com/0disoft/velox/internal/buildinfo"
+	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
 const TargetWindowsX64 = "windows-x64"
 
 type Options struct {
-	ManifestPath string
-	HostPath     string
-	OutputRoot   string
-	Target       string
+	ManifestPath     string
+	HostPath         string
+	HostMetadataPath string
+	OutputRoot       string
+	Target           string
 }
 
 type ErrorKind string
@@ -49,6 +53,7 @@ type Plan struct {
 	manifest       manifest.Resolved
 	assets         assettree.Tree
 	hostPath       string
+	hostMetadata   hostmeta.Metadata
 	hostSHA256     string
 	hostSize       int64
 	target         string
@@ -62,6 +67,7 @@ type Snapshot struct {
 	Manifest       manifest.Resolved
 	Assets         assettree.Tree
 	HostPath       string
+	HostMetadata   hostmeta.Metadata
 	HostSHA256     string
 	HostSize       int64
 	Target         string
@@ -123,6 +129,23 @@ func Create(options Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, fail(ErrorHost, fmt.Errorf("hash host template: %w", err))
 	}
+	if options.HostMetadataPath == "" {
+		options.HostMetadataPath = filepath.Join(filepath.Dir(hostPath), "velox-host.json")
+	}
+	metadataPath, err := filepath.Abs(options.HostMetadataPath)
+	if err != nil {
+		return Plan{}, fail(ErrorHost, fmt.Errorf("resolve host metadata: %w", err))
+	}
+	if err := rejectRedirectedPath(metadataPath); err != nil {
+		return Plan{}, fail(ErrorHost, fmt.Errorf("validate host metadata path: %w", err))
+	}
+	hostMetadata, err := hostmeta.Load(metadataPath)
+	if err != nil {
+		return Plan{}, fail(ErrorHost, err)
+	}
+	if err := hostMetadata.ValidateArtifact(hostPath, options.Target, buildinfo.Version, runtimeconfig.Version, hostInfo.Size(), hostDigest); err != nil {
+		return Plan{}, fail(ErrorHost, err)
+	}
 
 	outputCandidate := options.OutputRoot
 	if outputCandidate == "" {
@@ -146,6 +169,7 @@ func Create(options Options) (Plan, error) {
 		manifest:       resolved,
 		assets:         assets,
 		hostPath:       hostPath,
+		hostMetadata:   hostMetadata,
 		hostSHA256:     hostDigest,
 		hostSize:       hostInfo.Size(),
 		target:         options.Target,
@@ -173,7 +197,8 @@ func (plan Plan) Snapshot() Snapshot {
 	return Snapshot{
 		Manifest: resolved, Assets: assets,
 		HostPath: plan.hostPath, HostSHA256: plan.hostSHA256, HostSize: plan.hostSize,
-		Target: plan.target, OutputRoot: plan.outputRoot,
+		HostMetadata: plan.hostMetadata,
+		Target:       plan.target, OutputRoot: plan.outputRoot,
 		AppDirectory: plan.appDirectory, ArchivePath: plan.archivePath,
 		ApplicationKey: plan.applicationKey,
 	}
