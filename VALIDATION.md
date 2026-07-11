@@ -38,6 +38,9 @@ The parent workspace command contract currently provides these bounded intents:
   bundled-host compatibility, builds it twice, checks
   byte-identical archive hashes, and inspects both the portable directory and
   ZIP.
+- `velox_cli_run_smoke` launches source assets through the assembled release
+  CLI, requires the host to reach its ready callback, exits it, and verifies the
+  temporary runtime configuration was removed.
 - `velox_startup_smoke` maps to smoke.
 - `velox_cpp_build` maps to the C++23 reference build.
 - `velox_cpp_startup_smoke` maps to the C++23 startup smoke.

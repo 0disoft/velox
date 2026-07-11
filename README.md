@@ -95,9 +95,10 @@ M0 is a feasibility and kill test. It must compare a pure-Go WebView2 host with
 a minimal C++23 reference host and determine whether Velox has a meaningful
 advantage over Wails, existing compile-free wrappers, and a PWA.
 
-Consumer release packaging is not published yet. `run` remains unimplemented.
-`init` creates a dependency-free starter, `doctor` checks the current Windows,
-WebView2, project, and bundled-host compatibility, and `inspect` validates both
+Consumer release packaging is not published yet. `init` creates a
+dependency-free starter, `doctor` checks the current Windows, WebView2, project,
+and bundled-host compatibility, `run` launches source assets through the
+prebuilt host without a development server, and `inspect` validates both
 portable directories and ZIPs
 without executing them. The parent workspace exposes bounded
 maintainer-only release-bundle, compiler-free consumer smoke, host smoke, and

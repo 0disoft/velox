@@ -15,8 +15,8 @@
 
 ## Implementation Status
 
-`init`, `validate`, `doctor`, `build`, `inspect`, and `version` are implemented
-in the M1 vertical slice. `run` remains specified but unimplemented. The
+`init`, `validate`, `doctor`, `run`, `build`, `inspect`, and `version` are
+implemented in the M1 vertical slice. The
 release bundle must place the unchanged prebuilt `velox-host.exe` and its
 `velox-host.json` beside the CLI. The CLI verifies release, target, contract,
 size, and digest agreement; there is intentionally no public flag that
@@ -60,6 +60,14 @@ compatibility. Doctor is read-only.
 Launch the prebuilt host against the source asset directory for a manual smoke
 run. It does not start a development server, watcher, bundler, or hot-reload
 process.
+
+- Validate the same project, asset, target, and bundled-host contracts as build.
+- Create a unique runtime configuration beside the project manifest so relative
+  asset containment remains identical to packaged applications.
+- Remove the temporary configuration after normal or unsuccessful host exit.
+- Close child stdin, wait for the host, and preserve its non-zero exit code.
+- Suppress child output in JSON mode so stdout remains one JSON document.
+- Do not copy source assets or create build output.
 
 ### velox build
 

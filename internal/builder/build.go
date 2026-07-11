@@ -57,15 +57,7 @@ func Build(plan buildplan.Plan) (Result, error) {
 		}
 	}
 
-	runtimeValue := runtimeconfig.Config{
-		RuntimeVersion: runtimeconfig.Version,
-		App: runtimeconfig.App{
-			ID: snapshot.Manifest.App.ID, Name: snapshot.Manifest.App.Name, Version: snapshot.Manifest.App.Version,
-		},
-		Assets:   runtimeconfig.Assets{Root: "web", Entry: filepath.ToSlash(snapshot.Manifest.Assets.Entry)},
-		Window:   runtimeconfig.Window{Width: snapshot.Manifest.Window.Width, Height: snapshot.Manifest.Window.Height},
-		Security: runtimeconfig.Security{Permissions: append([]string{}, snapshot.Manifest.Security.Permissions...)},
-	}
+	runtimeValue := runtimeconfig.FromManifest(snapshot.Manifest, "web")
 	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue); err != nil {
 		return Result{}, err
 	}

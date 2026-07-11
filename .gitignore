@@ -24,3 +24,6 @@ tmp/
 
 # Project-owned maintainer tool environment.
 .pixi/
+
+# Ephemeral source-run configuration, removed after the host exits.
+.velox-run-*.json

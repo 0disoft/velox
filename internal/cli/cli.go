@@ -19,6 +19,7 @@ import (
 	"github.com/0disoft/velox/internal/initializer"
 	"github.com/0disoft/velox/internal/inspector"
 	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/runner"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 	"github.com/0disoft/velox/internal/webview2"
 )
@@ -30,6 +31,7 @@ type Dependencies struct {
 	GOOS                 string
 	GOARCH               string
 	WebView2VersionProbe func() (string, error)
+	HostLauncher         runner.Launcher
 }
 
 type Envelope struct {
@@ -112,6 +114,8 @@ func Run(args []string, dependencies Dependencies) int {
 		return runInit(args[1:], dependencies)
 	case "doctor":
 		return runDoctor(args[1:], dependencies)
+	case "run":
+		return runProject(args[1:], dependencies)
 	case "help", "--help", "-h":
 		printUsage(dependencies.Stdout)
 		return 0
@@ -234,6 +238,48 @@ func printDoctor(writer io.Writer, result doctor.Result) {
 	for _, check := range result.Checks {
 		fmt.Fprintf(writer, "%-7s %-9s %s\n", check.Status, check.Name, check.Message)
 	}
+}
+
+func runProject(args []string, dependencies Dependencies) int {
+	flags, options := newFlagSet("run", dependencies.Stderr)
+	if jsonRequested(args) {
+		flags.SetOutput(io.Discard)
+	}
+	if err := flags.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
+		return emitFailure(dependencies, "run", options.json || jsonRequested(args), 2, "USAGE_INVALID", "Command arguments are invalid.", err)
+	}
+	if flags.NArg() != 0 {
+		return emitFailure(dependencies, "run", options.json, 2, "USAGE_INVALID", "Run does not accept positional arguments.", errors.New("unexpected positional arguments"))
+	}
+	plan, err := createPlan(*options, dependencies.HostPath)
+	if err != nil {
+		return emitPlanError(dependencies, "run", options.json, err)
+	}
+
+	hostStdout, hostStderr := dependencies.Stdout, dependencies.Stderr
+	if options.json || options.quiet {
+		hostStdout = io.Discard
+	}
+	if options.json {
+		hostStderr = io.Discard
+	}
+	result, err := runner.Execute(plan, dependencies.HostLauncher, hostStdout, hostStderr)
+	if err != nil {
+		var hostExit *runner.HostExitError
+		if errors.As(err, &hostExit) {
+			return emitFailure(dependencies, "run", options.json, hostExit.Code, "RUNTIME_HOST_EXITED", "Host process exited unsuccessfully.", err)
+		}
+		return emitFailure(dependencies, "run", options.json, 6, "RUNTIME_HOST_START_FAILED", "Host process could not be executed cleanly.", err)
+	}
+	if options.json {
+		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "run", Result: result, Diagnostics: []Diagnostic{}})
+	} else if !options.quiet {
+		fmt.Fprintln(dependencies.Stdout, "Host exited cleanly.")
+	}
+	return 0
 }
 
 func runValidate(args []string, dependencies Dependencies) int {
@@ -486,5 +532,5 @@ func reorderPositionalArgs(args []string) []string {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: velox <init|validate|doctor|build|inspect|version> [options]")
+	fmt.Fprintln(writer, "Usage: velox <init|validate|doctor|run|build|inspect|version> [options]")
 }

@@ -90,8 +90,7 @@ work; sidecar metadata alone is not a trust anchor.
 - inspect
 - version
 
-`init`, `validate`, `doctor`, `build`, `inspect`, and `version` are currently
-implemented. `run` remains MVP scope, not current capability.
+All listed M1 commands are currently implemented.
 
 The command contract is defined in docs/cli/command-contract.md.
 

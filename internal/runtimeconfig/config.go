@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/0disoft/velox/internal/manifest"
 )
 
 const Version = 1
@@ -45,6 +47,18 @@ type Resolved struct {
 	ConfigPath string
 	AssetRoot  string
 	EntryPath  string
+}
+
+func FromManifest(value manifest.Resolved, assetRoot string) Config {
+	return Config{
+		RuntimeVersion: Version,
+		App: App{
+			ID: value.App.ID, Name: value.App.Name, Version: value.App.Version,
+		},
+		Assets:   Assets{Root: filepath.ToSlash(assetRoot), Entry: filepath.ToSlash(value.Assets.Entry)},
+		Window:   Window{Width: value.Window.Width, Height: value.Window.Height},
+		Security: Security{Permissions: append([]string{}, value.Security.Permissions...)},
+	}
 }
 
 func Load(path string) (Resolved, error) {

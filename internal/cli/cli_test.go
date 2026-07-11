@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -186,6 +187,52 @@ func TestDoctorFailureIncludesChecksWithoutExposingProbeError(t *testing.T) {
 		t.Fatal(err)
 	}
 	if envelope.OK || envelope.Error == nil || envelope.Error.Code != "RUNTIME_WEBVIEW2_PROBE_FAILED" || envelope.Result == nil {
+		t.Fatalf("unexpected envelope: %+v", envelope)
+	}
+}
+
+func TestRunJSONContractAndTemporaryConfigCleanup(t *testing.T) {
+	root, config, host := cliFixture(t)
+	var configPath string
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"run", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+		HostLauncher: func(hostPath, runtimeConfig string, childStdout, childStderr io.Writer) (int, error) {
+			configPath = runtimeConfig
+			if childStdout != io.Discard || childStderr != io.Discard {
+				t.Fatal("JSON mode exposed child output streams")
+			}
+			if _, err := os.Stat(runtimeConfig); err != nil {
+				t.Fatal(err)
+			}
+			return 0, nil
+		},
+	})
+	if exitCode != 0 || stderr.Len() != 0 || !json.Valid(stdout.Bytes()) {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(configPath); !os.IsNotExist(err) {
+		t.Fatalf("temporary config remained: %v", err)
+	}
+}
+
+func TestRunPreservesHostExitCode(t *testing.T) {
+	root, config, host := cliFixture(t)
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"run", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+		HostLauncher: func(hostPath, runtimeConfig string, childStdout, childStderr io.Writer) (int, error) {
+			return 5, nil
+		},
+	})
+	if exitCode != 5 || stderr.Len() != 0 {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if envelope.OK || envelope.Error == nil || envelope.Error.Code != "RUNTIME_HOST_EXITED" {
 		t.Fatalf("unexpected envelope: %+v", envelope)
 	}
 }
