@@ -1,7 +1,7 @@
 {
   "tool": "ssealed",
   "version": "0.6.11",
-  "generatedAt": "2026-07-10T14:18:12.047Z",
+  "generatedAt": "2026-07-11T05:52:38.421Z",
   "scope": "general",
   "profile": "cli-tool",
   "addons": [],
@@ -593,13 +593,13 @@
     },
     {
       "path": "docs/engineering/03-performance-budget.md",
-      "checksum": "sha256:30fa60513ed6c4e3d18486d932c35a11412f12ec561d3f5d9b2a0731146dc914",
+      "checksum": "sha256:9d74367ba9505a84803b7b52b0b29266ba503fa42314a9f95e17e6bf9ac58808",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:9f0f0bcbc34ea55f930eace525a3961d805b5961604f9ac787861d46c160f180",
-      "acceptedChecksum": "sha256:30fa60513ed6c4e3d18486d932c35a11412f12ec561d3f5d9b2a0731146dc914",
+      "acceptedChecksum": "sha256:9d74367ba9505a84803b7b52b0b29266ba503fa42314a9f95e17e6bf9ac58808",
       "generatedChecksum": "sha256:9f0f0bcbc34ea55f930eace525a3961d805b5961604f9ac787861d46c160f180"
     },
     {

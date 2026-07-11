@@ -146,3 +146,13 @@ The C++23 size includes the 11,776-byte executable and 164,192-byte
 directional results, not a release baseline: runner and WebView2 metadata are
 not yet captured, run order is fixed, and the C++ immediate-warm delay requires
 lifecycle diagnosis. No startup winner is selected from this run.
+
+The Go lifecycle smoke now measures a first launch, an immediate second launch
+using the same profile, ready-to-host-exit time, and final profile release. The
+first run after explicit controller and COM cleanup showed an immediate relaunch
+near 7.1 seconds. WebView2's pinned SDK contract states that `Close` is
+synchronous while user-data-folder release completes only after the shared
+browser process exits. This is a recorded lifecycle regression, not a startup
+outlier. The provisional smoke ceiling is 10 seconds until the architecture
+either avoids browser-process teardown on ordinary restart or accepts the delay
+as a platform limitation.

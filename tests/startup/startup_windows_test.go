@@ -59,20 +59,35 @@ type profileResult struct {
 	P95MS       float64   `json:"p95Ms"`
 }
 
+type hostRun struct {
+	Ready time.Duration
+	Exit  time.Duration
+}
+
 func TestBuiltHostStartup(t *testing.T) {
 	repoRoot := repositoryRoot(t)
 	host := goHost(t, repoRoot)
 	profile := managedProfileRoot(t, "velox-go-smoke-")
-	duration := runHost(t, host, profile)
-	t.Logf("process-to-ready: %s", duration)
+	first := runHost(t, host, profile)
+	immediate := runHost(t, host, profile)
+	profileRelease := waitForProfileRelease(t, profile, 10*time.Second)
+
+	if first.Exit > time.Second || immediate.Exit > time.Second {
+		t.Fatalf("host shutdown exceeded 1s: first=%s immediate=%s", first.Exit, immediate.Exit)
+	}
+	if immediate.Ready > 10*time.Second {
+		t.Fatalf("same-profile immediate relaunch exceeded 10s: %s", immediate.Ready)
+	}
+	t.Logf("first ready=%s exit=%s; immediate ready=%s exit=%s; profile release=%s",
+		first.Ready, first.Exit, immediate.Ready, immediate.Exit, profileRelease)
 }
 
 func TestBuiltCppHostStartup(t *testing.T) {
 	repoRoot := repositoryRoot(t)
 	host := cppHost(t, repoRoot)
 	profile := managedProfileRoot(t, "velox-cpp-smoke-")
-	duration := runHost(t, host, profile)
-	t.Logf("process-to-ready: %s", duration)
+	run := runHost(t, host, profile)
+	t.Logf("process-to-ready: %s; ready-to-exit: %s", run.Ready, run.Exit)
 }
 
 func TestHostStartupComparison(t *testing.T) {
@@ -100,7 +115,7 @@ func TestHostStartupComparison(t *testing.T) {
 			if err := os.MkdirAll(profile, 0o755); err != nil {
 				t.Fatal(err)
 			}
-			freshDurations = append(freshDurations, runHost(t, host, profile))
+			freshDurations = append(freshDurations, runHost(t, host, profile).Ready)
 		}
 		result.Fresh = summarize(freshDurations)
 
@@ -113,7 +128,7 @@ func TestHostStartupComparison(t *testing.T) {
 		}
 		warmDurations := make([]time.Duration, 0, benchmarkRuns)
 		for run := 0; run < benchmarkRuns; run++ {
-			warmDurations = append(warmDurations, runHost(t, host, warmProfile))
+			warmDurations = append(warmDurations, runHost(t, host, warmProfile).Ready)
 		}
 		result.Warm = summarize(warmDurations)
 		results.Hosts = append(results.Hosts, result)
@@ -165,6 +180,22 @@ func managedProfileRoot(t *testing.T, pattern string) string {
 		}
 	})
 	return root
+}
+
+func waitForProfileRelease(t *testing.T, root string, timeout time.Duration) time.Duration {
+	t.Helper()
+	started := time.Now()
+	deadline := started.Add(timeout)
+	for {
+		err := os.RemoveAll(root)
+		if err == nil || os.IsNotExist(err) {
+			return time.Since(started)
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("WebView2 profile remained locked after %s: %s: %v", timeout, root, err)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func goHost(t *testing.T, repoRoot string) hostAdapter {
@@ -222,7 +253,7 @@ func repositoryRoot(t *testing.T) string {
 	return root
 }
 
-func runHost(t *testing.T, host hostAdapter, profile string) time.Duration {
+func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	t.Helper()
 	pipeName := fmt.Sprintf(`\\.\pipe\velox-m0-%d`, time.Now().UnixNano())
 	pipe := createPipe(t, pipeName)
@@ -274,7 +305,8 @@ func runHost(t *testing.T, host hostAdapter, profile string) time.Duration {
 		cancelIoEx.Call(uintptr(pipe), 0)
 		t.Fatalf("%s host did not report ready; output: %s", host.name, output.String())
 	}
-	duration := time.Since(started)
+	readyDuration := time.Since(started)
+	exitStarted := time.Now()
 
 	waitDone := make(chan error, 1)
 	go func() { waitDone <- cmd.Wait() }()
@@ -287,7 +319,7 @@ func runHost(t *testing.T, host hostAdapter, profile string) time.Duration {
 		_ = cmd.Process.Kill()
 		t.Fatalf("%s host did not exit after ready", host.name)
 	}
-	return duration
+	return hostRun{Ready: readyDuration, Exit: time.Since(exitStarted)}
 }
 
 func summarize(durations []time.Duration) profileResult {
