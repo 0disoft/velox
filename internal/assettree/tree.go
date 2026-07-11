@@ -93,6 +93,11 @@ func Scan(root string) (Tree, error) {
 	if err != nil {
 		return Tree{}, err
 	}
+	return Summarize(files), nil
+}
+
+func Summarize(files []File) Tree {
+	files = append([]File(nil), files...)
 	sort.Slice(files, func(i, j int) bool { return files[i].RelativePath < files[j].RelativePath })
 	hash := sha256.New()
 	var total int64
@@ -100,7 +105,7 @@ func Scan(root string) (Tree, error) {
 		fmt.Fprintf(hash, "%s\x00%d\x00%s\n", file.RelativePath, file.Size, file.SHA256)
 		total += file.Size
 	}
-	return Tree{Files: files, TotalBytes: total, Digest: hex.EncodeToString(hash.Sum(nil))}, nil
+	return Tree{Files: files, TotalBytes: total, Digest: hex.EncodeToString(hash.Sum(nil))}
 }
 
 func validateRelativePath(path string) error {

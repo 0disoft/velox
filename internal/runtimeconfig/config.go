@@ -58,21 +58,8 @@ func Load(path string) (Resolved, error) {
 		return Resolved{}, fmt.Errorf("read runtime config: %w", err)
 	}
 
-	decoder := json.NewDecoder(strings.NewReader(string(data)))
-	decoder.DisallowUnknownFields()
-
-	var cfg Config
-	if err := decoder.Decode(&cfg); err != nil {
-		return Resolved{}, fmt.Errorf("decode runtime config: %w", err)
-	}
-	var trailing any
-	if err := decoder.Decode(&trailing); err != io.EOF {
-		if err == nil {
-			return Resolved{}, errors.New("decode runtime config: multiple JSON values")
-		}
-		return Resolved{}, fmt.Errorf("decode runtime config trailing data: %w", err)
-	}
-	if err := validate(cfg); err != nil {
+	cfg, err := Parse(data)
+	if err != nil {
 		return Resolved{}, err
 	}
 
@@ -107,6 +94,27 @@ func Load(path string) (Resolved, error) {
 		AssetRoot:  assetRoot,
 		EntryPath:  entryPath,
 	}, nil
+}
+
+func Parse(data []byte) (Config, error) {
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.DisallowUnknownFields()
+
+	var cfg Config
+	if err := decoder.Decode(&cfg); err != nil {
+		return Config{}, fmt.Errorf("decode runtime config: %w", err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return Config{}, errors.New("decode runtime config: multiple JSON values")
+		}
+		return Config{}, fmt.Errorf("decode runtime config trailing data: %w", err)
+	}
+	if err := validate(cfg); err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
 }
 
 func validate(cfg Config) error {

@@ -132,6 +132,26 @@ func TestUsageFailureHonorsJSONAnywhere(t *testing.T) {
 	}
 }
 
+func TestInspectJSONContract(t *testing.T) {
+	root, config, host := cliFixture(t)
+	var buildOut, buildErr bytes.Buffer
+	if exitCode := Run([]string{"build", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{Stdout: &buildOut, Stderr: &buildErr, HostPath: host}); exitCode != 0 {
+		t.Fatalf("build exit=%d stderr=%q", exitCode, buildErr.String())
+	}
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"inspect", filepath.Join(root, "dist", "hello.zip"), "--json"}, Dependencies{Stdout: &stdout, Stderr: &stderr})
+	if exitCode != 0 || stderr.Len() != 0 {
+		t.Fatalf("inspect exit=%d stderr=%q", exitCode, stderr.String())
+	}
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if !envelope.OK || envelope.Command != "inspect" {
+		t.Fatalf("unexpected envelope: %+v", envelope)
+	}
+}
+
 func cliFixture(t *testing.T) (string, string, string) {
 	t.Helper()
 	root := t.TempDir()

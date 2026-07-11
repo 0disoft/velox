@@ -15,8 +15,8 @@
 
 ## Implementation Status
 
-`validate`, `build`, and `version` are implemented in the M1 vertical slice.
-`init`, `doctor`, `run`, and `inspect` remain specified but unimplemented. The
+`validate`, `build`, `inspect`, and `version` are implemented in the M1 vertical
+slice. `init`, `doctor`, and `run` remain specified but unimplemented. The
 release bundle must place the unchanged prebuilt `velox-host.exe` and its
 `velox-host.json` beside the CLI. The CLI verifies release, target, contract,
 size, and digest agreement; there is intentionally no public flag that
@@ -76,6 +76,10 @@ evidence rather than reproducible artifact bytes.
 Read an output directory or archive and report its Velox release, contract
 versions, target, permissions, application identity, file counts, byte counts,
 and digests without executing it.
+
+Inspection recomputes the host and asset-tree SHA-256 values and validates the
+runtime configuration against the build result. ZIP inspection rejects unsafe,
+duplicate, case-colliding, multi-root, unexpected, or over-limit entries.
 
 ### velox version
 

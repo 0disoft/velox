@@ -14,6 +14,7 @@ import (
 	"github.com/0disoft/velox/internal/buildinfo"
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/velox/internal/inspector"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
@@ -98,6 +99,8 @@ func Run(args []string, dependencies Dependencies) int {
 		return runBuild(args[1:], dependencies)
 	case "version":
 		return runVersion(args[1:], dependencies)
+	case "inspect":
+		return runInspect(args[1:], dependencies)
 	case "help", "--help", "-h":
 		printUsage(dependencies.Stdout)
 		return 0
@@ -223,6 +226,35 @@ func runVersion(args []string, dependencies Dependencies) int {
 	return 0
 }
 
+func runInspect(args []string, dependencies Dependencies) int {
+	flags := flag.NewFlagSet("inspect", flag.ContinueOnError)
+	flags.SetOutput(dependencies.Stderr)
+	jsonOutput := flags.Bool("json", false, "emit one JSON document")
+	quiet := flags.Bool("quiet", false, "suppress successful human output")
+	if jsonRequested(args) {
+		flags.SetOutput(io.Discard)
+	}
+	if err := flags.Parse(reorderInspectArgs(args)); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
+		return emitFailure(dependencies, "inspect", *jsonOutput || jsonRequested(args), 2, "USAGE_INVALID", "Command arguments are invalid.", err)
+	}
+	if flags.NArg() != 1 {
+		return emitFailure(dependencies, "inspect", *jsonOutput, 2, "USAGE_INVALID", "Inspect requires one artifact path.", errors.New("expected one artifact path"))
+	}
+	result, err := inspector.Inspect(flags.Arg(0))
+	if err != nil {
+		return emitFailure(dependencies, "inspect", *jsonOutput, 3, "ARTIFACT_INVALID", "Artifact validation failed.", err)
+	}
+	if *jsonOutput {
+		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "inspect", Result: result, Diagnostics: []Diagnostic{}})
+	} else if !*quiet {
+		fmt.Fprintf(dependencies.Stdout, "Valid %s artifact: %s %s (%d files, %d bytes)\n", result.Kind, result.App.ID, result.App.Version, result.PortableFiles, result.PortableBytes)
+	}
+	return 0
+}
+
 func createPlan(options commonOptions, hostPath string) (buildplan.Plan, error) {
 	if hostPath == "" {
 		executable, err := os.Executable()
@@ -246,7 +278,7 @@ func validateResult(plan buildplan.Plan) ValidateResult {
 		ReleaseVersion: snapshot.HostMetadata.ReleaseVersion, AppID: snapshot.Manifest.App.ID, AppVersion: snapshot.Manifest.App.Version, Target: snapshot.Target,
 		AssetFiles: len(snapshot.Assets.Files), AssetBytes: snapshot.Assets.TotalBytes,
 		AssetSHA256: snapshot.Assets.Digest, HostSHA256: snapshot.HostSHA256,
-		Permissions: append([]string(nil), snapshot.Manifest.Security.Permissions...),
+		Permissions: append([]string{}, snapshot.Manifest.Security.Permissions...),
 	}
 }
 
@@ -292,6 +324,8 @@ func category(code string) string {
 		return "configuration"
 	case strings.HasPrefix(code, "ASSET"):
 		return "asset"
+	case strings.HasPrefix(code, "ARTIFACT"):
+		return "artifact"
 	case strings.HasPrefix(code, "HOST"):
 		return "host"
 	case strings.HasPrefix(code, "PACKAGING"):
@@ -329,6 +363,21 @@ func jsonRequested(args []string) bool {
 	return false
 }
 
+func reorderInspectArgs(args []string) []string {
+	ordered := make([]string, 0, len(args))
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			ordered = append(ordered, arg)
+		}
+	}
+	for _, arg := range args {
+		if !strings.HasPrefix(arg, "-") {
+			ordered = append(ordered, arg)
+		}
+	}
+	return ordered
+}
+
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: velox <validate|build|version> [options]")
+	fmt.Fprintln(writer, "Usage: velox <validate|build|inspect|version> [options]")
 }

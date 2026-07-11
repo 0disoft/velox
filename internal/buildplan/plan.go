@@ -191,7 +191,7 @@ func (plan Plan) AssetPaths() []string {
 
 func (plan Plan) Snapshot() Snapshot {
 	resolved := plan.manifest
-	resolved.Security.Permissions = append([]string(nil), plan.manifest.Security.Permissions...)
+	resolved.Security.Permissions = append([]string{}, plan.manifest.Security.Permissions...)
 	assets := plan.assets
 	assets.Files = append([]assettree.File(nil), plan.assets.Files...)
 	return Snapshot{

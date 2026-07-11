@@ -90,8 +90,8 @@ work; sidecar metadata alone is not a trust anchor.
 - inspect
 - version
 
-`validate`, `build`, and `version` are currently implemented. The other listed
-commands remain MVP scope, not current capability.
+`validate`, `build`, `inspect`, and `version` are currently implemented. The
+other listed commands remain MVP scope, not current capability.
 
 The command contract is defined in docs/cli/command-contract.md.
 

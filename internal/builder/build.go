@@ -12,53 +12,12 @@ import (
 
 	"github.com/0disoft/velox/internal/archive"
 	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
-const ReportSchema = "velox.build-result/v1"
-
-type Report struct {
-	SchemaVersion  string             `json:"schemaVersion"`
-	ReleaseVersion string             `json:"releaseVersion"`
-	App            ReportApp          `json:"app"`
-	Target         string             `json:"target"`
-	Contracts      ReportContracts    `json:"contracts"`
-	Host           ReportFile         `json:"host"`
-	Assets         ReportAssets       `json:"assets"`
-	Permissions    []string           `json:"permissions"`
-	Outputs        ReportOutputCounts `json:"outputs"`
-}
-
-type ReportApp struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Version string `json:"version"`
-}
-
-type ReportContracts struct {
-	Manifest int `json:"manifest"`
-	Runtime  int `json:"runtime"`
-	Host     int `json:"host"`
-}
-
-type ReportFile struct {
-	File   string `json:"file"`
-	Bytes  int64  `json:"bytes"`
-	SHA256 string `json:"sha256"`
-}
-
-type ReportAssets struct {
-	Files  int    `json:"files"`
-	Bytes  int64  `json:"bytes"`
-	SHA256 string `json:"sha256"`
-}
-
-type ReportOutputCounts struct {
-	PortableFiles int `json:"portableFiles"`
-}
-
 type Result struct {
-	Report        Report
+	Report        buildreport.Report
 	DirectoryPath string
 	ArchivePath   string
 	ArchiveSize   int64
@@ -105,21 +64,21 @@ func Build(plan buildplan.Plan) (Result, error) {
 		},
 		Assets:   runtimeconfig.Assets{Root: "web", Entry: filepath.ToSlash(snapshot.Manifest.Assets.Entry)},
 		Window:   runtimeconfig.Window{Width: snapshot.Manifest.Window.Width, Height: snapshot.Manifest.Window.Height},
-		Security: runtimeconfig.Security{Permissions: append([]string(nil), snapshot.Manifest.Security.Permissions...)},
+		Security: runtimeconfig.Security{Permissions: append([]string{}, snapshot.Manifest.Security.Permissions...)},
 	}
 	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue); err != nil {
 		return Result{}, err
 	}
-	report := Report{
-		SchemaVersion:  ReportSchema,
+	report := buildreport.Report{
+		SchemaVersion:  buildreport.SchemaVersion,
 		ReleaseVersion: snapshot.HostMetadata.ReleaseVersion,
-		App:            ReportApp{ID: snapshot.Manifest.App.ID, Name: snapshot.Manifest.App.Name, Version: snapshot.Manifest.App.Version},
+		App:            buildreport.App{ID: snapshot.Manifest.App.ID, Name: snapshot.Manifest.App.Name, Version: snapshot.Manifest.App.Version},
 		Target:         snapshot.Target,
-		Contracts:      ReportContracts{Manifest: 1, Runtime: runtimeconfig.Version, Host: snapshot.HostMetadata.Contracts.Host},
-		Host:           ReportFile{File: hostName, Bytes: snapshot.HostSize, SHA256: snapshot.HostSHA256},
-		Assets:         ReportAssets{Files: len(snapshot.Assets.Files), Bytes: snapshot.Assets.TotalBytes, SHA256: snapshot.Assets.Digest},
-		Permissions:    append([]string(nil), snapshot.Manifest.Security.Permissions...),
-		Outputs:        ReportOutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
+		Contracts:      buildreport.Contracts{Manifest: 1, Runtime: runtimeconfig.Version, Host: snapshot.HostMetadata.Contracts.Host},
+		Host:           buildreport.File{File: hostName, Bytes: snapshot.HostSize, SHA256: snapshot.HostSHA256},
+		Assets:         buildreport.Assets{Files: len(snapshot.Assets.Files), Bytes: snapshot.Assets.TotalBytes, SHA256: snapshot.Assets.Digest},
+		Permissions:    append([]string{}, snapshot.Manifest.Security.Permissions...),
+		Outputs:        buildreport.OutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
 	}
 	if err := writeJSON(filepath.Join(stageDirectory, "build-result.json"), report); err != nil {
 		return Result{}, err
