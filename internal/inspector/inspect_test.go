@@ -22,7 +22,7 @@ func TestInspectValidatesDirectoryAndZIP(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Inspect(%s): %v", test.kind, err)
 		}
-		if result.Kind != test.kind || result.ReleaseVersion != "0.2.0-dev" || result.App.ID != "com.example.inspect" || result.PortableFiles != 4 {
+		if result.Kind != test.kind || result.ReleaseVersion != "0.3.0-dev" || result.App.ID != "com.example.inspect" || result.PortableFiles != 4 {
 			t.Fatalf("unexpected %s result: %+v", test.kind, result)
 		}
 	}
@@ -72,7 +72,7 @@ func buildFixture(t *testing.T) builder.Result {
 	hostPath := filepath.Join(root, "release", "velox-host.exe")
 	writeInspectFile(t, hostPath, host)
 	digest := sha256.Sum256(host)
-	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.2.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
+	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.3.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
 	writeInspectFile(t, filepath.Join(filepath.Dir(hostPath), "velox-host.json"), []byte(metadata))
 	writeInspectFile(t, filepath.Join(root, "web", "index.html"), []byte("<title>Inspect</title>"))
 	manifest := `{"schemaVersion":1,"app":{"id":"com.example.inspect","name":"Inspect","version":"1.0.0"}}`

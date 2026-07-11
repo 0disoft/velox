@@ -142,6 +142,25 @@ excluded work, zero warmups, serial concurrency, fixture digest, output state,
 and uncontrolled OS file-cache caveat. Local samples are directional evidence;
 only isolated hosted jobs may support an end-to-end cold-build claim.
 
+## Consumer End-to-End Harness
+
+`scripts/measure-consumer-e2e.ps1` consumes an already-built release ZIP. Its
+hosted timing boundary starts after checkout and immediately before GitHub
+artifact acquisition. It includes artifact transfer, release verification and
+extraction, project initialization and validation, one build, and final ZIP
+inspection. Maintainer compilation runs in a separate producer job.
+
+Successful and failed observations use `velox.consumer-e2e/v1`. A failure
+records its phase and returns non-zero without copying raw exception text or
+local paths into the result. Local invocations are labeled
+`local-contract-smoke`; only the isolated `windows-2025` consumer jobs are
+`hosted-runner-evidence`.
+
+The end-to-end clock uses UTC wall time because the boundary crosses GitHub
+Actions steps and processes. The nested build-command duration still uses a
+monotonic `Stopwatch`. Results must therefore retain both clocks and must not
+compare local smoke duration with hosted evidence.
+
 ## Regression Policy
 
 Before a baseline exists, changes must report that performance is unmeasured.

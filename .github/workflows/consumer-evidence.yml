@@ -1,0 +1,132 @@
+name: Consumer evidence
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/consumer-evidence.yml"
+      - "cmd/**"
+      - "internal/**"
+      - "third_party/**"
+      - "schema/**"
+      - "scripts/measure-consumer-e2e.ps1"
+      - "go.mod"
+      - "go.sum"
+      - "THIRD_PARTY_NOTICES.md"
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: consumer-evidence-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  release:
+    name: Build unsigned release
+    runs-on: windows-2025
+    timeout-minutes: 10
+    outputs:
+      release_sha256: ${{ steps.release.outputs.release_sha256 }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+          check-latest: false
+          cache: false
+
+      - name: Record toolchain
+        shell: pwsh
+        run: |
+          go version
+          "runner_image=$env:ImageOS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "runner_image_version=$env:ImageVersion" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-test'
+          go test -count=1 ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build release
+        id: release
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-release'
+          $inputRoot = Join-Path $env:RUNNER_TEMP 'release-input'
+          New-Item -ItemType Directory -Path $inputRoot -Force | Out-Null
+          go build -trimpath -ldflags='-s -w' -o (Join-Path $inputRoot 'velox.exe') ./cmd/velox
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go build -trimpath -ldflags='-s -w' -o (Join-Path $inputRoot 'velox-host.exe') ./cmd/velox-host
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $raw = go run ./cmd/velox-release --cli (Join-Path $inputRoot 'velox.exe') --host (Join-Path $inputRoot 'velox-host.exe') --source-root $env:GITHUB_WORKSPACE --out (Join-Path $env:GITHUB_WORKSPACE 'dist/release') --json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = $raw | ConvertFrom-Json
+          "release_sha256=$($result.archiveSha256)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: velox-release-${{ github.sha }}
+          path: dist/release/velox-windows-x64.zip
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
+  consumer:
+    name: Consumer sample ${{ matrix.sample }}
+    needs: release
+    runs-on: windows-2025
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: ${{ fromJSON(github.event_name == 'schedule' && '[0,1,2,3,4,5,6,7,8,9]' || '[0]') }}
+    steps:
+      - name: Check out measurement contract
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Start end-to-end clock
+        shell: pwsh
+        run: |
+          "VELOX_E2E_STARTED_TICKS=$([DateTime]::UtcNow.Ticks)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Download release artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: velox-release-${{ github.sha }}
+          path: .ci/release
+
+      - name: Measure consumer path
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & scripts/measure-consumer-e2e.ps1 `
+            -ReleaseArchive '.ci/release/velox-windows-x64.zip' `
+            -WorkRoot ".ci/work/$($env:GITHUB_RUN_ID)-${{ matrix.sample }}" `
+            -ResultPath ".ci/results/consumer-e2e-${{ matrix.sample }}.json" `
+            -StartedAtUtcTicks ([long] $env:VELOX_E2E_STARTED_TICKS) `
+            -AcquisitionMode 'github-actions-artifact' `
+            -ExpectedReleaseSha256 '${{ needs.release.outputs.release_sha256 }}'
+
+      - name: Upload raw result
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: consumer-e2e-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.sample }}
+          path: .ci/results/consumer-e2e-${{ matrix.sample }}.json
+          retention-days: 7
+          if-no-files-found: warn

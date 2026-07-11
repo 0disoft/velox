@@ -74,7 +74,7 @@ func TestCreateRejectsRedirectedOutputRoot(t *testing.T) {
 func writePlanHostMetadata(t *testing.T, root, host string) {
 	t.Helper()
 	digest := sha256.Sum256([]byte(host))
-	body := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.2.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
+	body := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.3.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
 	writePlanFile(t, filepath.Join(root, "velox-host.json"), body)
 }
 

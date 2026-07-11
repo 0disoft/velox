@@ -1,30 +1,37 @@
 # CI
 
-- Status: Local harness implemented; hosted workflow pending
+- Status: Consumer evidence workflow implemented; first hosted run pending
 - Owner: Project maintainer
 
 ## Current State
 
-No repository-owned GitHub Actions workflow exists yet. The parent workspace
-command contract can build a release bundle and run the local consumer build
-harness, but hosted-runner evidence and artifact retention remain pending.
+`.github/workflows/consumer-evidence.yml` builds one unsigned Windows x64
+release artifact, then passes that exact ZIP to isolated consumer jobs. Pull
+requests and manual dispatches run one contract sample. The weekly schedule
+runs ten independent consumer jobs.
 
-## Planned Pull-Request CI
+The consumer clock starts after checkout and before artifact download. It ends
+after release extraction, dependency-free project initialization, build, and
+portable ZIP inspection. Maintainer compilation happens in a different job and
+is not included in the consumer path.
+
+## Pull-Request CI
 
 - Documentation and contract consistency.
 - Go formatting, static analysis, unit tests, and contract tests after source
   exists.
 - Windows x64 host build.
 - Dependency-free hello build and startup smoke.
-- A bounded Velox-only performance smoke sample.
+- One bounded Velox-only end-to-end contract sample.
 - Artifact and generated-output drift checks.
 
 The full cross-framework benchmark matrix does not run on every pull request.
 
-## Planned Scheduled and Release CI
+## Scheduled and Release CI
 
 - Reproducibility across clean workspaces.
-- Fresh and warm startup measurements.
+- Ten isolated consumer end-to-end samples.
+- Fresh and warm startup measurements remain pending.
 - Zero-cache and recommended-cache benchmark suites.
 - Wails, Neutralino, and Tauri comparison adapters.
 - Software bill of materials and release checksum checks.
@@ -59,9 +66,14 @@ unbounded storage.
 
 ## Artifacts
 
-Pull requests retain only bounded diagnostic and smoke artifacts. Raw benchmark
-retention and release artifact retention remain UNDECIDED until workflows are
-implemented.
+The intermediate unsigned release artifact is retained for one day. Raw
+consumer result JSON is retained for seven days. Failed measurement jobs upload
+their structured failure result when the script reached result serialization.
+
+The workflow pins checkout and artifact actions to immutable commit SHAs. It
+also pins `setup-go`, reads the Go version from `go.mod`, and disables its
+built-in cache. It does not use `actions/cache`. The release ZIP is uploaded
+without recompression because it is already compressed.
 
 Compiler caches, package-manager caches, and workspaces are not uploaded as
 ordinary artifacts.

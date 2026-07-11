@@ -48,6 +48,14 @@ The parent workspace command contract currently provides these bounded intents:
   build-duration, cache, intermediate-file, and compiler/package-manager
   child-process gates. It is expected to fail when Windows process-start
   tracing is unavailable.
+- `velox_consumer_e2e_smoke` validates release extraction, initialization,
+  build, inspection, success/failure result serialization, and the end-to-end
+  JSON Schema using a local release ZIP. Its result is not hosted cold-build
+  evidence.
+- `velox_consumer_e2e_failure_smoke` injects a release-checksum mismatch and
+  requires a schema-valid `release-verification` failure result.
+- `velox_workflow_validate` parses the repository-owned GitHub Actions workflow
+  with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
 - `velox_cpp_build` maps to the C++23 reference build.
 - `velox_cpp_startup_smoke` maps to the C++23 startup smoke.
