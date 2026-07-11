@@ -52,7 +52,7 @@ type navigationStartingEventHandlerVtbl struct {
 }
 
 type navigationStartingEventHandler struct {
-	vtbl *navigationStartingEventHandlerVtbl
+	vtbl  *navigationStartingEventHandlerVtbl
 	owner *Chromium
 	frame bool
 }
