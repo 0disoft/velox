@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M0 feasibility spike
+- Status: Go runtime feasibility proven; packaging MVP not implemented
 - Scope: general
 - Repository type: cli-tool
 
@@ -9,10 +9,11 @@ packager. It is designed to turn static HTML, CSS, and JavaScript into a
 portable WebView2 application without compiling application-specific native
 code.
 
-The repository now contains pure-Go and direct C++23 WebView2 host spikes, a
-strict external runtime configuration parser, a dependency-free hello fixture,
-and a named-pipe startup benchmark harness. These are comparison evidence, not
-a secure alpha runtime; see `DEVELOPMENT.md` for the current limitations.
+The repository now contains a policy-enforcing pure-Go WebView2 host, a direct
+C++23 benchmark reference, a strict external runtime configuration parser, a
+dependency-free hello fixture, and a named-pipe startup benchmark harness. It
+is not an alpha distribution; packaging commands and the broader IPC contract
+are still design work.
 
 ## Priorities
 

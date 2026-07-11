@@ -1,6 +1,6 @@
 # Development
 
-- Status: M0 spike active
+- Status: Go runtime boundary active
 - Owner: Project maintainer
 
 ## Current State
@@ -85,12 +85,10 @@ Future executable checks use the stable names in VALIDATION.md:
 The parent mustflow contract currently implements format, lint, test, build,
 and startup smoke. Other checks remain skipped rather than invented.
 
-## Current M0 Limitation
+## Current Runtime Limitation
 
-The selected Go binding proves that a CGo-free WebView2 host can build and
-reach the two-frame ready marker. It does not expose enough policy surface to
-implement the production security contract without a maintained patch or a
-lower-level host implementation:
+The selected Go host proves that a CGo-free WebView2 runtime can build, enforce
+the first native security boundary, and reach the two-frame ready marker:
 
 - The host now maps assets to an application-specific virtual HTTPS origin.
 - The fork denies all WebView2 permission requests by default.

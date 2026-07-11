@@ -132,27 +132,32 @@ Window creation alone is never the ready event.
 
 ## Current Evidence
 
-The first local M0 comparison used ten fresh runs and ten warm runs after five
-warmups per host. It measured process creation through the shared fixture's
-DOMContentLoaded-plus-two-animation-frame marker.
+The latest local comparison used ten fresh runs and ten immediate same-profile
+runs after five warmups per host. It measured process creation through the
+shared fixture's DOMContentLoaded-plus-two-animation-frame marker after the Go
+security adapter was enabled.
 
 | Host | Distributed native files | Fresh p50 | Fresh p95 | Immediate warm p50 | Immediate warm p95 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Go M0 | 2,863,616 bytes | 965.79 ms | 1,208.99 ms | 982.38 ms | 1,193.03 ms |
-| C++23 reference | 175,968 bytes | 925.82 ms | 1,001.82 ms | 7,057.81 ms | 7,140.33 ms |
+| Go runtime | 3,126,784 bytes | 1,048.50 ms | 1,209.65 ms | 7,076.14 ms | 7,410.56 ms |
+| C++23 reference | 175,968 bytes | 944.50 ms | 1,040.39 ms | 7,004.62 ms | 7,116.60 ms |
 
 The C++23 size includes the 11,776-byte executable and 164,192-byte
 `WebView2Loader.dll`. The Go executable embeds its loader. These are local,
 directional results, not a release baseline: runner and WebView2 metadata are
-not yet captured, run order is fixed, and the C++ immediate-warm delay requires
-lifecycle diagnosis. No startup winner is selected from this run.
+not yet captured and run order is fixed. Both implementations now show the
+same approximately seven-second immediate-relaunch delay, so the delay belongs
+to WebView2 browser-process teardown rather than the host language. Fresh Go
+and C++ results differ by about 104 ms at p50; this is not a sufficient basis
+for a startup marketing claim.
 
 The Go lifecycle smoke now measures a first launch, an immediate second launch
 using the same profile, ready-to-host-exit time, and final profile release. The
-first run after explicit controller and COM cleanup showed an immediate relaunch
-near 7.1 seconds. WebView2's pinned SDK contract states that `Close` is
+repeated run after explicit controller and COM cleanup showed an immediate
+relaunch near 7.1 seconds. WebView2's pinned SDK contract states that `Close` is
 synchronous while user-data-folder release completes only after the shared
 browser process exits. This is a recorded lifecycle regression, not a startup
 outlier. The provisional smoke ceiling is 10 seconds until the architecture
 either avoids browser-process teardown on ordinary restart or accepts the delay
-as a platform limitation.
+as a platform limitation. Startup remains a guardrail metric, not a product
+advantage, until cross-framework evidence exceeds the documented noise gate.
