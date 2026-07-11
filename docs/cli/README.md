@@ -49,8 +49,10 @@ docs/cli/output-and-exit-codes.md.
 
 ## Compatibility
 
-The first CLI artifact and host target Windows x64. The exact minimum Windows
-and WebView2 versions remain UNDECIDED until M0.
+The first CLI artifact and host target Windows x64. Doctor reports the installed
+WebView2 version through the bundled loader. The exact minimum Windows and
+WebView2 versions remain UNDECIDED until a compatibility support policy is
+accepted.
 
 Application authors do not install Go or another compiler to use a released
 Velox build.

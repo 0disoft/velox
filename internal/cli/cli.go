@@ -8,22 +8,28 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/0disoft/velox/internal/builder"
 	"github.com/0disoft/velox/internal/buildinfo"
 	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/velox/internal/doctor"
 	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/initializer"
 	"github.com/0disoft/velox/internal/inspector"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/webview2"
 )
 
 type Dependencies struct {
-	Stdout   io.Writer
-	Stderr   io.Writer
-	HostPath string
+	Stdout               io.Writer
+	Stderr               io.Writer
+	HostPath             string
+	GOOS                 string
+	GOARCH               string
+	WebView2VersionProbe func() (string, error)
 }
 
 type Envelope struct {
@@ -104,6 +110,8 @@ func Run(args []string, dependencies Dependencies) int {
 		return runInspect(args[1:], dependencies)
 	case "init":
 		return runInit(args[1:], dependencies)
+	case "doctor":
+		return runDoctor(args[1:], dependencies)
 	case "help", "--help", "-h":
 		printUsage(dependencies.Stdout)
 		return 0
@@ -167,6 +175,65 @@ func newFlagSet(command string, stderr io.Writer) (*flag.FlagSet, *commonOptions
 	flags.BoolVar(&options.quiet, "quiet", false, "suppress successful human output")
 	flags.BoolVar(&options.verbose, "verbose", false, "emit bounded diagnostic detail")
 	return flags, options
+}
+
+func runDoctor(args []string, dependencies Dependencies) int {
+	flags, options := newFlagSet("doctor", dependencies.Stderr)
+	if jsonRequested(args) {
+		flags.SetOutput(io.Discard)
+	}
+	if err := flags.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
+		return emitFailure(dependencies, "doctor", options.json || jsonRequested(args), 2, "USAGE_INVALID", "Command arguments are invalid.", err)
+	}
+	if flags.NArg() != 0 {
+		return emitFailure(dependencies, "doctor", options.json, 2, "USAGE_INVALID", "Doctor does not accept positional arguments.", errors.New("unexpected positional arguments"))
+	}
+
+	goos, goarch := dependencies.GOOS, dependencies.GOARCH
+	if goos == "" {
+		goos = runtime.GOOS
+	}
+	if goarch == "" {
+		goarch = runtime.GOARCH
+	}
+	probe := dependencies.WebView2VersionProbe
+	if probe == nil {
+		probe = webview2.InstalledVersion
+	}
+	version, probeErr := probe()
+	plan, planErr := createPlan(*options, dependencies.HostPath)
+	result, failure := doctor.Evaluate(doctor.Evidence{
+		GOOS: goos, GOARCH: goarch, WebView2Version: version,
+		WebView2ProbeError: probeErr, Plan: plan, PlanError: planErr,
+	})
+	if failure != nil {
+		if options.json {
+			emitJSON(dependencies.Stdout, Envelope{
+				SchemaVersion: 1, OK: false, Command: "doctor", Result: result,
+				Error:       &ErrorResult{Code: failure.Code, Message: failure.Message},
+				Diagnostics: []Diagnostic{{Code: failure.Code, Severity: "error", Category: category(failure.Code), Message: failure.Message}},
+			})
+		} else {
+			printDoctor(dependencies.Stdout, result)
+			fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", failure.Code, failure.Message)
+		}
+		return failure.ExitCode
+	}
+	if options.json {
+		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "doctor", Result: result, Diagnostics: []Diagnostic{}})
+	} else if !options.quiet {
+		printDoctor(dependencies.Stdout, result)
+	}
+	return 0
+}
+
+func printDoctor(writer io.Writer, result doctor.Result) {
+	for _, check := range result.Checks {
+		fmt.Fprintf(writer, "%-7s %-9s %s\n", check.Status, check.Name, check.Message)
+	}
 }
 
 func runValidate(args []string, dependencies Dependencies) int {
@@ -364,6 +431,8 @@ func category(code string) string {
 		return "artifact"
 	case strings.HasPrefix(code, "INIT"):
 		return "filesystem"
+	case strings.HasPrefix(code, "RUNTIME"):
+		return "runtime"
 	case strings.HasPrefix(code, "HOST"):
 		return "host"
 	case strings.HasPrefix(code, "PACKAGING"):
@@ -417,5 +486,5 @@ func reorderPositionalArgs(args []string) []string {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: velox <init|validate|build|inspect|version> [options]")
+	fmt.Fprintln(writer, "Usage: velox <init|validate|doctor|build|inspect|version> [options]")
 }

@@ -34,7 +34,8 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_release_bundle` builds the Go CLI and host and assembles the unsigned,
   deterministic Windows x64 release bundle.
 - `velox_consumer_build_smoke` invokes only the assembled release CLI, creates
-  and validates a dependency-free starter, builds it twice, checks
+  a dependency-free starter, diagnoses its platform, WebView2, project, and
+  bundled-host compatibility, builds it twice, checks
   byte-identical archive hashes, and inspects both the portable directory and
   ZIP.
 - `velox_startup_smoke` maps to smoke.

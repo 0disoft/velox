@@ -15,8 +15,8 @@
 
 ## Implementation Status
 
-`init`, `validate`, `build`, `inspect`, and `version` are implemented in the M1
-vertical slice. `doctor` and `run` remain specified but unimplemented. The
+`init`, `validate`, `doctor`, `build`, `inspect`, and `version` are implemented
+in the M1 vertical slice. `run` remains specified but unimplemented. The
 release bundle must place the unchanged prebuilt `velox-host.exe` and its
 `velox-host.json` beside the CLI. The CLI verifies release, target, contract,
 size, and digest agreement; there is intentionally no public flag that
@@ -47,6 +47,13 @@ output.
 Report local prerequisites and compatibility, including Windows architecture,
 WebView2 Runtime availability, project configuration, and bundled host
 compatibility. Doctor is read-only.
+
+- Query the installed runtime through the same bundled WebView2 loader used by
+  the host instead of inferring availability from registry paths.
+- Report platform, runtime, project, and host checks in stable order.
+- Keep the complete check result in JSON on failure while returning the
+  corresponding non-zero prerequisite, project, or host exit code.
+- Report the installed WebView2 version without enforcing an undecided minimum.
 
 ### velox run
 
@@ -180,7 +187,9 @@ Stable diagnostic codes provide detail within these broad process exit codes.
 - CLI release artifacts: Windows x64 first.
 - Packaged host: Windows x64 first.
 - Web runtime: Evergreen WebView2.
-- Minimum Windows and WebView2 versions: UNDECIDED pending M0.
+- Minimum Windows and WebView2 versions: UNDECIDED pending a compatibility
+  support policy; doctor currently reports but does not gate the detected
+  WebView2 version.
 - Maintainer implementation language: Go.
 - Consumer machine compiler and Node.js requirement: none.
 

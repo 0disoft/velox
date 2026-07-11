@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -151,6 +152,44 @@ func TestInitJSONContract(t *testing.T) {
 	}
 }
 
+func TestDoctorJSONContract(t *testing.T) {
+	root, config, host := cliFixture(t)
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"doctor", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+		GOOS: "windows", GOARCH: "amd64", WebView2VersionProbe: func() (string, error) { return "123.0.0.0", nil },
+	})
+	if exitCode != 0 || stderr.Len() != 0 {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if !envelope.OK || envelope.Command != "doctor" || envelope.Diagnostics == nil {
+		t.Fatalf("unexpected envelope: %+v", envelope)
+	}
+}
+
+func TestDoctorFailureIncludesChecksWithoutExposingProbeError(t *testing.T) {
+	root, config, host := cliFixture(t)
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"doctor", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+		GOOS: "windows", GOARCH: "amd64", WebView2VersionProbe: func() (string, error) { return "", errors.New(`private C:\runtime\probe failed`) },
+	})
+	if exitCode != 5 || stderr.Len() != 0 || bytes.Contains(stdout.Bytes(), []byte(`C:\runtime`)) {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if envelope.OK || envelope.Error == nil || envelope.Error.Code != "RUNTIME_WEBVIEW2_PROBE_FAILED" || envelope.Result == nil {
+		t.Fatalf("unexpected envelope: %+v", envelope)
+	}
+}
+
 func TestInspectJSONContract(t *testing.T) {
 	root, config, host := cliFixture(t)
 	var buildOut, buildErr bytes.Buffer
@@ -178,7 +217,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.1.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.2.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host
