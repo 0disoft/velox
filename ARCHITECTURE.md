@@ -98,7 +98,9 @@ product validation and consumer packaging do not require Pixi.
 ## Evidence Boundary
 
 This document distinguishes implemented slices from intended architecture. The
-Go host security boundary and the M1 validate/build path are implemented and
-covered by local tests. Host release metadata, end-to-end consumer release
-bundling, remaining CLI commands, full IPC, and pinned-runner performance gates
-remain incomplete.
+Go host security boundary, seven-command M1 CLI, host release metadata,
+deterministic consumer bundle, and local end-to-end evidence contracts are
+implemented and covered by local tests. The GitHub Actions consumer workflow is
+defined but has no hosted run evidence until the branch is pushed. Public
+cross-framework benchmark fixtures, signed distribution, and provenance remain
+incomplete.

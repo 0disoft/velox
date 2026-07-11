@@ -11,11 +11,11 @@ code.
 
 The repository now contains a policy-enforcing pure-Go WebView2 host, manifest
 validation, an immutable build plan, atomic portable-directory assembly, a
-deterministic ZIP writer, `validate` and `build` CLI commands, an unsigned
-deterministic Windows x64 release bundle, a direct C++23
-benchmark reference, and startup benchmark fixtures. It is not an alpha
-distribution; public release provenance, the broader IPC contract, and the
-remaining CLI commands are still incomplete.
+deterministic ZIP writer, all seven M1 CLI commands, an unsigned deterministic
+Windows x64 release bundle, a direct C++23 benchmark reference, startup
+fixtures, and a zero-cache consumer evidence workflow. It is not an alpha
+distribution; public release provenance, hosted benchmark results, and the
+cross-framework comparison remain incomplete.
 
 ## Priorities
 
@@ -77,8 +77,13 @@ building. Consumer builds never invoke Go, C++, Node.js, Pixi, or a package
 manager.
 
 ```powershell
+velox init .\hello --json
 velox validate --config .\velox.json --json
+velox doctor --config .\velox.json --out .\dist --json
+velox run --config .\velox.json --out .\.velox-run --json
 velox build --config .\velox.json --out .\dist --json
+velox inspect .\dist\hello.zip --json
+velox version --json
 ```
 
 `build` produces `dist/<app>/`, `dist/<app>.zip`, and a deterministic
@@ -103,6 +108,9 @@ portable directories and ZIPs
 without executing them. The parent workspace exposes bounded
 maintainer-only release-bundle, compiler-free consumer smoke, host smoke, and
 benchmark intents documented in `DEVELOPMENT.md` and `VALIDATION.md`.
+The repository-owned consumer workflow keeps maintainer compilation in a
+producer job, measures isolated consumer jobs from artifact acquisition through
+portable ZIP inspection, and publishes raw and aggregated result contracts.
 
 ## Repository Workflow
 
