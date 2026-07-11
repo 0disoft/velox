@@ -63,6 +63,9 @@ $durations = [double[]] @($successes | ForEach-Object { [double] $_.durationMs }
 $hostedOnly = $rawResults.Count -gt 0 -and @($rawResults | Where-Object evidenceLevel -ne 'hosted-runner-evidence').Count -eq 0
 $releaseDigests = @($successes | ForEach-Object { [string] $_.acquisition.archiveSha256 } | Sort-Object -Unique)
 $releaseDigest = if ($releaseDigests.Count -eq 1) { $releaseDigests[0] } else { $null }
+$processPassCount = @($successes | Where-Object { $_.build.processTrace.status -eq 'pass' }).Count
+$processFailCount = @($successes | Where-Object { $_.build.processTrace.status -eq 'fail' }).Count
+$processUnverifiedCount = @($successes | Where-Object { $_.build.processTrace.status -eq 'unverified' }).Count
 $statistics = if ($durations.Count -gt 0) {
     [ordered]@{
         minMs = [Math]::Round(($durations | Measure-Object -Minimum).Minimum, 3)
@@ -83,6 +86,9 @@ $result = [ordered]@{
     successCount = $successes.Count
     failureCount = $failures.Count
     missingCount = [Math]::Max(0, $ExpectedSamples - $rawResults.Count)
+    processEvidencePassCount = $processPassCount
+    processEvidenceFailCount = $processFailCount
+    processEvidenceUnverifiedCount = $processUnverifiedCount
     releaseArchiveSha256 = $releaseDigest
     statistics = $statistics
     samples = @($rawResults | Sort-Object sampleId | ForEach-Object {
@@ -91,6 +97,7 @@ $result = [ordered]@{
             outcome = [string] $_.outcome
             durationMs = [double] $_.durationMs
             failurePhase = if ($_.error) { [string] $_.error.phase } else { $null }
+            processEvidenceStatus = if ($_.build) { [string] $_.build.processTrace.status } else { $null }
         }
     })
 }
@@ -104,6 +111,6 @@ if (-not ($json | Test-Json -SchemaFile $SummarySchemaPath -ErrorAction Stop)) {
 [System.IO.File]::WriteAllText($ResultPath, $json + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
 $json
 
-if ($result.observedSamples -ne $ExpectedSamples -or $result.failureCount -gt 0 -or $releaseDigests.Count -ne 1) {
+if ($result.observedSamples -ne $ExpectedSamples -or $result.failureCount -gt 0 -or $releaseDigests.Count -ne 1 -or ($hostedOnly -and ($processFailCount -gt 0 -or $processUnverifiedCount -gt 0))) {
     throw 'Consumer end-to-end evidence is incomplete or inconsistent.'
 }

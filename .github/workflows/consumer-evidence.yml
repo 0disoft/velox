@@ -10,6 +10,7 @@ on:
       - "schema/**"
       - "scripts/measure-consumer-e2e.ps1"
       - "scripts/summarize-consumer-e2e.ps1"
+      - "scripts/lib/process-trace.ps1"
       - "go.mod"
       - "go.sum"
       - "THIRD_PARTY_NOTICES.md"

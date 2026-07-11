@@ -49,14 +49,25 @@
     "build": {
       "type": ["object", "null"],
       "additionalProperties": false,
-      "required": ["durationMs", "archiveBytes", "archiveSha256", "portableFiles", "portableBytes", "survivingIntermediateFiles"],
+      "required": ["durationMs", "archiveBytes", "archiveSha256", "portableFiles", "portableBytes", "survivingIntermediateFiles", "processTrace"],
       "properties": {
         "durationMs": { "type": "number", "minimum": 0 },
         "archiveBytes": { "type": "integer", "minimum": 1 },
         "archiveSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "portableFiles": { "type": "integer", "minimum": 1 },
         "portableBytes": { "type": "integer", "minimum": 1 },
-        "survivingIntermediateFiles": { "type": "integer", "minimum": 0 }
+        "survivingIntermediateFiles": { "type": "integer", "minimum": 0 },
+        "processTrace": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "rootProcessCount", "descendants", "forbiddenDescendants"],
+          "properties": {
+            "status": { "enum": ["pass", "fail", "unverified"] },
+            "rootProcessCount": { "type": "integer", "minimum": 0 },
+            "descendants": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "forbiddenDescendants": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        }
       }
     },
     "environment": {
@@ -140,6 +151,15 @@
           "measurement": {
             "properties": {
               "osFileCacheState": { "const": "fresh-hosted-runner-when-executed-in-an-isolated-job" }
+            }
+          },
+          "environment": {
+            "properties": {
+              "runnerImage": { "type": "string", "minLength": 1 },
+              "runnerImageVersion": { "type": "string", "minLength": 1 },
+              "githubRunId": { "type": "string", "minLength": 1 },
+              "githubRunAttempt": { "type": "string", "minLength": 1 },
+              "gitCommit": { "type": "string", "pattern": "^[0-9a-fA-F]{40}$" }
             }
           }
         }

@@ -16,6 +16,11 @@ counts, and calculates minimum, p50, p95, and maximum over successful samples.
 The summary job fails when a sample is missing, failed, or points at a different
 release digest.
 
+Each consumer build traces child-process starts. Hosted samples are rejected
+unless the measured CLI process is identified and no compiler or package
+manager descendant appears. A denied WMI/CIM subscription is `unverified`, not
+a pass, and makes hosted evidence fail.
+
 The consumer clock starts after checkout and before artifact download. It ends
 after release extraction, dependency-free project initialization, build, and
 portable ZIP inspection. Maintainer compilation happens in a different job and

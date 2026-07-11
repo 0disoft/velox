@@ -168,6 +168,13 @@ digest; and calculates nearest-rank p50 and p95 only from successful samples.
 The summary still records failed samples and returns non-zero when evidence is
 incomplete.
 
+The end-to-end harness subscribes to Windows process-start events around the
+consumer build. It records process names only, never arguments or environment
+values. Hosted evidence fails when tracing is unavailable, when the measured
+CLI root process cannot be identified exactly once, or when a compiler or
+package-manager descendant is observed. Local permission failures remain
+`unverified` and cannot support a public compiler-free claim.
+
 ## Regression Policy
 
 Before a baseline exists, changes must report that performance is unmeasured.

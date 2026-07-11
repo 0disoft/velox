@@ -24,6 +24,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'lib/process-trace.ps1')
 
 function Write-Result {
     param($Value)
@@ -95,12 +96,16 @@ $osFileCacheState = if ($AcquisitionMode -eq 'github-actions-artifact') {
     'uncontrolled-local-state'
 }
 $phase = 'input-validation'
+$hostedGateFailed = $false
 $sessionRoot = Join-Path $WorkRoot ('run-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ') + '-' + [guid]::NewGuid().ToString('N'))
 $stderrPath = Join-Path $sessionRoot 'velox.stderr.txt'
 
 try {
     if ($startedAt -gt [DateTime]::UtcNow) {
         throw 'Measurement start is in the future.'
+    }
+    if ($AcquisitionMode -eq 'github-actions-artifact' -and $env:GITHUB_ACTIONS -ne 'true') {
+        throw 'GitHub Actions acquisition mode requires a GitHub Actions runner.'
     }
     if (-not (Test-Path -LiteralPath $ReleaseArchive -PathType Leaf)) {
         throw 'Release archive is missing.'
@@ -141,9 +146,16 @@ try {
 
     $phase = 'consumer-build'
     $outputRoot = Join-Path $sessionRoot 'output'
+    $processTraceHandle = Start-VeloxProcessTrace
     $buildTimer = [System.Diagnostics.Stopwatch]::StartNew()
-    $built = Invoke-VeloxJson -Executable $cli -Arguments @('build', '--config', $configPath, '--out', $outputRoot, '--json') -StderrPath $stderrPath
-    $buildTimer.Stop()
+    try {
+        $built = Invoke-VeloxJson -Executable $cli -Arguments @('build', '--config', $configPath, '--out', $outputRoot, '--json') -StderrPath $stderrPath
+    } catch {
+        [void] (Complete-VeloxProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli)))
+        throw
+    } finally {
+        $buildTimer.Stop()
+    }
 
     $phase = 'output-verification'
     $appId = [string] $initialized.result.appId
@@ -155,6 +167,7 @@ try {
     })
     $finishedAt = [DateTime]::UtcNow
     $durationMs = [Math]::Round(($finishedAt - $startedAt).TotalMilliseconds, 3)
+    $processTrace = Complete-VeloxProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli))
     $releaseVersion = [string] (Invoke-VeloxJson -Executable $cli -Arguments @('version', '--json') -StderrPath $stderrPath).result.version
 
     $phase = 'result-validation'
@@ -191,6 +204,7 @@ try {
             portableFiles = [int] $inspected.result.portableFiles
             portableBytes = [int64] $inspected.result.portableBytes
             survivingIntermediateFiles = $unexpected.Count
+            processTrace = $processTrace
         }
         environment = [ordered]@{
             os = [Environment]::OSVersion.VersionString
@@ -216,6 +230,9 @@ try {
         error = $null
     }
     Write-Result -Value $result
+    if ($AcquisitionMode -eq 'github-actions-artifact' -and $processTrace.status -ne 'pass') {
+        $hostedGateFailed = $true
+    }
 } catch {
     $finishedAt = [DateTime]::UtcNow
     $failure = [ordered]@{
@@ -263,4 +280,8 @@ try {
         Write-Error 'Consumer end-to-end result could not be written or validated.'
     }
     throw
+}
+
+if ($hostedGateFailed) {
+    throw 'Hosted child-process evidence did not pass.'
 }

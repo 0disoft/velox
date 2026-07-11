@@ -51,7 +51,7 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_consumer_e2e_smoke` validates release extraction, initialization,
   build, inspection, success/failure result serialization, and the end-to-end
   JSON Schema using a local release ZIP. Its result is not hosted cold-build
-  evidence.
+  evidence. Child-process tracing may remain `unverified` locally.
 - `velox_consumer_e2e_failure_smoke` injects a release-checksum mismatch and
   requires a schema-valid `release-verification` failure result.
 - `velox_consumer_e2e_summary_smoke` aggregates one local raw result and
@@ -59,6 +59,11 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_consumer_e2e_summary_failure_smoke` aggregates one success and one
   injected failure, requires the summary command to fail, and verifies the
   failed sample remains in the written summary.
+- `velox_consumer_e2e_hosted_gate_smoke` simulates bounded hosted metadata and
+  requires unavailable process tracing to preserve a raw result while failing
+  the hosted evidence gate.
+- `velox_consumer_e2e_hosted_summary_gate_smoke` requires an unverified hosted
+  process trace to remain counted and fail the aggregate summary gate.
 - `velox_workflow_validate` parses the repository-owned GitHub Actions workflow
   with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
