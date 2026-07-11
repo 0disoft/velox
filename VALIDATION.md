@@ -41,6 +41,13 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_cli_run_smoke` launches source assets through the assembled release
   CLI, requires the host to reach its ready callback, exits it, and verifies the
   temporary runtime configuration was removed.
+- `velox_consumer_benchmark_smoke` runs three local samples to validate the
+  benchmark harness and schema without turning unavailable process tracing into
+  a false pass.
+- `velox_consumer_benchmark` runs ten local clean-output samples and enforces
+  build-duration, cache, intermediate-file, and compiler/package-manager
+  child-process gates. It is expected to fail when Windows process-start
+  tracing is unavailable.
 - `velox_startup_smoke` maps to smoke.
 - `velox_cpp_build` maps to the C++23 reference build.
 - `velox_cpp_startup_smoke` maps to the C++23 startup smoke.

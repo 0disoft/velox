@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/consumer-benchmark/v1.json",
+  "title": "Velox consumer build benchmark v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scope", "evidenceLevel", "releaseVersion", "repetitions", "measurement", "fixture", "environment", "summary", "cache", "workspace", "gates", "samples"],
+  "properties": {
+    "schemaVersion": { "const": "velox.consumer-benchmark/v1" },
+    "scope": { "const": "local-clean-output-build-command" },
+    "evidenceLevel": { "const": "controlled-local-observation" },
+    "releaseVersion": { "type": "string", "minLength": 1 },
+    "repetitions": { "type": "integer", "minimum": 3 },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "toolVersion", "metric", "unit", "clock", "startsAt", "endsAt", "warmupSamples", "concurrency", "projectState", "outputState", "osFileCacheState", "excludedWork"],
+      "properties": {
+        "tool": { "const": "scripts/measure-consumer-build.ps1" },
+        "toolVersion": { "const": 1 },
+        "metric": { "const": "build-command-duration" },
+        "unit": { "const": "milliseconds" },
+        "clock": { "const": "System.Diagnostics.Stopwatch" },
+        "startsAt": { "const": "immediately-before-velox-process-launch" },
+        "endsAt": { "const": "velox-process-exit" },
+        "warmupSamples": { "const": 0 },
+        "concurrency": { "const": 1 },
+        "projectState": { "const": "same-initialized-project" },
+        "outputState": { "const": "new-empty-output-root-per-sample" },
+        "osFileCacheState": { "const": "uncontrolled-and-potentially-warm-after-first-sample" },
+        "excludedWork": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "appId", "assetFiles", "assetBytes", "assetSha256"],
+      "properties": {
+        "kind": { "const": "dependency-free-init-template" },
+        "appId": { "type": "string", "minLength": 1 },
+        "assetFiles": { "type": "integer", "minimum": 1 },
+        "assetBytes": { "type": "integer", "minimum": 1 },
+        "assetSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architecture"],
+      "properties": {
+        "os": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 },
+        "runnerImage": { "type": ["string", "null"] },
+        "runnerImageVersion": { "type": ["string", "null"] }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["minMs", "p50Ms", "p95Ms", "maxMs"],
+      "properties": {
+        "minMs": { "type": "number", "minimum": 0 },
+        "p50Ms": { "type": "number", "minimum": 0 },
+        "p95Ms": { "type": "number", "minimum": 0 },
+        "maxMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "cache": {
+      "type": "object",
+      "required": ["workflowDeclaredActionsCacheUploadBytes", "veloxOwnedBytesBefore", "veloxOwnedBytesAfter", "veloxOwnedDeltaBytes", "paths"]
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["sourceChangesOutsideOutput", "survivingIntermediateFiles"]
+    },
+    "gates": {
+      "type": "object",
+      "required": ["p95AtOrBelowTwoSeconds", "zeroVeloxCacheGrowth", "zeroSurvivingIntermediates", "noCompilerOrPackageManagerChildren"],
+      "properties": {
+        "p95AtOrBelowTwoSeconds": { "enum": ["pass", "fail"] },
+        "zeroVeloxCacheGrowth": { "enum": ["pass", "fail"] },
+        "zeroSurvivingIntermediates": { "enum": ["pass", "fail"] },
+        "noCompilerOrPackageManagerChildren": { "enum": ["pass", "fail", "unverified"] }
+      }
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["index", "outcome", "durationMs", "archiveBytes", "archiveSha256", "portableFiles", "portableBytes", "survivingIntermediateFiles", "survivingIntermediatePaths", "processTrace"],
+        "properties": {
+          "outcome": { "const": "success" }
+        }
+      }
+    }
+  }
+}

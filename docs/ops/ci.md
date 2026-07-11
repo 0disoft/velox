@@ -1,12 +1,13 @@
 # CI
 
-- Status: Pre-implementation
+- Status: Local harness implemented; hosted workflow pending
 - Owner: Project maintainer
 
 ## Current State
 
-No CI workflow or executable project runner exists. The following stages are
-the required design for M0 and later, not current behavior.
+No repository-owned GitHub Actions workflow exists yet. The parent workspace
+command contract can build a release bundle and run the local consumer build
+harness, but hosted-runner evidence and artifact retention remain pending.
 
 ## Planned Pull-Request CI
 

@@ -22,10 +22,12 @@ Elapsed time from a completed source checkout through acquiring the pinned
 framework release and producing the final portable ZIP. Toolchain and package
 installation are included.
 
-### Build-command cold
+### Local clean-output build command
 
 Elapsed time from starting the already-installed build command through final
-ZIP completion on a clean project workspace.
+ZIP completion. The local harness reuses one initialized project and gives each
+sample a new output root. It does not reset the OS file cache, so this profile
+must not be called a cold build.
 
 ### Fresh-profile startup
 
@@ -59,7 +61,7 @@ These are go-or-kill targets, not published performance claims.
 | Consumer native compiler execution | None |
 | Consumer Node.js execution | None |
 | Surviving intermediate files | 0 files outside declared output |
-| Hello build-command cold | p95 at or below 2 seconds on the pinned runner |
+| Hello local clean-output build command | p95 at or below 2 seconds on the pinned runner |
 | End-to-end cold build | At least 3x faster than the pinned Wails fixture |
 | Go host startup | Record regressions against its pinned Go baseline; C++23 remains diagnostic only |
 | Startup claim | Publish only when the advantage exceeds noise and 10% |
@@ -106,6 +108,39 @@ the benchmark repository is created.
   matrix.
 - Full benchmark repetitions do not run on every commit because the benchmark
   itself must not consume disproportionate CI resources.
+
+## Consumer Build Harness
+
+`scripts/measure-consumer-build.ps1` owns the local Windows measurement path.
+It initializes one dependency-free project and gives each repetition a clean
+output root. Build-command duration excludes initialization, inspection, schema
+validation, and process-trace draining.
+
+The harness records controlled local observations under
+`velox.consumer-benchmark/v1`, validates them against
+`schema/consumer-benchmark-v1.schema.json`, and reports:
+
+- minimum, p50, p95, and maximum build-command duration;
+- portable output and archive bytes and digests;
+- Velox-owned cache-directory growth;
+- source-tree changes and surviving intermediate files;
+- descendants of the measured CLI process matching compiler or package-manager
+  executable names.
+
+Process tracing uses Windows process-start events. If both WMI and CIM event
+subscriptions are unavailable, that gate is `unverified`, never `pass`. The
+three-sample smoke preserves this diagnostic result, while the ten-sample gate
+requires every gate to pass.
+
+`workflowDeclaredActionsCacheUploadBytes` is a workflow-contract field, not a
+local measurement. A future hosted workflow must contain no cache action and
+must preserve the workflow source with the raw result before this field
+supports a public cache claim.
+
+The result contract records the monotonic clock, exact timing boundaries,
+excluded work, zero warmups, serial concurrency, fixture digest, output state,
+and uncontrolled OS file-cache caveat. Local samples are directional evidence;
+only isolated hosted jobs may support an end-to-end cold-build claim.
 
 ## Regression Policy
 
