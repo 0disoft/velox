@@ -4,6 +4,8 @@
 package edge
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -27,6 +29,22 @@ type Chromium struct {
 	webResourceRequested  *iCoreWebView2WebResourceRequestedEventHandler
 	acceleratorKeyPressed *ICoreWebView2AcceleratorKeyPressedEventHandler
 	navigationCompleted   *ICoreWebView2NavigationCompletedEventHandler
+	navigationStarting    *navigationStartingEventHandler
+	frameNavigation       *navigationStartingEventHandler
+	newWindowRequested    *newWindowRequestedEventHandler
+	downloadStarting      *downloadStartingEventHandler
+
+	webMessageToken          _EventRegistrationToken
+	permissionToken          _EventRegistrationToken
+	webResourceToken         _EventRegistrationToken
+	acceleratorToken         _EventRegistrationToken
+	navigationCompletedToken _EventRegistrationToken
+	navigationStartingToken  _EventRegistrationToken
+	frameNavigationToken     _EventRegistrationToken
+	newWindowToken           _EventRegistrationToken
+	downloadToken            _EventRegistrationToken
+	downloadRegistered       bool
+	initializationError      error
 
 	environment *ICoreWebView2Environment
 
@@ -42,6 +60,12 @@ type Chromium struct {
 	WebResourceRequestedCallback func(request *ICoreWebView2WebResourceRequest, args *ICoreWebView2WebResourceRequestedEventArgs)
 	NavigationCompletedCallback  func(sender *ICoreWebView2, args *ICoreWebView2NavigationCompletedEventArgs)
 	AcceleratorKeyCallback       func(uint) bool
+	MessageSourceAllowed         func(source string) bool
+	NavigationAllowed            func(uri string) bool
+	DenyFrames                   bool
+	DenyNewWindows               bool
+	DenyDownloads                bool
+	PolicyBlocked                func(kind string)
 }
 
 func NewChromium() *Chromium {
@@ -64,6 +88,10 @@ func NewChromium() *Chromium {
 	e.webResourceRequested = newICoreWebView2WebResourceRequestedEventHandler(e)
 	e.acceleratorKeyPressed = newICoreWebView2AcceleratorKeyPressedEventHandler(e)
 	e.navigationCompleted = newICoreWebView2NavigationCompletedEventHandler(e)
+	e.navigationStarting = newNavigationStartingEventHandler(e, false)
+	e.frameNavigation = newNavigationStartingEventHandler(e, true)
+	e.newWindowRequested = newNewWindowRequestedEventHandler(e)
+	e.downloadStarting = newDownloadStartingEventHandler(e)
 	e.permissions = make(map[CoreWebView2PermissionKind]CoreWebView2PermissionState)
 
 	return e
@@ -110,6 +138,10 @@ func (e *Chromium) Embed(hwnd uintptr) bool {
 		_, _, _ = w32.User32DispatchMessageW.Call(uintptr(unsafe.Pointer(&msg)))
 	}
 	e.Init("window.external={invoke:s=>window.chrome.webview.postMessage(s)}")
+	if e.initializationError != nil {
+		e.Destroy()
+		return false
+	}
 	return true
 }
 
@@ -134,6 +166,7 @@ func (e *Chromium) SetVirtualHostNameToFolderMapping(hostName, folderPath string
 }
 
 func (e *Chromium) Destroy() {
+	e.removeEventHandlers()
 	if e.controller != nil {
 		_ = e.controller.Close()
 	}
@@ -221,7 +254,6 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 	_, _, _ = controller.vtbl.AddRef.Call(uintptr(unsafe.Pointer(controller)))
 	e.controller = controller
 
-	var token _EventRegistrationToken
 	_, _, _ = controller.vtbl.GetCoreWebView2.Call(
 		uintptr(unsafe.Pointer(controller)),
 		uintptr(unsafe.Pointer(&e.webview)),
@@ -229,25 +261,26 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 	_, _, _ = e.webview.vtbl.AddWebMessageReceived.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.webMessageReceived)),
-		uintptr(unsafe.Pointer(&token)),
+		uintptr(unsafe.Pointer(&e.webMessageToken)),
 	)
 	_, _, _ = e.webview.vtbl.AddPermissionRequested.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.permissionRequested)),
-		uintptr(unsafe.Pointer(&token)),
+		uintptr(unsafe.Pointer(&e.permissionToken)),
 	)
 	_, _, _ = e.webview.vtbl.AddWebResourceRequested.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.webResourceRequested)),
-		uintptr(unsafe.Pointer(&token)),
+		uintptr(unsafe.Pointer(&e.webResourceToken)),
 	)
 	_, _, _ = e.webview.vtbl.AddNavigationCompleted.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.navigationCompleted)),
-		uintptr(unsafe.Pointer(&token)),
+		uintptr(unsafe.Pointer(&e.navigationCompletedToken)),
 	)
 
-	_ = e.controller.AddAcceleratorKeyPressed(e.acceleratorKeyPressed, &token)
+	_ = e.controller.AddAcceleratorKeyPressed(e.acceleratorKeyPressed, &e.acceleratorToken)
+	e.registerSecurityPolicyHandlers()
 
 	atomic.StoreUintptr(&e.inited, 1)
 
@@ -259,6 +292,15 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 }
 
 func (e *Chromium) MessageReceived(sender *ICoreWebView2, args *iCoreWebView2WebMessageReceivedEventArgs) uintptr {
+	source, err := args.Source()
+	if err != nil {
+		log.Printf("read WebMessage source: %v", err)
+		return 0
+	}
+	if e.MessageSourceAllowed != nil && !e.MessageSourceAllowed(source) {
+		e.reportPolicyBlocked("message-source")
+		return 0
+	}
 	var message *uint16
 	_, _, _ = args.vtbl.TryGetWebMessageAsString.Call(
 		uintptr(unsafe.Pointer(args)),
@@ -275,6 +317,28 @@ func (e *Chromium) MessageReceived(sender *ICoreWebView2, args *iCoreWebView2Web
 	return 0
 }
 
+func (e *Chromium) handleNavigationStarting(args *iCoreWebView2NavigationStartingEventArgs, frame bool) {
+	deny := frame && e.DenyFrames
+	if !frame && e.NavigationAllowed != nil {
+		uri, err := args.URI()
+		if err != nil {
+			e.setPolicyError(fmt.Errorf("read navigation URI: %w", err))
+			deny = true
+		} else {
+			deny = !e.NavigationAllowed(uri)
+		}
+	}
+	if deny {
+		if err := args.PutCancel(true); err != nil {
+			e.setPolicyError(fmt.Errorf("cancel navigation: %w", err))
+		} else if frame {
+			e.reportPolicyBlocked("frame-navigation")
+		} else {
+			e.reportPolicyBlocked("navigation")
+		}
+	}
+}
+
 func (e *Chromium) SetPermission(kind CoreWebView2PermissionKind, state CoreWebView2PermissionState) {
 	e.permissions[kind] = state
 }
@@ -287,7 +351,7 @@ func (e *Chromium) PermissionRequested(_ *ICoreWebView2, args *iCoreWebView2Perm
 	var kind CoreWebView2PermissionKind
 	_, _, _ = args.vtbl.GetPermissionKind.Call(
 		uintptr(unsafe.Pointer(args)),
-		uintptr(kind),
+		uintptr(unsafe.Pointer(&kind)),
 	)
 	var result CoreWebView2PermissionState
 	if e.globalPermission != nil {
@@ -303,6 +367,9 @@ func (e *Chromium) PermissionRequested(_ *ICoreWebView2, args *iCoreWebView2Perm
 		uintptr(unsafe.Pointer(args)),
 		uintptr(result),
 	)
+	if result == CoreWebView2PermissionStateDeny {
+		e.reportPolicyBlocked("permission")
+	}
 	return 0
 }
 
@@ -326,6 +393,102 @@ func (e *Chromium) AddWebResourceRequestedFilter(filter string, ctx COREWEBVIEW2
 
 func (e *Chromium) Environment() *ICoreWebView2Environment {
 	return e.environment
+}
+
+func (e *Chromium) registerSecurityPolicyHandlers() {
+	if e.NavigationAllowed != nil {
+		result, _, _ := e.webview.vtbl.AddNavigationStarting.Call(
+			uintptr(unsafe.Pointer(e.webview)),
+			uintptr(unsafe.Pointer(e.navigationStarting)),
+			uintptr(unsafe.Pointer(&e.navigationStartingToken)),
+		)
+		if err := hresult(result); err != nil {
+			e.initializationError = fmt.Errorf("register navigation policy: %w", err)
+			return
+		}
+	}
+	if e.DenyFrames {
+		result, _, _ := e.webview.vtbl.AddFrameNavigationStarting.Call(
+			uintptr(unsafe.Pointer(e.webview)),
+			uintptr(unsafe.Pointer(e.frameNavigation)),
+			uintptr(unsafe.Pointer(&e.frameNavigationToken)),
+		)
+		if err := hresult(result); err != nil {
+			e.initializationError = fmt.Errorf("register frame policy: %w", err)
+			return
+		}
+	}
+	if e.DenyNewWindows {
+		result, _, _ := e.webview.vtbl.AddNewWindowRequested.Call(
+			uintptr(unsafe.Pointer(e.webview)),
+			uintptr(unsafe.Pointer(e.newWindowRequested)),
+			uintptr(unsafe.Pointer(&e.newWindowToken)),
+		)
+		if err := hresult(result); err != nil {
+			e.initializationError = fmt.Errorf("register popup policy: %w", err)
+			return
+		}
+	}
+	if e.DenyDownloads {
+		webview4 := e.webview.GetICoreWebView2_4()
+		if webview4 == nil {
+			e.initializationError = errors.New("WebView2 download policy interface is unavailable")
+			return
+		}
+		defer webview4.Release()
+		if err := webview4.AddDownloadStarting(e.downloadStarting, &e.downloadToken); err != nil {
+			e.initializationError = fmt.Errorf("register download policy: %w", err)
+			return
+		}
+		e.downloadRegistered = true
+	}
+}
+
+func (e *Chromium) removeEventHandlers() {
+	if e.webview == nil {
+		return
+	}
+	if e.NavigationAllowed != nil {
+		_, _, _ = e.webview.vtbl.RemoveNavigationStarting.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.navigationStartingToken.Value))
+	}
+	if e.DenyFrames {
+		_, _, _ = e.webview.vtbl.RemoveFrameNavigationStarting.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.frameNavigationToken.Value))
+	}
+	if e.DenyNewWindows {
+		_, _, _ = e.webview.vtbl.RemoveNewWindowRequested.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.newWindowToken.Value))
+	}
+	if e.downloadRegistered {
+		if webview4 := e.webview.GetICoreWebView2_4(); webview4 != nil {
+			_ = webview4.RemoveDownloadStarting(e.downloadToken)
+			webview4.Release()
+		}
+		e.downloadRegistered = false
+	}
+	_, _, _ = e.webview.vtbl.RemoveWebMessageReceived.Call(
+		uintptr(unsafe.Pointer(e.webview)), uintptr(e.webMessageToken.Value))
+	_, _, _ = e.webview.vtbl.RemovePermissionRequested.Call(
+		uintptr(unsafe.Pointer(e.webview)), uintptr(e.permissionToken.Value))
+	_, _, _ = e.webview.vtbl.RemoveWebResourceRequested.Call(
+		uintptr(unsafe.Pointer(e.webview)), uintptr(e.webResourceToken.Value))
+	_, _, _ = e.webview.vtbl.RemoveNavigationCompleted.Call(
+		uintptr(unsafe.Pointer(e.webview)), uintptr(e.navigationCompletedToken.Value))
+	if e.controller != nil {
+		_, _, _ = e.controller.vtbl.RemoveAcceleratorKeyPressed.Call(
+			uintptr(unsafe.Pointer(e.controller)), uintptr(e.acceleratorToken.Value))
+	}
+}
+
+func (e *Chromium) setPolicyError(err error) {
+	log.Printf("WebView2 policy error: %v", err)
+}
+
+func (e *Chromium) reportPolicyBlocked(kind string) {
+	if e.PolicyBlocked != nil {
+		e.PolicyBlocked(kind)
+	}
 }
 
 // AcceleratorKeyPressed is called when an accelerator key is pressed.

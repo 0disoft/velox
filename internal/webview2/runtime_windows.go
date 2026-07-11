@@ -12,12 +12,12 @@ import (
 
 type ReadyHandler func(phase string) error
 
-type M0Runtime struct {
+type Runtime struct {
 	view      webview.WebView
 	closeOnce sync.Once
 }
 
-func OpenM0(config Config, onReady ReadyHandler) (*M0Runtime, error) {
+func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	if err := config.validate(); err != nil {
 		return nil, fmt.Errorf("invalid WebView2 configuration: %w", err)
 	}
@@ -34,6 +34,16 @@ func OpenM0(config Config, onReady ReadyHandler) (*M0Runtime, error) {
 		DataPath:           config.DataPath,
 		AutoFocus:          true,
 		DenyAllPermissions: true,
+		MessageSourceAllowed: func(source string) bool {
+			return isTrustedDocument(source, config.AppID)
+		},
+		NavigationAllowed: func(uri string) bool {
+			return isTrustedDocument(uri, config.AppID)
+		},
+		DenyFrames:     true,
+		DenyNewWindows: true,
+		DenyDownloads:  true,
+		PolicyBlocked:  config.PolicyBlocked,
 		WindowOptions: webview.WindowOptions{
 			Title:  config.Title,
 			Width:  config.Width,
@@ -45,28 +55,28 @@ func OpenM0(config Config, onReady ReadyHandler) (*M0Runtime, error) {
 		return nil, ErrRuntimeUnavailable
 	}
 
-	runtime := &M0Runtime{view: view}
+	runtime := &Runtime{view: view}
 	if err := view.SetVirtualHostNameToFolderMapping(trustedHost(config.AppID), config.AssetRoot); err != nil {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("map virtual asset host: %w", err)
 	}
-	if err := view.Bind("__veloxM0Ready", onReady); err != nil {
+	if err := view.Bind("__veloxReady", onReady); err != nil {
 		destroyBeforeRun(view)
-		return nil, fmt.Errorf("bind M0 ready marker: %w", err)
+		return nil, fmt.Errorf("bind ready marker: %w", err)
 	}
 	view.Navigate(entryURL)
 	return runtime, nil
 }
 
-func (r *M0Runtime) Run() {
+func (r *Runtime) Run() {
 	r.view.Run()
 }
 
-func (r *M0Runtime) Terminate() {
+func (r *Runtime) Terminate() {
 	r.view.Terminate()
 }
 
-func (r *M0Runtime) Close() {
+func (r *Runtime) Close() {
 	r.closeOnce.Do(func() {
 		// Bind callbacks enqueue their RPC response after returning. Two dispatch
 		// turns let that response drain before Destroy releases WebView2 COM state.

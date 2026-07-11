@@ -44,8 +44,8 @@ local HTTP server, or expose arbitrary native capabilities.
 - Platform: Windows x64.
 - CLI: Go.
 - Production host: pure Go with no CGo or C++ shim.
-- WebView2 binding: repository-owned adapter; fork versus lower-level direct
-  implementation remains an M1 decision.
+- WebView2 binding: repository-owned adapter over a pinned, maintained pure-Go
+  fork.
 - C++23 host: M0 benchmark and lifecycle reference only.
 - Web runtime: installed Evergreen WebView2.
 - Frontend bridge: dependency-free JavaScript.

@@ -1,15 +1,15 @@
 {
   "runtimeVersion": 1,
   "app": {
-    "id": "dev.velox.hello",
-    "name": "Velox Hello"
+    "id": "dev.velox.security-fixture",
+    "name": "Velox Security Fixture"
   },
   "assets": {
     "root": "web",
     "entry": "index.html"
   },
   "window": {
-    "width": 720,
+    "width": 640,
     "height": 480
   }
 }

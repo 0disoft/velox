@@ -64,11 +64,13 @@ the production security contract.
 6. Move or retire C++23/Pixi reference infrastructure after the Go lifecycle
    baseline is stable on pinned CI.
 
-The first two slices are complete: `cmd/velox-host` consumes
-`internal/webview2`, and the pinned local fork provides virtual HTTPS mapping,
-default-denied permissions, and explicit COM close/release. Trusted message
-origin, remote navigation, popup, download, and tighter same-profile shutdown
-contracts remain required before the adapter can be treated as production.
+The adapter slice is complete: `cmd/velox-host` consumes `internal/webview2`,
+and the pinned local fork provides virtual HTTPS mapping, source-validated
+messages, denied frame and remote navigation, denied popups, denied downloads,
+default-denied permissions, and explicit COM close/release. Host shutdown and
+browser profile release are separate measurements; the host exits promptly,
+while same-profile relaunch remains delayed by WebView2 browser-process
+shutdown.
 
 Rollback before the adapter becomes a public runtime contract means returning
 to the isolated M0 wrapper while fixing the repository-owned adapter. Rollback

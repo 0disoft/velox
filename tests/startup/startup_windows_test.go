@@ -36,6 +36,7 @@ type hostAdapter struct {
 	executable  string
 	arguments   func(profile string) []string
 	environment func(profile string) []string
+	expected    string
 }
 
 type benchmarkResult struct {
@@ -71,6 +72,8 @@ func TestBuiltHostStartup(t *testing.T) {
 	first := runHost(t, host, profile)
 	immediate := runHost(t, host, profile)
 	profileRelease := waitForProfileRelease(t, profile, 10*time.Second)
+	securityProfile := managedProfileRoot(t, "velox-go-security-")
+	security := runHost(t, securityHost(t, repoRoot), securityProfile)
 
 	if first.Exit > time.Second || immediate.Exit > time.Second {
 		t.Fatalf("host shutdown exceeded 1s: first=%s immediate=%s", first.Exit, immediate.Exit)
@@ -80,6 +83,7 @@ func TestBuiltHostStartup(t *testing.T) {
 	}
 	t.Logf("first ready=%s exit=%s; immediate ready=%s exit=%s; profile release=%s",
 		first.Ready, first.Exit, immediate.Ready, immediate.Exit, profileRelease)
+	t.Logf("security ready=%s exit=%s", security.Ready, security.Exit)
 }
 
 func TestBuiltCppHostStartup(t *testing.T) {
@@ -211,6 +215,27 @@ func goHost(t *testing.T, repoRoot string) hostAdapter {
 		environment: func(profile string) []string {
 			return []string{"VELOX_DATA_DIR=" + profile}
 		},
+		expected: "ready dom-2raf\n",
+	}
+}
+
+func securityHost(t *testing.T, repoRoot string) hostAdapter {
+	t.Helper()
+	executable := requiredExecutable(t, "VELOX_BUILT_HOST")
+	config := filepath.Join(repoRoot, "tests", "fixtures", "security", "velox.runtime.json")
+	return hostAdapter{
+		name:       "go-security",
+		executable: executable,
+		arguments: func(string) []string {
+			return []string{"--config", config}
+		},
+		environment: func(profile string) []string {
+			return []string{
+				"VELOX_DATA_DIR=" + profile,
+				"VELOX_BENCH_POLICY_AUDIT=1",
+			}
+		},
+		expected: "ready security-ok\n",
 	}
 }
 
@@ -225,6 +250,7 @@ func cppHost(t *testing.T, repoRoot string) hostAdapter {
 			return []string{assets, profile}
 		},
 		environment: func(string) []string { return nil },
+		expected:    "ready dom-2raf\n",
 	}
 }
 
@@ -255,7 +281,7 @@ func repositoryRoot(t *testing.T) string {
 
 func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	t.Helper()
-	pipeName := fmt.Sprintf(`\\.\pipe\velox-m0-%d`, time.Now().UnixNano())
+	pipeName := fmt.Sprintf(`\\.\pipe\velox-%d`, time.Now().UnixNano())
 	pipe := createPipe(t, pipeName)
 	defer windows.CloseHandle(pipe)
 	defer disconnectNamedPipe.Call(uintptr(pipe))
@@ -287,8 +313,8 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 			done <- err
 			return
 		}
-		if string(buffer[:n]) != "ready dom-2raf\n" {
-			done <- fmt.Errorf("unexpected marker %q", buffer[:n])
+		if string(buffer[:n]) != host.expected {
+			done <- fmt.Errorf("unexpected marker %q, want %q", buffer[:n], host.expected)
 			return
 		}
 		done <- nil

@@ -90,6 +90,27 @@ type WebViewOptions struct {
 	// default. Callers should opt out only when they own a narrower policy.
 	DenyAllPermissions bool
 
+	// MessageSourceAllowed validates the document URL associated with an
+	// incoming WebMessage before it reaches a bound Go callback.
+	MessageSourceAllowed func(source string) bool
+
+	// NavigationAllowed validates every top-level navigation, including
+	// redirects. A false result cancels the navigation.
+	NavigationAllowed func(uri string) bool
+
+	// DenyFrames cancels every child-frame navigation.
+	DenyFrames bool
+
+	// DenyNewWindows handles every popup request without creating a window.
+	DenyNewWindows bool
+
+	// DenyDownloads cancels every download and hides the download UI.
+	DenyDownloads bool
+
+	// PolicyBlocked observes a blocked policy kind without receiving URLs or
+	// message contents. It is intended for conformance instrumentation.
+	PolicyBlocked func(kind string)
+
 	// WindowOptions customizes the window that is created to embed the
 	// WebView2 widget.
 	WindowOptions WindowOptions
@@ -114,6 +135,12 @@ func NewWithOptions(options WebViewOptions) WebView {
 	chromium := edge.NewChromium()
 	chromium.MessageCallback = w.msgcb
 	chromium.DataPath = options.DataPath
+	chromium.MessageSourceAllowed = options.MessageSourceAllowed
+	chromium.NavigationAllowed = options.NavigationAllowed
+	chromium.DenyFrames = options.DenyFrames
+	chromium.DenyNewWindows = options.DenyNewWindows
+	chromium.DenyDownloads = options.DenyDownloads
+	chromium.PolicyBlocked = options.PolicyBlocked
 	if options.DenyAllPermissions {
 		chromium.SetGlobalPermission(edge.CoreWebView2PermissionStateDeny)
 	} else {
@@ -356,6 +383,7 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 	_, _, _ = w32.User32SetFocus.Call(w.hwnd)
 
 	if !w.browser.Embed(w.hwnd) {
+		_, _, _ = w32.User32DestroyWindow.Call(w.hwnd)
 		return false
 	}
 	w.browser.Resize()
@@ -482,6 +510,7 @@ func (w *webview) Bind(name string, f interface{}) error {
 	w.m.Unlock()
 
 	w.Init("(function() { var name = " + jsString(name) + ";" + `
+		if (window.top !== window) return;
 		var RPC = window._rpc = (window._rpc || {nextSeq: 1});
 		window[name] = function() {
 		  var seq = RPC.nextSeq++;

@@ -94,3 +94,13 @@ An embedded or sealed profile is deferred and must be benchmarked separately.
 - Missing-runtime and invalid-configuration failure tests.
 - Dependency and release checksum verification.
 - A current threat model before alpha.
+
+## Current Runtime Evidence
+
+The Windows startup security fixture triggers and observes native policy blocks
+for remote top-level navigation, child-frame navigation, popup creation,
+downloads, and browser permission requests. The ordinary ready path proves that
+messages from the generated application origin are accepted; unit tests reject
+remote, suffix-confused, credential-bearing, port-bearing, non-HTTPS, and
+malformed source URLs. The benchmark-only observer records policy names but not
+URLs, payloads, or user data.

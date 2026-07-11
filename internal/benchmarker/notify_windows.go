@@ -9,12 +9,20 @@ import (
 const PipeEnvironment = "VELOX_BENCH_PIPE"
 
 func NotifyReady(phase string) error {
+	if phase != "dom-2raf" {
+		return errors.New("unexpected ready phase")
+	}
+	return notify("ready dom-2raf\n")
+}
+
+func NotifyPolicyAudit() error {
+	return notify("ready security-ok\n")
+}
+
+func notify(marker string) error {
 	pipePath := os.Getenv(PipeEnvironment)
 	if pipePath == "" {
 		return nil
-	}
-	if phase != "dom-2raf" {
-		return errors.New("unexpected ready phase")
 	}
 
 	pipe, err := os.OpenFile(pipePath, os.O_WRONLY, 0)
@@ -23,7 +31,7 @@ func NotifyReady(phase string) error {
 	}
 	defer pipe.Close()
 
-	if _, err := pipe.WriteString("ready dom-2raf\n"); err != nil {
+	if _, err := pipe.WriteString(marker); err != nil {
 		return fmt.Errorf("write benchmark marker: %w", err)
 	}
 	return nil

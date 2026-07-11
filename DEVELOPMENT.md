@@ -94,8 +94,9 @@ lower-level host implementation:
 
 - The host now maps assets to an application-specific virtual HTTPS origin.
 - The fork denies all WebView2 permission requests by default.
-- Top-level navigation, popup, download, frame, and message-source policies are
-  not implemented yet.
+- The adapter accepts messages and top-level navigation only from the generated
+  application origin, denies every child-frame navigation, and blocks popups
+  and downloads at their native WebView2 events.
 
 Treat the current executable as benchmark evidence only. It is not an alpha
 runtime and must not be distributed as a secure application host.
@@ -105,24 +106,27 @@ runtime and must not be distributed as a secure application host.
 ADR 0005 selects Go for both the CLI and production host. This reduces the
 normal product build, test, debugging, and release path to one maintainer
 language. The repository now owns a narrow fork behind the pure-Go WebView2
-adapter. Production work must continue enforcing navigation, message-origin,
-popup, download, and shutdown contracts at that boundary.
+adapter. Navigation, message-origin, popup, download, permission, and shutdown
+contracts are enforced at that boundary and exercised by the startup security
+fixture.
 
 The C++23/Pixi path remains reference-only and is removed or moved after the Go
 adapter has a stable pinned-CI lifecycle baseline.
 
 The repository-owned adapter boundary lives in `internal/webview2`.
-`cmd/velox-host` does not import the fork directly. `M0Runtime` now reports
-virtual HTTPS asset loading and default-denied permissions as implemented. It
-continues to report trusted-origin messaging, navigation, popup, download, and
-clean shutdown as unsupported.
+`cmd/velox-host` does not import the fork directly. The adapter reports virtual
+HTTPS assets, trusted-origin messaging, navigation, frame, popup, download,
+permission, and clean host shutdown controls as implemented.
 
 The fork explicitly closes and releases controller, webview, queried extension,
 and environment COM interfaces. The startup smoke reaches the ready marker,
 exits normally, and no longer exceeds the ten-second profile cleanup window.
-Profile release is still asynchronous and took several seconds in the first
-local smoke, so `CleanShutdown` remains false until repeated same-profile
-relaunch proves a tighter lifecycle contract.
+`CleanShutdown` means that the controller is synchronously closed, COM
+interfaces are released in ownership order, and the host process exits within
+one second. It does not claim that WebView2 has released the user-data folder.
+That browser-process lifecycle is measured separately: repeated local smoke
+shows same-profile immediate relaunch and final profile release taking about
+seven seconds.
 
 ## M0 Completion
 
@@ -136,6 +140,7 @@ M0 development setup is complete only when:
 
 The Go and C++23 hosts build and reach the same two-frame marker locally. The
 first repeated comparison is recorded in the performance budget. The C++23
-host still has a same-profile immediate-relaunch delay that must be explained
-before either host is selected. Missing-runtime tests and production security
-controls remain open.
+host still has a same-profile immediate-relaunch delay. The Go security
+controls now have executable navigation, frame, popup, permission, and download
+evidence. Missing-runtime behavior and the browser-process relaunch delay remain
+open.

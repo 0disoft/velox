@@ -227,6 +227,19 @@ type iCoreWebView2WebMessageReceivedEventArgs struct {
 	vtbl *iCoreWebView2WebMessageReceivedEventArgsVtbl
 }
 
+func (i *iCoreWebView2WebMessageReceivedEventArgs) Source() (string, error) {
+	var value *uint16
+	result, _, _ := i.vtbl.GetSource.Call(
+		uintptr(unsafe.Pointer(i)),
+		uintptr(unsafe.Pointer(&value)),
+	)
+	if err := hresult(result); err != nil {
+		return "", err
+	}
+	defer windows.CoTaskMemFree(unsafe.Pointer(value))
+	return w32.Utf16PtrToString(value), nil
+}
+
 // ICoreWebView2PermissionRequestedEventArgs
 
 type iCoreWebView2PermissionRequestedEventArgsVtbl struct {

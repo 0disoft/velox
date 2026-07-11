@@ -8,10 +8,20 @@ Velox carries only the changes required by its Windows host boundary:
 
 - deny all WebView2 permission requests by default;
 - expose virtual-host-to-folder mapping through the public wrapper;
+- validate WebMessage sources before dispatching bound callbacks;
+- deny untrusted top-level navigation and all frame navigation;
+- deny popup and download events;
 - close and release the WebView2 controller, webview, and environment;
+- unregister native event handlers during shutdown;
 - release queried `ICoreWebView2_3` interfaces; and
 - remove window context after native window destruction.
 
 Do not merge upstream changes mechanically. Review COM ownership, public API
 changes, generated bindings, loader changes, and license notices before
 updating the pinned source revision.
+
+The upstream x86 and ARM64 loader files remain checked in even though the first
+supported target is Windows x64. Removing them saves only about 231 KiB from
+the source checkout, does not reduce the x64 executable because build tags
+already exclude them, and would make upstream review noisier. Revisit only if
+repository or CI transfer measurements make that source-only cost material.

@@ -11,15 +11,25 @@ import (
 
 var ErrRuntimeUnavailable = errors.New("WebView2 Runtime is unavailable or initialization failed")
 
+const (
+	PolicyNavigation      = "navigation"
+	PolicyFrameNavigation = "frame-navigation"
+	PolicyNewWindow       = "new-window"
+	PolicyDownload        = "download"
+	PolicyPermission      = "permission"
+	PolicyMessageSource   = "message-source"
+)
+
 type Config struct {
-	Title     string
-	AppID     string
-	Width     uint
-	Height    uint
-	DataPath  string
-	AssetRoot string
-	EntryPath string
-	Debug     bool
+	Title         string
+	AppID         string
+	Width         uint
+	Height        uint
+	DataPath      string
+	AssetRoot     string
+	EntryPath     string
+	Debug         bool
+	PolicyBlocked func(kind string)
 }
 
 type Capabilities struct {
@@ -32,10 +42,15 @@ type Capabilities struct {
 	CleanShutdown         bool
 }
 
-func M0Capabilities() Capabilities {
+func RuntimeCapabilities() Capabilities {
 	return Capabilities{
-		VirtualHTTPSOrigin: true,
-		PermissionPolicy:   true,
+		VirtualHTTPSOrigin:    true,
+		TrustedOriginMessages: true,
+		NavigationPolicy:      true,
+		NewWindowPolicy:       true,
+		DownloadPolicy:        true,
+		PermissionPolicy:      true,
+		CleanShutdown:         true,
 	}
 }
 
@@ -79,6 +94,18 @@ func (c Config) validate() error {
 func trustedHost(appID string) string {
 	digest := sha256.Sum256([]byte(appID))
 	return fmt.Sprintf("%x.app.invalid", digest[:16])
+}
+
+func trustedOrigin(appID string) string {
+	return "https://" + trustedHost(appID)
+}
+
+func isTrustedDocument(rawURL, appID string) bool {
+	parsed, err := url.Parse(rawURL)
+	if err != nil || parsed.Scheme != "https" || parsed.User != nil {
+		return false
+	}
+	return parsed.Host == trustedHost(appID)
 }
 
 func virtualEntryURL(appID, assetRoot, entryPath string) (string, error) {
