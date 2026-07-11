@@ -11,6 +11,7 @@ Velox carries only the changes required by its Windows host boundary:
 - validate WebMessage sources before dispatching bound callbacks;
 - deny untrusted top-level navigation and all frame navigation;
 - deny popup and download events;
+- allow an explicit fixed-runtime folder for missing-runtime conformance tests;
 - close and release the WebView2 controller, webview, and environment;
 - unregister native event handlers during shutdown;
 - release queried `ICoreWebView2_3` interfaces; and

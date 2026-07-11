@@ -82,6 +82,10 @@ type WebViewOptions struct {
 	// browser instance.
 	DataPath string
 
+	// BrowserExecutableFolder optionally selects a fixed WebView2 Runtime.
+	// An empty value uses the installed Evergreen Runtime.
+	BrowserExecutableFolder string
+
 	// AutoFocus will try to keep the WebView2 widget focused when the window
 	// is focused.
 	AutoFocus bool
@@ -135,6 +139,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 	chromium := edge.NewChromium()
 	chromium.MessageCallback = w.msgcb
 	chromium.DataPath = options.DataPath
+	chromium.BrowserExecutableFolder = options.BrowserExecutableFolder
 	chromium.MessageSourceAllowed = options.MessageSourceAllowed
 	chromium.NavigationAllowed = options.NavigationAllowed
 	chromium.DenyFrames = options.DenyFrames

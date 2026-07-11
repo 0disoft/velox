@@ -21,15 +21,16 @@ const (
 )
 
 type Config struct {
-	Title         string
-	AppID         string
-	Width         uint
-	Height        uint
-	DataPath      string
-	AssetRoot     string
-	EntryPath     string
-	Debug         bool
-	PolicyBlocked func(kind string)
+	Title                   string
+	AppID                   string
+	Width                   uint
+	Height                  uint
+	DataPath                string
+	BrowserExecutableFolder string
+	AssetRoot               string
+	EntryPath               string
+	Debug                   bool
+	PolicyBlocked           func(kind string)
 }
 
 type Capabilities struct {

@@ -40,15 +40,16 @@ func run(args []string) int {
 	var runtime *webview2.Runtime
 	audit := newPolicyAudit(os.Getenv("VELOX_BENCH_POLICY_AUDIT") == "1")
 	runtime, err = webview2.Open(webview2.Config{
-		Title:         cfg.App.Name,
-		AppID:         cfg.App.ID,
-		Width:         cfg.Window.Width,
-		Height:        cfg.Window.Height,
-		DataPath:      dataPath,
-		AssetRoot:     cfg.AssetRoot,
-		EntryPath:     cfg.EntryPath,
-		Debug:         *debug,
-		PolicyBlocked: audit.record,
+		Title:                   cfg.App.Name,
+		AppID:                   cfg.App.ID,
+		Width:                   cfg.Window.Width,
+		Height:                  cfg.Window.Height,
+		DataPath:                dataPath,
+		BrowserExecutableFolder: os.Getenv("VELOX_BENCH_WEBVIEW2_BROWSER_DIR"),
+		AssetRoot:               cfg.AssetRoot,
+		EntryPath:               cfg.EntryPath,
+		Debug:                   *debug,
+		PolicyBlocked:           audit.record,
 	}, func(phase string) error {
 		if audit.enabled {
 			return nil

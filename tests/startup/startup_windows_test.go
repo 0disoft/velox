@@ -2,6 +2,7 @@ package startup_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -74,6 +75,7 @@ func TestBuiltHostStartup(t *testing.T) {
 	profileRelease := waitForProfileRelease(t, profile, 10*time.Second)
 	securityProfile := managedProfileRoot(t, "velox-go-security-")
 	security := runHost(t, securityHost(t, repoRoot), securityProfile)
+	testUnavailableRuntime(t, host, filepath.Join(t.TempDir(), "missing-webview2-runtime"))
 
 	if first.Exit > time.Second || immediate.Exit > time.Second {
 		t.Fatalf("host shutdown exceeded 1s: first=%s immediate=%s", first.Exit, immediate.Exit)
@@ -268,6 +270,29 @@ func requiredExecutable(t *testing.T, environment string) string {
 		t.Fatalf("built host unavailable: %v", err)
 	}
 	return abs
+}
+
+func testUnavailableRuntime(t *testing.T, host hostAdapter, missingRuntime string) {
+	t.Helper()
+	profile := filepath.Join(t.TempDir(), "profile")
+	cmd := exec.Command(host.executable, host.arguments(profile)...)
+	cmd.Env = append(os.Environ(),
+		append(host.environment(profile),
+			"VELOX_BENCH_WEBVIEW2_BROWSER_DIR="+missingRuntime,
+		)...,
+	)
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("host started with a missing fixed WebView2 Runtime")
+	}
+	var exitError *exec.ExitError
+	if !errors.As(err, &exitError) || exitError.ExitCode() != 5 {
+		t.Fatalf("missing-runtime exit = %v; output: %s", err, output)
+	}
+	const diagnostic = "WebView2 Runtime is unavailable or initialization failed"
+	if !strings.Contains(string(output), diagnostic) {
+		t.Fatalf("missing-runtime diagnostic = %q, want containing %q", output, diagnostic)
+	}
 }
 
 func repositoryRoot(t *testing.T) string {

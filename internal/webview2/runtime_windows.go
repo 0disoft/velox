@@ -30,10 +30,11 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	}
 
 	view := webview.NewWithOptions(webview.WebViewOptions{
-		Debug:              config.Debug,
-		DataPath:           config.DataPath,
-		AutoFocus:          true,
-		DenyAllPermissions: true,
+		Debug:                   config.Debug,
+		DataPath:                config.DataPath,
+		BrowserExecutableFolder: config.BrowserExecutableFolder,
+		AutoFocus:               true,
+		DenyAllPermissions:      true,
 		MessageSourceAllowed: func(source string) bool {
 			return isTrustedDocument(source, config.AppID)
 		},

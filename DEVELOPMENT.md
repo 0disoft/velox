@@ -142,5 +142,5 @@ The Go and C++23 hosts build and reach the same two-frame marker locally. The
 first repeated comparison is recorded in the performance budget. The C++23
 host still has a same-profile immediate-relaunch delay. The Go security
 controls now have executable navigation, frame, popup, permission, and download
-evidence. Missing-runtime behavior and the browser-process relaunch delay remain
-open.
+evidence. A missing or invalid fixed WebView2 Runtime exits with code 5 and an
+actionable local diagnostic. The browser-process relaunch delay remains open.
