@@ -14,6 +14,7 @@ import (
 	"github.com/0disoft/velox/internal/buildinfo"
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/velox/internal/initializer"
 	"github.com/0disoft/velox/internal/inspector"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runtimeconfig"
@@ -101,6 +102,8 @@ func Run(args []string, dependencies Dependencies) int {
 		return runVersion(args[1:], dependencies)
 	case "inspect":
 		return runInspect(args[1:], dependencies)
+	case "init":
+		return runInit(args[1:], dependencies)
 	case "help", "--help", "-h":
 		printUsage(dependencies.Stdout)
 		return 0
@@ -109,6 +112,39 @@ func Run(args []string, dependencies Dependencies) int {
 		printUsage(dependencies.Stderr)
 		return 2
 	}
+}
+
+func runInit(args []string, dependencies Dependencies) int {
+	flags := flag.NewFlagSet("init", flag.ContinueOnError)
+	flags.SetOutput(dependencies.Stderr)
+	jsonOutput := flags.Bool("json", false, "emit one JSON document")
+	quiet := flags.Bool("quiet", false, "suppress successful human output")
+	if jsonRequested(args) {
+		flags.SetOutput(io.Discard)
+	}
+	if err := flags.Parse(reorderPositionalArgs(args)); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
+		return emitFailure(dependencies, "init", *jsonOutput || jsonRequested(args), 2, "USAGE_INVALID", "Command arguments are invalid.", err)
+	}
+	if flags.NArg() > 1 {
+		return emitFailure(dependencies, "init", *jsonOutput, 2, "USAGE_INVALID", "Init accepts at most one directory.", errors.New("too many project directories"))
+	}
+	directory := "."
+	if flags.NArg() == 1 {
+		directory = flags.Arg(0)
+	}
+	result, err := initializer.Create(directory)
+	if err != nil {
+		return emitFailure(dependencies, "init", *jsonOutput, 6, "INIT_FAILED", "Project initialization failed.", err)
+	}
+	if *jsonOutput {
+		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "init", Result: result, Diagnostics: []Diagnostic{}})
+	} else if !*quiet {
+		fmt.Fprintf(dependencies.Stdout, "Initialized %s in %s\n", result.AppID, result.Directory)
+	}
+	return 0
 }
 
 type commonOptions struct {
@@ -234,7 +270,7 @@ func runInspect(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(reorderInspectArgs(args)); err != nil {
+	if err := flags.Parse(reorderPositionalArgs(args)); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -326,6 +362,8 @@ func category(code string) string {
 		return "asset"
 	case strings.HasPrefix(code, "ARTIFACT"):
 		return "artifact"
+	case strings.HasPrefix(code, "INIT"):
+		return "filesystem"
 	case strings.HasPrefix(code, "HOST"):
 		return "host"
 	case strings.HasPrefix(code, "PACKAGING"):
@@ -363,7 +401,7 @@ func jsonRequested(args []string) bool {
 	return false
 }
 
-func reorderInspectArgs(args []string) []string {
+func reorderPositionalArgs(args []string) []string {
 	ordered := make([]string, 0, len(args))
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "-") {
@@ -379,5 +417,5 @@ func reorderInspectArgs(args []string) []string {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: velox <validate|build|inspect|version> [options]")
+	fmt.Fprintln(writer, "Usage: velox <init|validate|build|inspect|version> [options]")
 }

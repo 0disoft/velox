@@ -132,6 +132,25 @@ func TestUsageFailureHonorsJSONAnywhere(t *testing.T) {
 	}
 }
 
+func TestInitJSONContract(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "sample-app")
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"init", target, "--json"}, Dependencies{Stdout: &stdout, Stderr: &stderr})
+	if exitCode != 0 || stderr.Len() != 0 {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if !envelope.OK || envelope.Command != "init" {
+		t.Fatalf("unexpected envelope: %+v", envelope)
+	}
+	if _, err := os.Stat(filepath.Join(target, "velox.json")); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestInspectJSONContract(t *testing.T) {
 	root, config, host := cliFixture(t)
 	var buildOut, buildErr bytes.Buffer

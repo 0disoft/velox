@@ -15,8 +15,8 @@
 
 ## Implementation Status
 
-`validate`, `build`, `inspect`, and `version` are implemented in the M1 vertical
-slice. `init`, `doctor`, and `run` remain specified but unimplemented. The
+`init`, `validate`, `build`, `inspect`, and `version` are implemented in the M1
+vertical slice. `doctor` and `run` remain specified but unimplemented. The
 release bundle must place the unchanged prebuilt `velox-host.exe` and its
 `velox-host.json` beside the CLI. The CLI verifies release, target, contract,
 size, and digest agreement; there is intentionally no public flag that
@@ -28,7 +28,11 @@ substitutes an arbitrary host.
 
 Create a minimal manifest and dependency-free static web example.
 
-- Refuse a non-empty target unless every planned write is conflict free.
+- Derive a conservative `dev.velox.<directory>` application ID and display name
+  from the target directory.
+- Preflight every planned path and refuse the operation if any generated file
+  already exists.
+- Remove only files and directories created by the failed invocation.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
 
