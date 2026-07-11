@@ -22,7 +22,7 @@ func TestConsumerEvidenceWorkflowPinsActionsAndAvoidsCaches(t *testing.T) {
 	if !strings.Contains(workflow, "runs-on: windows-2025") {
 		t.Fatal("consumer evidence workflow must pin the Windows runner label")
 	}
-	if !strings.Contains(workflow, "retention-days: 1") || !strings.Contains(workflow, "retention-days: 7") {
+	if !strings.Contains(workflow, "retention-days: 1") || !strings.Contains(workflow, "retention-days: 7") || !strings.Contains(workflow, "retention-days: 30") {
 		t.Fatal("consumer evidence workflow must bound release and raw-result retention")
 	}
 
@@ -58,5 +58,8 @@ func TestConsumerEvidenceWorkflowKeepsConsumerBuildCompilerFree(t *testing.T) {
 	}
 	if !strings.Contains(consumer, "scripts/measure-consumer-e2e.ps1") {
 		t.Fatal("consumer job does not invoke the end-to-end measurement contract")
+	}
+	if !strings.Contains(consumer, "scripts/summarize-consumer-e2e.ps1") || !strings.Contains(consumer, "merge-multiple: true") {
+		t.Fatal("consumer evidence workflow does not aggregate all raw sample artifacts")
 	}
 }

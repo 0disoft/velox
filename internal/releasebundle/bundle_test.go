@@ -17,8 +17,8 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	hostPath := filepath.Join(root, "input", "velox-host.exe")
 	writeReleaseFile(t, cliPath, []byte("cli-binary"))
 	writeReleaseFile(t, hostPath, []byte("host-binary"))
-	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "velox-v1.schema.json"), []byte("{}\n"))
-	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "host-metadata-v1.schema.json"), []byte("{}\n"))
+	writeReleaseSchemas(t, sourceRoot)
+	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "consumer-e2e-v1.schema.json"), []byte("must-not-ship\n"))
 	writeReleaseFile(t, filepath.Join(sourceRoot, "THIRD_PARTY_NOTICES.md"), []byte("notices\n"))
 
 	first, err := Build(Options{CLIPath: cliPath, HostPath: hostPath, SourceRoot: sourceRoot, OutputRoot: filepath.Join(root, "first")})
@@ -50,8 +50,11 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 6 {
+	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 9 {
 		t.Fatalf("unexpected release manifest: %+v", manifest)
+	}
+	if _, err := os.Stat(filepath.Join(first.Directory, "schema", "consumer-e2e-v1.schema.json")); !os.IsNotExist(err) {
+		t.Fatalf("maintainer-only schema shipped in consumer release: %v", err)
 	}
 	for index := 1; index < len(manifest.Artifacts); index++ {
 		if manifest.Artifacts[index-1].File >= manifest.Artifacts[index].File {
@@ -67,7 +70,7 @@ func TestBuildReplacesExistingReleaseAtomically(t *testing.T) {
 	hostPath := filepath.Join(root, "velox-host.exe")
 	writeReleaseFile(t, cliPath, []byte("cli"))
 	writeReleaseFile(t, hostPath, []byte("host"))
-	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "one.schema.json"), []byte("{}"))
+	writeReleaseSchemas(t, sourceRoot)
 	writeReleaseFile(t, filepath.Join(sourceRoot, "THIRD_PARTY_NOTICES.md"), []byte("notices"))
 	outputRoot := filepath.Join(root, "out")
 	if _, err := Build(Options{CLIPath: cliPath, HostPath: hostPath, SourceRoot: sourceRoot, OutputRoot: outputRoot}); err != nil {
@@ -83,6 +86,27 @@ func TestBuildReplacesExistingReleaseAtomically(t *testing.T) {
 	}
 	if first.ArchiveSHA256 != second.ArchiveSHA256 {
 		t.Fatalf("replacement changed archive: %s != %s", first.ArchiveSHA256, second.ArchiveSHA256)
+	}
+}
+
+func TestBuildFailsWhenRequiredReleaseSchemaIsMissing(t *testing.T) {
+	root := t.TempDir()
+	sourceRoot := filepath.Join(root, "source")
+	cliPath := filepath.Join(root, "velox.exe")
+	hostPath := filepath.Join(root, "velox-host.exe")
+	writeReleaseFile(t, cliPath, []byte("cli"))
+	writeReleaseFile(t, hostPath, []byte("host"))
+	writeReleaseFile(t, filepath.Join(sourceRoot, "THIRD_PARTY_NOTICES.md"), []byte("notices"))
+
+	if _, err := Build(Options{CLIPath: cliPath, HostPath: hostPath, SourceRoot: sourceRoot, OutputRoot: filepath.Join(root, "out")}); err == nil {
+		t.Fatal("expected missing required release schema to fail")
+	}
+}
+
+func writeReleaseSchemas(t *testing.T, sourceRoot string) {
+	t.Helper()
+	for _, name := range releaseSchemaFiles {
+		writeReleaseFile(t, filepath.Join(sourceRoot, "schema", name), []byte("{}\n"))
 	}
 }
 

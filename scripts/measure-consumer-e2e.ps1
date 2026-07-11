@@ -17,6 +17,8 @@ param(
 
     [string] $ExpectedReleaseSha256 = '',
 
+    [string] $SampleId = 'local',
+
     [string] $SchemaPath = 'schema/consumer-e2e-v1.schema.json'
 )
 
@@ -125,7 +127,7 @@ try {
     }
     $cli = $cliFiles[0].FullName
     $releaseDirectory = [System.IO.Path]::GetDirectoryName($cli)
-    foreach ($requiredReleaseFile in @('release-manifest.json', 'schema/consumer-e2e-v1.schema.json')) {
+    foreach ($requiredReleaseFile in @('release-manifest.json', 'schema/velox-v1.schema.json')) {
         if (-not (Test-Path -LiteralPath (Join-Path $releaseDirectory $requiredReleaseFile) -PathType Leaf)) {
             throw "Release archive is missing $requiredReleaseFile."
         }
@@ -160,6 +162,7 @@ try {
         schemaVersion = 'velox.consumer-e2e/v1'
         scope = 'checkout-complete-to-portable-zip'
         evidenceLevel = if ($AcquisitionMode -eq 'github-actions-artifact') { 'hosted-runner-evidence' } else { 'local-contract-smoke' }
+        sampleId = $SampleId
         outcome = 'success'
         startedAtUtc = $startedAt.ToString('o')
         finishedAtUtc = $finishedAt.ToString('o')
@@ -219,6 +222,7 @@ try {
         schemaVersion = 'velox.consumer-e2e/v1'
         scope = 'checkout-complete-to-portable-zip'
         evidenceLevel = if ($AcquisitionMode -eq 'github-actions-artifact') { 'hosted-runner-evidence' } else { 'local-contract-smoke' }
+        sampleId = $SampleId
         outcome = 'failure'
         startedAtUtc = $startedAt.ToString('o')
         finishedAtUtc = $finishedAt.ToString('o')

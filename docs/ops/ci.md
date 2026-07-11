@@ -10,6 +10,12 @@ release artifact, then passes that exact ZIP to isolated consumer jobs. Pull
 requests and manual dispatches run one contract sample. The weekly schedule
 runs ten independent consumer jobs.
 
+After consumer jobs finish, an always-run summary job downloads every available
+raw result, rejects duplicate sample IDs, preserves failures and missing sample
+counts, and calculates minimum, p50, p95, and maximum over successful samples.
+The summary job fails when a sample is missing, failed, or points at a different
+release digest.
+
 The consumer clock starts after checkout and before artifact download. It ends
 after release extraction, dependency-free project initialization, build, and
 portable ZIP inspection. Maintainer compilation happens in a different job and
@@ -69,6 +75,7 @@ unbounded storage.
 The intermediate unsigned release artifact is retained for one day. Raw
 consumer result JSON is retained for seven days. Failed measurement jobs upload
 their structured failure result when the script reached result serialization.
+The generated summary is retained for 30 days.
 
 The workflow pins checkout and artifact actions to immutable commit SHAs. It
 also pins `setup-go`, reads the Go version from `go.mod`, and disables its

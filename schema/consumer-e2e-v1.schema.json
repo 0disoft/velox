@@ -4,11 +4,12 @@
   "title": "Velox consumer end-to-end measurement v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "scope", "evidenceLevel", "outcome", "startedAtUtc", "finishedAtUtc", "durationMs", "acquisition", "release", "fixture", "build", "environment", "measurement", "error"],
+  "required": ["schemaVersion", "scope", "evidenceLevel", "sampleId", "outcome", "startedAtUtc", "finishedAtUtc", "durationMs", "acquisition", "release", "fixture", "build", "environment", "measurement", "error"],
   "properties": {
     "schemaVersion": { "const": "velox.consumer-e2e/v1" },
     "scope": { "const": "checkout-complete-to-portable-zip" },
     "evidenceLevel": { "enum": ["local-contract-smoke", "hosted-runner-evidence"] },
+    "sampleId": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,64}$" },
     "outcome": { "enum": ["success", "failure"] },
     "startedAtUtc": { "type": "string", "format": "date-time" },
     "finishedAtUtc": { "type": "string", "format": "date-time" },

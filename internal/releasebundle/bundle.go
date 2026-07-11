@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/0disoft/velox/internal/archive"
 	"github.com/0disoft/velox/internal/buildinfo"
@@ -23,6 +22,14 @@ const (
 	SchemaVersion    = "velox.release/v1"
 	TargetWindowsX64 = "windows-x64"
 )
+
+var releaseSchemaFiles = []string{
+	"build-result-v1.schema.json",
+	"host-metadata-v1.schema.json",
+	"release-manifest-v1.schema.json",
+	"runtime-config-v1.schema.json",
+	"velox-v1.schema.json",
+}
 
 type Options struct {
 	CLIPath    string
@@ -108,18 +115,11 @@ func Build(options Options) (Result, error) {
 
 	artifacts := []Artifact{cliArtifact, hostArtifact}
 	schemaRoot := filepath.Join(options.SourceRoot, "schema")
-	schemaEntries, err := os.ReadDir(schemaRoot)
-	if err != nil {
-		return Result{}, fmt.Errorf("read schemas: %w", err)
-	}
-	for _, entry := range schemaEntries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".schema.json") {
-			continue
-		}
-		relative := filepath.ToSlash(filepath.Join("schema", entry.Name()))
-		artifact, err := copyArtifact(filepath.Join(schemaRoot, entry.Name()), filepath.Join(stageDirectory, filepath.FromSlash(relative)), relative)
+	for _, schemaFile := range releaseSchemaFiles {
+		relative := filepath.ToSlash(filepath.Join("schema", schemaFile))
+		artifact, err := copyArtifact(filepath.Join(schemaRoot, schemaFile), filepath.Join(stageDirectory, filepath.FromSlash(relative)), relative)
 		if err != nil {
-			return Result{}, fmt.Errorf("package schema %s: %w", entry.Name(), err)
+			return Result{}, fmt.Errorf("package schema %s: %w", schemaFile, err)
 		}
 		artifacts = append(artifacts, artifact)
 	}

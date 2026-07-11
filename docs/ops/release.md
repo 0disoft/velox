@@ -39,7 +39,10 @@ Nightly distribution is not planned during the initial project stage.
 - Provenance before public alpha.
 
 The current local bundle includes the CLI, unchanged host, strict host
-metadata, JSON schemas, release manifest, and third-party notices. SBOM,
+metadata, the five product JSON schemas, release manifest, and third-party
+notices. The release builder uses an explicit schema allowlist and fails when a
+required product schema is missing. Benchmark and CI evidence schemas remain
+maintainer contracts and are not copied into the consumer archive. SBOM,
 signatures, provenance, compatibility notes, and public checksums remain alpha
 gates rather than claimed M1 output.
 

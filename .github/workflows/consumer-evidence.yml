@@ -9,6 +9,7 @@ on:
       - "third_party/**"
       - "schema/**"
       - "scripts/measure-consumer-e2e.ps1"
+      - "scripts/summarize-consumer-e2e.ps1"
       - "go.mod"
       - "go.sum"
       - "THIRD_PARTY_NOTICES.md"
@@ -120,7 +121,8 @@ jobs:
             -ResultPath ".ci/results/consumer-e2e-${{ matrix.sample }}.json" `
             -StartedAtUtcTicks ([long] $env:VELOX_E2E_STARTED_TICKS) `
             -AcquisitionMode 'github-actions-artifact' `
-            -ExpectedReleaseSha256 '${{ needs.release.outputs.release_sha256 }}'
+            -ExpectedReleaseSha256 '${{ needs.release.outputs.release_sha256 }}' `
+            -SampleId '${{ matrix.sample }}'
 
       - name: Upload raw result
         if: always()
@@ -129,4 +131,42 @@ jobs:
           name: consumer-e2e-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.sample }}
           path: .ci/results/consumer-e2e-${{ matrix.sample }}.json
           retention-days: 7
+          if-no-files-found: warn
+
+  summary:
+    name: Consumer summary
+    if: always() && needs.release.result == 'success'
+    needs: [release, consumer]
+    runs-on: windows-2025
+    timeout-minutes: 3
+    steps:
+      - name: Check out summary contract
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Download raw results
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          pattern: consumer-e2e-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: .ci/raw
+          merge-multiple: true
+
+      - name: Summarize results
+        shell: pwsh
+        env:
+          EXPECTED_SAMPLES: ${{ github.event_name == 'schedule' && '10' || '1' }}
+        run: |
+          & scripts/summarize-consumer-e2e.ps1 `
+            -ResultsRoot '.ci/raw' `
+            -ResultPath '.ci/summary/consumer-e2e-summary.json' `
+            -ExpectedSamples ([int] $env:EXPECTED_SAMPLES)
+
+      - name: Upload summary
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: consumer-e2e-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci/summary/consumer-e2e-summary.json
+          retention-days: 30
           if-no-files-found: warn

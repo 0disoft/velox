@@ -161,6 +161,13 @@ Actions steps and processes. The nested build-command duration still uses a
 monotonic `Stopwatch`. Results must therefore retain both clocks and must not
 compare local smoke duration with hosted evidence.
 
+`scripts/summarize-consumer-e2e.ps1` validates every raw result before
+aggregation. It reports expected, observed, successful, failed, and missing
+sample counts; rejects duplicate sample IDs; requires one release archive
+digest; and calculates nearest-rank p50 and p95 only from successful samples.
+The summary still records failed samples and returns non-zero when evidence is
+incomplete.
+
 ## Regression Policy
 
 Before a baseline exists, changes must report that performance is unmeasured.

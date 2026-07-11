@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/consumer-e2e-summary/v1.json",
+  "title": "Velox consumer end-to-end summary v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scope", "evidenceLevel", "expectedSamples", "observedSamples", "successCount", "failureCount", "missingCount", "releaseArchiveSha256", "statistics", "samples"],
+  "properties": {
+    "schemaVersion": { "const": "velox.consumer-e2e-summary/v1" },
+    "scope": { "const": "checkout-complete-to-portable-zip" },
+    "evidenceLevel": { "enum": ["local-contract-summary", "hosted-runner-summary"] },
+    "expectedSamples": { "type": "integer", "minimum": 1 },
+    "observedSamples": { "type": "integer", "minimum": 0 },
+    "successCount": { "type": "integer", "minimum": 0 },
+    "failureCount": { "type": "integer", "minimum": 0 },
+    "missingCount": { "type": "integer", "minimum": 0 },
+    "releaseArchiveSha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "statistics": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["minMs", "p50Ms", "p95Ms", "maxMs"],
+      "properties": {
+        "minMs": { "type": "number", "minimum": 0 },
+        "p50Ms": { "type": "number", "minimum": 0 },
+        "p95Ms": { "type": "number", "minimum": 0 },
+        "maxMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sampleId", "outcome", "durationMs", "failurePhase"],
+        "properties": {
+          "sampleId": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,64}$" },
+          "outcome": { "enum": ["success", "failure"] },
+          "durationMs": { "type": "number", "minimum": 0 },
+          "failurePhase": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

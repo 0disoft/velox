@@ -54,6 +54,11 @@ The parent workspace command contract currently provides these bounded intents:
   evidence.
 - `velox_consumer_e2e_failure_smoke` injects a release-checksum mismatch and
   requires a schema-valid `release-verification` failure result.
+- `velox_consumer_e2e_summary_smoke` aggregates one local raw result and
+  validates the summary schema without promoting it to hosted evidence.
+- `velox_consumer_e2e_summary_failure_smoke` aggregates one success and one
+  injected failure, requires the summary command to fail, and verifies the
+  failed sample remains in the written summary.
 - `velox_workflow_validate` parses the repository-owned GitHub Actions workflow
   with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
