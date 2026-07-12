@@ -115,15 +115,16 @@ func Create(options Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, fail(ErrorHost, fmt.Errorf("resolve host template: %w", err))
 	}
-	if err := rejectRedirectedPath(hostPath); err != nil {
-		return Plan{}, fail(ErrorHost, fmt.Errorf("validate host template path: %w", err))
-	}
 	hostInfo, err := os.Lstat(hostPath)
 	if err != nil {
 		return Plan{}, fail(ErrorHost, fmt.Errorf("inspect host template: %w", err))
 	}
 	if !hostInfo.Mode().IsRegular() || hostInfo.Mode()&os.ModeSymlink != 0 {
 		return Plan{}, fail(ErrorHost, errors.New("host template must be a regular file"))
+	}
+	hostPath, err = canonicalPath(hostPath)
+	if err != nil {
+		return Plan{}, fail(ErrorHost, fmt.Errorf("canonicalize host template path: %w", err))
 	}
 	hostDigest, err := hashFile(hostPath)
 	if err != nil {
@@ -136,8 +137,16 @@ func Create(options Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, fail(ErrorHost, fmt.Errorf("resolve host metadata: %w", err))
 	}
-	if err := rejectRedirectedPath(metadataPath); err != nil {
-		return Plan{}, fail(ErrorHost, fmt.Errorf("validate host metadata path: %w", err))
+	metadataInfo, err := os.Lstat(metadataPath)
+	if err != nil {
+		return Plan{}, fail(ErrorHost, fmt.Errorf("inspect host metadata path: %w", err))
+	}
+	if !metadataInfo.Mode().IsRegular() || metadataInfo.Mode()&os.ModeSymlink != 0 {
+		return Plan{}, fail(ErrorHost, errors.New("host metadata must be a regular file"))
+	}
+	metadataPath, err = canonicalPath(metadataPath)
+	if err != nil {
+		return Plan{}, fail(ErrorHost, fmt.Errorf("canonicalize host metadata path: %w", err))
 	}
 	hostMetadata, err := hostmeta.Load(metadataPath)
 	if err != nil {
@@ -158,10 +167,15 @@ func Create(options Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, fail(ErrorConfig, fmt.Errorf("resolve output root: %w", err))
 	}
-	if err := rejectRedirectedPath(outputRoot); err != nil {
-		return Plan{}, fail(ErrorConfig, fmt.Errorf("validate output root: %w", err))
+	outputRoot, err = canonicalPath(outputRoot)
+	if err != nil {
+		return Plan{}, fail(ErrorConfig, fmt.Errorf("canonicalize output root: %w", err))
 	}
-	if containsPath(resolved.AssetRoot, outputRoot) || containsPath(outputRoot, resolved.AssetRoot) {
+	canonicalAssetRoot, err := canonicalPath(resolved.AssetRoot)
+	if err != nil {
+		return Plan{}, fail(ErrorAsset, fmt.Errorf("canonicalize asset root: %w", err))
+	}
+	if containsPath(canonicalAssetRoot, outputRoot) || containsPath(outputRoot, canonicalAssetRoot) {
 		return Plan{}, fail(ErrorConfig, errors.New("output root and asset root must not contain each other"))
 	}
 	applicationKey := applicationKey(resolved.App.ID)
@@ -209,8 +223,12 @@ func applicationKey(appID string) string {
 }
 
 func (plan Plan) RevalidateInputs() error {
-	if err := rejectRedirectedPath(plan.outputRoot); err != nil {
+	currentOutputRoot, err := canonicalPath(plan.outputRoot)
+	if err != nil {
 		return fail(ErrorConfig, fmt.Errorf("revalidate output root: %w", err))
+	}
+	if !samePath(currentOutputRoot, plan.outputRoot) {
+		return fail(ErrorConfig, errors.New("output root target changed after build planning"))
 	}
 	assets, err := assettree.Scan(plan.manifest.AssetRoot)
 	if err != nil {
@@ -230,32 +248,38 @@ func containsPath(root, candidate string) bool {
 	return relative == "." || (relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)))
 }
 
-func rejectRedirectedPath(path string) error {
+func canonicalPath(path string) (string, error) {
 	existing := filepath.Clean(path)
+	missing := make([]string, 0, 4)
 	for {
 		_, err := os.Lstat(existing)
 		if err == nil {
 			break
 		}
 		if !errors.Is(err, os.ErrNotExist) {
-			return err
+			return "", err
 		}
 		parent := filepath.Dir(existing)
 		if parent == existing {
-			return err
+			return "", err
 		}
+		missing = append(missing, filepath.Base(existing))
 		existing = parent
 	}
 	resolved, err := filepath.EvalSymlinks(existing)
 	if err != nil {
-		return err
+		return "", err
 	}
-	left := filepath.Clean(existing)
-	right := filepath.Clean(resolved)
-	if left != right && !strings.EqualFold(left, right) {
-		return fmt.Errorf("path traverses a symbolic link or reparse point at %s", filepath.Base(existing))
+	for index := len(missing) - 1; index >= 0; index-- {
+		resolved = filepath.Join(resolved, missing[index])
 	}
-	return nil
+	return filepath.Clean(resolved), nil
+}
+
+func samePath(left, right string) bool {
+	left = filepath.Clean(left)
+	right = filepath.Clean(right)
+	return left == right || strings.EqualFold(left, right)
 }
 
 func hashFile(path string) (string, error) {

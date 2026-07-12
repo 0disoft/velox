@@ -67,23 +67,53 @@ func TestCreateUsesFullApplicationIDAsCollisionFreeOutputKey(t *testing.T) {
 	}
 }
 
-func TestCreateRejectsRedirectedOutputRoot(t *testing.T) {
+func TestCreateCanonicalizesRedirectedOutputAncestor(t *testing.T) {
 	root := t.TempDir()
 	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
 	writePlanFile(t, filepath.Join(root, "velox-host.exe"), "host")
 	writePlanHostMetadata(t, root, "host")
 	writePlanFile(t, filepath.Join(root, "velox.json"), `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1"}}`)
+	target := t.TempDir()
 	redirect := filepath.Join(root, "redirect")
-	if err := os.Symlink(t.TempDir(), redirect); err != nil {
+	if err := os.Symlink(target, redirect); err != nil {
 		t.Skipf("symbolic links unavailable: %v", err)
 	}
-	_, err := Create(Options{
+	plan, err := Create(Options{
 		ManifestPath: filepath.Join(root, "velox.json"),
 		HostPath:     filepath.Join(root, "velox-host.exe"),
 		OutputRoot:   filepath.Join(redirect, "dist"),
 	})
-	if err == nil {
-		t.Fatal("Create() accepted redirected output root")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(target, "dist")
+	if !samePath(plan.Snapshot().OutputRoot, want) {
+		t.Fatalf("output root = %q, want %q", plan.Snapshot().OutputRoot, want)
+	}
+}
+
+func TestCreateCanonicalizesRedirectedHostAncestor(t *testing.T) {
+	root := t.TempDir()
+	target := t.TempDir()
+	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
+	writePlanFile(t, filepath.Join(root, "velox.json"), `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1"}}`)
+	writePlanFile(t, filepath.Join(target, "velox-host.exe"), "host")
+	writePlanHostMetadata(t, target, "host")
+	redirect := filepath.Join(root, "release")
+	if err := os.Symlink(target, redirect); err != nil {
+		t.Skipf("symbolic links unavailable: %v", err)
+	}
+	plan, err := Create(Options{
+		ManifestPath: filepath.Join(root, "velox.json"),
+		HostPath:     filepath.Join(redirect, "velox-host.exe"),
+		OutputRoot:   filepath.Join(root, "dist"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(target, "velox-host.exe")
+	if !samePath(plan.Snapshot().HostPath, want) {
+		t.Fatalf("host path = %q, want %q", plan.Snapshot().HostPath, want)
 	}
 }
 
