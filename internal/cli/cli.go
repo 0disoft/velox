@@ -152,7 +152,7 @@ func runInit(args []string, dependencies Dependencies) int {
 		return emitFailure(dependencies, "init", *jsonOutput, 6, "INIT_FAILED", "Project initialization failed.", err)
 	}
 	if *jsonOutput {
-		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "init", Result: result, Diagnostics: []Diagnostic{}})
+		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "init", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !*quiet {
 		fmt.Fprintf(dependencies.Stdout, "Initialized %s in %s\n", result.AppID, result.Directory)
 	}
@@ -215,11 +215,13 @@ func runDoctor(args []string, dependencies Dependencies) int {
 	})
 	if failure != nil {
 		if options.json {
-			emitJSON(dependencies.Stdout, Envelope{
+			if err := emitJSON(dependencies.Stdout, Envelope{
 				SchemaVersion: 1, OK: false, Command: "doctor", Result: result,
 				Error:       &ErrorResult{Code: failure.Code, Message: failure.Message},
 				Diagnostics: []Diagnostic{{Code: failure.Code, Severity: "error", Category: category(failure.Code), Message: failure.Message}},
-			})
+			}); err != nil {
+				return 10
+			}
 		} else {
 			printDoctor(dependencies.Stdout, result)
 			fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", failure.Code, failure.Message)
@@ -227,7 +229,7 @@ func runDoctor(args []string, dependencies Dependencies) int {
 		return failure.ExitCode
 	}
 	if options.json {
-		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "doctor", Result: result, Diagnostics: []Diagnostic{}})
+		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "doctor", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !options.quiet {
 		printDoctor(dependencies.Stdout, result)
 	}
@@ -275,7 +277,7 @@ func runProject(args []string, dependencies Dependencies) int {
 		return emitFailure(dependencies, "run", options.json, 6, "RUNTIME_HOST_START_FAILED", "Host process could not be executed cleanly.", err)
 	}
 	if options.json {
-		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "run", Result: result, Diagnostics: []Diagnostic{}})
+		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "run", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !options.quiet {
 		fmt.Fprintln(dependencies.Stdout, "Host exited cleanly.")
 	}
@@ -302,7 +304,7 @@ func runValidate(args []string, dependencies Dependencies) int {
 	}
 	result := validateResult(plan)
 	if options.json {
-		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "validate", Result: result, Diagnostics: []Diagnostic{}})
+		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "validate", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !options.quiet {
 		fmt.Fprintf(dependencies.Stdout, "Valid: %s (%d assets, %d bytes)\n", result.AppID, result.AssetFiles, result.AssetBytes)
 	}
@@ -339,7 +341,7 @@ func runBuild(args []string, dependencies Dependencies) int {
 		ArchiveBytes: result.ArchiveSize, ArchiveSHA256: result.ArchiveSHA256,
 	}
 	if options.json {
-		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "build", Result: presented, Diagnostics: []Diagnostic{}})
+		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "build", Result: presented, Diagnostics: []Diagnostic{}})
 	} else if !options.quiet {
 		fmt.Fprintf(dependencies.Stdout, "Built %s\nArchive: %s\nSHA-256: %s\n", presented.AppID, presented.Archive, presented.ArchiveSHA256)
 	}
@@ -368,7 +370,7 @@ func runVersion(args []string, dependencies Dependencies) int {
 		RuntimeVersions: []int{runtimeconfig.Version}, HostContracts: []int{hostmeta.ContractVersion}, Targets: []string{buildplan.TargetWindowsX64},
 	}
 	if *jsonOutput {
-		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "version", Result: result, Diagnostics: []Diagnostic{}})
+		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "version", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !*quiet {
 		fmt.Fprintf(dependencies.Stdout, "Velox %s\nManifest: v%d\nRuntime: v%d\nTarget: %s\n", buildinfo.Version, manifest.Version, runtimeconfig.Version, buildplan.TargetWindowsX64)
 	}
@@ -397,7 +399,7 @@ func runInspect(args []string, dependencies Dependencies) int {
 		return emitFailure(dependencies, "inspect", *jsonOutput, 3, "ARTIFACT_INVALID", "Artifact validation failed.", err)
 	}
 	if *jsonOutput {
-		emitJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "inspect", Result: result, Diagnostics: []Diagnostic{}})
+		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "inspect", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !*quiet {
 		fmt.Fprintf(dependencies.Stdout, "Valid %s artifact: %s %s (%d files, %d bytes)\n", result.Kind, result.App.ID, result.App.Version, result.PortableFiles, result.PortableBytes)
 	}
@@ -450,21 +452,30 @@ func emitPlanError(dependencies Dependencies, command string, jsonOutput bool, e
 
 func emitFailure(dependencies Dependencies, command string, jsonOutput bool, exitCode int, code, message string, detail error) int {
 	if jsonOutput {
-		emitJSON(dependencies.Stdout, Envelope{
+		if err := emitJSON(dependencies.Stdout, Envelope{
 			SchemaVersion: 1, OK: false, Command: command,
 			Error:       &ErrorResult{Code: code, Message: message},
 			Diagnostics: []Diagnostic{{Code: code, Severity: "error", Category: category(code), Message: message}},
-		})
+		}); err != nil {
+			return 10
+		}
 	} else {
 		fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", code, safeMessage(detail))
 	}
 	return exitCode
 }
 
-func emitJSON(writer io.Writer, value Envelope) {
+func emitSuccessJSON(writer io.Writer, value Envelope) int {
+	if err := emitJSON(writer, value); err != nil {
+		return 10
+	}
+	return 0
+}
+
+func emitJSON(writer io.Writer, value Envelope) error {
 	encoder := json.NewEncoder(writer)
 	encoder.SetEscapeHTML(false)
-	_ = encoder.Encode(value)
+	return encoder.Encode(value)
 }
 
 func category(code string) string {

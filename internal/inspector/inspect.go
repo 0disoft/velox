@@ -20,8 +20,11 @@ import (
 )
 
 const (
-	maxArchiveFiles  = 100_000
-	maxMetadataBytes = 1 << 20
+	maxArchiveFiles       = 100_000
+	maxMetadataBytes      = 1 << 20
+	maxArchiveEntryBytes  = 512 << 20
+	maxArchiveTotalBytes  = 1 << 30
+	maxArchiveExpandRatio = 1_000
 )
 
 type Result struct {
@@ -115,6 +118,9 @@ func inspectZIP(archivePath string) (Result, error) {
 	defer reader.Close()
 	if len(reader.File) == 0 || len(reader.File) > maxArchiveFiles {
 		return Result{}, fmt.Errorf("artifact ZIP file count %d is outside limits", len(reader.File))
+	}
+	if err := validateArchiveBudget(reader.File); err != nil {
+		return Result{}, err
 	}
 
 	entries := make(map[string]*zip.File, len(reader.File))
@@ -214,6 +220,26 @@ func inspectZIP(archivePath string) (Result, error) {
 		return Result{}, errors.New("runtime entry point is missing or unsafe")
 	}
 	return result("zip", report, totalBytes), nil
+}
+
+func validateArchiveBudget(files []*zip.File) error {
+	var total uint64
+	for _, file := range files {
+		if file.UncompressedSize64 > maxArchiveEntryBytes {
+			return fmt.Errorf("ZIP entry exceeds uncompressed size limit: %s", file.Name)
+		}
+		if total > maxArchiveTotalBytes-file.UncompressedSize64 {
+			return errors.New("artifact ZIP exceeds total uncompressed size limit")
+		}
+		total += file.UncompressedSize64
+		if file.UncompressedSize64 > 0 && file.CompressedSize64 == 0 {
+			return fmt.Errorf("ZIP entry has an invalid compression size: %s", file.Name)
+		}
+		if file.CompressedSize64 > 0 && file.UncompressedSize64/file.CompressedSize64 > maxArchiveExpandRatio {
+			return fmt.Errorf("ZIP entry exceeds compression ratio limit: %s", file.Name)
+		}
+	}
+	return nil
 }
 
 func validateAssets(report buildreport.Report, assets assettree.Tree) error {

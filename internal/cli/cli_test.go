@@ -31,6 +31,20 @@ func TestValidateJSONContract(t *testing.T) {
 	}
 }
 
+func TestSuccessfulJSONWriteFailureReturnsInternalExit(t *testing.T) {
+	root, config, host := cliFixture(t)
+	exitCode := Run([]string{"validate", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: failingWriter{}, Stderr: io.Discard, HostPath: host,
+	})
+	if exitCode != 10 {
+		t.Fatalf("exit = %d, want 10", exitCode)
+	}
+}
+
+type failingWriter struct{}
+
+func (failingWriter) Write([]byte) (int, error) { return 0, errors.New("write failed") }
+
 func TestBuildJSONContractAndOutputs(t *testing.T) {
 	root, config, host := cliFixture(t)
 	var stdout, stderr bytes.Buffer

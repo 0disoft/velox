@@ -65,6 +65,29 @@ func TestInspectRejectsUnsafeZIPPaths(t *testing.T) {
 	}
 }
 
+func TestValidateArchiveBudgetRejectsUnsafeEntries(t *testing.T) {
+	tests := []struct {
+		name string
+		file *zip.File
+	}{
+		{
+			name: "oversized entry",
+			file: &zip.File{FileHeader: zip.FileHeader{Name: "app/large.bin", UncompressedSize64: maxArchiveEntryBytes + 1, CompressedSize64: maxArchiveEntryBytes + 1}},
+		},
+		{
+			name: "expansion ratio",
+			file: &zip.File{FileHeader: zip.FileHeader{Name: "app/bomb.bin", UncompressedSize64: maxArchiveExpandRatio + 1, CompressedSize64: 1}},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if err := validateArchiveBudget([]*zip.File{test.file}); err == nil {
+				t.Fatal("validateArchiveBudget() accepted an unsafe entry")
+			}
+		})
+	}
+}
+
 func buildFixture(t *testing.T) builder.Result {
 	t.Helper()
 	root := t.TempDir()
