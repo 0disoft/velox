@@ -127,10 +127,13 @@ The harness records controlled local observations under
 - descendants of the measured CLI process matching compiler or package-manager
   executable names.
 
-Process tracing uses Windows process-start events. If both WMI and CIM event
-subscriptions are unavailable, that gate is `unverified`, never `pass`. The
-three-sample smoke preserves this diagnostic result, while the ten-sample gate
-requires every gate to pass.
+Process tracing prefers Windows WMI or CIM process-start events. If the runner
+denies those subscriptions, a non-administrator Win32 Toolhelp snapshot poller
+samples process identity and parent relationships every two milliseconds. If
+all trace backends are unavailable, that gate is `unverified`, never `pass`.
+The trace covers exactly one measured `velox build` process and closes before
+artifact inspection or version queries. The three-sample smoke preserves any
+diagnostic result, while the ten-sample gate requires every gate to pass.
 
 `workflowDeclaredActionsCacheUploadBytes` is a workflow-contract field, not a
 local measurement. A future hosted workflow must contain no cache action and

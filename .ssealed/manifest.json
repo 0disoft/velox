@@ -1,7 +1,7 @@
 {
   "tool": "ssealed",
   "version": "0.6.11",
-  "generatedAt": "2026-07-12T05:33:11.488Z",
+  "generatedAt": "2026-07-12T06:29:00.503Z",
   "scope": "general",
   "profile": "cli-tool",
   "addons": [],
@@ -593,13 +593,13 @@
     },
     {
       "path": "docs/engineering/03-performance-budget.md",
-      "checksum": "sha256:b298ceddf63e2eb605ab7ec0d3a94a9d4e3add7d4d3d9af3660b035b04791b9d",
+      "checksum": "sha256:d237511bd955b4fac0a8613ea41eab0b4929a4fe9786e1efa06b689a18bd18c4",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:9f0f0bcbc34ea55f930eace525a3961d805b5961604f9ac787861d46c160f180",
-      "acceptedChecksum": "sha256:b298ceddf63e2eb605ab7ec0d3a94a9d4e3add7d4d3d9af3660b035b04791b9d",
+      "acceptedChecksum": "sha256:d237511bd955b4fac0a8613ea41eab0b4929a4fe9786e1efa06b689a18bd18c4",
       "generatedChecksum": "sha256:9f0f0bcbc34ea55f930eace525a3961d805b5961604f9ac787861d46c160f180"
     },
     {
@@ -670,13 +670,13 @@
     },
     {
       "path": "docs/ops/ci.md",
-      "checksum": "sha256:48adfff6dd31c95f7487f0b067e8a8bed014c18df3a590929f00854e8a44577a",
+      "checksum": "sha256:07d60502ad868b94c6e9ed999708d0db4ccf859bd27a68b0a215e2e49bd949a3",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:22ccaa9f1a1371db7743291eebeef85d477ff5bc0838dde24a166722e8bdc525",
-      "acceptedChecksum": "sha256:48adfff6dd31c95f7487f0b067e8a8bed014c18df3a590929f00854e8a44577a",
+      "acceptedChecksum": "sha256:07d60502ad868b94c6e9ed999708d0db4ccf859bd27a68b0a215e2e49bd949a3",
       "generatedChecksum": "sha256:22ccaa9f1a1371db7743291eebeef85d477ff5bc0838dde24a166722e8bdc525"
     },
     {

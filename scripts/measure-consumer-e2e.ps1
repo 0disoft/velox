@@ -156,6 +156,7 @@ try {
     } finally {
         $buildTimer.Stop()
     }
+    $processTrace = Complete-VeloxProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli))
 
     $phase = 'output-verification'
     $appId = [string] $initialized.result.appId
@@ -167,7 +168,6 @@ try {
     })
     $finishedAt = [DateTime]::UtcNow
     $durationMs = [Math]::Round(($finishedAt - $startedAt).TotalMilliseconds, 3)
-    $processTrace = Complete-VeloxProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli))
     $releaseVersion = [string] (Invoke-VeloxJson -Executable $cli -Arguments @('version', '--json') -StderrPath $stderrPath).result.version
 
     $phase = 'result-validation'

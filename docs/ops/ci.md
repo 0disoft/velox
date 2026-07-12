@@ -18,8 +18,11 @@ release digest.
 
 Each consumer build traces child-process starts. Hosted samples are rejected
 unless the measured CLI process is identified and no compiler or package
-manager descendant appears. A denied WMI/CIM subscription is `unverified`, not
-a pass, and makes hosted evidence fail.
+manager descendant appears. The tracer prefers WMI or CIM process-start events
+and falls back to a non-administrator Win32 Toolhelp snapshot poller when event
+subscriptions are unavailable. Failure of every backend is `unverified`, not a
+pass, and makes hosted evidence fail. The trace closes immediately after the
+single measured `velox build` process; later inspection commands are excluded.
 
 The consumer clock starts after checkout and before artifact download. It ends
 after release extraction, dependency-free project initialization, build, and
