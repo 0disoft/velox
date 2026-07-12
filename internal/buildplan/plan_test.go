@@ -51,6 +51,22 @@ func TestCreateRejectsOutputContainingAssets(t *testing.T) {
 	}
 }
 
+func TestCreateUsesFullApplicationIDAsCollisionFreeOutputKey(t *testing.T) {
+	root := t.TempDir()
+	host := []byte("host")
+	writePlanFile(t, filepath.Join(root, "release", "velox-host.exe"), string(host))
+	writePlanHostMetadata(t, filepath.Join(root, "release"), string(host))
+	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
+	writePlanFile(t, filepath.Join(root, "velox.json"), `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1"}}`)
+	plan, err := Create(Options{ManifestPath: filepath.Join(root, "velox.json"), HostPath: filepath.Join(root, "release", "velox-host.exe")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Snapshot().ApplicationKey != "com.example.hello" {
+		t.Fatalf("application key = %q", plan.Snapshot().ApplicationKey)
+	}
+}
+
 func TestCreateRejectsRedirectedOutputRoot(t *testing.T) {
 	root := t.TempDir()
 	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
@@ -74,7 +90,7 @@ func TestCreateRejectsRedirectedOutputRoot(t *testing.T) {
 func writePlanHostMetadata(t *testing.T, root, host string) {
 	t.Helper()
 	digest := sha256.Sum256([]byte(host))
-	body := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.3.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
+	body := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.4.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
 	writePlanFile(t, filepath.Join(root, "velox-host.json"), body)
 }
 

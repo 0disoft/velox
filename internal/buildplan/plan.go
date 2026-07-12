@@ -205,8 +205,21 @@ func (plan Plan) Snapshot() Snapshot {
 }
 
 func applicationKey(appID string) string {
-	parts := strings.Split(appID, ".")
-	return parts[len(parts)-1]
+	return appID
+}
+
+func (plan Plan) RevalidateInputs() error {
+	if err := rejectRedirectedPath(plan.outputRoot); err != nil {
+		return fail(ErrorConfig, fmt.Errorf("revalidate output root: %w", err))
+	}
+	assets, err := assettree.Scan(plan.manifest.AssetRoot)
+	if err != nil {
+		return fail(ErrorAsset, fmt.Errorf("revalidate asset tree: %w", err))
+	}
+	if assets.Digest != plan.assets.Digest || assets.TotalBytes != plan.assets.TotalBytes || len(assets.Files) != len(plan.assets.Files) {
+		return fail(ErrorAsset, errors.New("asset tree changed after build planning"))
+	}
+	return nil
 }
 
 func containsPath(root, candidate string) bool {

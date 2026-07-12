@@ -75,15 +75,16 @@ Validate the project and create a portable application directory,
 machine-readable build report, and deterministic ZIP through an atomic staging
 flow.
 
-The current output names are derived from the last segment of `app.id`:
+The current output names use the complete `app.id`, preventing projects with
+the same leaf identifier from overwriting each other in a shared output root:
 
-    dist/<app>/<app>.exe
-    dist/<app>/velox.runtime.json
-    dist/<app>/web/**
-    dist/<app>/build-result.json
-    dist/<app>.zip
+    dist/<app-id>/<app-id>.exe
+    dist/<app-id>/velox.runtime.json
+    dist/<app-id>/web/**
+    dist/<app-id>/build-result.json
+    dist/<app-id>.zip
 
-The ZIP contains one top-level `<app>/` directory. File order, timestamps, and
+The ZIP contains one top-level `<app-id>/` directory. File order, timestamps, and
 portable file modes are normalized. The deterministic report contains contract
 versions, release version, identity, permissions, host and asset digests, and
 counts; it omits

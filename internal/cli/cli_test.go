@@ -52,7 +52,7 @@ func TestBuildJSONContractAndOutputs(t *testing.T) {
 	if err := json.Unmarshal(resultData, &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.ArchiveSHA256 == "" || !strings.HasSuffix(result.Archive, "hello.zip") {
+	if result.ArchiveSHA256 == "" || !strings.HasSuffix(result.Archive, "com.example.hello.zip") {
 		t.Fatalf("unexpected result: %+v", result)
 	}
 }
@@ -244,7 +244,7 @@ func TestInspectJSONContract(t *testing.T) {
 		t.Fatalf("build exit=%d stderr=%q", exitCode, buildErr.String())
 	}
 	var stdout, stderr bytes.Buffer
-	exitCode := Run([]string{"inspect", filepath.Join(root, "dist", "hello.zip"), "--json"}, Dependencies{Stdout: &stdout, Stderr: &stderr})
+	exitCode := Run([]string{"inspect", filepath.Join(root, "dist", "com.example.hello.zip"), "--json"}, Dependencies{Stdout: &stdout, Stderr: &stderr})
 	if exitCode != 0 || stderr.Len() != 0 {
 		t.Fatalf("inspect exit=%d stderr=%q", exitCode, stderr.String())
 	}
@@ -264,7 +264,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.3.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.4.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

@@ -29,6 +29,9 @@ func Build(plan buildplan.Plan) (Result, error) {
 	if err := os.MkdirAll(snapshot.OutputRoot, 0o755); err != nil {
 		return Result{}, fmt.Errorf("create output root: %w", err)
 	}
+	if err := plan.RevalidateInputs(); err != nil {
+		return Result{}, err
+	}
 	stageDirectory := filepath.Join(snapshot.OutputRoot, "."+snapshot.ApplicationKey+".staging")
 	stageArchive := filepath.Join(snapshot.OutputRoot, "."+snapshot.ApplicationKey+".zip.staging")
 	if exists(stageDirectory) || exists(stageArchive) {
@@ -98,6 +101,12 @@ func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error
 	if exists(backupDirectory) || exists(backupArchive) {
 		return errors.New("previous-output backup already exists; refusing to overwrite recovery data")
 	}
+	if err := validateExistingOutput(plan.AppDirectory, true); err != nil {
+		return fmt.Errorf("validate previous app directory: %w", err)
+	}
+	if err := validateExistingOutput(plan.ArchivePath, false); err != nil {
+		return fmt.Errorf("validate previous archive: %w", err)
+	}
 	directoryBackedUp := false
 	archiveBackedUp := false
 	if exists(plan.AppDirectory) {
@@ -134,14 +143,30 @@ func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error
 		return fmt.Errorf("promote archive: %w", err)
 	}
 	if directoryBackedUp {
-		if err := os.RemoveAll(backupDirectory); err != nil {
-			return fmt.Errorf("remove previous app backup: %w", err)
-		}
+		_ = os.RemoveAll(backupDirectory)
 	}
 	if archiveBackedUp {
-		if err := os.Remove(backupArchive); err != nil {
-			return fmt.Errorf("remove previous archive backup: %w", err)
-		}
+		_ = os.Remove(backupArchive)
+	}
+	return nil
+}
+
+func validateExistingOutput(path string, wantDirectory bool) error {
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return errors.New("output must not be a symbolic link")
+	}
+	if wantDirectory && !info.IsDir() {
+		return errors.New("output is not a directory")
+	}
+	if !wantDirectory && !info.Mode().IsRegular() {
+		return errors.New("output is not a regular file")
 	}
 	return nil
 }

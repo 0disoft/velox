@@ -43,7 +43,7 @@ func TestBuildIsDeterministicAndKeepsHostUnchanged(t *testing.T) {
 		t.Fatalf("archive is not deterministic: %s != %s", first.ArchiveSHA256, second.ArchiveSHA256)
 	}
 	sourceHost, _ := os.ReadFile(hostPath)
-	copiedHost, _ := os.ReadFile(filepath.Join(second.DirectoryPath, "hello.exe"))
+	copiedHost, _ := os.ReadFile(filepath.Join(second.DirectoryPath, "com.example.hello.exe"))
 	if !bytes.Equal(sourceHost, copiedHost) {
 		t.Fatal("packaged host bytes changed")
 	}
@@ -77,7 +77,7 @@ func TestBuildPreservesPreviousOutputWhenStagingIsOccupied(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Mkdir(filepath.Join(plan.Snapshot().OutputRoot, ".hello.staging"), 0o755); err != nil {
+	if err := os.Mkdir(filepath.Join(plan.Snapshot().OutputRoot, ".com.example.hello.staging"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := Build(plan); err == nil {
@@ -121,8 +121,37 @@ func TestBuildRejectsSourceChangesAfterPlanning(t *testing.T) {
 	if _, err := Build(plan); err == nil {
 		t.Fatal("Build() accepted an asset changed after planning")
 	}
-	if _, err := os.Stat(filepath.Join(root, "dist", "hello.zip")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, "dist", "com.example.hello.zip")); !os.IsNotExist(err) {
 		t.Fatalf("failed build promoted an archive: %v", err)
+	}
+}
+
+func TestBuildRejectsAssetsAddedAfterPlanning(t *testing.T) {
+	root, manifestPath, hostPath := fixture(t)
+	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeFixture(t, filepath.Join(root, "web", "late.js"), []byte("late\n"))
+	if _, err := Build(plan); err == nil {
+		t.Fatal("Build() silently omitted an asset added after planning")
+	}
+}
+
+func TestBuildRejectsInvalidExistingArchiveBeforePromotion(t *testing.T) {
+	root, manifestPath, hostPath := fixture(t)
+	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(plan.Snapshot().ArchivePath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Build(plan); err == nil {
+		t.Fatal("Build() accepted a directory at the final archive path")
+	}
+	if _, err := os.Stat(plan.Snapshot().AppDirectory); !os.IsNotExist(err) {
+		t.Fatalf("failed build promoted the app directory: %v", err)
 	}
 }
 
@@ -148,7 +177,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.3.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.4.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {

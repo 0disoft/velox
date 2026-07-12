@@ -159,7 +159,7 @@ try {
 
     $phase = 'output-verification'
     $appId = [string] $initialized.result.appId
-    $appKey = $appId.Substring($appId.LastIndexOf('.') + 1)
+    $appKey = $appId
     $archivePath = Join-Path $outputRoot ($appKey + '.zip')
     $inspected = Invoke-VeloxJson -Executable $cli -Arguments @('inspect', $archivePath, '--json') -StderrPath $stderrPath
     $unexpected = @(Get-ChildItem -LiteralPath $outputRoot -Force | Where-Object {

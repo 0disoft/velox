@@ -82,11 +82,11 @@ velox validate --config .\velox.json --json
 velox doctor --config .\velox.json --out .\dist --json
 velox run --config .\velox.json --out .\.velox-run --json
 velox build --config .\velox.json --out .\dist --json
-velox inspect .\dist\hello.zip --json
+velox inspect .\dist\dev.velox.hello.zip --json
 velox version --json
 ```
 
-`build` produces `dist/<app>/`, `dist/<app>.zip`, and a deterministic
+`build` produces `dist/<app-id>/`, `dist/<app-id>.zip`, and a deterministic
 `build-result.json` inside the portable directory and archive. The host bytes
 are copied unchanged. Output assembly occurs in an owned sibling staging path;
 an occupied staging or recovery path fails closed instead of deleting it.

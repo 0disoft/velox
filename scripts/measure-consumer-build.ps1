@@ -164,7 +164,7 @@ New-Item -ItemType Directory -Path $sessionRoot, $outputsRoot -Force | Out-Null
 $initialized = Invoke-VeloxJson -Arguments @('init', $projectRoot, '--json')
 $configPath = Join-Path $projectRoot 'velox.json'
 $appId = [string] $initialized.result.appId
-$appKey = $appId.Substring($appId.LastIndexOf('.') + 1)
+$appKey = $appId
 $validation = Invoke-VeloxJson -Arguments @('validate', '--config', $configPath, '--json')
 $projectBefore = Get-FileSnapshot -Root $projectRoot
 
