@@ -86,7 +86,10 @@ func TestCreateCanonicalizesRedirectedOutputAncestor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(target, "dist")
+	want, err := canonicalPath(filepath.Join(target, "dist"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !samePath(plan.Snapshot().OutputRoot, want) {
 		t.Fatalf("output root = %q, want %q", plan.Snapshot().OutputRoot, want)
 	}
@@ -111,7 +114,10 @@ func TestCreateCanonicalizesRedirectedHostAncestor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(target, "velox-host.exe")
+	want, err := canonicalPath(filepath.Join(target, "velox-host.exe"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !samePath(plan.Snapshot().HostPath, want) {
 		t.Fatalf("host path = %q, want %q", plan.Snapshot().HostPath, want)
 	}
