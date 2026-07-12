@@ -14,7 +14,7 @@ improve or protect the three priority metrics stay deferred.
 ### Deliver
 
 - Minimal pure-Go Windows x64 WebView2 host.
-- Minimal C++23 reference host.
+- A bounded C++23 reference used only for the completed host-selection decision.
 - One dependency-free hello fixture.
 - A benchmark-only ready marker.
 - Fresh-profile and warm-profile startup harness.

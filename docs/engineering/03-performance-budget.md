@@ -63,7 +63,7 @@ These are go-or-kill targets, not published performance claims.
 | Surviving intermediate files | 0 files outside declared output |
 | Hello local clean-output build command | p95 at or below 2 seconds on the pinned runner |
 | End-to-end cold build | At least 3x faster than the pinned Wails fixture |
-| Go host startup | Record regressions against its pinned Go baseline; C++23 remains diagnostic only |
+| Go host startup | Record regressions against its pinned Go baseline |
 | Startup claim | Publish only when the advantage exceeds noise and 10% |
 
 If the Go host exceeds its startup allowance, investigate the repository-owned
@@ -203,7 +203,7 @@ Window creation alone is never the ready event.
 
 ## Current Evidence
 
-The latest local comparison used ten fresh runs and ten immediate same-profile
+The retired M0 local comparison used ten fresh runs and ten immediate same-profile
 runs after five warmups per host. It measured process creation through the
 shared fixture's DOMContentLoaded-plus-two-animation-frame marker after the Go
 security adapter was enabled.
@@ -213,14 +213,16 @@ security adapter was enabled.
 | Go runtime | 3,126,784 bytes | 1,048.50 ms | 1,209.65 ms | 7,076.14 ms | 7,410.56 ms |
 | C++23 reference | 175,968 bytes | 944.50 ms | 1,040.39 ms | 7,004.62 ms | 7,116.60 ms |
 
-The C++23 size includes the 11,776-byte executable and 164,192-byte
+The C++23 size included the 11,776-byte executable and 164,192-byte
 `WebView2Loader.dll`. The Go executable embeds its loader. These are local,
 directional results, not a release baseline: runner and WebView2 metadata are
 not yet captured and run order is fixed. Both implementations now show the
 same approximately seven-second immediate-relaunch delay, so the delay belongs
 to WebView2 browser-process teardown rather than the host language. Fresh Go
 and C++ results differ by about 104 ms at p50; this is not a sufficient basis
-for a startup marketing claim.
+for a startup marketing claim. The C++23 source and toolchain were retired
+after Go was selected; this table is immutable historical evidence, not an
+active benchmark target.
 
 The Go lifecycle smoke now measures a first launch, an immediate second launch
 using the same profile, ready-to-host-exit time, and final profile release. The

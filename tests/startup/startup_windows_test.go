@@ -1,13 +1,11 @@
 package startup_test
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -20,8 +18,6 @@ const (
 	pipeAccessInbound = 0x00000001
 	pipeTypeByte      = 0x00000000
 	pipeWait          = 0x00000000
-	benchmarkRuns     = 10
-	warmupRuns        = 5
 )
 
 var (
@@ -38,27 +34,6 @@ type hostAdapter struct {
 	arguments   func(profile string) []string
 	environment func(profile string) []string
 	expected    string
-}
-
-type benchmarkResult struct {
-	SchemaVersion int          `json:"schemaVersion"`
-	RecordedAt    string       `json:"recordedAt"`
-	Runs          int          `json:"runs"`
-	Warmups       int          `json:"warmups"`
-	Hosts         []hostResult `json:"hosts"`
-}
-
-type hostResult struct {
-	Name            string        `json:"name"`
-	ExecutableBytes int64         `json:"executableBytes"`
-	Fresh           profileResult `json:"fresh"`
-	Warm            profileResult `json:"warm"`
-}
-
-type profileResult struct {
-	DurationsMS []float64 `json:"durationsMs"`
-	P50MS       float64   `json:"p50Ms"`
-	P95MS       float64   `json:"p95Ms"`
 }
 
 type hostRun struct {
@@ -86,79 +61,6 @@ func TestBuiltHostStartup(t *testing.T) {
 	t.Logf("first ready=%s exit=%s; immediate ready=%s exit=%s; profile release=%s",
 		first.Ready, first.Exit, immediate.Ready, immediate.Exit, profileRelease)
 	t.Logf("security ready=%s exit=%s", security.Ready, security.Exit)
-}
-
-func TestBuiltCppHostStartup(t *testing.T) {
-	repoRoot := repositoryRoot(t)
-	host := cppHost(t, repoRoot)
-	profile := managedProfileRoot(t, "velox-cpp-smoke-")
-	run := runHost(t, host, profile)
-	t.Logf("process-to-ready: %s; ready-to-exit: %s", run.Ready, run.Exit)
-}
-
-func TestHostStartupComparison(t *testing.T) {
-	repoRoot := repositoryRoot(t)
-	profileRoot := managedProfileRoot(t, "velox-startup-benchmark-")
-	hosts := []hostAdapter{goHost(t, repoRoot), cppHost(t, repoRoot)}
-	results := benchmarkResult{
-		SchemaVersion: 1,
-		RecordedAt:    time.Now().UTC().Format(time.RFC3339),
-		Runs:          benchmarkRuns,
-		Warmups:       warmupRuns,
-	}
-
-	for _, host := range hosts {
-		result := hostResult{Name: host.name}
-		info, err := os.Stat(host.executable)
-		if err != nil {
-			t.Fatal(err)
-		}
-		result.ExecutableBytes = info.Size()
-
-		freshDurations := make([]time.Duration, 0, benchmarkRuns)
-		for run := 0; run < benchmarkRuns; run++ {
-			profile := filepath.Join(profileRoot, host.name, fmt.Sprintf("fresh-%02d", run))
-			if err := os.MkdirAll(profile, 0o755); err != nil {
-				t.Fatal(err)
-			}
-			freshDurations = append(freshDurations, runHost(t, host, profile).Ready)
-		}
-		result.Fresh = summarize(freshDurations)
-
-		warmProfile := filepath.Join(profileRoot, host.name, "warm")
-		if err := os.MkdirAll(warmProfile, 0o755); err != nil {
-			t.Fatal(err)
-		}
-		for run := 0; run < warmupRuns; run++ {
-			runHost(t, host, warmProfile)
-		}
-		warmDurations := make([]time.Duration, 0, benchmarkRuns)
-		for run := 0; run < benchmarkRuns; run++ {
-			warmDurations = append(warmDurations, runHost(t, host, warmProfile).Ready)
-		}
-		result.Warm = summarize(warmDurations)
-		results.Hosts = append(results.Hosts, result)
-	}
-
-	output := os.Getenv("VELOX_BENCH_OUTPUT")
-	if output == "" {
-		t.Skip("VELOX_BENCH_OUTPUT is set only by the startup benchmark intent")
-	}
-	if err := os.MkdirAll(filepath.Dir(output), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	data, err := json.MarshalIndent(results, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	data = append(data, '\n')
-	if err := os.WriteFile(output, data, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	for _, result := range results.Hosts {
-		t.Logf("%s fresh p50=%.2fms p95=%.2fms warm p50=%.2fms p95=%.2fms",
-			result.Name, result.Fresh.P50MS, result.Fresh.P95MS, result.Warm.P50MS, result.Warm.P95MS)
-	}
 }
 
 func managedProfileRoot(t *testing.T, pattern string) string {
@@ -238,21 +140,6 @@ func securityHost(t *testing.T, repoRoot string) hostAdapter {
 			}
 		},
 		expected: "ready security-ok\n",
-	}
-}
-
-func cppHost(t *testing.T, repoRoot string) hostAdapter {
-	t.Helper()
-	executable := requiredExecutable(t, "VELOX_BUILT_CPP_HOST")
-	assets := filepath.Join(repoRoot, "examples", "hello", "web")
-	return hostAdapter{
-		name:       "cpp23",
-		executable: executable,
-		arguments: func(profile string) []string {
-			return []string{assets, profile}
-		},
-		environment: func(string) []string { return nil },
-		expected:    "ready dom-2raf\n",
 	}
 }
 
@@ -371,34 +258,6 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 		t.Fatalf("%s host did not exit after ready", host.name)
 	}
 	return hostRun{Ready: readyDuration, Exit: time.Since(exitStarted)}
-}
-
-func summarize(durations []time.Duration) profileResult {
-	milliseconds := make([]float64, len(durations))
-	for index, duration := range durations {
-		milliseconds[index] = float64(duration) / float64(time.Millisecond)
-	}
-	sorted := append([]float64(nil), milliseconds...)
-	sort.Float64s(sorted)
-	return profileResult{
-		DurationsMS: milliseconds,
-		P50MS:       percentile(sorted, 0.50),
-		P95MS:       percentile(sorted, 0.95),
-	}
-}
-
-func percentile(sorted []float64, percentile float64) float64 {
-	if len(sorted) == 0 {
-		return 0
-	}
-	position := percentile * float64(len(sorted)-1)
-	lower := int(position)
-	upper := lower + 1
-	if upper >= len(sorted) {
-		return sorted[lower]
-	}
-	fraction := position - float64(lower)
-	return sorted[lower] + (sorted[upper]-sorted[lower])*fraction
 }
 
 func createPipe(t *testing.T, name string) windows.Handle {

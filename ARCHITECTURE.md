@@ -46,7 +46,6 @@ local HTTP server, or expose arbitrary native capabilities.
 - Production host: pure Go with no CGo or C++ shim.
 - WebView2 binding: repository-owned adapter over a pinned, maintained pure-Go
   fork.
-- C++23 host: M0 benchmark and lifecycle reference only.
 - Web runtime: installed Evergreen WebView2.
 - Frontend bridge: dependency-free JavaScript.
 - IPC: bounded JSON request-response over direct WebView2 messages.
@@ -73,10 +72,9 @@ file size, or SHA-256 differs. The sidecar is not a signature and does not make
 an untrusted download trustworthy; users must acquire the complete bundle by a
 pinned external checksum until signed release provenance exists.
 
-The C++23 source under `host/reference-cpp`, root Pixi manifest, and Pixi lock
-exist only to reproduce the M0 comparison. No package under `cmd/velox`,
-`cmd/velox-host`, or `internal/` imports or invokes that toolchain. Normal Go
-product validation and consumer packaging do not require Pixi.
+The retired C++23 M0 comparison remains documented in ADR 0004 and the
+performance budget. Its source and Pixi toolchain are no longer active
+repository dependencies.
 
 ## Contract Sources
 
@@ -99,8 +97,7 @@ product validation and consumer packaging do not require Pixi.
 
 This document distinguishes implemented slices from intended architecture. The
 Go host security boundary, seven-command M1 CLI, host release metadata,
-deterministic consumer bundle, and local end-to-end evidence contracts are
-implemented and covered by local tests. The GitHub Actions consumer workflow is
-defined but has no hosted run evidence until the branch is pushed. Public
-cross-framework benchmark fixtures, signed distribution, and provenance remain
-incomplete.
+deterministic consumer bundle, and end-to-end evidence contracts are
+implemented and covered by local tests and the hosted consumer workflow.
+Public cross-framework benchmark fixtures, signed distribution, and provenance
+remain incomplete.

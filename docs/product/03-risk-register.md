@@ -15,7 +15,7 @@
 | --- | --- | --- | --- | --- | --- |
 | R-001 | Velox duplicates an existing compile-free wrapper | High | Critical | Open | M0 compares architecture and workflow with Neutralino and a PWA; stop if the difference is only fewer features |
 | R-002 | WebView2 initialization dominates startup | High | High | Open | Publish fresh and warm process-to-ready data; remove startup from headline claims when the difference is noise |
-| R-003 | Pure-Go COM lifecycle code is unsafe or costly | Medium | Critical | Open | Compare with a minimal C++23 reference; fall back when ADR-0001 gates fail |
+| R-003 | Pure-Go COM lifecycle code is unsafe or costly | Medium | Critical | Monitoring | Keep the WebView2 adapter bounded and reopen ADR 0005 only if required COM lifetime or security controls cannot be represented safely |
 | R-004 | Feature requests recreate Tauri or Wails | High | Critical | Open | Enforce project invariants; require an ADR and metric impact for every new native surface |
 | R-005 | Unchanged generic host prevents application branding | High | Medium | Accepted | Keep branding out of M0; revisit only after product viability |
 | R-006 | Directory assets can be modified locally | High | High | Accepted | State the limitation prominently; defer sealed assets to a separately measured profile |

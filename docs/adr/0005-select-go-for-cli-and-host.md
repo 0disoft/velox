@@ -48,8 +48,8 @@ the production security contract.
   later measurements justify size-specific work.
 - COM and WebView2 interfaces require careful pure-Go ABI code and cannot be
   hidden behind an underpowered convenience wrapper.
-- C++23 and Pixi remain M0 reference infrastructure only until their benchmark
-  evidence is moved or retired; they are not product build dependencies.
+- C++23 and Pixi were retired after their M0 benchmark evidence was preserved
+  in ADR 0004 and the performance budget.
 
 ## Migration
 
@@ -71,6 +71,10 @@ default-denied permissions, and explicit COM close/release. Host shutdown and
 browser profile release are separate measurements; the host exits promptly,
 while same-profile relaunch remains delayed by WebView2 browser-process
 shutdown.
+
+The C++23/Pixi reference infrastructure and its dedicated comparison tests are
+retired. Reopening the language decision requires the revisit evidence below,
+not restoration of the old toolchain by default.
 
 Rollback before the adapter becomes a public runtime contract means returning
 to the isolated M0 wrapper while fixing the repository-owned adapter. Rollback

@@ -12,8 +12,8 @@ code.
 The repository now contains a policy-enforcing pure-Go WebView2 host, manifest
 validation, an immutable build plan, atomic portable-directory assembly, a
 deterministic ZIP writer, all seven M1 CLI commands, an unsigned deterministic
-Windows x64 release bundle, a direct C++23 benchmark reference, startup
-fixtures, and a zero-cache consumer evidence workflow. It is not an alpha
+Windows x64 release bundle, startup fixtures, and a zero-cache consumer
+evidence workflow. It is not an alpha
 distribution; public release provenance, hosted benchmark results, and the
 cross-framework comparison remain incomplete.
 
@@ -31,8 +31,8 @@ runtime surface. Startup is a hypothesis to measure, not a proven advantage.
 - A standalone Go CLI validates and packages projects.
 - A separate prebuilt generic host opens static assets through WebView2.
 - The production host is pure Go with no CGo or C++ shim.
-- A minimal C++23 host remains an M0 benchmark reference, not a product
-  fallback selected by startup numbers alone.
+- The retired C++23 M0 comparison remains available as historical ADR and
+  performance evidence, not as an active build target.
 - Consumer builds copy an unchanged host, external configuration, and assets.
 - Consumer builds require no compiler, Node.js, or frontend package manager.
 
@@ -96,9 +96,9 @@ authoring contract.
 
 ## Development State
 
-M0 is a feasibility and kill test. It must compare a pure-Go WebView2 host with
-a minimal C++23 reference host and determine whether Velox has a meaningful
-advantage over Wails, existing compile-free wrappers, and a PWA.
+M0 selected the pure-Go WebView2 host. The next product gate is a reproducible
+comparison with Wails, existing compile-free wrappers, and a PWA where
+applicable.
 
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,

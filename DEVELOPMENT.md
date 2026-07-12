@@ -5,15 +5,14 @@
 
 ## Current State
 
-This repository contains Windows-only Go and C++23 host spikes, a strict
+This repository contains the Windows-only Go CLI and production host, a strict
 external runtime configuration parser, a dependency-free hello fixture, and a
-named-pipe startup benchmark harness.
+named-pipe startup smoke harness.
 
 The parent workspace owns bounded mustflow intents named `velox_format`,
-`velox_lint`, `velox_test`, `velox_build`, `velox_startup_smoke`,
-`velox_cpp_build`, `velox_cpp_startup_smoke`, and
-`velox_startup_benchmark`. The repository still has no standalone task runner.
-Do not infer additional commands from `go.mod` or `pixi.toml`.
+`velox_lint`, `velox_test`, `velox_build`, and `velox_startup_smoke`. The
+repository still has no standalone task runner. Do not infer additional
+commands from `go.mod`.
 
 ## Planned M0 Environment
 
@@ -22,15 +21,6 @@ Do not infer additional commands from `go.mod` or `pixi.toml`.
 - Installed Evergreen WebView2 Runtime.
 - A narrow local fork of `github.com/jchv/go-webview2`, pinned to commit
   `56598839c808` under `third_party/go-webview2`.
-- Pixi 0.72.2 for the maintainer-only C++23 reference environment.
-- Locked Clang 21, CMake 4, lld 21, and Ninja 1.13 through `pixi.lock`.
-- Installed Visual Studio C++ headers and Windows SDK 10.0.26100.0.
-- Microsoft.Web.WebView2 SDK 1.0.4078.44 for headers and the loader DLL.
-
-Pixi is not a consumer dependency and does not make the reference build fully
-self-contained. The current build still discovers system Visual Studio C++
-headers and the Windows SDK. A clean CI image must provide those components or
-the build must later pin an explicit SDK/toolset bundle.
 
 ## Planned Repository Boundaries
 
@@ -108,8 +98,8 @@ adapter. Navigation, message-origin, popup, download, permission, and shutdown
 contracts are enforced at that boundary and exercised by the startup security
 fixture.
 
-The C++23/Pixi path remains reference-only and is removed or moved after the Go
-adapter has a stable pinned-CI lifecycle baseline.
+The retired C++23/Pixi comparison is retained only as historical evidence in
+ADR 0004 and the performance budget.
 
 The repository-owned adapter boundary lives in `internal/webview2`.
 `cmd/velox-host` does not import the fork directly. The adapter reports virtual
@@ -130,15 +120,13 @@ seven seconds.
 
 M0 development setup is complete only when:
 
-- The Go and C++23 reference hosts build reproducibly.
+- The Go CLI and host build reproducibly.
 - The hello fixture launches and emits the ready marker.
 - Fresh and warm startup measurements can be repeated.
 - Missing WebView2 and invalid configuration fail locally and cleanly.
 - The selected command front door is documented here and in VALIDATION.md.
 
-The Go and C++23 hosts build and reach the same two-frame marker locally. The
-first repeated comparison is recorded in the performance budget. The C++23
-host still has a same-profile immediate-relaunch delay. The Go security
-controls now have executable navigation, frame, popup, permission, and download
+The retired Go/C++23 comparison is recorded in the performance budget. The Go
+security controls now have executable navigation, frame, popup, permission, and download
 evidence. A missing or invalid fixed WebView2 Runtime exits with code 5 and an
 actionable local diagnostic. The browser-process relaunch delay remains open.

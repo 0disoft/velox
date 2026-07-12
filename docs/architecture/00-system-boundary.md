@@ -18,9 +18,9 @@ WebView2 environment and controller lifecycle, virtual-host asset mapping,
 navigation policy, direct web-message transport, and a fixed native method
 dispatcher.
 
-The first implementation candidate is a pure-Go Windows host. It must not use
-CGo or a C++ shim in the consumer artifact. A minimal C++23 reference host may
-exist only as benchmark and fallback evidence.
+The production implementation is a pure-Go Windows host. It must not use CGo
+or a C++ shim in the consumer artifact. The retired C++23 M0 comparison is
+historical evidence only.
 
 ### JavaScript Bridge
 

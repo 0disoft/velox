@@ -17,8 +17,9 @@ install a compiler, package manager, SDK, or framework dependency.
 
 ### Maintainer build dependencies
 
-May include the Go toolchain, Windows SDK, WebView2 SDK, and a C++23 toolchain
-for the M0 reference host. They do not become consumer prerequisites.
+Includes the Go toolchain used to build the CLI and host. Windows and WebView2
+runtime facilities remain platform dependencies, not consumer build
+toolchains.
 
 ### Runtime dependencies
 
@@ -99,10 +100,7 @@ policy controls required by the security baseline, and its constructor enables
 clipboard-read permission. Removal cost is limited because all usage is
 confined to `cmd/velox-host` during M0.
 
-The C++23 reference environment uses Pixi 0.72.2 with a committed lockfile for
-Clang 21, CMake 4, lld 21, and Ninja 1.13. It consumes
-Microsoft.Web.WebView2 1.0.4078.44 and redistributes its x64 loader DLL in the
-local reference output. Pixi does not currently pin the Visual Studio C++
-headers or Windows SDK, so the reference build is reproducible only within the
-documented system-toolset boundary. None of these maintainer dependencies may
-enter the consumer application build path.
+The retired C++23 reference environment used Pixi, Clang, CMake, lld, Ninja,
+the WebView2 SDK, Visual Studio headers, and the Windows SDK. Those dependencies
+are preserved only as historical evidence in ADR 0004 and are no longer part
+of the active repository graph.

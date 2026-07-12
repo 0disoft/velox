@@ -1,6 +1,6 @@
 # ADR 0004: Keep a C++23 WebView2 host as the M0 reference implementation
 
-- Status: Accepted for M0
+- Status: Retired by ADR 0005
 - Date: 2026-07-10
 - Owner: Project maintainer
 
@@ -23,6 +23,14 @@ Use Pixi only to lock the maintainer-side Clang, CMake, lld, and Ninja versions.
 The current reference build also requires installed Visual Studio C++ headers
 and Windows SDK 10.0.26100.0. Consumer application builds use neither Pixi nor
 a native compiler.
+
+## Retirement
+
+ADR 0005 selected Go for both production executables after the bounded M0
+comparison. The reference source, Pixi environment, and executable comparison
+tests were removed after the Go release-bundle and hosted consumer gates
+passed. The measurements below remain historical evidence and are not
+reproducible from the current repository checkout.
 
 ## Consequences
 

@@ -27,21 +27,9 @@ The upstream MIT license is preserved at
 
 ## golang.org/x/sys
 
-- Version: `v0.0.0-20210218145245-beda7e5e158e`
+- Version: `v0.0.0-20220412211240-33da011f77ad`
 - License: BSD-3-Clause
 - Purpose: Windows system-call support used transitively and by the startup test
 
 Microsoft WebView2 Runtime and loader redistribution obligations remain
 separate from the licenses above and must be reviewed before a public release.
-
-## Microsoft.Web.WebView2
-
-- Version: `1.0.4078.44`
-- License: Microsoft software license included in the NuGet package
-- Purpose: C++ headers and the x64 `WebView2Loader.dll` used by the reference host
-
-The reference build also uses maintainer-only Pixi, LLVM/Clang/lld, CMake, and
-Ninja packages pinned by `pixi.lock`. They are not copied into the application
-runtime output. Their notices and the system Windows SDK and Visual Studio
-toolset obligations must be collected before distributing a maintainer SDK or
-source-build bundle.

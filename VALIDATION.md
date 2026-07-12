@@ -67,13 +67,10 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_workflow_validate` parses the repository-owned GitHub Actions workflow
   with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
-- `velox_cpp_build` maps to the C++23 reference build.
-- `velox_cpp_startup_smoke` maps to the C++23 startup smoke.
-- `velox_startup_benchmark` maps to the repeated Go/C++23 comparison.
 
-The C++ and Pixi intents validate reference evidence only. They are not
-required after CLI packaging changes that do not touch the reference host,
-benchmark harness, or reference toolchain.
+The C++23/Pixi M0 reference intents were retired after ADR 0005 selected Go
+for both production executables. Historical comparison results remain in ADR
+0004 and the performance budget.
 
 Unconfigured validation names remain skipped and must not pass with a fake
 success.
