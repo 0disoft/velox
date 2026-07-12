@@ -1,0 +1,28 @@
+flowchart TD
+  start["Start generic host"]
+  config["Read and validate runtime config"]
+  thread["Initialize UI thread and COM apartment"]
+  window["Create native window"]
+  webview["Create WebView2 environment and controller"]
+  secure["Apply security policy and virtual origin"]
+  bridge["Inject frozen JavaScript bridge"]
+  navigate["Navigate to local entry point"]
+  ready["Usable content ready"]
+  ipc["Validate and dispatch bounded IPC"]
+  shutdown["Detach callbacks and shut down"]
+  fail["Fail closed with local diagnostic"]
+
+  start --> config
+  config -->|valid| thread
+  config -->|invalid| fail
+  thread --> window
+  window --> webview
+  webview -->|available| secure
+  webview -->|missing or unsupported| fail
+  secure --> bridge
+  bridge --> navigate
+  navigate -->|trusted local origin| ready
+  navigate -->|untrusted navigation| fail
+  ready --> ipc
+  ipc -->|close requested| shutdown
+  ipc -->|invalid request| ready

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/manifest/v1.json",
+  "title": "Velox project manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "app"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "app": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": { "type": "string", "default": "web" },
+        "entry": { "type": "string", "default": "index.html" }
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "integer", "minimum": 320, "default": 960 },
+        "height": { "type": "integer", "minimum": 240, "default": 640 }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["app.info", "window.basic"] },
+          "default": []
+        }
+      }
+    }
+  }
+}

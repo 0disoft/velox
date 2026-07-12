@@ -1,0 +1,21 @@
+flowchart LR
+  manifest["velox.json"]
+  assets["Static asset tree"]
+  cli["Velox CLI\nGo executable"]
+  release["Pinned release bundle\nHost, bridge, schemas"]
+  output["Portable output\nHost, config, web, report, ZIP"]
+  host["Generic host\nGo candidate"]
+  bridge["JavaScript bridge"]
+  webview["Evergreen WebView2"]
+  windows["Windows desktop APIs and COM"]
+
+  manifest --> cli
+  assets --> cli
+  release --> cli
+  cli --> output
+  output --> host
+  output --> bridge
+  host <--> bridge
+  host --> webview
+  host --> windows
+  bridge --> webview

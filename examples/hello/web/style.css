@@ -1,0 +1,34 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Segoe UI", sans-serif;
+  background: #111418;
+  color: #f5f7fa;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+}
+
+main {
+  width: min(34rem, calc(100% - 3rem));
+}
+
+.eyebrow {
+  color: #55d6be;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.4rem 0 0.75rem;
+  font-size: 2rem;
+  letter-spacing: 0;
+}
+
+p {
+  line-height: 1.55;
+}

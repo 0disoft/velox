@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/consumer-e2e/v1.json",
+  "title": "Velox consumer end-to-end measurement v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scope", "evidenceLevel", "sampleId", "outcome", "startedAtUtc", "finishedAtUtc", "durationMs", "acquisition", "release", "fixture", "build", "environment", "measurement", "error"],
+  "properties": {
+    "schemaVersion": { "const": "velox.consumer-e2e/v1" },
+    "scope": { "const": "checkout-complete-to-portable-zip" },
+    "evidenceLevel": { "enum": ["local-contract-smoke", "hosted-runner-evidence"] },
+    "sampleId": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,64}$" },
+    "outcome": { "enum": ["success", "failure"] },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "finishedAtUtc": { "type": "string", "format": "date-time" },
+    "durationMs": { "type": "number", "minimum": 0 },
+    "acquisition": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["mode", "archiveBytes", "archiveSha256", "expectedSha256Verified"],
+      "properties": {
+        "mode": { "enum": ["local-file", "github-actions-artifact"] },
+        "archiveBytes": { "type": "integer", "minimum": 1 },
+        "archiveSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "expectedSha256Verified": { "type": "boolean" }
+      }
+    },
+    "release": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["version", "target"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "target": { "const": "windows-x64" }
+      }
+    },
+    "fixture": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["kind", "appId", "assetFiles", "assetBytes", "assetSha256"],
+      "properties": {
+        "kind": { "const": "dependency-free-init-template" },
+        "appId": { "type": "string", "minLength": 1 },
+        "assetFiles": { "type": "integer", "minimum": 1 },
+        "assetBytes": { "type": "integer", "minimum": 1 },
+        "assetSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "build": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["durationMs", "archiveBytes", "archiveSha256", "portableFiles", "portableBytes", "survivingIntermediateFiles", "processTrace"],
+      "properties": {
+        "durationMs": { "type": "number", "minimum": 0 },
+        "archiveBytes": { "type": "integer", "minimum": 1 },
+        "archiveSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "portableFiles": { "type": "integer", "minimum": 1 },
+        "portableBytes": { "type": "integer", "minimum": 1 },
+        "survivingIntermediateFiles": { "type": "integer", "minimum": 0 },
+        "processTrace": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "rootProcessCount", "descendants", "forbiddenDescendants"],
+          "properties": {
+            "status": { "enum": ["pass", "fail", "unverified"] },
+            "rootProcessCount": { "type": "integer", "minimum": 0 },
+            "descendants": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "forbiddenDescendants": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architecture"],
+      "properties": {
+        "os": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 },
+        "runnerImage": { "type": ["string", "null"] },
+        "runnerImageVersion": { "type": ["string", "null"] },
+        "githubRunId": { "type": ["string", "null"] },
+        "githubRunAttempt": { "type": ["string", "null"] },
+        "gitCommit": { "type": ["string", "null"] }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "toolVersion", "unit", "endToEndClock", "buildClock", "startsAt", "endsAt", "warmupSamples", "concurrency", "osFileCacheState"],
+      "properties": {
+        "tool": { "const": "scripts/measure-consumer-e2e.ps1" },
+        "toolVersion": { "const": 1 },
+        "unit": { "const": "milliseconds" },
+        "endToEndClock": { "const": "System.DateTime.UtcNow-across-workflow-steps" },
+        "buildClock": { "const": "System.Diagnostics.Stopwatch" },
+        "startsAt": { "const": "after-checkout-before-release-artifact-acquisition" },
+        "endsAt": { "enum": ["after-portable-zip-inspection", "failure"] },
+        "warmupSamples": { "const": 0 },
+        "concurrency": { "const": 1 },
+        "osFileCacheState": { "enum": ["uncontrolled-local-state", "fresh-hosted-runner-when-executed-in-an-isolated-job"] }
+      }
+    },
+    "error": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["phase", "code"],
+      "properties": {
+        "phase": { "type": "string", "minLength": 1 },
+        "code": { "const": "PHASE_FAILED" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "outcome": { "const": "success" } } },
+      "then": {
+        "properties": {
+          "acquisition": { "type": "object" },
+          "release": { "type": "object" },
+          "fixture": { "type": "object" },
+          "build": { "type": "object" },
+          "error": { "type": "null" },
+          "measurement": {
+            "properties": {
+              "endsAt": { "const": "after-portable-zip-inspection" }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "acquisition": { "type": "null" },
+          "release": { "type": "null" },
+          "fixture": { "type": "null" },
+          "build": { "type": "null" },
+          "error": { "type": "object" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "evidenceLevel": { "const": "hosted-runner-evidence" } } },
+      "then": {
+        "properties": {
+          "acquisition": {
+            "properties": {
+              "mode": { "const": "github-actions-artifact" },
+              "expectedSha256Verified": { "const": true }
+            }
+          },
+          "measurement": {
+            "properties": {
+              "osFileCacheState": { "const": "fresh-hosted-runner-when-executed-in-an-isolated-job" }
+            }
+          },
+          "environment": {
+            "properties": {
+              "runnerImage": { "type": "string", "minLength": 1 },
+              "runnerImageVersion": { "type": "string", "minLength": 1 },
+              "githubRunId": { "type": "string", "minLength": 1 },
+              "githubRunAttempt": { "type": "string", "minLength": 1 },
+              "gitCommit": { "type": "string", "pattern": "^[0-9a-fA-F]{40}$" }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "measurement": {
+            "properties": {
+              "osFileCacheState": { "const": "uncontrolled-local-state" }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

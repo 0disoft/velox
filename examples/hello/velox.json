@@ -1,0 +1,20 @@
+{
+  "$schema": "../../schema/velox-v1.schema.json",
+  "schemaVersion": 1,
+  "app": {
+    "id": "dev.velox.hello",
+    "name": "Velox Hello",
+    "version": "0.1.0"
+  },
+  "assets": {
+    "root": "web",
+    "entry": "index.html"
+  },
+  "window": {
+    "width": 720,
+    "height": 480
+  },
+  "security": {
+    "permissions": []
+  }
+}

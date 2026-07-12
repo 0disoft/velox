@@ -1,0 +1,15 @@
+flowchart LR
+  developer["Application developer"]
+  ci["Consumer CI"]
+  velox["Velox CLI and release bundle"]
+  output["Portable application"]
+  user["Application user"]
+  windows["Windows x64 and WebView2"]
+  appnet["Application-owned network services"]
+
+  developer -->|"manifest and static assets"| velox
+  ci -->|"offline build after pinned download"| velox
+  velox -->|"unchanged host, config, assets, ZIP"| output
+  user -->|"launches"| output
+  output -->|"uses installed runtime"| windows
+  output -.->|"optional application traffic, outside Velox"| appnet
