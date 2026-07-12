@@ -45,32 +45,37 @@ func TestLoadRejectsUnsafeOrUnknownInput(t *testing.T) {
 	}{
 		{
 			name:    "unsupported version",
-			config:  `{"runtimeVersion":2,"app":{"id":"x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}}`,
+			config:  `{"runtimeVersion":2,"app":{"id":"dev.test.x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}}`,
 			message: "unsupported runtimeVersion",
 		},
 		{
+			name:    "invalid app id",
+			config:  `{"runtimeVersion":1,"app":{"id":"../../escaped-profile","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}}`,
+			message: "reverse-domain",
+		},
+		{
 			name:    "root escape",
-			config:  `{"runtimeVersion":1,"app":{"id":"x","name":"x","version":"1"},"assets":{"root":"..","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}}`,
+			config:  `{"runtimeVersion":1,"app":{"id":"dev.test.x","name":"x","version":"1"},"assets":{"root":"..","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}}`,
 			message: "path must stay inside",
 		},
 		{
 			name:    "unknown field",
-			config:  `{"runtimeVersion":1,"app":{"id":"x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]},"surprise":true}`,
+			config:  `{"runtimeVersion":1,"app":{"id":"dev.test.x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]},"surprise":true}`,
 			message: "unknown field",
 		},
 		{
 			name:    "multiple values",
-			config:  `{"runtimeVersion":1,"app":{"id":"x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}} {}`,
+			config:  `{"runtimeVersion":1,"app":{"id":"dev.test.x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}} {}`,
 			message: "multiple JSON values",
 		},
 		{
 			name:    "missing permissions",
-			config:  `{"runtimeVersion":1,"app":{"id":"x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{}}`,
+			config:  `{"runtimeVersion":1,"app":{"id":"dev.test.x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{}}`,
 			message: "security.permissions is required",
 		},
 		{
 			name:    "unknown permission",
-			config:  `{"runtimeVersion":1,"app":{"id":"x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":["shell.execute"]}}`,
+			config:  `{"runtimeVersion":1,"app":{"id":"dev.test.x","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":["shell.execute"]}}`,
 			message: "unsupported permission",
 		},
 	}
@@ -86,5 +91,25 @@ func TestLoadRejectsUnsafeOrUnknownInput(t *testing.T) {
 				t.Fatalf("Load() error = %v, want containing %q", err, tt.message)
 			}
 		})
+	}
+}
+
+func TestLoadRejectsLinkedAssetBoundary(t *testing.T) {
+	root := t.TempDir()
+	external := t.TempDir()
+	if err := os.WriteFile(filepath.Join(external, "index.html"), []byte("outside"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(external, filepath.Join(root, "web")); err != nil {
+		t.Skipf("symlink creation unavailable: %v", err)
+	}
+	config := `{"runtimeVersion":1,"app":{"id":"dev.test.linked","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}}`
+	path := filepath.Join(root, "velox.runtime.json")
+	if err := os.WriteFile(path, []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Load(path)
+	if err == nil || !strings.Contains(err.Error(), "link or reparse point") {
+		t.Fatalf("Load() error = %v, want linked asset rejection", err)
 	}
 }

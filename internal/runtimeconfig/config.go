@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/0disoft/velox/internal/appidentity"
+	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/manifest"
 )
 
@@ -87,19 +89,8 @@ func Load(path string) (Resolved, error) {
 		return Resolved{}, fmt.Errorf("resolve entry point: %w", err)
 	}
 
-	rootInfo, err := os.Stat(assetRoot)
-	if err != nil {
-		return Resolved{}, fmt.Errorf("inspect asset root: %w", err)
-	}
-	if !rootInfo.IsDir() {
-		return Resolved{}, errors.New("asset root is not a directory")
-	}
-	entryInfo, err := os.Stat(entryPath)
-	if err != nil {
-		return Resolved{}, fmt.Errorf("inspect entry point: %w", err)
-	}
-	if !entryInfo.Mode().IsRegular() {
-		return Resolved{}, errors.New("entry point is not a regular file")
+	if err := assettree.ValidateResolvedEntry(assetRoot, entryPath); err != nil {
+		return Resolved{}, err
 	}
 
 	return Resolved{
@@ -135,8 +126,8 @@ func validate(cfg Config) error {
 	if cfg.RuntimeVersion != Version {
 		return fmt.Errorf("unsupported runtimeVersion %d", cfg.RuntimeVersion)
 	}
-	if strings.TrimSpace(cfg.App.ID) == "" {
-		return errors.New("app.id is required")
+	if err := appidentity.Validate(cfg.App.ID); err != nil {
+		return err
 	}
 	if strings.TrimSpace(cfg.App.Name) == "" {
 		return errors.New("app.name is required")

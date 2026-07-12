@@ -26,6 +26,55 @@ type Tree struct {
 	Digest     string
 }
 
+// ValidateResolvedEntry verifies the runtime asset boundary without scanning or
+// hashing unrelated assets. Both paths must already be absolute and lexical
+// containment must be established by the caller.
+func ValidateResolvedEntry(root, entry string) error {
+	rootInfo, err := os.Lstat(root)
+	if err != nil {
+		return fmt.Errorf("inspect asset root: %w", err)
+	}
+	if linked, err := isLinkOrReparse(root, rootInfo); err != nil {
+		return err
+	} else if linked {
+		return errors.New("asset root must not be a link or reparse point")
+	}
+	if !rootInfo.IsDir() {
+		return errors.New("asset root is not a directory")
+	}
+
+	relative, err := filepath.Rel(root, entry)
+	if err != nil {
+		return fmt.Errorf("resolve entry relative path: %w", err)
+	}
+	if relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return errors.New("entry point must stay inside the asset root")
+	}
+
+	current := root
+	for _, segment := range strings.Split(relative, string(filepath.Separator)) {
+		current = filepath.Join(current, segment)
+		info, err := os.Lstat(current)
+		if err != nil {
+			return fmt.Errorf("inspect entry point: %w", err)
+		}
+		linked, err := isLinkOrReparse(current, info)
+		if err != nil {
+			return err
+		}
+		if linked {
+			return fmt.Errorf("entry path is a link or reparse point: %s", filepath.ToSlash(relative))
+		}
+		if current != entry && !info.IsDir() {
+			return fmt.Errorf("entry parent is not a directory: %s", filepath.ToSlash(relative))
+		}
+		if current == entry && !info.Mode().IsRegular() {
+			return errors.New("entry point is not a regular file")
+		}
+	}
+	return nil
+}
+
 func Scan(root string) (Tree, error) {
 	info, err := os.Lstat(root)
 	if err != nil {

@@ -7,13 +7,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/0disoft/velox/internal/appidentity"
 )
 
 const Version = 1
-
-var appIDPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$`)
 
 type Manifest struct {
 	Schema        string   `json:"$schema,omitempty"`
@@ -120,8 +119,8 @@ func validate(value Manifest) error {
 	if value.SchemaVersion != Version {
 		return fmt.Errorf("unsupported schemaVersion %d", value.SchemaVersion)
 	}
-	if !appIDPattern.MatchString(value.App.ID) {
-		return errors.New("app.id must be lowercase reverse-domain ASCII")
+	if err := appidentity.Validate(value.App.ID); err != nil {
+		return err
 	}
 	if strings.TrimSpace(value.App.Name) == "" {
 		return errors.New("app.name is required")

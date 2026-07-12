@@ -12,7 +12,10 @@
       "additionalProperties": false,
       "required": ["id", "name", "version"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$"
+        },
         "name": { "type": "string", "minLength": 1 },
         "version": { "type": "string", "minLength": 1 }
       }
@@ -22,7 +25,7 @@
       "additionalProperties": false,
       "required": ["root", "entry"],
       "properties": {
-        "root": { "const": "web" },
+        "root": { "type": "string", "minLength": 1 },
         "entry": { "type": "string", "minLength": 1 }
       }
     },
