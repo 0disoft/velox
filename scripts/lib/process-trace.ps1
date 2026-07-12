@@ -101,14 +101,15 @@ namespace Velox.ProcessTrace {
 
 function Start-VeloxProcessTrace {
     $sourceIdentifier = 'velox-process-trace-' + [guid]::NewGuid().ToString('N')
+    $manualRecords = [System.Collections.Generic.List[object]]::new()
     if ($env:VELOX_PROCESS_TRACE_BACKEND -ne 'snapshot-poller') {
         try {
             Register-WmiEvent -Class Win32_ProcessStartTrace -SourceIdentifier $sourceIdentifier -ErrorAction Stop | Out-Null
-            return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $null }
+            return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $null; ManualRecords = $manualRecords }
         } catch {
             try {
                 Register-CimIndicationEvent -ClassName Win32_ProcessStartTrace -SourceIdentifier $sourceIdentifier -ErrorAction Stop | Out-Null
-                return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $null }
+                return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $null; ManualRecords = $manualRecords }
             } catch {
                 # PowerShell 7 runner images may not expose either registration cmdlet.
             }
@@ -121,7 +122,7 @@ function Start-VeloxProcessTrace {
         $watcher = [System.Management.ManagementEventWatcher]::new($query)
         Register-ObjectEvent -InputObject $watcher -EventName EventArrived -SourceIdentifier $sourceIdentifier -ErrorAction Stop | Out-Null
         $watcher.Start()
-        return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $watcher; Poller = $null }
+        return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $watcher; Poller = $null; ManualRecords = $manualRecords }
     } catch {
         if ($null -ne $watcher) {
             $watcher.Dispose()
@@ -132,9 +133,9 @@ function Start-VeloxProcessTrace {
             Initialize-VeloxSnapshotPoller
             $poller = [Velox.ProcessTrace.SnapshotPoller]::new()
             $poller.Start()
-            return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $poller }
+            return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $poller; ManualRecords = $manualRecords }
         } catch {
-            return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $false; Watcher = $null; Poller = $null }
+            return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $false; Watcher = $null; Poller = $null; ManualRecords = $manualRecords }
         }
     }
 }
@@ -186,6 +187,8 @@ function Complete-VeloxProcessTrace {
             }
         })
     }
+    $records = @($records) + @($Trace.ManualRecords)
+    $records = @($records | Group-Object pid | ForEach-Object { $_.Group[0] })
     $roots = @($records | Where-Object {
         $_.parentPid -eq $ParentPid -and $_.name -ieq $RootProcessName
     })

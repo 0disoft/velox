@@ -62,6 +62,56 @@ function Invoke-VeloxJson {
     return $value
 }
 
+function Invoke-VeloxTracedJson {
+    param(
+        [string] $Executable,
+        [string[]] $Arguments,
+        [string] $StderrPath,
+        $Trace
+    )
+
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $Executable
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    foreach ($argument in $Arguments) {
+        [void] $startInfo.ArgumentList.Add($argument)
+    }
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    try {
+        if (-not $process.Start()) {
+            throw 'Velox process did not start.'
+        }
+        $Trace.ManualRecords.Add([pscustomobject]@{
+            pid = [int] $process.Id
+            parentPid = [int] $PID
+            name = [System.IO.Path]::GetFileName($Executable)
+        })
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        $stderr = $stderrTask.GetAwaiter().GetResult()
+        [System.IO.File]::WriteAllText($StderrPath, $stderr, [System.Text.UTF8Encoding]::new($false))
+        if ($process.ExitCode -ne 0) {
+            throw "Velox exited with code $($process.ExitCode)."
+        }
+        if ([string]::IsNullOrWhiteSpace($stdout)) {
+            throw 'Velox returned no JSON output.'
+        }
+        $value = $stdout | ConvertFrom-Json
+        if (-not $value.ok) {
+            throw "Velox returned a failure envelope for $($Arguments[0])."
+        }
+        return $value
+    } finally {
+        $process.Dispose()
+    }
+}
+
 function Expand-ReleaseArchive {
     param([string] $ArchivePath, [string] $Destination)
 
@@ -149,7 +199,7 @@ try {
     $processTraceHandle = Start-VeloxProcessTrace
     $buildTimer = [System.Diagnostics.Stopwatch]::StartNew()
     try {
-        $built = Invoke-VeloxJson -Executable $cli -Arguments @('build', '--config', $configPath, '--out', $outputRoot, '--json') -StderrPath $stderrPath
+        $built = Invoke-VeloxTracedJson -Executable $cli -Arguments @('build', '--config', $configPath, '--out', $outputRoot, '--json') -StderrPath $stderrPath -Trace $processTraceHandle
     } catch {
         [void] (Complete-VeloxProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli)))
         throw
