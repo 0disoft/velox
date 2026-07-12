@@ -62,6 +62,7 @@ type Chromium struct {
 	NavigationCompletedCallback  func(sender *ICoreWebView2, args *ICoreWebView2NavigationCompletedEventArgs)
 	AcceleratorKeyCallback       func(uint) bool
 	MessageSourceAllowed         func(source string) bool
+	MaxWebMessageBytes           int
 	NavigationAllowed            func(uri string) bool
 	DenyFrames                   bool
 	DenyNewWindows               bool
@@ -239,40 +240,66 @@ func (e *Chromium) Release() uintptr {
 
 func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environment) uintptr {
 	if int64(res) < 0 {
-		log.Fatalf("Creating environment failed with %08x", res)
+		e.initializationError = fmt.Errorf("creating environment failed with %08x", res)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
 	}
 	_, _, _ = env.vtbl.AddRef.Call(uintptr(unsafe.Pointer(env)))
 	e.environment = env
 
-	_, _, _ = env.vtbl.CreateCoreWebView2Controller.Call(
+	result, _, _ := env.vtbl.CreateCoreWebView2Controller.Call(
 		uintptr(unsafe.Pointer(env)),
 		e.hwnd,
 		uintptr(unsafe.Pointer(e.controllerCompleted)),
 	)
+	if err := hresult(result); err != nil {
+		e.initializationError = fmt.Errorf("create controller: %w", err)
+		atomic.StoreUintptr(&e.inited, 1)
+	}
 	return 0
 }
 
 func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller *ICoreWebView2Controller) uintptr {
 	if int64(res) < 0 {
-		log.Fatalf("Creating controller failed with %08x", res)
+		e.initializationError = fmt.Errorf("creating controller failed with %08x", res)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
 	}
 	_, _, _ = controller.vtbl.AddRef.Call(uintptr(unsafe.Pointer(controller)))
 	e.controller = controller
 
-	_, _, _ = controller.vtbl.GetCoreWebView2.Call(
+	result, _, _ := controller.vtbl.GetCoreWebView2.Call(
 		uintptr(unsafe.Pointer(controller)),
 		uintptr(unsafe.Pointer(&e.webview)),
 	)
-	_, _, _ = e.webview.vtbl.AddWebMessageReceived.Call(
+	if err := hresult(result); err != nil || e.webview == nil {
+		if err == nil {
+			err = errors.New("controller returned an empty WebView")
+		}
+		e.initializationError = fmt.Errorf("get WebView: %w", err)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
+	}
+	result, _, _ = e.webview.vtbl.AddWebMessageReceived.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.webMessageReceived)),
 		uintptr(unsafe.Pointer(&e.webMessageToken)),
 	)
-	_, _, _ = e.webview.vtbl.AddPermissionRequested.Call(
+	if err := hresult(result); err != nil {
+		e.initializationError = fmt.Errorf("register WebMessage policy: %w", err)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
+	}
+	result, _, _ = e.webview.vtbl.AddPermissionRequested.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.permissionRequested)),
 		uintptr(unsafe.Pointer(&e.permissionToken)),
 	)
+	if err := hresult(result); err != nil {
+		e.initializationError = fmt.Errorf("register permission policy: %w", err)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
+	}
 	_, _, _ = e.webview.vtbl.AddWebResourceRequested.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.webResourceRequested)),
@@ -307,12 +334,26 @@ func (e *Chromium) MessageReceived(sender *ICoreWebView2, args *iCoreWebView2Web
 		return 0
 	}
 	var message *uint16
-	_, _, _ = args.vtbl.TryGetWebMessageAsString.Call(
+	result, _, _ := args.vtbl.TryGetWebMessageAsString.Call(
 		uintptr(unsafe.Pointer(args)),
 		uintptr(unsafe.Pointer(&message)),
 	)
+	if err := hresult(result); err != nil {
+		e.setPolicyError(fmt.Errorf("read WebMessage: %w", err))
+		return 0
+	}
+	if message == nil {
+		e.setPolicyError(errors.New("read WebMessage: empty native message"))
+		return 0
+	}
+	decoded := w32.Utf16PtrToString(message)
+	if e.MaxWebMessageBytes > 0 && len(decoded) > e.MaxWebMessageBytes {
+		e.reportPolicyBlocked("message-size")
+		windows.CoTaskMemFree(unsafe.Pointer(message))
+		return 0
+	}
 	if e.MessageCallback != nil {
-		e.MessageCallback(w32.Utf16PtrToString(message))
+		e.MessageCallback(decoded)
 	}
 	_, _, _ = sender.vtbl.PostWebMessageAsString.Call(
 		uintptr(unsafe.Pointer(sender)),
@@ -354,10 +395,13 @@ func (e *Chromium) SetGlobalPermission(state CoreWebView2PermissionState) {
 
 func (e *Chromium) PermissionRequested(_ *ICoreWebView2, args *iCoreWebView2PermissionRequestedEventArgs) uintptr {
 	var kind CoreWebView2PermissionKind
-	_, _, _ = args.vtbl.GetPermissionKind.Call(
+	resultCode, _, _ := args.vtbl.GetPermissionKind.Call(
 		uintptr(unsafe.Pointer(args)),
 		uintptr(unsafe.Pointer(&kind)),
 	)
+	if err := hresult(resultCode); err != nil {
+		e.setPolicyError(fmt.Errorf("read permission kind: %w", err))
+	}
 	var result CoreWebView2PermissionState
 	if e.globalPermission != nil {
 		result = *e.globalPermission
@@ -368,10 +412,14 @@ func (e *Chromium) PermissionRequested(_ *ICoreWebView2, args *iCoreWebView2Perm
 			result = CoreWebView2PermissionStateDefault
 		}
 	}
-	_, _, _ = args.vtbl.PutState.Call(
+	resultCode, _, _ = args.vtbl.PutState.Call(
 		uintptr(unsafe.Pointer(args)),
 		uintptr(result),
 	)
+	if err := hresult(resultCode); err != nil {
+		e.setPolicyError(fmt.Errorf("deny permission: %w", err))
+		return 0
+	}
 	if result == CoreWebView2PermissionStateDeny {
 		e.reportPolicyBlocked("permission")
 	}

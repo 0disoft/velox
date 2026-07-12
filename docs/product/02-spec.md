@@ -133,8 +133,10 @@ who can modify the installed asset directory.
 - Build output belongs to the application author.
 - The Velox CLI persists no user profile or telemetry.
 - The WebView2 user-data directory belongs to the packaged application.
-- The exact default profile path and cleanup policy remain UNDECIDED until the
-  runtime spike validates Windows behavior.
+- The default WebView2 profile is stable and application-scoped at
+  `%LOCALAPPDATA%\Velox\profiles\<app-id>` on Windows. Velox does not delete it
+  automatically. Benchmarks and controlled runs may override the location with
+  `VELOX_DATA_DIR`.
 
 ## Success Criteria
 

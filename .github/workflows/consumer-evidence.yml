@@ -77,6 +77,15 @@ jobs:
           $result = $raw | ConvertFrom-Json
           "release_sha256=$($result.archiveSha256)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
+      - name: Verify native startup and security policies
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-startup'
+          $env:VELOX_BUILT_HOST = Join-Path $env:RUNNER_TEMP 'release-input/velox-host.exe'
+          go test -v -count=1 -run 'TestBuiltHostStartup$' ./tests/startup
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Upload release artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:

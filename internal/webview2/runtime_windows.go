@@ -10,6 +10,8 @@ import (
 	webview "github.com/jchv/go-webview2"
 )
 
+const maxWebMessageBytes = 64 << 10
+
 type ReadyHandler func(phase string) error
 
 type Runtime struct {
@@ -38,6 +40,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		MessageSourceAllowed: func(source string) bool {
 			return isTrustedDocument(source, config.AppID)
 		},
+		MaxWebMessageBytes: maxWebMessageBytes,
 		NavigationAllowed: func(uri string) bool {
 			return isTrustedDocument(uri, config.AppID)
 		},

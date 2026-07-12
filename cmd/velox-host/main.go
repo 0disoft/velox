@@ -34,7 +34,11 @@ func run(args []string) int {
 
 	dataPath := os.Getenv("VELOX_DATA_DIR")
 	if dataPath == "" {
-		dataPath = filepath.Join(os.TempDir(), "velox", cfg.App.ID)
+		dataPath, err = defaultDataPath(cfg.App.ID)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+			return 6
+		}
 	}
 
 	var runtime *webview2.Runtime
@@ -81,6 +85,17 @@ func run(args []string) int {
 
 	runtime.Run()
 	return 0
+}
+
+func defaultDataPath(appID string) (string, error) {
+	base, err := os.UserCacheDir()
+	if err != nil {
+		return "", fmt.Errorf("resolve local application data: %w", err)
+	}
+	if !filepath.IsAbs(base) {
+		return "", errors.New("local application data path is not absolute")
+	}
+	return filepath.Join(base, "Velox", "profiles", appID), nil
 }
 
 type policyAudit struct {

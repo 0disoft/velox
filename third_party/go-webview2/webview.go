@@ -98,6 +98,10 @@ type WebViewOptions struct {
 	// incoming WebMessage before it reaches a bound Go callback.
 	MessageSourceAllowed func(source string) bool
 
+	// MaxWebMessageBytes rejects oversized messages before JSON decoding and
+	// callback dispatch. Zero preserves the upstream unlimited behavior.
+	MaxWebMessageBytes int
+
 	// NavigationAllowed validates every top-level navigation, including
 	// redirects. A false result cancels the navigation.
 	NavigationAllowed func(uri string) bool
@@ -141,6 +145,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 	chromium.DataPath = options.DataPath
 	chromium.BrowserExecutableFolder = options.BrowserExecutableFolder
 	chromium.MessageSourceAllowed = options.MessageSourceAllowed
+	chromium.MaxWebMessageBytes = options.MaxWebMessageBytes
 	chromium.NavigationAllowed = options.NavigationAllowed
 	chromium.DenyFrames = options.DenyFrames
 	chromium.DenyNewWindows = options.DenyNewWindows
@@ -160,17 +165,20 @@ func NewWithOptions(options WebViewOptions) WebView {
 
 	settings, err := chromium.GetSettings()
 	if err != nil {
-		log.Fatal(err)
+		w.Destroy()
+		return nil
 	}
 	// disable context menu
 	err = settings.PutAreDefaultContextMenusEnabled(options.Debug)
 	if err != nil {
-		log.Fatal(err)
+		w.Destroy()
+		return nil
 	}
 	// disable developer tools
 	err = settings.PutAreDevToolsEnabled(options.Debug)
 	if err != nil {
-		log.Fatal(err)
+		w.Destroy()
+		return nil
 	}
 
 	return w
