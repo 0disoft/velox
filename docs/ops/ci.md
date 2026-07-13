@@ -12,6 +12,11 @@ requests run one consumer contract sample. Manual dispatches expose a bounded
 lifecycle samples, while full runs ten of each. The weekly schedule and
 release-candidate tags use the full tier.
 
+Manual dispatch also exposes a disabled-by-default profile comparison. When
+selected, the producer runs three paired same-UDF and fresh-UDF relaunch trials,
+validates `velox.startup-profile-comparison/v1`, and retains the raw comparison
+for 30 days. It is diagnostic evidence and does not expand the normal CI path.
+
 After consumer jobs finish, an always-run summary job downloads every available
 raw result, rejects duplicate sample IDs, preserves failures and missing sample
 counts, and calculates minimum, p50, p95, and maximum over successful samples.

@@ -81,6 +81,9 @@ func TestConsumerEvidenceWorkflowOwnsLifecycleSummaryPolicy(t *testing.T) {
 		"type: choice",
 		"- quick",
 		"- full",
+		"include_profile_comparison:",
+		"TestStartupProfileComparisonEvidence$",
+		"schema/startup-profile-comparison-v1.schema.json",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("consumer evidence workflow is missing lifecycle contract %q", required)

@@ -77,6 +77,11 @@ and ten consumer samples. It validates
 This longer evidence path is intentionally separate from the local one-sample
 `velox_startup_smoke` intent.
 
+An explicit manual `include_profile_comparison` input runs three alternating,
+serial same-profile versus fresh-profile pairs and validates
+`velox.startup-profile-comparison/v1`. It is disabled for ordinary pull request,
+scheduled, and release-candidate evidence.
+
 The C++23/Pixi M0 reference intents were retired after ADR 0005 selected Go
 for both production executables. Historical comparison results remain in ADR
 0004 and the performance budget.

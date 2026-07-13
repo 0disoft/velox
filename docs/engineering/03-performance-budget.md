@@ -259,3 +259,10 @@ The provisional immediate-relaunch ceiling remains 10 seconds as a regression
 guard, not an expected duration. Startup remains a guardrail metric, not a
 product advantage, until cross-framework evidence exceeds the documented noise
 gate.
+
+An explicit manual diagnostic may additionally produce
+`velox.startup-profile-comparison/v1`. It compares immediate relaunch with the
+same UDF against a new UDF in three paired, serial samples. Trial order
+alternates by sample, and the two trials never run concurrently. This diagnostic
+separates WebView initialization cost from same-profile teardown contention; it
+does not run on pull requests, schedules, or release-candidate tags by default.
