@@ -16,6 +16,15 @@ on:
       - "go.sum"
       - "THIRD_PARTY_NOTICES.md"
   workflow_dispatch:
+    inputs:
+      evidence_tier:
+        description: Evidence repetition tier
+        required: true
+        default: quick
+        type: choice
+        options:
+          - quick
+          - full
   push:
     tags:
       - "v*-rc.*"
@@ -102,7 +111,7 @@ jobs:
       - name: Measure startup lifecycle
         shell: pwsh
         env:
-          VELOX_STARTUP_LIFECYCLE_REPETITIONS: ${{ (github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/')) && '10' || '3' }}
+          VELOX_STARTUP_LIFECYCLE_REPETITIONS: ${{ (github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '10' || '3' }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $false
@@ -161,7 +170,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sample: ${{ fromJSON(github.event_name == 'schedule' && '[0,1,2,3,4,5,6,7,8,9]' || '[0]') }}
+        sample: ${{ fromJSON((github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '[0,1,2,3,4,5,6,7,8,9]' || '[0]') }}
     steps:
       - name: Check out measurement contract
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -223,7 +232,7 @@ jobs:
       - name: Summarize results
         shell: pwsh
         env:
-          EXPECTED_SAMPLES: ${{ github.event_name == 'schedule' && '10' || '1' }}
+          EXPECTED_SAMPLES: ${{ (github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '10' || '1' }}
         run: |
           & scripts/summarize-consumer-e2e.ps1 `
             -ResultsRoot '.ci/raw' `

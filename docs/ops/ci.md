@@ -7,8 +7,10 @@
 
 `.github/workflows/consumer-evidence.yml` builds one unsigned Windows x64
 release artifact, then passes that exact ZIP to isolated consumer jobs. Pull
-requests and manual dispatches run one consumer contract sample. The weekly
-schedule runs ten independent consumer jobs.
+requests run one consumer contract sample. Manual dispatches expose a bounded
+`quick` or `full` evidence tier: quick runs one consumer sample and three
+lifecycle samples, while full runs ten of each. The weekly schedule and
+release-candidate tags use the full tier.
 
 After consumer jobs finish, an always-run summary job downloads every available
 raw result, rejects duplicate sample IDs, preserves failures and missing sample
@@ -101,6 +103,8 @@ Dependabot checks the `github-actions` ecosystem weekly and opens reviewable
 pull requests without auto-merge. The workflow also runs
 `cmd/velox-action-pins`, which rejects mutable `actions/*` references, stale
 stable-release comments, and SHAs that do not match the official release tag.
+Independent action repositories are checked concurrently while output and
+failure ordering remain deterministic.
 
 Compiler caches, package-manager caches, and workspaces are not uploaded as
 ordinary artifacts.

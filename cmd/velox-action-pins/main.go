@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -37,6 +38,11 @@ type githubClient struct {
 type gitObject struct {
 	SHA  string `json:"sha"`
 	Type string `json:"type"`
+}
+
+type verification struct {
+	Pin actionPin
+	Err error
 }
 
 func main() {
@@ -71,13 +77,28 @@ func run(args []string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	for _, pin := range pins {
-		if err := checker.verify(ctx, pin); err != nil {
-			return err
+	for _, result := range verifyAll(ctx, checker, pins) {
+		if result.Err != nil {
+			return result.Err
 		}
+		pin := result.Pin
 		fmt.Printf("verified %s %s %s (%d use sites)\n", pin.Repository, pin.Version, pin.SHA, len(pin.Locations))
 	}
 	return nil
+}
+
+func verifyAll(ctx context.Context, client githubClient, pins []actionPin) []verification {
+	results := make([]verification, len(pins))
+	var wait sync.WaitGroup
+	wait.Add(len(pins))
+	for index, pin := range pins {
+		go func() {
+			defer wait.Done()
+			results[index] = verification{Pin: pin, Err: client.verify(ctx, pin)}
+		}()
+	}
+	wait.Wait()
+	return results
 }
 
 func discoverPins(root string) ([]actionPin, error) {

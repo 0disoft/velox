@@ -69,8 +69,9 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_startup_smoke` maps to smoke.
 
 The hosted `Consumer evidence` workflow additionally runs three startup
-lifecycle samples for pull requests and manual dispatches, or ten for the
-weekly schedule and release-candidate tags. It validates
+lifecycle samples for pull requests and `quick` manual dispatches. A `full`
+manual dispatch, weekly schedule, or release-candidate tag runs ten lifecycle
+and ten consumer samples. It validates
 `velox.startup-lifecycle/v2`, derives and validates
 `velox.startup-lifecycle-summary/v1`, and uploads both results with `always()`.
 This longer evidence path is intentionally separate from the local one-sample

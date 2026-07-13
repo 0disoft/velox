@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestDiscoverPinsRejectsMutableReference(t *testing.T) {
@@ -79,6 +81,49 @@ func TestVerifyRejectsStaleRelease(t *testing.T) {
 	err := client.verify(context.Background(), actionPin{Repository: "actions/checkout", Version: "v7.0.0", SHA: strings.Repeat("1", 40)})
 	if err == nil || !strings.Contains(err.Error(), "latest stable release") {
 		t.Fatalf("verify error = %v", err)
+	}
+}
+
+func TestVerifyAllRunsRepositoriesConcurrentlyAndKeepsOrder(t *testing.T) {
+	const sha = "1111111111111111111111111111111111111111"
+	var active int32
+	var maximum int32
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		current := atomic.AddInt32(&active, 1)
+		defer atomic.AddInt32(&active, -1)
+		for {
+			observed := atomic.LoadInt32(&maximum)
+			if current <= observed || atomic.CompareAndSwapInt32(&maximum, observed, current) {
+				break
+			}
+		}
+		time.Sleep(25 * time.Millisecond)
+		if strings.HasSuffix(request.URL.Path, "/releases/latest") {
+			fmt.Fprint(response, `{"tag_name":"v1.0.0"}`)
+			return
+		}
+		fmt.Fprintf(response, `{"object":{"sha":%q,"type":"commit"}}`, sha)
+	}))
+	defer server.Close()
+
+	client := githubClient{baseURL: mustURL(t, server.URL), client: server.Client()}
+	pins := []actionPin{
+		{Repository: "actions/a", Version: "v1.0.0", SHA: sha},
+		{Repository: "actions/b", Version: "v1.0.0", SHA: sha},
+		{Repository: "actions/c", Version: "v1.0.0", SHA: sha},
+		{Repository: "actions/d", Version: "v1.0.0", SHA: sha},
+	}
+	results := verifyAll(context.Background(), client, pins)
+	if atomic.LoadInt32(&maximum) < 2 {
+		t.Fatalf("maximum concurrent requests = %d, want at least 2", maximum)
+	}
+	for index, result := range results {
+		if result.Err != nil {
+			t.Fatal(result.Err)
+		}
+		if result.Pin.Repository != pins[index].Repository {
+			t.Fatalf("result %d repository = %s, want %s", index, result.Pin.Repository, pins[index].Repository)
+		}
 	}
 }
 

@@ -231,8 +231,9 @@ times use Go's monotonic clock. Cross-process ordering is observed and timestamp
 by the single parent test harness rather than by subtracting child clocks.
 
 The hosted lifecycle evidence path runs three serial samples for pull requests
-and manual dispatches, and ten for the weekly schedule and release-candidate
-tags. Every sample owns a fresh profile, performs one immediate same-profile
+and `quick` manual dispatches, and ten for `full` manual dispatches, the weekly
+schedule, and release-candidate tags. Every sample owns a fresh profile,
+performs one immediate same-profile
 relaunch, and records both launches plus their cross-process ordering under
 `velox.startup-lifecycle/v2`. A failed launch, browser-exit wait, or
 profile-release wait remains in the JSON result with a stable phase and error

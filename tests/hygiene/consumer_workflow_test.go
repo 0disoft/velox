@@ -75,8 +75,12 @@ func TestConsumerEvidenceWorkflowOwnsLifecycleSummaryPolicy(t *testing.T) {
 		"schema/startup-lifecycle-v2.schema.json",
 		"schema/startup-lifecycle-summary-v1.schema.json",
 		"go run ./cmd/velox-startup-summary",
-		"github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/')",
+		"inputs.evidence_tier == 'full'",
 		"&& '10' || '3'",
+		"&& '10' || '1'",
+		"type: choice",
+		"- quick",
+		"- full",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("consumer evidence workflow is missing lifecycle contract %q", required)
