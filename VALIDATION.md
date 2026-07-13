@@ -68,6 +68,11 @@ The parent workspace command contract currently provides these bounded intents:
   with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
 
+The hosted `Consumer evidence` workflow additionally runs ten startup
+lifecycle samples, validates `velox.startup-lifecycle/v1`, and uploads the raw
+result with `always()`. This longer evidence path is intentionally separate
+from the local one-sample `velox_startup_smoke` intent.
+
 The C++23/Pixi M0 reference intents were retired after ADR 0005 selected Go
 for both production executables. Historical comparison results remain in ADR
 0004 and the performance budget.

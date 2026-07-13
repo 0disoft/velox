@@ -50,14 +50,14 @@ func TestBuiltHostStartup(t *testing.T) {
 	repoRoot := repositoryRoot(t)
 	host := goHost(t, repoRoot)
 	profile := managedProfileRoot(t, "velox-go-smoke-")
-	first := runHost(t, host, profile)
-	immediate := runHost(t, host, profile)
+	first := mustRunHost(t, host, profile)
+	immediate := mustRunHost(t, host, profile)
 	profileReleaseStarted := time.Now()
-	profileRelease := waitForProfileRelease(t, profile, 10*time.Second)
-	firstBrowserExit := awaitBrowserExit(t, first, 10*time.Second)
-	immediateBrowserExit := awaitBrowserExit(t, immediate, 10*time.Second)
+	profileRelease := mustWaitForProfileRelease(t, profile, 10*time.Second)
+	firstBrowserExit := mustAwaitBrowserExit(t, first, 10*time.Second)
+	immediateBrowserExit := mustAwaitBrowserExit(t, immediate, 10*time.Second)
 	securityProfile := managedProfileRoot(t, "velox-go-security-")
-	security := runHost(t, securityHost(t, repoRoot), securityProfile)
+	security := mustRunHost(t, securityHost(t, repoRoot), securityProfile)
 	testUnavailableRuntime(t, host, filepath.Join(t.TempDir(), "missing-webview2-runtime"))
 
 	if first.Exit > time.Second || immediate.Exit > time.Second {
@@ -100,20 +100,28 @@ func managedProfileRoot(t *testing.T, pattern string) string {
 	return root
 }
 
-func waitForProfileRelease(t *testing.T, root string, timeout time.Duration) time.Duration {
-	t.Helper()
+func waitForProfileRelease(root string, timeout time.Duration) (time.Duration, error) {
 	started := time.Now()
 	deadline := started.Add(timeout)
 	for {
 		err := os.RemoveAll(root)
 		if err == nil || os.IsNotExist(err) {
-			return time.Since(started)
+			return time.Since(started), nil
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("WebView2 profile remained locked after %s: %s: %v", timeout, root, err)
+			return 0, fmt.Errorf("WebView2 profile remained locked after %s: %w", timeout, err)
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func mustWaitForProfileRelease(t *testing.T, root string, timeout time.Duration) time.Duration {
+	t.Helper()
+	duration, err := waitForProfileRelease(root, timeout)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return duration
 }
 
 func goHost(t *testing.T, repoRoot string) hostAdapter {
@@ -202,10 +210,21 @@ func repositoryRoot(t *testing.T) string {
 	return root
 }
 
-func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
+func mustRunHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	t.Helper()
+	run, err := runHost(host, profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return run
+}
+
+func runHost(host hostAdapter, profile string) (hostRun, error) {
 	pipeName := fmt.Sprintf(`\\.\pipe\velox-%d`, time.Now().UnixNano())
-	pipe := createPipe(t, pipeName)
+	pipe, err := createPipe(pipeName)
+	if err != nil {
+		return hostRun{}, err
+	}
 	defer windows.CloseHandle(pipe)
 	defer disconnectNamedPipe.Call(uintptr(pipe))
 
@@ -220,7 +239,7 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	cmd.Stdout = output
 	cmd.Stderr = output
 	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
+		return hostRun{}, fmt.Errorf("start %s host: %w", host.name, err)
 	}
 	started := time.Now()
 
@@ -268,12 +287,14 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	case ready = <-done:
 		if ready.err != nil {
 			_ = cmd.Process.Kill()
-			t.Fatalf("%s ready marker failed: %v; host output: %s", host.name, ready.err, output.String())
+			_, _ = cmd.Process.Wait()
+			return hostRun{}, fmt.Errorf("%s ready marker failed: %w; host output: %s", host.name, ready.err, output.String())
 		}
 	case <-time.After(15 * time.Second):
 		_ = cmd.Process.Kill()
 		cancelIoEx.Call(uintptr(pipe), 0)
-		t.Fatalf("%s host did not report ready; output: %s", host.name, output.String())
+		_, _ = cmd.Process.Wait()
+		return hostRun{}, fmt.Errorf("%s host did not report ready within 15s; output: %s", host.name, output.String())
 	}
 	readyDuration := time.Since(started)
 	exitStarted := time.Now()
@@ -283,11 +304,12 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	select {
 	case err := <-waitDone:
 		if err != nil {
-			t.Fatalf("%s host exit failed: %v; output: %s", host.name, err, output.String())
+			return hostRun{}, fmt.Errorf("%s host exit failed: %w; output: %s", host.name, err, output.String())
 		}
 	case <-time.After(5 * time.Second):
 		_ = cmd.Process.Kill()
-		t.Fatalf("%s host did not exit after ready", host.name)
+		<-waitDone
+		return hostRun{}, fmt.Errorf("%s host did not exit within 5s after ready", host.name)
 	}
 	hostExitedAt := time.Now()
 	return hostRun{
@@ -296,7 +318,7 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 		HostExitedAt:       hostExitedAt,
 		BrowserProcessID:   ready.browserProcessID,
 		BrowserProcessExit: ready.browserExit,
-	}
+	}, nil
 }
 
 func observeProcessExit(processID uint32) (<-chan time.Time, error) {
@@ -316,28 +338,34 @@ func observeProcessExit(processID uint32) (<-chan time.Time, error) {
 	return exited, nil
 }
 
-func awaitBrowserExit(t *testing.T, run hostRun, timeout time.Duration) time.Duration {
-	t.Helper()
+func awaitBrowserExit(run hostRun, timeout time.Duration) (time.Duration, error) {
 	if run.BrowserProcessExit == nil {
-		t.Fatal("browser process exit observation is unavailable")
+		return 0, errors.New("browser process exit observation is unavailable")
 	}
 	select {
 	case exitedAt, ok := <-run.BrowserProcessExit:
 		if !ok {
-			t.Fatalf("browser process %d exit observation failed", run.BrowserProcessID)
+			return 0, fmt.Errorf("browser process %d exit observation failed", run.BrowserProcessID)
 		}
-		return exitedAt.Sub(run.HostExitedAt)
+		return exitedAt.Sub(run.HostExitedAt), nil
 	case <-time.After(timeout):
-		t.Fatalf("browser process %d did not exit within %s", run.BrowserProcessID, timeout)
-		return 0
+		return 0, fmt.Errorf("browser process %d did not exit within %s", run.BrowserProcessID, timeout)
 	}
 }
 
-func createPipe(t *testing.T, name string) windows.Handle {
+func mustAwaitBrowserExit(t *testing.T, run hostRun, timeout time.Duration) time.Duration {
 	t.Helper()
-	nameUTF16, err := windows.UTF16PtrFromString(name)
+	duration, err := awaitBrowserExit(run, timeout)
 	if err != nil {
 		t.Fatal(err)
+	}
+	return duration
+}
+
+func createPipe(name string) (windows.Handle, error) {
+	nameUTF16, err := windows.UTF16PtrFromString(name)
+	if err != nil {
+		return windows.InvalidHandle, err
 	}
 	handle, _, callErr := createNamedPipeW.Call(
 		uintptr(unsafe.Pointer(nameUTF16)),
@@ -350,9 +378,9 @@ func createPipe(t *testing.T, name string) windows.Handle {
 		0,
 	)
 	if handle == uintptr(windows.InvalidHandle) {
-		t.Fatalf("CreateNamedPipeW: %v", callErr)
+		return windows.InvalidHandle, fmt.Errorf("CreateNamedPipeW: %w", callErr)
 	}
-	return windows.Handle(handle)
+	return windows.Handle(handle), nil
 }
 
 func acceptPipe(pipe windows.Handle) error {

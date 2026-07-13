@@ -45,7 +45,10 @@ The full cross-framework benchmark matrix does not run on every pull request.
 
 - Reproducibility across clean workspaces.
 - Ten isolated consumer end-to-end samples.
-- Fresh and warm startup measurements remain pending.
+- The Windows producer job records ten fresh/immediate same-profile startup
+  lifecycle samples, validates `velox.startup-lifecycle/v1`, and preserves the
+  result as a 30-day artifact even when a sample fails. Cross-framework startup
+  comparison remains pending.
 - Zero-cache and recommended-cache benchmark suites.
 - Wails, Neutralino, and Tauri comparison adapters.
 - Software bill of materials and release checksum checks.

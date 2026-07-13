@@ -229,6 +229,15 @@ measures first ready, host exit, browser-process exit, immediate same-profile
 ready, and UDF deletion readiness as separate events. Process-local elapsed
 times use Go's monotonic clock; no timestamp is subtracted across processes.
 
+The hosted lifecycle evidence path runs ten serial samples. Every sample owns
+a fresh profile, performs one immediate same-profile relaunch, and records both
+launches under `velox.startup-lifecycle/v1`. A failed launch, browser-exit wait,
+or profile-release wait remains in the JSON result with a stable phase and
+error code. The workflow validates the result against
+`schema/startup-lifecycle-v1.schema.json` and uploads it even when the
+measurement test fails. Runner image, runner image version, Git commit, and
+WebView2 Runtime version are part of the evidence contract.
+
 A single instrumented local run on 2026-07-13 observed first ready at 924 ms,
 the first browser process exiting 779 ms after its host, immediate same-profile
 ready at 1,406 ms with a new browser process ID, and both the second browser
