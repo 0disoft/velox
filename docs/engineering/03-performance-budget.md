@@ -227,16 +227,22 @@ active benchmark target.
 The Go lifecycle smoke now records the main WebView2 browser process ID and
 measures first ready, host exit, browser-process exit, immediate same-profile
 ready, and UDF deletion readiness as separate events. Process-local elapsed
-times use Go's monotonic clock; no timestamp is subtracted across processes.
+times use Go's monotonic clock. Cross-process ordering is observed and timestamped
+by the single parent test harness rather than by subtracting child clocks.
 
-The hosted lifecycle evidence path runs ten serial samples. Every sample owns
-a fresh profile, performs one immediate same-profile relaunch, and records both
-launches under `velox.startup-lifecycle/v1`. A failed launch, browser-exit wait,
-or profile-release wait remains in the JSON result with a stable phase and
-error code. The workflow validates the result against
-`schema/startup-lifecycle-v1.schema.json` and uploads it even when the
-measurement test fails. Runner image, runner image version, Git commit, and
-WebView2 Runtime version are part of the evidence contract.
+The hosted lifecycle evidence path runs three serial samples for pull requests
+and manual dispatches, and ten for the weekly schedule and release-candidate
+tags. Every sample owns a fresh profile, performs one immediate same-profile
+relaunch, and records both launches plus their cross-process ordering under
+`velox.startup-lifecycle/v2`. A failed launch, browser-exit wait, or
+profile-release wait remains in the JSON result with a stable phase and error
+code. The workflow validates the result against
+`schema/startup-lifecycle-v2.schema.json`, derives a deterministic
+`velox.startup-lifecycle-summary/v1` with p50, p95, ordering counts, and the
+Pearson correlation between first-browser exit timing and immediate ready
+timing, and uploads both files even when the measurement test fails. Runner
+image, runner image version, Git commit, and WebView2 Runtime version are part
+of the evidence contract.
 
 A single instrumented local run on 2026-07-13 observed first ready at 924 ms,
 the first browser process exiting 779 ms after its host, immediate same-profile

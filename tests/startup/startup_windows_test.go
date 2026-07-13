@@ -41,6 +41,8 @@ type hostAdapter struct {
 type hostRun struct {
 	Ready              time.Duration
 	Exit               time.Duration
+	ProcessStartedAt   time.Time
+	ReadyAt            time.Time
 	HostExitedAt       time.Time
 	BrowserProcessID   uint32
 	BrowserProcessExit <-chan time.Time
@@ -58,6 +60,8 @@ func TestBuiltHostStartup(t *testing.T) {
 	immediateBrowserExit := mustAwaitBrowserExit(t, immediate, 10*time.Second)
 	securityProfile := managedProfileRoot(t, "velox-go-security-")
 	security := mustRunHost(t, securityHost(t, repoRoot), securityProfile)
+	securityBrowserExit := mustAwaitBrowserExit(t, security, 10*time.Second)
+	securityProfileRelease := mustWaitForProfileRelease(t, securityProfile, 10*time.Second)
 	testUnavailableRuntime(t, host, filepath.Join(t.TempDir(), "missing-webview2-runtime"))
 
 	if first.Exit > time.Second || immediate.Exit > time.Second {
@@ -70,7 +74,8 @@ func TestBuiltHostStartup(t *testing.T) {
 		first.Ready, first.Exit, first.BrowserProcessID, firstBrowserExit,
 		immediate.Ready, immediate.Exit, immediate.BrowserProcessID, immediateBrowserExit,
 		profileRelease, profileReleaseStarted.Add(profileRelease).Sub(immediate.HostExitedAt))
-	t.Logf("security ready=%s exit=%s", security.Ready, security.Exit)
+	t.Logf("security ready=%s host-exit=%s browser-pid=%d browser-exit-after-host=%s profile-release=%s",
+		security.Ready, security.Exit, security.BrowserProcessID, securityBrowserExit, securityProfileRelease)
 }
 
 func managedProfileRoot(t *testing.T, pattern string) string {
@@ -158,7 +163,8 @@ func securityHost(t *testing.T, repoRoot string) hostAdapter {
 				"VELOX_BENCH_POLICY_AUDIT=1",
 			}
 		},
-		expectedPhase: "security-ok",
+		expectedPhase:         "security-ok",
+		requireBrowserProcess: true,
 	}
 }
 
@@ -296,7 +302,8 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 		_, _ = cmd.Process.Wait()
 		return hostRun{}, fmt.Errorf("%s host did not report ready within 15s; output: %s", host.name, output.String())
 	}
-	readyDuration := time.Since(started)
+	readyAt := time.Now()
+	readyDuration := readyAt.Sub(started)
 	exitStarted := time.Now()
 
 	waitDone := make(chan error, 1)
@@ -315,6 +322,8 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	return hostRun{
 		Ready:              readyDuration,
 		Exit:               hostExitedAt.Sub(exitStarted),
+		ProcessStartedAt:   started,
+		ReadyAt:            readyAt,
 		HostExitedAt:       hostExitedAt,
 		BrowserProcessID:   ready.browserProcessID,
 		BrowserProcessExit: ready.browserExit,
@@ -339,17 +348,25 @@ func observeProcessExit(processID uint32) (<-chan time.Time, error) {
 }
 
 func awaitBrowserExit(run hostRun, timeout time.Duration) (time.Duration, error) {
+	exitedAt, err := awaitBrowserExitAt(run, timeout)
+	if err != nil {
+		return 0, err
+	}
+	return exitedAt.Sub(run.HostExitedAt), nil
+}
+
+func awaitBrowserExitAt(run hostRun, timeout time.Duration) (time.Time, error) {
 	if run.BrowserProcessExit == nil {
-		return 0, errors.New("browser process exit observation is unavailable")
+		return time.Time{}, errors.New("browser process exit observation is unavailable")
 	}
 	select {
 	case exitedAt, ok := <-run.BrowserProcessExit:
 		if !ok {
-			return 0, fmt.Errorf("browser process %d exit observation failed", run.BrowserProcessID)
+			return time.Time{}, fmt.Errorf("browser process %d exit observation failed", run.BrowserProcessID)
 		}
-		return exitedAt.Sub(run.HostExitedAt), nil
+		return exitedAt, nil
 	case <-time.After(timeout):
-		return 0, fmt.Errorf("browser process %d did not exit within %s", run.BrowserProcessID, timeout)
+		return time.Time{}, fmt.Errorf("browser process %d did not exit within %s", run.BrowserProcessID, timeout)
 	}
 }
 

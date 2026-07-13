@@ -1,14 +1,14 @@
 # CI
 
-- Status: Consumer evidence workflow implemented; first hosted run pending
+- Status: Consumer evidence workflow active
 - Owner: Project maintainer
 
 ## Current State
 
 `.github/workflows/consumer-evidence.yml` builds one unsigned Windows x64
 release artifact, then passes that exact ZIP to isolated consumer jobs. Pull
-requests and manual dispatches run one contract sample. The weekly schedule
-runs ten independent consumer jobs.
+requests and manual dispatches run one consumer contract sample. The weekly
+schedule runs ten independent consumer jobs.
 
 After consumer jobs finish, an always-run summary job downloads every available
 raw result, rejects duplicate sample IDs, preserves failures and missing sample
@@ -37,6 +37,7 @@ is not included in the consumer path.
 - Windows x64 host build.
 - Dependency-free hello build and startup smoke.
 - One bounded Velox-only end-to-end contract sample.
+- Three serial fresh/immediate same-profile startup lifecycle samples.
 - Artifact and generated-output drift checks.
 
 The full cross-framework benchmark matrix does not run on every pull request.
@@ -46,9 +47,11 @@ The full cross-framework benchmark matrix does not run on every pull request.
 - Reproducibility across clean workspaces.
 - Ten isolated consumer end-to-end samples.
 - The Windows producer job records ten fresh/immediate same-profile startup
-  lifecycle samples, validates `velox.startup-lifecycle/v1`, and preserves the
-  result as a 30-day artifact even when a sample fails. Cross-framework startup
-  comparison remains pending.
+  lifecycle samples, validates `velox.startup-lifecycle/v2`, derives a
+  `velox.startup-lifecycle-summary/v1` correlation and ordering summary, and
+  preserves both as a 30-day artifact even when a sample fails. Release
+  candidate tags use the same ten-sample lifecycle path. Cross-framework
+  startup comparison remains pending.
 - Zero-cache and recommended-cache benchmark suites.
 - Wails, Neutralino, and Tauri comparison adapters.
 - Software bill of materials and release checksum checks.
@@ -86,12 +89,18 @@ unbounded storage.
 The intermediate unsigned release artifact is retained for one day. Raw
 consumer result JSON is retained for seven days. Failed measurement jobs upload
 their structured failure result when the script reached result serialization.
-The generated summary is retained for 30 days.
+The generated consumer and startup lifecycle summaries are retained for 30
+days.
 
 The workflow pins checkout and artifact actions to immutable commit SHAs. It
 also pins `setup-go`, reads the Go version from `go.mod`, and disables its
 built-in cache. It does not use `actions/cache`. The release ZIP is uploaded
 without recompression because it is already compressed.
+
+Dependabot checks the `github-actions` ecosystem weekly and opens reviewable
+pull requests without auto-merge. The workflow also runs
+`cmd/velox-action-pins`, which rejects mutable `actions/*` references, stale
+stable-release comments, and SHAs that do not match the official release tag.
 
 Compiler caches, package-manager caches, and workspaces are not uploaded as
 ordinary artifacts.

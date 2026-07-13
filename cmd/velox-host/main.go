@@ -78,7 +78,12 @@ func run(args []string) int {
 		return 6
 	}
 	audit.complete = func() {
-		if err := benchmarker.NotifyPolicyAudit(); err != nil {
+		browserProcessID, err := runtime.BrowserProcessID()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "velox-host: policy audit browser process: %v\n", err)
+			return
+		}
+		if err := benchmarker.NotifyReady("security-ok", browserProcessID); err != nil {
 			fmt.Fprintf(os.Stderr, "velox-host: policy audit marker: %v\n", err)
 		}
 		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {

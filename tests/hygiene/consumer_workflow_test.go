@@ -63,3 +63,40 @@ func TestConsumerEvidenceWorkflowKeepsConsumerBuildCompilerFree(t *testing.T) {
 		t.Fatal("consumer evidence workflow does not aggregate all raw sample artifacts")
 	}
 }
+
+func TestConsumerEvidenceWorkflowOwnsLifecycleSummaryPolicy(t *testing.T) {
+	path := filepath.Join("..", "..", ".github", "workflows", "consumer-evidence.yml")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := string(data)
+	for _, required := range []string{
+		"schema/startup-lifecycle-v2.schema.json",
+		"schema/startup-lifecycle-summary-v1.schema.json",
+		"go run ./cmd/velox-startup-summary",
+		"github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/')",
+		"&& '10' || '3'",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("consumer evidence workflow is missing lifecycle contract %q", required)
+		}
+	}
+}
+
+func TestDependabotChecksGitHubActionsWithoutAutoMerge(t *testing.T) {
+	path := filepath.Join("..", "..", ".github", "dependabot.yml")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := string(data)
+	for _, required := range []string{"package-ecosystem: github-actions", "interval: weekly", "timezone: Asia/Seoul"} {
+		if !strings.Contains(config, required) {
+			t.Errorf("Dependabot configuration is missing %q", required)
+		}
+	}
+	if strings.Contains(strings.ToLower(config), "auto-merge") || strings.Contains(strings.ToLower(config), "automerge") {
+		t.Fatal("Dependabot configuration must not enable auto-merge")
+	}
+}

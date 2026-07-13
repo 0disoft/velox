@@ -16,6 +16,9 @@ on:
       - "go.sum"
       - "THIRD_PARTY_NOTICES.md"
   workflow_dispatch:
+  push:
+    tags:
+      - "v*-rc.*"
   schedule:
     - cron: "23 3 * * 1"
 
@@ -53,6 +56,15 @@ jobs:
           "runner_image=$env:ImageOS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           "runner_image_version=$env:ImageVersion" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
 
+      - name: Verify GitHub Action pins
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          go run ./cmd/velox-action-pins --root .github/workflows
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Test
         shell: pwsh
         run: |
@@ -89,19 +101,21 @@ jobs:
 
       - name: Measure startup lifecycle
         shell: pwsh
+        env:
+          VELOX_STARTUP_LIFECYCLE_REPETITIONS: ${{ (github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/')) && '10' || '3' }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $false
           $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-startup-lifecycle'
           $env:VELOX_BUILT_HOST = Join-Path $env:RUNNER_TEMP 'release-input/velox-host.exe'
           $env:VELOX_STARTUP_LIFECYCLE_RESULT = Join-Path $env:GITHUB_WORKSPACE '.ci/startup/startup-lifecycle.json'
-          $env:VELOX_STARTUP_LIFECYCLE_REPETITIONS = '10'
+          $summaryPath = Join-Path $env:GITHUB_WORKSPACE '.ci/startup/startup-lifecycle-summary.json'
           go test -v -count=1 -run 'TestStartupLifecycleEvidence$' ./tests/startup
           $testExit = $LASTEXITCODE
           if (-not (Test-Path -LiteralPath $env:VELOX_STARTUP_LIFECYCLE_RESULT -PathType Leaf)) {
             throw 'Startup lifecycle evidence was not written.'
           }
-          $schema = Get-Content -LiteralPath 'schema/startup-lifecycle-v1.schema.json' -Raw
+          $schema = Get-Content -LiteralPath 'schema/startup-lifecycle-v2.schema.json' -Raw
           $result = Get-Content -LiteralPath $env:VELOX_STARTUP_LIFECYCLE_RESULT -Raw
           if (-not ($result | Test-Json -Schema $schema)) {
             throw 'Startup lifecycle evidence failed JSON Schema validation.'
@@ -110,6 +124,13 @@ jobs:
           if ($document.samples.Count -ne $document.repetitions) {
             throw 'Startup lifecycle sample count does not match repetitions.'
           }
+          go run ./cmd/velox-startup-summary --input $env:VELOX_STARTUP_LIFECYCLE_RESULT --output $summaryPath
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $summarySchema = Get-Content -LiteralPath 'schema/startup-lifecycle-summary-v1.schema.json' -Raw
+          $summary = Get-Content -LiteralPath $summaryPath -Raw
+          if (-not ($summary | Test-Json -Schema $summarySchema)) {
+            throw 'Startup lifecycle summary failed JSON Schema validation.'
+          }
           if ($testExit -ne 0) { exit $testExit }
 
       - name: Upload startup lifecycle evidence
@@ -117,7 +138,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: startup-lifecycle-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .ci/startup/startup-lifecycle.json
+          path: |
+            .ci/startup/startup-lifecycle.json
+            .ci/startup/startup-lifecycle-summary.json
           retention-days: 30
           if-no-files-found: warn
 

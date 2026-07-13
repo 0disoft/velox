@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	lifecycleSchemaVersion = "velox.startup-lifecycle/v1"
+	lifecycleSchemaVersion = "velox.startup-lifecycle/v2"
 	lifecycleResultEnv     = "VELOX_STARTUP_LIFECYCLE_RESULT"
 	lifecycleRepetitionEnv = "VELOX_STARTUP_LIFECYCLE_REPETITIONS"
 )
@@ -60,12 +60,20 @@ type lifecycleMeasurement struct {
 }
 
 type lifecycleSample struct {
-	Index            int              `json:"index"`
-	Outcome          string           `json:"outcome"`
-	First            *lifecycleLaunch `json:"first"`
-	Immediate        *lifecycleLaunch `json:"immediate"`
-	ProfileReleaseMs *float64         `json:"profileReleaseMs"`
-	Error            *lifecycleError  `json:"error"`
+	Index            int                `json:"index"`
+	Outcome          string             `json:"outcome"`
+	First            *lifecycleLaunch   `json:"first"`
+	Immediate        *lifecycleLaunch   `json:"immediate"`
+	ProfileReleaseMs *float64           `json:"profileReleaseMs"`
+	Timeline         *lifecycleTimeline `json:"timeline"`
+	Error            *lifecycleError    `json:"error"`
+}
+
+type lifecycleTimeline struct {
+	ImmediateProcessStartAfterFirstHostExitMs float64 `json:"immediateProcessStartAfterFirstHostExitMs"`
+	FirstBrowserExitAfterImmediateStartMs     float64 `json:"firstBrowserExitAfterImmediateStartMs"`
+	ImmediateReadyAfterFirstBrowserExitMs     float64 `json:"immediateReadyAfterFirstBrowserExitMs"`
+	ImmediateReadyWaitedForFirstBrowserExit   bool    `json:"immediateReadyWaitedForFirstBrowserExit"`
 }
 
 type lifecycleLaunch struct {
@@ -166,22 +174,28 @@ func measureLifecycleSample(repoRoot string, host hostAdapter, index int) lifecy
 
 	profileReleaseStarted := time.Now()
 	profileRelease, profileErr := waitForProfileRelease(profile, 10*time.Second)
-	firstBrowserExit, firstErr := awaitBrowserExit(first, 10*time.Second)
-	immediateBrowserExit, immediateErr := awaitBrowserExit(immediate, 10*time.Second)
+	firstBrowserExitedAt, firstErr := awaitBrowserExitAt(first, 10*time.Second)
+	immediateBrowserExitedAt, immediateErr := awaitBrowserExitAt(immediate, 10*time.Second)
 	if firstErr != nil {
 		return failLifecycleSample(sample, "first-browser-exit", "BROWSER_EXIT_FAILED")
 	}
-	sample.First.BrowserExitAfterHostMs = milliseconds(firstBrowserExit)
+	sample.First.BrowserExitAfterHostMs = milliseconds(firstBrowserExitedAt.Sub(first.HostExitedAt))
 	if immediateErr != nil {
 		return failLifecycleSample(sample, "immediate-browser-exit", "BROWSER_EXIT_FAILED")
 	}
-	sample.Immediate.BrowserExitAfterHostMs = milliseconds(immediateBrowserExit)
+	sample.Immediate.BrowserExitAfterHostMs = milliseconds(immediateBrowserExitedAt.Sub(immediate.HostExitedAt))
 	if profileErr != nil {
 		return failLifecycleSample(sample, "profile-release", "PROFILE_RELEASE_FAILED")
 	}
 	profileReleasedAfterHost := profileReleaseStarted.Add(profileRelease).Sub(immediate.HostExitedAt)
 	value := milliseconds(profileReleasedAfterHost)
 	sample.ProfileReleaseMs = &value
+	sample.Timeline = &lifecycleTimeline{
+		ImmediateProcessStartAfterFirstHostExitMs: milliseconds(immediate.ProcessStartedAt.Sub(first.HostExitedAt)),
+		FirstBrowserExitAfterImmediateStartMs:     milliseconds(firstBrowserExitedAt.Sub(immediate.ProcessStartedAt)),
+		ImmediateReadyAfterFirstBrowserExitMs:     milliseconds(immediate.ReadyAt.Sub(firstBrowserExitedAt)),
+		ImmediateReadyWaitedForFirstBrowserExit:   !immediate.ReadyAt.Before(firstBrowserExitedAt),
+	}
 	sample.Outcome = "success"
 	return sample
 }

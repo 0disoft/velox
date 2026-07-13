@@ -8,6 +8,9 @@ func TestNotifyReadyValidatesLifecycleMarker(t *testing.T) {
 	if err := NotifyReady("dom-2raf", 42); err != nil {
 		t.Fatalf("NotifyReady(valid) error = %v", err)
 	}
+	if err := NotifyReady("security-ok", 42); err != nil {
+		t.Fatalf("NotifyReady(security) error = %v", err)
+	}
 	if err := NotifyReady("load", 42); err == nil {
 		t.Fatal("NotifyReady accepted an unexpected phase")
 	}

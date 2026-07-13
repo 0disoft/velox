@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/startup-lifecycle-summary/v1.json",
+  "title": "Velox startup lifecycle summary v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceSchemaVersion", "sourceSha256", "evidenceLevel", "outcome", "repetitions", "observedSamples", "successCount", "failureCount", "environment", "metrics", "correlation", "ordering", "failedSamples"],
+  "properties": {
+    "schemaVersion": { "const": "velox.startup-lifecycle-summary/v1" },
+    "sourceSchemaVersion": { "const": "velox.startup-lifecycle/v2" },
+    "sourceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidenceLevel": { "enum": ["controlled-local-observation", "hosted-runner-evidence"] },
+    "outcome": { "enum": ["success", "failure"] },
+    "repetitions": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "observedSamples": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "successCount": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "failureCount": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architecture", "webView2Version", "runnerImage", "runnerImageVersion", "githubRunId", "githubRunAttempt", "gitCommit"],
+      "properties": {
+        "os": { "const": "windows" },
+        "architecture": { "const": "amd64" },
+        "webView2Version": { "type": "string", "minLength": 1 },
+        "runnerImage": { "type": ["string", "null"] },
+        "runnerImageVersion": { "type": ["string", "null"] },
+        "githubRunId": { "type": ["string", "null"] },
+        "githubRunAttempt": { "type": ["string", "null"] },
+        "gitCommit": { "type": ["string", "null"] }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/metric" }
+    },
+    "correlation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metricX", "metricY", "sampleCount", "pearsonCoefficient"],
+      "properties": {
+        "metricX": { "const": "firstBrowserExitAfterImmediateStartMs" },
+        "metricY": { "const": "immediateReadyMs" },
+        "sampleCount": { "type": "integer", "minimum": 0 },
+        "pearsonCoefficient": { "type": ["number", "null"], "minimum": -1, "maximum": 1 }
+      }
+    },
+    "ordering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readyWaitedForFirstBrowserExitCount", "readyBeforeFirstBrowserExitCount", "violationSampleIndexes"],
+      "properties": {
+        "readyWaitedForFirstBrowserExitCount": { "type": "integer", "minimum": 0 },
+        "readyBeforeFirstBrowserExitCount": { "type": "integer", "minimum": 0 },
+        "violationSampleIndexes": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "uniqueItems": true }
+      }
+    },
+    "failedSamples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["index", "phase", "code"],
+        "properties": {
+          "index": { "type": "integer", "minimum": 0 },
+          "phase": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimumMs", "p50Ms", "p95Ms", "maximumMs"],
+      "properties": {
+        "minimumMs": { "type": "number" },
+        "p50Ms": { "type": "number" },
+        "p95Ms": { "type": "number" },
+        "maximumMs": { "type": "number" }
+      }
+    }
+  }
+}
