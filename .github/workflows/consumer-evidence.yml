@@ -65,21 +65,22 @@ jobs:
           "runner_image=$env:ImageOS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           "runner_image_version=$env:ImageVersion" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
 
-      - name: Verify GitHub Action pins
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          go run ./cmd/velox-action-pins --root .github/workflows
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
       - name: Test
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-test'
           go test -count=1 ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify GitHub Action pins
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-test'
+          go run ./cmd/velox-action-pins --root .github/workflows
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build release
