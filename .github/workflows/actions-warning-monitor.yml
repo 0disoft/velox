@@ -1,0 +1,70 @@
+name: Actions warning monitor
+
+on:
+  workflow_run:
+    workflows:
+      - Consumer evidence
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Completed Consumer evidence run ID
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: actions-warning-monitor-${{ github.event.workflow_run.id || inputs.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect completed workflow logs
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - name: Check out monitor
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+          check-latest: false
+          cache: false
+
+      - name: Inspect action warnings
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MONITORED_RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-warning-monitor'
+          go run ./cmd/velox-actions-warning-monitor `
+            --repository '${{ github.repository }}' `
+            --run-id $env:MONITORED_RUN_ID `
+            --output '.ci/actions-warning-monitor.json'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $schema = Get-Content -LiteralPath 'schema/actions-warning-monitor-v1.schema.json' -Raw
+          $result = Get-Content -LiteralPath '.ci/actions-warning-monitor.json' -Raw
+          if (-not ($result | Test-Json -Schema $schema)) {
+            throw 'Actions warning monitor failed JSON Schema validation.'
+          }
+          $document = $result | ConvertFrom-Json
+          "known_warning_status=$($document.status)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Upload warning report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: actions-warning-monitor-${{ github.event.workflow_run.id || inputs.run_id }}
+          path: .ci/actions-warning-monitor.json
+          retention-days: 30
+          if-no-files-found: warn

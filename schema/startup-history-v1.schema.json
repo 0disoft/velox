@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.invalid/velox/startup-history-v1.schema.json",
+  "title": "Velox startup history v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAtUtc",
+    "repository",
+    "workflow",
+    "requestedLimit",
+    "sourceCount",
+    "series",
+    "environmentGroups",
+    "collectionIssues"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "velox.startup-history/v1" },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "repository": { "type": "string", "minLength": 3 },
+    "workflow": { "type": "string", "minLength": 1 },
+    "requestedLimit": { "type": "integer", "minimum": 1, "maximum": 52 },
+    "sourceCount": { "type": "integer", "minimum": 1 },
+    "series": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/historyPoint" }
+    },
+    "environmentGroups": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/environmentGroup" }
+    },
+    "collectionIssues": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/collectionIssue" }
+    }
+  },
+  "$defs": {
+    "nonNegativeNumber": { "type": "number", "minimum": 0 },
+    "historyPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId", "runAttempt", "headSha", "createdAtUtc", "runnerImage",
+        "runnerImageVersion", "webView2Version", "immediateReadyP50Ms",
+        "immediateReadyP95Ms", "firstBrowserExitAfterImmediateP50Ms",
+        "firstBrowserExitAfterImmediateP95Ms", "readyAfterFirstBrowserExitP50Ms",
+        "readyAfterFirstBrowserExitP95Ms", "readyWaitedForFirstBrowserExitCount",
+        "pearsonCoefficient"
+      ],
+      "properties": {
+        "runId": { "type": "integer", "minimum": 1 },
+        "runAttempt": { "type": "integer", "minimum": 1 },
+        "headSha": { "type": "string", "minLength": 1 },
+        "createdAtUtc": { "type": "string", "format": "date-time" },
+        "runnerImage": { "type": "string" },
+        "runnerImageVersion": { "type": "string" },
+        "webView2Version": { "type": "string", "minLength": 1 },
+        "immediateReadyP50Ms": { "$ref": "#/$defs/nonNegativeNumber" },
+        "immediateReadyP95Ms": { "$ref": "#/$defs/nonNegativeNumber" },
+        "firstBrowserExitAfterImmediateP50Ms": { "$ref": "#/$defs/nonNegativeNumber" },
+        "firstBrowserExitAfterImmediateP95Ms": { "$ref": "#/$defs/nonNegativeNumber" },
+        "readyAfterFirstBrowserExitP50Ms": { "$ref": "#/$defs/nonNegativeNumber" },
+        "readyAfterFirstBrowserExitP95Ms": { "$ref": "#/$defs/nonNegativeNumber" },
+        "readyWaitedForFirstBrowserExitCount": { "type": "integer", "minimum": 0 },
+        "pearsonCoefficient": { "type": ["number", "null"], "minimum": -1, "maximum": 1 }
+      }
+    },
+    "environmentGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runnerImage", "runnerImageVersion", "webView2Version", "sampleCount"],
+      "properties": {
+        "runnerImage": { "type": "string" },
+        "runnerImageVersion": { "type": "string" },
+        "webView2Version": { "type": "string", "minLength": 1 },
+        "sampleCount": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "collectionIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "code"],
+      "properties": {
+        "runId": { "type": "integer", "minimum": 1 },
+        "code": {
+          "enum": [
+            "ARTIFACT_LIST_FAILED", "ARTIFACT_UNAVAILABLE", "ARTIFACT_DOWNLOAD_FAILED",
+            "INVALID_ARTIFACT_ARCHIVE", "SUMMARY_READ_FAILED", "SUMMARY_MISSING",
+            "INVALID_SUMMARY", "INCOMPLETE_SUMMARY"
+          ]
+        }
+      }
+    }
+  }
+}

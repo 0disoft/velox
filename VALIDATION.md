@@ -82,6 +82,19 @@ serial same-profile versus fresh-profile pairs and validates
 `velox.startup-profile-comparison/v1`. It is disabled for ordinary pull request,
 scheduled, and release-candidate evidence.
 
+Each weekly schedule also builds `velox.startup-history/v1` from the current
+lifecycle summary and up to eleven prior successful scheduled artifacts. The
+history is grouped by runner image version and WebView2 version, retained for
+90 days, and remains diagnostic evidence rather than an automatic regression
+gate. Manual runs can exercise the same collector with
+`include_startup_history`.
+
+The `Actions warning monitor` workflow runs after completed consumer evidence
+and scans the bounded workflow-log archive for the known
+`actions/download-artifact` `DEP0005 Buffer()` warning. It validates and uploads
+`velox.actions-warning-monitor/v1`. Presence is diagnostic rather than a failed
+product check; malformed or inaccessible log evidence still fails the monitor.
+
 The C++23/Pixi M0 reference intents were retired after ADR 0005 selected Go
 for both production executables. Historical comparison results remain in ADR
 0004 and the performance budget.

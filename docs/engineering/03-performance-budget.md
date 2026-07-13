@@ -266,3 +266,12 @@ same UDF against a new UDF in three paired, serial samples. Trial order
 alternates by sample, and the two trials never run concurrently. This diagnostic
 separates WebView initialization cost from same-profile teardown contention; it
 does not run on pull requests, schedules, or release-candidate tags by default.
+
+The weekly schedule aggregates the current lifecycle summary and up to eleven
+prior successful scheduled summaries into `velox.startup-history/v1`. History
+points retain p50 and p95 lifecycle timing, ordering count, correlation, runner
+image version, and WebView2 version. Series with different environment tuples
+must be interpreted separately. Missing historical artifacts are recorded as
+collection issues, and the history is evidence only: it has no automatic
+regression threshold because twelve hosted weekly points are not a stable
+baseline across runner and WebView2 updates.

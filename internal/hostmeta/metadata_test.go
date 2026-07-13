@@ -11,7 +11,7 @@ func TestLoadAndValidateArtifact(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "velox-host.json")
 	writeMetadata(t, path, `{
   "schemaVersion": "velox.host/v1",
-  "releaseVersion": "0.4.0-dev",
+  "releaseVersion": "0.4.1-dev",
   "target": "windows-x64",
   "contracts": {"host": 1, "runtime": 1},
   "host": {"file": "velox-host.exe", "bytes": 4, "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
@@ -20,7 +20,7 @@ func TestLoadAndValidateArtifact(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := metadata.ValidateArtifact(filepath.Join(filepath.Dir(path), "velox-host.exe"), "windows-x64", "0.4.0-dev", 1, 4, strings.Repeat("a", 64)); err != nil {
+	if err := metadata.ValidateArtifact(filepath.Join(filepath.Dir(path), "velox-host.exe"), "windows-x64", "0.4.1-dev", 1, 4, strings.Repeat("a", 64)); err != nil {
 		t.Fatal(err)
 	}
 }

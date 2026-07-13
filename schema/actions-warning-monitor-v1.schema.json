@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.invalid/velox/actions-warning-monitor-v1.schema.json",
+  "title": "Velox GitHub Actions warning monitor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "checkedAtUtc", "repository", "runId", "status", "findings"],
+  "properties": {
+    "schemaVersion": { "const": "velox.actions-warning-monitor/v1" },
+    "checkedAtUtc": { "type": "string", "format": "date-time" },
+    "repository": { "type": "string", "minLength": 3 },
+    "runId": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["present", "absent"] },
+    "findings": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "code", "occurrenceCount"],
+        "properties": {
+          "action": { "const": "actions/download-artifact" },
+          "code": { "const": "DEP0005" },
+          "occurrenceCount": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "present" } } },
+      "then": { "properties": { "findings": { "minItems": 1 } } },
+      "else": { "properties": { "findings": { "maxItems": 0 } } }
+    }
+  ]
+}

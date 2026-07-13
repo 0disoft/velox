@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/consumer-evidence.yml"
+      - ".github/workflows/actions-warning-monitor.yml"
       - "cmd/**"
       - "internal/**"
       - "third_party/**"
@@ -30,6 +31,11 @@ on:
         required: true
         default: false
         type: boolean
+      include_startup_history:
+        description: Build the 12-point startup history diagnostic
+        required: true
+        default: false
+        type: boolean
   push:
     tags:
       - "v*-rc.*"
@@ -37,6 +43,7 @@ on:
     - cron: "23 3 * * 1"
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -165,6 +172,27 @@ jobs:
             throw 'Startup profile comparison failed JSON Schema validation.'
           }
 
+      - name: Build startup history
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.include_startup_history)
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-startup-lifecycle'
+          go run ./cmd/velox-startup-history `
+            --repository '${{ github.repository }}' `
+            --workflow 'consumer-evidence.yml' `
+            --current '.ci/startup/startup-lifecycle-summary.json' `
+            --output '.ci/startup/startup-history.json' `
+            --limit 12
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $schema = Get-Content -LiteralPath 'schema/startup-history-v1.schema.json' -Raw
+          $result = Get-Content -LiteralPath '.ci/startup/startup-history.json' -Raw
+          if (-not ($result | Test-Json -Schema $schema)) {
+            throw 'Startup history failed JSON Schema validation.'
+          }
+
       - name: Upload startup lifecycle evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -173,7 +201,8 @@ jobs:
           path: |
             .ci/startup/startup-lifecycle.json
             .ci/startup/startup-lifecycle-summary.json
-          retention-days: 30
+            .ci/startup/startup-history.json
+          retention-days: 90
           if-no-files-found: warn
 
       - name: Upload startup profile comparison

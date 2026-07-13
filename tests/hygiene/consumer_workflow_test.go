@@ -22,7 +22,7 @@ func TestConsumerEvidenceWorkflowPinsActionsAndAvoidsCaches(t *testing.T) {
 	if !strings.Contains(workflow, "runs-on: windows-2025") {
 		t.Fatal("consumer evidence workflow must pin the Windows runner label")
 	}
-	if !strings.Contains(workflow, "retention-days: 1") || !strings.Contains(workflow, "retention-days: 7") || !strings.Contains(workflow, "retention-days: 30") {
+	if !strings.Contains(workflow, "retention-days: 1") || !strings.Contains(workflow, "retention-days: 7") || !strings.Contains(workflow, "retention-days: 30") || !strings.Contains(workflow, "retention-days: 90") {
 		t.Fatal("consumer evidence workflow must bound release and raw-result retention")
 	}
 
@@ -84,6 +84,11 @@ func TestConsumerEvidenceWorkflowOwnsLifecycleSummaryPolicy(t *testing.T) {
 		"include_profile_comparison:",
 		"TestStartupProfileComparisonEvidence$",
 		"schema/startup-profile-comparison-v1.schema.json",
+		"include_startup_history:",
+		"go run ./cmd/velox-startup-history",
+		"schema/startup-history-v1.schema.json",
+		"--limit 12",
+		"actions: read",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("consumer evidence workflow is missing lifecycle contract %q", required)
@@ -105,5 +110,34 @@ func TestDependabotChecksGitHubActionsWithoutAutoMerge(t *testing.T) {
 	}
 	if strings.Contains(strings.ToLower(config), "auto-merge") || strings.Contains(strings.ToLower(config), "automerge") {
 		t.Fatal("Dependabot configuration must not enable auto-merge")
+	}
+}
+
+func TestActionsWarningMonitorIsBoundedAndDiagnostic(t *testing.T) {
+	path := filepath.Join("..", "..", ".github", "workflows", "actions-warning-monitor.yml")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := string(data)
+	for _, required := range []string{
+		"workflow_run:",
+		"- Consumer evidence",
+		"actions: read",
+		"contents: read",
+		"go run ./cmd/velox-actions-warning-monitor",
+		"schema/actions-warning-monitor-v1.schema.json",
+		"known_warning_status=",
+		"retention-days: 30",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("warning monitor workflow is missing %q", required)
+		}
+	}
+	if strings.Contains(workflow, "actions/download-artifact@") {
+		t.Fatal("warning monitor must fetch completed logs through the bounded GitHub API client")
+	}
+	if strings.Contains(workflow, "if ($document.status -eq 'present')") {
+		t.Fatal("known upstream warning presence must remain diagnostic")
 	}
 }
