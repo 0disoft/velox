@@ -89,11 +89,14 @@ history is grouped by runner image version and WebView2 version, retained for
 gate. Manual runs can exercise the same collector with
 `include_startup_history`.
 
-The `Actions warning monitor` workflow runs after completed consumer evidence
-and scans the bounded workflow-log archive for the known
+The `Actions warning monitor` workflow allocates a runner after scheduled or
+release-candidate consumer evidence, or for an explicit manual run ID. Pull
+request and ordinary manual consumer evidence produce only a skipped monitor
+job. The monitor scans the bounded workflow-log archive for the known
 `actions/download-artifact` `DEP0005 Buffer()` warning. It validates and uploads
 `velox.actions-warning-monitor/v1`. Presence is diagnostic rather than a failed
 product check; malformed or inaccessible log evidence still fails the monitor.
+The platform-independent scanner uses the pinned `ubuntu-24.04` runner.
 
 The C++23/Pixi M0 reference intents were retired after ADR 0005 selected Go
 for both production executables. Historical comparison results remain in ADR

@@ -125,6 +125,9 @@ func TestActionsWarningMonitorIsBoundedAndDiagnostic(t *testing.T) {
 		"- Consumer evidence",
 		"actions: read",
 		"contents: read",
+		"github.event.workflow_run.event == 'schedule'",
+		"github.event.workflow_run.event == 'push'",
+		"runs-on: ubuntu-24.04",
 		"go run ./cmd/velox-actions-warning-monitor",
 		"schema/actions-warning-monitor-v1.schema.json",
 		"known_warning_status=",
@@ -136,6 +139,9 @@ func TestActionsWarningMonitorIsBoundedAndDiagnostic(t *testing.T) {
 	}
 	if strings.Contains(workflow, "actions/download-artifact@") {
 		t.Fatal("warning monitor must fetch completed logs through the bounded GitHub API client")
+	}
+	if strings.Contains(workflow, "runs-on: windows-") {
+		t.Fatal("platform-independent warning scanning must not consume a Windows runner")
 	}
 	if strings.Contains(workflow, "if ($document.status -eq 'present')") {
 		t.Fatal("known upstream warning presence must remain diagnostic")

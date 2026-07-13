@@ -128,9 +128,11 @@ ordinary artifacts.
 
 ## Upstream Action Warning Monitor
 
-`Actions warning monitor` starts only after `Consumer evidence` completes, or
-for an explicit completed run ID. It reads that run's log archive with
-`actions: read`, scans only for the known `actions/download-artifact`
+`Actions warning monitor` allocates its `ubuntu-24.04` runner only after a
+scheduled or release-candidate `Consumer evidence` run, or for an explicit
+completed run ID. Pull-request and ordinary manual evidence events create a
+skipped job without runner allocation. It reads the selected run's log archive
+with `actions: read`, scans only for the known `actions/download-artifact`
 `DEP0005 Buffer()` signature, validates
 `velox.actions-warning-monitor/v1`, and retains the report for 30 days. The
 workflow never logs its token and does not use `download-artifact` to inspect
