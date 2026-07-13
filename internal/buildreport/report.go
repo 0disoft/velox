@@ -32,6 +32,7 @@ type Contracts struct {
 	Manifest int `json:"manifest"`
 	Runtime  int `json:"runtime"`
 	Host     int `json:"host"`
+	IPC      int `json:"ipc"`
 }
 
 type File struct {
@@ -83,7 +84,7 @@ func (report Report) Validate() error {
 	if report.Target != "windows-x64" {
 		return fmt.Errorf("unsupported build result target %q", report.Target)
 	}
-	if report.Contracts.Manifest != 1 || report.Contracts.Runtime != 1 || report.Contracts.Host != 1 {
+	if report.Contracts.Manifest != 1 || report.Contracts.Runtime != 1 || report.Contracts.Host != 1 || report.Contracts.IPC != 1 {
 		return errors.New("unsupported build result contract versions")
 	}
 	if report.Host.File == "" || strings.ContainsAny(report.Host.File, `/\\:`) || report.Host.Bytes <= 0 || !validDigest(report.Host.SHA256) {

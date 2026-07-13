@@ -3,10 +3,12 @@
 package webview2
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
+	"github.com/0disoft/velox/internal/ipc"
 	webview "github.com/jchv/go-webview2"
 )
 
@@ -15,8 +17,9 @@ const maxWebMessageBytes = 64 << 10
 type ReadyHandler func(phase string) error
 
 type Runtime struct {
-	view      webview.WebView
-	closeOnce sync.Once
+	view       webview.WebView
+	dispatcher *ipc.Dispatcher
+	closeOnce  sync.Once
 }
 
 func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
@@ -60,10 +63,20 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	}
 
 	runtime := &Runtime{view: view}
+	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
+		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
+	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
 	if err := view.SetVirtualHostNameToFolderMapping(trustedHost(config.AppID), config.AssetRoot); err != nil {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("map virtual asset host: %w", err)
 	}
+	if err := view.Bind("__veloxInvoke", func(request json.RawMessage) ipc.Response {
+		return runtime.dispatcher.Dispatch(request)
+	}); err != nil {
+		destroyBeforeRun(view)
+		return nil, fmt.Errorf("bind native invocation bridge: %w", err)
+	}
+	view.Init(ipc.BridgeSource())
 	if err := view.Bind("__veloxReady", onReady); err != nil {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("bind ready marker: %w", err)
@@ -86,6 +99,9 @@ func (r *Runtime) BrowserProcessID() (uint32, error) {
 
 func (r *Runtime) Close() {
 	r.closeOnce.Do(func() {
+		if r.dispatcher != nil {
+			r.dispatcher.Close()
+		}
 		// Bind callbacks enqueue their RPC response after returning. Two dispatch
 		// turns let that response drain before Destroy releases WebView2 COM state.
 		r.view.Dispatch(func() {

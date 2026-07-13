@@ -14,6 +14,7 @@ import (
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildinfo"
 	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
@@ -152,7 +153,7 @@ func Create(options Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, fail(ErrorHost, err)
 	}
-	if err := hostMetadata.ValidateArtifact(hostPath, options.Target, buildinfo.Version, runtimeconfig.Version, hostInfo.Size(), hostDigest); err != nil {
+	if err := hostMetadata.ValidateArtifact(hostPath, options.Target, buildinfo.Version, runtimeconfig.Version, ipc.Version, hostInfo.Size(), hostDigest); err != nil {
 		return Plan{}, fail(ErrorHost, err)
 	}
 

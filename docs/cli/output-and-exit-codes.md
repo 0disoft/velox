@@ -111,6 +111,10 @@ Successful build JSON should include:
 Build output must not claim reproducibility until the reproducibility check
 passes.
 
+`version --json` reports manifest, runtime, host, and IPC compatibility
+independently. IPC v1 is also recorded in host metadata, release manifests, and
+build results so a CLI cannot silently package an incompatible bridge.
+
 ## Compatibility Policy
 
 - Adding optional JSON fields is compatible within schema version 1.

@@ -11,6 +11,8 @@ improve or protect the three priority metrics stay deferred.
 
 ## M0: Feasibility and Kill Test
 
+Status: Complete.
+
 ### Deliver
 
 - Minimal pure-Go Windows x64 WebView2 host.
@@ -36,6 +38,8 @@ selected host approach.
 
 ## M1: Compile-Free Vertical Slice
 
+Status: Complete.
+
 ### Deliver
 
 - Go CLI with init, validate, doctor, run, build, inspect, and version.
@@ -56,6 +60,8 @@ selected host approach.
 
 ## M2: Minimum Security Contract
 
+Status: Complete.
+
 ### Deliver
 
 - Trusted top-level origin checks.
@@ -73,6 +79,8 @@ selected host approach.
 - No filesystem, shell, process, sidecar, or plugin capability exists.
 
 ## M3: Public Benchmark
+
+Status: Active.
 
 ### Deliver
 

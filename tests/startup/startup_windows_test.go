@@ -49,6 +49,11 @@ type hostRun struct {
 }
 
 func TestBuiltHostStartup(t *testing.T) {
+	t.Run("lifecycle", testBuiltHostLifecycle)
+	t.Run("security-policy", testBuiltHostSecurityPolicy)
+}
+
+func testBuiltHostLifecycle(t *testing.T) {
 	repoRoot := repositoryRoot(t)
 	host := goHost(t, repoRoot)
 	profile := managedProfileRoot(t, "velox-go-smoke-")
@@ -58,10 +63,6 @@ func TestBuiltHostStartup(t *testing.T) {
 	profileRelease := mustWaitForProfileRelease(t, profile, 10*time.Second)
 	firstBrowserExit := mustAwaitBrowserExit(t, first, 10*time.Second)
 	immediateBrowserExit := mustAwaitBrowserExit(t, immediate, 10*time.Second)
-	securityProfile := managedProfileRoot(t, "velox-go-security-")
-	security := mustRunHost(t, securityHost(t, repoRoot), securityProfile)
-	securityBrowserExit := mustAwaitBrowserExit(t, security, 10*time.Second)
-	securityProfileRelease := mustWaitForProfileRelease(t, securityProfile, 10*time.Second)
 	testUnavailableRuntime(t, host, filepath.Join(t.TempDir(), "missing-webview2-runtime"))
 
 	if first.Exit > time.Second || immediate.Exit > time.Second {
@@ -74,8 +75,16 @@ func TestBuiltHostStartup(t *testing.T) {
 		first.Ready, first.Exit, first.BrowserProcessID, firstBrowserExit,
 		immediate.Ready, immediate.Exit, immediate.BrowserProcessID, immediateBrowserExit,
 		profileRelease, profileReleaseStarted.Add(profileRelease).Sub(immediate.HostExitedAt))
+}
+
+func testBuiltHostSecurityPolicy(t *testing.T) {
+	repoRoot := repositoryRoot(t)
+	profile := managedProfileRoot(t, "velox-go-security-")
+	run := mustRunHost(t, securityHost(t, repoRoot), profile)
+	browserExit := mustAwaitBrowserExit(t, run, 10*time.Second)
+	profileRelease := mustWaitForProfileRelease(t, profile, 10*time.Second)
 	t.Logf("security ready=%s host-exit=%s browser-pid=%d browser-exit-after-host=%s profile-release=%s",
-		security.Ready, security.Exit, security.BrowserProcessID, securityBrowserExit, securityProfileRelease)
+		run.Ready, run.Exit, run.BrowserProcessID, browserExit, profileRelease)
 }
 
 func managedProfileRoot(t *testing.T, pattern string) string {

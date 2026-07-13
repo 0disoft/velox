@@ -18,6 +18,7 @@ import (
 	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/initializer"
 	"github.com/0disoft/velox/internal/inspector"
+	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runner"
 	"github.com/0disoft/velox/internal/runtimeconfig"
@@ -83,6 +84,7 @@ type VersionResult struct {
 	ManifestVersions []int    `json:"manifestVersions"`
 	RuntimeVersions  []int    `json:"runtimeVersions"`
 	HostContracts    []int    `json:"hostContracts"`
+	IPCVersions      []int    `json:"ipcVersions"`
 	Targets          []string `json:"targets"`
 }
 
@@ -367,12 +369,13 @@ func runVersion(args []string, dependencies Dependencies) int {
 	}
 	result := VersionResult{
 		Version: buildinfo.Version, ManifestVersions: []int{manifest.Version},
-		RuntimeVersions: []int{runtimeconfig.Version}, HostContracts: []int{hostmeta.ContractVersion}, Targets: []string{buildplan.TargetWindowsX64},
+		RuntimeVersions: []int{runtimeconfig.Version}, HostContracts: []int{hostmeta.ContractVersion},
+		IPCVersions: []int{ipc.Version}, Targets: []string{buildplan.TargetWindowsX64},
 	}
 	if *jsonOutput {
 		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "version", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !*quiet {
-		fmt.Fprintf(dependencies.Stdout, "Velox %s\nManifest: v%d\nRuntime: v%d\nTarget: %s\n", buildinfo.Version, manifest.Version, runtimeconfig.Version, buildplan.TargetWindowsX64)
+		fmt.Fprintf(dependencies.Stdout, "Velox %s\nManifest: v%d\nRuntime: v%d\nIPC: v%d\nTarget: %s\n", buildinfo.Version, manifest.Version, runtimeconfig.Version, ipc.Version, buildplan.TargetWindowsX64)
 	}
 	return 0
 }

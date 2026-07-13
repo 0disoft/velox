@@ -26,6 +26,7 @@ type Metadata struct {
 type Contracts struct {
 	Host    int `json:"host"`
 	Runtime int `json:"runtime"`
+	IPC     int `json:"ipc"`
 }
 
 type Artifact struct {
@@ -58,7 +59,7 @@ func Load(path string) (Metadata, error) {
 	return metadata, nil
 }
 
-func (metadata Metadata) ValidateArtifact(hostPath, target, releaseVersion string, runtimeVersion int, size int64, sha256 string) error {
+func (metadata Metadata) ValidateArtifact(hostPath, target, releaseVersion string, runtimeVersion, ipcVersion int, size int64, sha256 string) error {
 	if metadata.Target != target {
 		return fmt.Errorf("host target %q does not match requested target %q", metadata.Target, target)
 	}
@@ -70,6 +71,9 @@ func (metadata Metadata) ValidateArtifact(hostPath, target, releaseVersion strin
 	}
 	if metadata.Contracts.Runtime != runtimeVersion {
 		return fmt.Errorf("host runtime contract %d does not match CLI runtime contract %d", metadata.Contracts.Runtime, runtimeVersion)
+	}
+	if metadata.Contracts.IPC != ipcVersion {
+		return fmt.Errorf("host IPC contract %d does not match CLI IPC contract %d", metadata.Contracts.IPC, ipcVersion)
 	}
 	if metadata.Host.File != filepath.Base(hostPath) {
 		return fmt.Errorf("host metadata names %q, found %q", metadata.Host.File, filepath.Base(hostPath))

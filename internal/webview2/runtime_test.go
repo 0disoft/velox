@@ -39,13 +39,14 @@ func TestConfigValidateRejectsRelativeRuntimePaths(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			config := Config{
-				Title:     "Hello",
-				AppID:     "dev.velox.hello",
-				Width:     640,
-				Height:    480,
-				DataPath:  test.dataPath,
-				AssetRoot: test.assetRoot,
-				EntryPath: test.entryPath,
+				Title:      "Hello",
+				AppID:      "dev.velox.hello",
+				AppVersion: "1.0.0",
+				Width:      640,
+				Height:     480,
+				DataPath:   test.dataPath,
+				AssetRoot:  test.assetRoot,
+				EntryPath:  test.entryPath,
 			}
 			if err := config.validate(); err == nil {
 				t.Fatal("validate() succeeded, want an absolute-path error")

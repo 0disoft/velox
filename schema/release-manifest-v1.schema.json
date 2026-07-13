@@ -12,11 +12,12 @@
     "contracts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifest", "runtime", "host", "buildResult"],
+      "required": ["manifest", "runtime", "host", "ipc", "buildResult"],
       "properties": {
         "manifest": { "const": 1 },
         "runtime": { "const": 1 },
         "host": { "const": 1 },
+        "ipc": { "const": 1 },
         "buildResult": { "const": 1 }
       }
     },

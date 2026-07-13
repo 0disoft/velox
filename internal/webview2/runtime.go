@@ -23,6 +23,8 @@ const (
 type Config struct {
 	Title                   string
 	AppID                   string
+	AppVersion              string
+	Permissions             []string
 	Width                   uint
 	Height                  uint
 	DataPath                string
@@ -61,6 +63,9 @@ func (c Config) validate() error {
 	}
 	if strings.TrimSpace(c.AppID) == "" {
 		return errors.New("app ID is required")
+	}
+	if strings.TrimSpace(c.AppVersion) == "" {
+		return errors.New("app version is required")
 	}
 	if c.Width == 0 || c.Height == 0 {
 		return errors.New("window dimensions must be positive")

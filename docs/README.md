@@ -27,6 +27,8 @@ Summary pages must not silently broaden these sources.
 - docs/architecture/01-domain-model.md: stable concepts and invariants.
 - docs/architecture/02-runtime-flow.md: build and runtime sequences.
 - docs/architecture/03-quality-attributes.md: ranked quality requirements.
+- docs/architecture/04-ipc-v1.md: frozen JavaScript bridge, wire envelopes,
+  limits, methods, permissions, and stable errors.
 - docs/adr/: durable decisions and revisit triggers.
 - diagrams/: derived visual summaries.
 

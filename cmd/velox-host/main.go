@@ -46,6 +46,8 @@ func run(args []string) int {
 	runtime, err = webview2.Open(webview2.Config{
 		Title:                   cfg.App.Name,
 		AppID:                   cfg.App.ID,
+		AppVersion:              cfg.App.Version,
+		Permissions:             cfg.Security.Permissions,
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
 		DataPath:                dataPath,
@@ -56,6 +58,7 @@ func run(args []string) int {
 		PolicyBlocked:           audit.record,
 	}, func(phase string) error {
 		if audit.enabled {
+			audit.markIPCReady(phase)
 			return nil
 		}
 		browserProcessID, err := runtime.BrowserProcessID()
@@ -110,6 +113,7 @@ func defaultDataPath(appID string) (string, error) {
 type policyAudit struct {
 	enabled  bool
 	blocked  map[string]bool
+	ipcReady bool
 	complete func()
 	reported bool
 }
@@ -122,10 +126,27 @@ func (a *policyAudit) record(kind string) {
 	if a.enabled {
 		a.blocked[kind] = true
 		fmt.Fprintf(os.Stderr, "velox-policy-blocked: %s\n", kind)
-		if !a.reported && len(a.missing()) == 0 && a.complete != nil {
-			a.reported = true
-			a.complete()
-		}
+		a.tryComplete()
+	}
+}
+
+func (a *policyAudit) markIPCReady(phase string) {
+	if !a.enabled {
+		return
+	}
+	if phase != "ipc-ok" {
+		fmt.Fprintf(os.Stderr, "velox-ipc-audit: %s\n", phase)
+		return
+	}
+	a.ipcReady = true
+	fmt.Fprintln(os.Stderr, "velox-policy-blocked: ipc-contract-passed")
+	a.tryComplete()
+}
+
+func (a *policyAudit) tryComplete() {
+	if !a.reported && len(a.missing()) == 0 && a.complete != nil {
+		a.reported = true
+		a.complete()
 	}
 }
 
@@ -142,6 +163,9 @@ func (a *policyAudit) missing() []string {
 		if !a.blocked[kind] {
 			missing = append(missing, kind)
 		}
+	}
+	if !a.ipcReady {
+		missing = append(missing, "ipc-contract")
 	}
 	if len(missing) == 0 {
 		return nil

@@ -14,6 +14,7 @@ import (
 	"github.com/0disoft/velox/internal/archive"
 	"github.com/0disoft/velox/internal/buildinfo"
 	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
@@ -26,6 +27,7 @@ const (
 var releaseSchemaFiles = []string{
 	"build-result-v1.schema.json",
 	"host-metadata-v1.schema.json",
+	"ipc-v1.schema.json",
 	"release-manifest-v1.schema.json",
 	"runtime-config-v1.schema.json",
 	"velox-v1.schema.json",
@@ -50,6 +52,7 @@ type Contracts struct {
 	Manifest    int `json:"manifest"`
 	Runtime     int `json:"runtime"`
 	Host        int `json:"host"`
+	IPC         int `json:"ipc"`
 	BuildResult int `json:"buildResult"`
 }
 
@@ -106,7 +109,7 @@ func Build(options Options) (Result, error) {
 	}
 	hostMetadata := hostmeta.Metadata{
 		SchemaVersion: hostmeta.SchemaVersion, ReleaseVersion: buildinfo.Version, Target: TargetWindowsX64,
-		Contracts: hostmeta.Contracts{Host: hostmeta.ContractVersion, Runtime: runtimeconfig.Version},
+		Contracts: hostmeta.Contracts{Host: hostmeta.ContractVersion, Runtime: runtimeconfig.Version, IPC: ipc.Version},
 		Host:      hostmeta.Artifact{File: hostArtifact.File, Bytes: hostArtifact.Bytes, SHA256: hostArtifact.SHA256},
 	}
 	if err := writeJSON(filepath.Join(stageDirectory, "velox-host.json"), hostMetadata); err != nil {
@@ -136,7 +139,7 @@ func Build(options Options) (Result, error) {
 	sort.Slice(artifacts, func(i, j int) bool { return artifacts[i].File < artifacts[j].File })
 	releaseManifest := Manifest{
 		SchemaVersion: SchemaVersion, ReleaseVersion: buildinfo.Version, Target: TargetWindowsX64,
-		Contracts: Contracts{Manifest: manifest.Version, Runtime: runtimeconfig.Version, Host: hostmeta.ContractVersion, BuildResult: 1},
+		Contracts: Contracts{Manifest: manifest.Version, Runtime: runtimeconfig.Version, Host: hostmeta.ContractVersion, IPC: ipc.Version, BuildResult: 1},
 		Artifacts: artifacts,
 	}
 	if err := writeJSON(filepath.Join(stageDirectory, "release-manifest.json"), releaseManifest); err != nil {

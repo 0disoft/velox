@@ -1,6 +1,6 @@
 # Security Baseline
 
-- Status: Draft
+- Status: Active
 - Owner: Project maintainer
 
 ## Security Model
@@ -18,6 +18,43 @@ Local content is not trusted merely because it is stored beside the host.
 - Web content to native host.
 - Host to installed WebView2 Runtime.
 - Packaged application to application-owned remote services.
+
+## Threat Model
+
+### Protected assets
+
+- Source assets and manifests that must not be changed by a build.
+- Previous successful output that must survive a failed build.
+- Host and release integrity metadata.
+- Native methods and window state reachable from untrusted web content.
+- Local diagnostics, profile data, and configuration values.
+
+### Attacker capabilities
+
+The model includes malformed project files, hostile HTML or JavaScript,
+cross-origin and child-frame content, forged IPC messages, path and archive
+traversal, linked or redirected filesystem entries, and a tampered downloaded
+release bundle. It does not claim to defeat an administrator or local attacker
+who can replace installed directory assets or the external runtime config.
+
+### Abuse cases and controls
+
+| Abuse case | Control |
+| --- | --- |
+| Web content invokes undeclared native behavior | closed method table and permission check |
+| A frame or remote page reaches the bridge | top-level virtual-origin enforcement and frame denial |
+| IPC exhausts memory or parser work | 64 KiB payload, depth 16, uint32 IDs, and 64 in-flight requests |
+| Browser features escape the product boundary | popup, download, permission, and remote-navigation denial |
+| Project paths overwrite unrelated files | canonical containment, link/reparse checks, owned staging, atomic promotion |
+| A release swaps the generic host | target, contract, size, and SHA-256 verification |
+| Production inspection exposes privileged tooling | development tools and default context menus disabled outside debug runs |
+
+### Residual risk
+
+WebView2 and the pinned Go binding remain external attack surfaces. Directory
+assets are not sealed. The M2 tests prove the repository contract on the pinned
+Windows runner; they are not an independent security audit or a claim of local
+tamper resistance.
 
 ## Build Controls
 

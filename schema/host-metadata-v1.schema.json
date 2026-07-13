@@ -12,10 +12,11 @@
     "contracts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["host", "runtime"],
+      "required": ["host", "runtime", "ipc"],
       "properties": {
         "host": { "const": 1 },
-        "runtime": { "const": 1 }
+        "runtime": { "const": 1 },
+        "ipc": { "const": 1 }
       }
     },
     "host": {

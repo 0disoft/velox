@@ -1,6 +1,6 @@
 # Testing Standard
 
-- Status: Draft
+- Status: Active
 - Owner: Project maintainer
 
 ## Principle
@@ -8,8 +8,9 @@
 Tests prove contracts at their owning boundary. Snapshot volume, a green retry,
 or a benchmark average does not replace behavior evidence.
 
-No executable test runner exists yet. This document defines the required test
-shape for M0 and later implementation.
+The Go test suite, Windows startup fixture, release smoke, schema validation,
+and hosted consumer workflow provide the executable test layers. This document
+defines how those layers prove their owning contracts.
 
 ## CLI Unit Tests
 

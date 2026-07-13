@@ -138,6 +138,13 @@ func TestVersionJSONContract(t *testing.T) {
 	if !envelope.OK || envelope.Command != "version" {
 		t.Fatalf("unexpected envelope: %+v", envelope)
 	}
+	encoded, err := json.Marshal(envelope.Result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"ipcVersions":[1]`) {
+		t.Fatalf("version result does not advertise IPC v1: %s", encoded)
+	}
 }
 
 func TestUsageFailureHonorsJSONAnywhere(t *testing.T) {
@@ -278,7 +285,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.4.2-dev","target":"windows-x64","contracts":{"host":1,"runtime":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.0-dev","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

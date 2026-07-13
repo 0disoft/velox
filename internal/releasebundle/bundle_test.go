@@ -50,7 +50,7 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 9 {
+	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 10 {
 		t.Fatalf("unexpected release manifest: %+v", manifest)
 	}
 	if _, err := os.Stat(filepath.Join(first.Directory, "schema", "consumer-e2e-v1.schema.json")); !os.IsNotExist(err) {

@@ -14,6 +14,6 @@
     "height": 480
   },
   "security": {
-    "permissions": []
+    "permissions": ["app.info"]
   }
 }

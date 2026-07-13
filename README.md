@@ -1,6 +1,6 @@
 # Velox
 
-- Status: Go runtime feasibility proven; packaging M1 vertical slice implemented
+- Status: M2 security contract implemented; M3 public benchmark active
 - Scope: general
 - Repository type: cli-tool
 
@@ -9,7 +9,8 @@ packager. It is designed to turn static HTML, CSS, and JavaScript into a
 portable WebView2 application without compiling application-specific native
 code.
 
-The repository now contains a policy-enforcing pure-Go WebView2 host, manifest
+The repository now contains a policy-enforcing pure-Go WebView2 host, a frozen
+and permission-checked IPC v1 bridge, manifest
 validation, an immutable build plan, atomic portable-directory assembly, a
 deterministic ZIP writer, all seven M1 CLI commands, an unsigned deterministic
 Windows x64 release bundle, startup fixtures, and a zero-cache consumer
@@ -72,7 +73,7 @@ Explicitly deferred:
 
 The CLI expects an unchanged prebuilt `velox-host.exe` and strict
 `velox-host.json` beside `velox.exe` in a release bundle. It verifies release,
-target, host-contract, runtime-contract, file-size, and SHA-256 agreement before
+target, host-contract, runtime-contract, IPC-contract, file-size, and SHA-256 agreement before
 building. Consumer builds never invoke Go, C++, Node.js, Pixi, or a package
 manager.
 
@@ -96,7 +97,9 @@ authoring contract.
 
 ## Development State
 
-M0 selected the pure-Go WebView2 host. The next product gate is a reproducible
+M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging
+slice, and M2 closed the minimum runtime security contract. The active product
+gate is a reproducible
 comparison with Wails, existing compile-free wrappers, and a PWA where
 applicable.
 

@@ -13,6 +13,7 @@ import (
 	"github.com/0disoft/velox/internal/archive"
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/buildreport"
+	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
@@ -69,7 +70,7 @@ func Build(plan buildplan.Plan) (Result, error) {
 		ReleaseVersion: snapshot.HostMetadata.ReleaseVersion,
 		App:            buildreport.App{ID: snapshot.Manifest.App.ID, Name: snapshot.Manifest.App.Name, Version: snapshot.Manifest.App.Version},
 		Target:         snapshot.Target,
-		Contracts:      buildreport.Contracts{Manifest: 1, Runtime: runtimeconfig.Version, Host: snapshot.HostMetadata.Contracts.Host},
+		Contracts:      buildreport.Contracts{Manifest: 1, Runtime: runtimeconfig.Version, Host: snapshot.HostMetadata.Contracts.Host, IPC: ipc.Version},
 		Host:           buildreport.File{File: hostName, Bytes: snapshot.HostSize, SHA256: snapshot.HostSHA256},
 		Assets:         buildreport.Assets{Files: len(snapshot.Assets.Files), Bytes: snapshot.Assets.TotalBytes, SHA256: snapshot.Assets.Digest},
 		Permissions:    append([]string{}, snapshot.Manifest.Security.Permissions...),

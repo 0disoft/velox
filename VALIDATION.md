@@ -1,6 +1,6 @@
 # Validation
 
-- Status: Active for M1
+- Status: M2 complete; active for M3
 
 ## Validation Source of Truth
 
@@ -104,6 +104,23 @@ for both production executables. Historical comparison results remain in ADR
 
 Unconfigured validation names remain skipped and must not pass with a fake
 success.
+
+## M2 Security Evidence
+
+| Contract | Executable evidence |
+| --- | --- |
+| Trusted virtual origin and top-level messages | `internal/webview2` origin tests and Windows startup security fixture |
+| Navigation, frame, popup, download, and permission denial | Windows startup security fixture policy audit |
+| Closed method and permission table | `internal/ipc` dispatcher tests |
+| Payload, nesting, request ID, duplicate, and in-flight limits | `internal/ipc` malformed and concurrency tests |
+| Frozen JavaScript bridge | embedded bridge contract test and Windows startup IPC invocation |
+| Production development-tool restrictions | runtime security source guard and startup production path |
+| No listening socket or broad native API | production-host source guard and closed dispatcher tests |
+| Missing runtime and malformed configuration | startup and runtime-configuration failure tests |
+| Path, archive, staging, and release checksum controls | asset, build-plan, builder, inspector, host metadata, and release tests |
+
+The security fixture must complete both a trusted `app.getInfo` invocation and
+the five browser-policy denials before emitting `security-ok`.
 
 ## Hygiene Validation
 

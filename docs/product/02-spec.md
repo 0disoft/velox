@@ -109,6 +109,13 @@ Web content is not trusted merely because it is local.
 - Production mode disables development tools unless explicitly enabled by a
   development-only run path.
 
+The M2 implementation exposes a frozen `window.velox.invoke()` bridge. IPC v1
+uses a closed method table for application information and basic window
+lifecycle only, validates permissions before dispatch, and bounds payload size,
+JSON nesting, request identifiers, duplicate identifiers, and concurrent
+requests. The wire and method contract is defined in
+`docs/architecture/04-ipc-v1.md`.
+
 The initial directory-assets mode does not claim resistance to a local attacker
 who can modify the installed asset directory.
 
