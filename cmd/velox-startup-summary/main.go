@@ -18,12 +18,16 @@ import (
 const summarySchemaVersion = "velox.startup-lifecycle-summary/v1"
 
 type evidence struct {
-	SchemaVersion string      `json:"schemaVersion"`
-	EvidenceLevel string      `json:"evidenceLevel"`
-	Outcome       string      `json:"outcome"`
-	Repetitions   int         `json:"repetitions"`
-	Environment   environment `json:"environment"`
-	Samples       []sample    `json:"samples"`
+	SchemaVersion string          `json:"schemaVersion"`
+	Scope         string          `json:"scope"`
+	EvidenceLevel string          `json:"evidenceLevel"`
+	Outcome       string          `json:"outcome"`
+	Repetitions   int             `json:"repetitions"`
+	StartedAtUTC  string          `json:"startedAtUtc"`
+	FinishedAtUTC string          `json:"finishedAtUtc"`
+	Environment   environment     `json:"environment"`
+	Measurement   json.RawMessage `json:"measurement"`
+	Samples       []sample        `json:"samples"`
 }
 
 type environment struct {
@@ -50,13 +54,15 @@ type sample struct {
 type launch struct {
 	ReadyMs                float64 `json:"readyMs"`
 	HostExitMs             float64 `json:"hostExitMs"`
+	BrowserProcessID       uint32  `json:"browserProcessId"`
 	BrowserExitAfterHostMs float64 `json:"browserExitAfterHostMs"`
 }
 
 type timeline struct {
-	FirstBrowserExitAfterImmediateStartMs   float64 `json:"firstBrowserExitAfterImmediateStartMs"`
-	ImmediateReadyAfterFirstBrowserExitMs   float64 `json:"immediateReadyAfterFirstBrowserExitMs"`
-	ImmediateReadyWaitedForFirstBrowserExit bool    `json:"immediateReadyWaitedForFirstBrowserExit"`
+	ImmediateProcessStartAfterFirstHostExitMs float64 `json:"immediateProcessStartAfterFirstHostExitMs"`
+	FirstBrowserExitAfterImmediateStartMs     float64 `json:"firstBrowserExitAfterImmediateStartMs"`
+	ImmediateReadyAfterFirstBrowserExitMs     float64 `json:"immediateReadyAfterFirstBrowserExitMs"`
+	ImmediateReadyWaitedForFirstBrowserExit   bool    `json:"immediateReadyWaitedForFirstBrowserExit"`
 }
 
 type runError struct {
@@ -147,6 +153,9 @@ func run(args []string) error {
 func summarize(raw evidence, source []byte) (summary, error) {
 	if raw.SchemaVersion != "velox.startup-lifecycle/v2" {
 		return summary{}, fmt.Errorf("unsupported source schema %q", raw.SchemaVersion)
+	}
+	if raw.Scope != "fresh-and-immediate-same-profile-startup" {
+		return summary{}, fmt.Errorf("unsupported source scope %q", raw.Scope)
 	}
 	if raw.Repetitions != len(raw.Samples) {
 		return summary{}, errors.New("repetitions does not match observed sample count")
