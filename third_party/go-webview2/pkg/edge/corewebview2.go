@@ -156,6 +156,18 @@ func (i *ICoreWebView2) GetSettings() (*ICoreWebViewSettings, error) {
 	return settings, nil
 }
 
+func (i *ICoreWebView2) GetBrowserProcessID() (uint32, error) {
+	var processID uint32
+	_, _, err := i.vtbl.GetBrowserProcessID.Call(
+		uintptr(unsafe.Pointer(i)),
+		uintptr(unsafe.Pointer(&processID)),
+	)
+	if err != windows.ERROR_SUCCESS {
+		return 0, err
+	}
+	return processID, nil
+}
+
 // ICoreWebView2Environment
 
 type iCoreWebView2EnvironmentVtbl struct {

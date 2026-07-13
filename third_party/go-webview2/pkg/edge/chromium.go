@@ -190,6 +190,13 @@ func (e *Chromium) Destroy() {
 	}
 }
 
+func (e *Chromium) BrowserProcessID() (uint32, error) {
+	if e.webview == nil {
+		return 0, errors.New("WebView2 is not initialized")
+	}
+	return e.webview.GetBrowserProcessID()
+}
+
 func (e *Chromium) NavigateToString(htmlContent string) {
 	_, _, _ = e.webview.vtbl.NavigateToString.Call(
 		uintptr(unsafe.Pointer(e.webview)),

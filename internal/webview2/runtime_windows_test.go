@@ -30,6 +30,8 @@ func (f *fakeWebView) Destroy() {
 	f.sequence = append(f.sequence, "destroy")
 }
 
+func (f *fakeWebView) BrowserProcessID() (uint32, error) { return 42, nil }
+
 func (f *fakeWebView) Window() unsafe.Pointer { return nil }
 
 func (f *fakeWebView) SetTitle(string) {}
@@ -85,5 +87,16 @@ func TestDestroyBeforeRunProcessesNativeClose(t *testing.T) {
 
 	if len(view.sequence) != 2 || view.sequence[0] != "destroy" || view.sequence[1] != "run" {
 		t.Fatalf("destroyBeforeRun sequence = %v, want [destroy run]", view.sequence)
+	}
+}
+
+func TestRuntimeReportsBrowserProcessID(t *testing.T) {
+	runtime := &Runtime{view: &fakeWebView{}}
+	processID, err := runtime.BrowserProcessID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if processID != 42 {
+		t.Fatalf("BrowserProcessID() = %d, want 42", processID)
 	}
 }

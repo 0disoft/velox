@@ -67,10 +67,11 @@ the production security contract.
 The adapter slice is complete: `cmd/velox-host` consumes `internal/webview2`,
 and the pinned local fork provides virtual HTTPS mapping, source-validated
 messages, denied frame and remote navigation, denied popups, denied downloads,
-default-denied permissions, and explicit COM close/release. Host shutdown and
-browser profile release are separate measurements; the host exits promptly,
-while same-profile relaunch remains delayed by WebView2 browser-process
-shutdown.
+default-denied permissions, explicit COM close/release, and benchmark-only
+browser-process ID reporting. Host shutdown, browser-process exit, profile
+release, and same-profile relaunch are separate measurements. Current evidence
+shows asynchronous final browser and UDF cleanup but does not establish a fixed
+same-profile relaunch delay.
 
 The C++23/Pixi reference infrastructure and its dedicated comparison tests are
 retired. Reopening the language decision requires the revisit evidence below,

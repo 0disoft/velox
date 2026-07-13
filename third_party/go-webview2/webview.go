@@ -44,6 +44,7 @@ func deleteWindowContext(wnd uintptr) {
 type browser interface {
 	Embed(hwnd uintptr) bool
 	Destroy()
+	BrowserProcessID() (uint32, error)
 	Resize()
 	Navigate(url string)
 	SetVirtualHostNameToFolderMapping(hostName, folderPath string) error
@@ -52,6 +53,10 @@ type browser interface {
 	Eval(script string)
 	NotifyParentWindowPositionChanged() error
 	Focus()
+}
+
+func (w *webview) BrowserProcessID() (uint32, error) {
+	return w.browser.BrowserProcessID()
 }
 
 type webview struct {

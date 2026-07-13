@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -29,16 +30,20 @@ var (
 )
 
 type hostAdapter struct {
-	name        string
-	executable  string
-	arguments   func(profile string) []string
-	environment func(profile string) []string
-	expected    string
+	name                  string
+	executable            string
+	arguments             func(profile string) []string
+	environment           func(profile string) []string
+	expectedPhase         string
+	requireBrowserProcess bool
 }
 
 type hostRun struct {
-	Ready time.Duration
-	Exit  time.Duration
+	Ready              time.Duration
+	Exit               time.Duration
+	HostExitedAt       time.Time
+	BrowserProcessID   uint32
+	BrowserProcessExit <-chan time.Time
 }
 
 func TestBuiltHostStartup(t *testing.T) {
@@ -47,7 +52,10 @@ func TestBuiltHostStartup(t *testing.T) {
 	profile := managedProfileRoot(t, "velox-go-smoke-")
 	first := runHost(t, host, profile)
 	immediate := runHost(t, host, profile)
+	profileReleaseStarted := time.Now()
 	profileRelease := waitForProfileRelease(t, profile, 10*time.Second)
+	firstBrowserExit := awaitBrowserExit(t, first, 10*time.Second)
+	immediateBrowserExit := awaitBrowserExit(t, immediate, 10*time.Second)
 	securityProfile := managedProfileRoot(t, "velox-go-security-")
 	security := runHost(t, securityHost(t, repoRoot), securityProfile)
 	testUnavailableRuntime(t, host, filepath.Join(t.TempDir(), "missing-webview2-runtime"))
@@ -58,8 +66,10 @@ func TestBuiltHostStartup(t *testing.T) {
 	if immediate.Ready > 10*time.Second {
 		t.Fatalf("same-profile immediate relaunch exceeded 10s: %s", immediate.Ready)
 	}
-	t.Logf("first ready=%s exit=%s; immediate ready=%s exit=%s; profile release=%s",
-		first.Ready, first.Exit, immediate.Ready, immediate.Exit, profileRelease)
+	t.Logf("first ready=%s host-exit=%s browser-pid=%d browser-exit-after-host=%s; immediate ready=%s host-exit=%s browser-pid=%d browser-exit-after-host=%s; profile-release-wait=%s profile-released-after-immediate-host=%s",
+		first.Ready, first.Exit, first.BrowserProcessID, firstBrowserExit,
+		immediate.Ready, immediate.Exit, immediate.BrowserProcessID, immediateBrowserExit,
+		profileRelease, profileReleaseStarted.Add(profileRelease).Sub(immediate.HostExitedAt))
 	t.Logf("security ready=%s exit=%s", security.Ready, security.Exit)
 }
 
@@ -119,7 +129,8 @@ func goHost(t *testing.T, repoRoot string) hostAdapter {
 		environment: func(profile string) []string {
 			return []string{"VELOX_DATA_DIR=" + profile}
 		},
-		expected: "ready dom-2raf\n",
+		expectedPhase:         "dom-2raf",
+		requireBrowserProcess: true,
 	}
 }
 
@@ -139,7 +150,7 @@ func securityHost(t *testing.T, repoRoot string) hostAdapter {
 				"VELOX_BENCH_POLICY_AUDIT=1",
 			}
 		},
-		expected: "ready security-ok\n",
+		expectedPhase: "security-ok",
 	}
 }
 
@@ -213,30 +224,51 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	}
 	started := time.Now()
 
-	done := make(chan error, 1)
+	type readyResult struct {
+		browserProcessID uint32
+		browserExit      <-chan time.Time
+		err              error
+	}
+	done := make(chan readyResult, 1)
 	go func() {
 		if err := acceptPipe(pipe); err != nil {
-			done <- err
+			done <- readyResult{err: err}
 			return
 		}
 		buffer := make([]byte, 128)
 		n, err := windows.Read(pipe, buffer)
 		if err != nil {
-			done <- err
+			done <- readyResult{err: err}
 			return
 		}
-		if string(buffer[:n]) != host.expected {
-			done <- fmt.Errorf("unexpected marker %q, want %q", buffer[:n], host.expected)
+		fields := strings.Fields(string(buffer[:n]))
+		if len(fields) < 2 || fields[0] != "ready" || fields[1] != host.expectedPhase {
+			done <- readyResult{err: fmt.Errorf("unexpected marker %q, want ready %s", buffer[:n], host.expectedPhase)}
 			return
 		}
-		done <- nil
+		result := readyResult{}
+		if host.requireBrowserProcess {
+			if len(fields) != 3 {
+				done <- readyResult{err: fmt.Errorf("ready marker %q has no browser process ID", buffer[:n])}
+				return
+			}
+			processID, parseErr := strconv.ParseUint(fields[2], 10, 32)
+			if parseErr != nil || processID == 0 {
+				done <- readyResult{err: fmt.Errorf("invalid browser process ID %q", fields[2])}
+				return
+			}
+			result.browserProcessID = uint32(processID)
+			result.browserExit, result.err = observeProcessExit(result.browserProcessID)
+		}
+		done <- result
 	}()
 
+	var ready readyResult
 	select {
-	case err := <-done:
-		if err != nil {
+	case ready = <-done:
+		if ready.err != nil {
 			_ = cmd.Process.Kill()
-			t.Fatalf("%s ready marker failed: %v; host output: %s", host.name, err, output.String())
+			t.Fatalf("%s ready marker failed: %v; host output: %s", host.name, ready.err, output.String())
 		}
 	case <-time.After(15 * time.Second):
 		_ = cmd.Process.Kill()
@@ -257,7 +289,48 @@ func runHost(t *testing.T, host hostAdapter, profile string) hostRun {
 		_ = cmd.Process.Kill()
 		t.Fatalf("%s host did not exit after ready", host.name)
 	}
-	return hostRun{Ready: readyDuration, Exit: time.Since(exitStarted)}
+	hostExitedAt := time.Now()
+	return hostRun{
+		Ready:              readyDuration,
+		Exit:               hostExitedAt.Sub(exitStarted),
+		HostExitedAt:       hostExitedAt,
+		BrowserProcessID:   ready.browserProcessID,
+		BrowserProcessExit: ready.browserExit,
+	}
+}
+
+func observeProcessExit(processID uint32) (<-chan time.Time, error) {
+	handle, err := windows.OpenProcess(windows.SYNCHRONIZE, false, processID)
+	if err != nil {
+		return nil, fmt.Errorf("open browser process %d: %w", processID, err)
+	}
+	exited := make(chan time.Time, 1)
+	go func() {
+		defer windows.CloseHandle(handle)
+		result, waitErr := windows.WaitForSingleObject(handle, windows.INFINITE)
+		if waitErr == nil && result == windows.WAIT_OBJECT_0 {
+			exited <- time.Now()
+		}
+		close(exited)
+	}()
+	return exited, nil
+}
+
+func awaitBrowserExit(t *testing.T, run hostRun, timeout time.Duration) time.Duration {
+	t.Helper()
+	if run.BrowserProcessExit == nil {
+		t.Fatal("browser process exit observation is unavailable")
+	}
+	select {
+	case exitedAt, ok := <-run.BrowserProcessExit:
+		if !ok {
+			t.Fatalf("browser process %d exit observation failed", run.BrowserProcessID)
+		}
+		return exitedAt.Sub(run.HostExitedAt)
+	case <-time.After(timeout):
+		t.Fatalf("browser process %d did not exit within %s", run.BrowserProcessID, timeout)
+		return 0
+	}
 }
 
 func createPipe(t *testing.T, name string) windows.Handle {

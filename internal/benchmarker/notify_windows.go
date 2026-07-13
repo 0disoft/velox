@@ -8,11 +8,14 @@ import (
 
 const PipeEnvironment = "VELOX_BENCH_PIPE"
 
-func NotifyReady(phase string) error {
+func NotifyReady(phase string, browserProcessID uint32) error {
 	if phase != "dom-2raf" {
 		return errors.New("unexpected ready phase")
 	}
-	return notify("ready dom-2raf\n")
+	if browserProcessID == 0 {
+		return errors.New("browser process ID is required")
+	}
+	return notify(fmt.Sprintf("ready dom-2raf %d\n", browserProcessID))
 }
 
 func NotifyPolicyAudit() error {

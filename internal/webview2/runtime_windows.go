@@ -80,6 +80,10 @@ func (r *Runtime) Terminate() {
 	r.view.Terminate()
 }
 
+func (r *Runtime) BrowserProcessID() (uint32, error) {
+	return r.view.BrowserProcessID()
+}
+
 func (r *Runtime) Close() {
 	r.closeOnce.Do(func() {
 		// Bind callbacks enqueue their RPC response after returning. Two dispatch

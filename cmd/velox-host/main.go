@@ -58,7 +58,11 @@ func run(args []string) int {
 		if audit.enabled {
 			return nil
 		}
-		if err := benchmarker.NotifyReady(phase); err != nil {
+		browserProcessID, err := runtime.BrowserProcessID()
+		if err != nil {
+			return fmt.Errorf("read WebView2 browser process ID: %w", err)
+		}
+		if err := benchmarker.NotifyReady(phase, browserProcessID); err != nil {
 			return err
 		}
 		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {

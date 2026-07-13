@@ -224,13 +224,22 @@ for a startup marketing claim. The C++23 source and toolchain were retired
 after Go was selected; this table is immutable historical evidence, not an
 active benchmark target.
 
-The Go lifecycle smoke now measures a first launch, an immediate second launch
-using the same profile, ready-to-host-exit time, and final profile release. The
-repeated run after explicit controller and COM cleanup showed an immediate
-relaunch near 7.1 seconds. WebView2's pinned SDK contract states that `Close` is
-synchronous while user-data-folder release completes only after the shared
-browser process exits. This is a recorded lifecycle regression, not a startup
-outlier. The provisional smoke ceiling is 10 seconds until the architecture
-either avoids browser-process teardown on ordinary restart or accepts the delay
-as a platform limitation. Startup remains a guardrail metric, not a product
-advantage, until cross-framework evidence exceeds the documented noise gate.
+The Go lifecycle smoke now records the main WebView2 browser process ID and
+measures first ready, host exit, browser-process exit, immediate same-profile
+ready, and UDF deletion readiness as separate events. Process-local elapsed
+times use Go's monotonic clock; no timestamp is subtracted across processes.
+
+A single instrumented local run on 2026-07-13 observed first ready at 924 ms,
+the first browser process exiting 779 ms after its host, immediate same-profile
+ready at 1,406 ms with a new browser process ID, and both the second browser
+exit and UDF deletion readiness about 6.42 seconds after the second host exit.
+This disproves a fixed seven-second immediate-relaunch penalty in that
+environment. It supports only the narrower conclusion that final browser and
+UDF cleanup can remain asynchronous for several seconds. Repeated pinned-runner
+evidence is still required before assigning the delay to a fixed WebView2 grace
+period or singleton handover timeout.
+
+The provisional immediate-relaunch ceiling remains 10 seconds as a regression
+guard, not an expected duration. Startup remains a guardrail metric, not a
+product advantage, until cross-framework evidence exceeds the documented noise
+gate.

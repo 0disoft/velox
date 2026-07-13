@@ -41,6 +41,9 @@ type WebView interface {
 	// Destroy destroys a webview and closes the native window.
 	Destroy()
 
+	// BrowserProcessID returns the main WebView2 browser process identifier.
+	BrowserProcessID() (uint32, error)
+
 	// Window returns a native window handle pointer. When using GTK backend the
 	// pointer is GtkWindow pointer, when using Cocoa backend the pointer is
 	// NSWindow pointer, when using Win32 backend the pointer is HWND pointer.
