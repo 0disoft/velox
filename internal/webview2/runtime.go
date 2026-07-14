@@ -33,6 +33,7 @@ type Config struct {
 	EntryPath               string
 	Debug                   bool
 	PolicyBlocked           func(kind string)
+	StartupPhase            func(name string)
 }
 
 type Capabilities struct {

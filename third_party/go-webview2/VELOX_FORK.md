@@ -14,6 +14,8 @@ Velox carries only the changes required by its Windows host boundary:
 - deny popup and download events;
 - allow an explicit fixed-runtime folder for missing-runtime conformance tests;
 - expose the main WebView2 browser process ID for lifecycle measurement;
+- expose a phase-only startup observer for benchmark instrumentation without
+  changing WebView2 initialization decisions;
 - close and release the WebView2 controller, webview, and environment;
 - unregister native event handlers during shutdown;
 - fail initialization when mandatory WebMessage or permission policies cannot

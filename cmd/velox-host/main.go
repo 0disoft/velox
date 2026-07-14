@@ -18,6 +18,7 @@ func main() {
 }
 
 func run(args []string) int {
+	timeline := benchmarker.NewTimelineRecorder(os.Getenv(benchmarker.PipeEnvironment) != "")
 	flags := flag.NewFlagSet("velox-host", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	configPath := flags.String("config", "velox.runtime.json", "path to the external runtime configuration")
@@ -31,6 +32,7 @@ func run(args []string) int {
 		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
 		return 2
 	}
+	timeline.Mark("config-loaded")
 
 	dataPath := os.Getenv("VELOX_DATA_DIR")
 	if dataPath == "" {
@@ -43,6 +45,7 @@ func run(args []string) int {
 
 	var runtime *webview2.Runtime
 	audit := newPolicyAudit(os.Getenv("VELOX_BENCH_POLICY_AUDIT") == "1")
+	timeline.Mark("runtime-open-started")
 	runtime, err = webview2.Open(webview2.Config{
 		Title:                   cfg.App.Name,
 		AppID:                   cfg.App.ID,
@@ -56,6 +59,7 @@ func run(args []string) int {
 		EntryPath:               cfg.EntryPath,
 		Debug:                   *debug,
 		PolicyBlocked:           audit.record,
+		StartupPhase:            timeline.Mark,
 	}, func(phase string) error {
 		if audit.enabled {
 			audit.markIPCReady(phase)
@@ -65,7 +69,11 @@ func run(args []string) int {
 		if err != nil {
 			return fmt.Errorf("read WebView2 browser process ID: %w", err)
 		}
+		timeline.Mark(phase)
 		if err := benchmarker.NotifyReady(phase, browserProcessID); err != nil {
+			return err
+		}
+		if err := timeline.Emit(os.Stderr); err != nil {
 			return err
 		}
 		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {
@@ -80,6 +88,7 @@ func run(args []string) int {
 		}
 		return 6
 	}
+	timeline.Mark("runtime-opened")
 	audit.complete = func() {
 		browserProcessID, err := runtime.BrowserProcessID()
 		if err != nil {

@@ -1,6 +1,7 @@
 package startup_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/0disoft/velox/internal/benchmarker"
 	"golang.org/x/sys/windows"
 )
 
@@ -46,6 +48,7 @@ type hostRun struct {
 	HostExitedAt       time.Time
 	BrowserProcessID   uint32
 	BrowserProcessExit <-chan time.Time
+	Timeline           *benchmarker.StartupTimeline
 }
 
 func TestBuiltHostStartup(t *testing.T) {
@@ -58,7 +61,9 @@ func testBuiltHostLifecycle(t *testing.T) {
 	host := goHost(t, repoRoot)
 	profile := managedProfileRoot(t, "velox-go-smoke-")
 	first := mustRunHost(t, host, profile)
+	assertStartupTimeline(t, first.Timeline)
 	immediate := mustRunHost(t, host, profile)
+	assertStartupTimeline(t, immediate.Timeline)
 	profileReleaseStarted := time.Now()
 	profileRelease := mustWaitForProfileRelease(t, profile, 10*time.Second)
 	firstBrowserExit := mustAwaitBrowserExit(t, first, 10*time.Second)
@@ -328,6 +333,10 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 		return hostRun{}, fmt.Errorf("%s host did not exit within 5s after ready", host.name)
 	}
 	hostExitedAt := time.Now()
+	timeline, err := parseStartupTimeline(output.String())
+	if err != nil && host.expectedPhase == "dom-2raf" {
+		return hostRun{}, fmt.Errorf("%s startup timeline failed: %w; host output: %s", host.name, err, output.String())
+	}
 	return hostRun{
 		Ready:              readyDuration,
 		Exit:               hostExitedAt.Sub(exitStarted),
@@ -336,7 +345,65 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 		HostExitedAt:       hostExitedAt,
 		BrowserProcessID:   ready.browserProcessID,
 		BrowserProcessExit: ready.browserExit,
+		Timeline:           timeline,
 	}, nil
+}
+
+func parseStartupTimeline(output string) (*benchmarker.StartupTimeline, error) {
+	var timeline *benchmarker.StartupTimeline
+	for _, line := range strings.Split(output, "\n") {
+		if !strings.HasPrefix(line, benchmarker.TimelinePrefix) {
+			continue
+		}
+		if timeline != nil {
+			return nil, errors.New("multiple startup timelines were emitted")
+		}
+		decoded := &benchmarker.StartupTimeline{}
+		if err := json.Unmarshal([]byte(strings.TrimPrefix(line, benchmarker.TimelinePrefix)), decoded); err != nil {
+			return nil, fmt.Errorf("decode startup timeline: %w", err)
+		}
+		timeline = decoded
+	}
+	if timeline == nil {
+		return nil, errors.New("startup timeline was not emitted")
+	}
+	return timeline, nil
+}
+
+func assertStartupTimeline(t *testing.T, timeline *benchmarker.StartupTimeline) {
+	t.Helper()
+	if timeline == nil {
+		t.Fatal("startup timeline is missing")
+	}
+	if timeline.SchemaVersion != benchmarker.TimelineSchemaVersion || timeline.Clock != "time-since-host-entry-monotonic" {
+		t.Fatalf("startup timeline metadata = %#v", timeline)
+	}
+	want := []string{
+		"host-entry",
+		"config-loaded",
+		"runtime-open-started",
+		"window-create-started",
+		"environment-create-started",
+		"environment-created",
+		"controller-created",
+		"webview-created",
+		"navigation-dispatched",
+		"runtime-opened",
+		"dom-2raf",
+	}
+	if len(timeline.Phases) != len(want) {
+		t.Fatalf("startup timeline phases = %#v, want %v", timeline.Phases, want)
+	}
+	previous := -1.0
+	for index, phase := range timeline.Phases {
+		if phase.Name != want[index] {
+			t.Fatalf("startup phase %d = %q, want %q", index, phase.Name, want[index])
+		}
+		if phase.ElapsedMS < previous {
+			t.Fatalf("startup phase %q elapsedMs %f precedes %f", phase.Name, phase.ElapsedMS, previous)
+		}
+		previous = phase.ElapsedMS
+	}
 }
 
 func observeProcessExit(processID uint32) (<-chan time.Time, error) {

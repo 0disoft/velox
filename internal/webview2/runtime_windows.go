@@ -51,6 +51,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		DenyNewWindows: true,
 		DenyDownloads:  true,
 		PolicyBlocked:  config.PolicyBlocked,
+		StartupPhase:   config.StartupPhase,
 		WindowOptions: webview.WindowOptions{
 			Title:  config.Title,
 			Width:  config.Width,
@@ -82,6 +83,9 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, fmt.Errorf("bind ready marker: %w", err)
 	}
 	view.Navigate(entryURL)
+	if config.StartupPhase != nil {
+		config.StartupPhase("navigation-dispatched")
+	}
 	return runtime, nil
 }
 

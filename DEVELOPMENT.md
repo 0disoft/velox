@@ -116,6 +116,13 @@ That browser-process lifecycle is measured separately: repeated local smoke
 shows same-profile immediate relaunch and final profile release taking about
 seven seconds.
 
+When `VELOX_BENCH_PIPE` is set, the host also emits one versioned startup
+timeline after the ready marker. It records host entry, configuration loading,
+WebView2 environment and controller creation, navigation dispatch, and the
+DOM-plus-two-animation-frame boundary with a process-local monotonic clock.
+The recorder is disabled during ordinary application execution, carries no
+application data, and does not alter runtime policy decisions.
+
 ## M0 Completion
 
 M0 development setup is complete only when:

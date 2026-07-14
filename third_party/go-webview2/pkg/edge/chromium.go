@@ -68,6 +68,7 @@ type Chromium struct {
 	DenyNewWindows               bool
 	DenyDownloads                bool
 	PolicyBlocked                func(kind string)
+	StartupPhase                 func(name string)
 }
 
 func NewChromium() *Chromium {
@@ -117,6 +118,9 @@ func (e *Chromium) Embed(hwnd uintptr) bool {
 	var browserExecutableFolder *uint16
 	if e.BrowserExecutableFolder != "" {
 		browserExecutableFolder = windows.StringToUTF16Ptr(e.BrowserExecutableFolder)
+	}
+	if e.StartupPhase != nil {
+		e.StartupPhase("environment-create-started")
 	}
 	res, err := createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, windows.StringToUTF16Ptr(dataPath), 0, e.envCompleted)
 	if err != nil {
@@ -253,6 +257,9 @@ func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environme
 	}
 	_, _, _ = env.vtbl.AddRef.Call(uintptr(unsafe.Pointer(env)))
 	e.environment = env
+	if e.StartupPhase != nil {
+		e.StartupPhase("environment-created")
+	}
 
 	result, _, _ := env.vtbl.CreateCoreWebView2Controller.Call(
 		uintptr(unsafe.Pointer(env)),
@@ -320,6 +327,9 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 
 	_ = e.controller.AddAcceleratorKeyPressed(e.acceleratorKeyPressed, &e.acceleratorToken)
 	e.registerSecurityPolicyHandlers()
+	if e.StartupPhase != nil {
+		e.StartupPhase("controller-created")
+	}
 
 	atomic.StoreUintptr(&e.inited, 1)
 

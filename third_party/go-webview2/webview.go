@@ -124,6 +124,10 @@ type WebViewOptions struct {
 	// message contents. It is intended for conformance instrumentation.
 	PolicyBlocked func(kind string)
 
+	// StartupPhase observes benchmark-only WebView2 initialization boundaries.
+	// It receives phase names only and must not affect initialization decisions.
+	StartupPhase func(name string)
+
 	// WindowOptions customizes the window that is created to embed the
 	// WebView2 widget.
 	WindowOptions WindowOptions
@@ -156,6 +160,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 	chromium.DenyNewWindows = options.DenyNewWindows
 	chromium.DenyDownloads = options.DenyDownloads
 	chromium.PolicyBlocked = options.PolicyBlocked
+	chromium.StartupPhase = options.StartupPhase
 	if options.DenyAllPermissions {
 		chromium.SetGlobalPermission(edge.CoreWebView2PermissionStateDeny)
 	} else {
@@ -164,8 +169,14 @@ func NewWithOptions(options WebViewOptions) WebView {
 
 	w.browser = chromium
 	w.mainthread, _, _ = w32.Kernel32GetCurrentThreadID.Call()
+	if options.StartupPhase != nil {
+		options.StartupPhase("window-create-started")
+	}
 	if !w.CreateWithOptions(options.WindowOptions) {
 		return nil
+	}
+	if options.StartupPhase != nil {
+		options.StartupPhase("webview-created")
 	}
 
 	settings, err := chromium.GetSettings()
