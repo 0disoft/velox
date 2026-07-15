@@ -224,7 +224,7 @@ func (e *ICoreWebView2Environment) CreateWebResourceResponse(content []byte, sta
 		return nil, err
 	}
 	var response *ICoreWebView2WebResourceResponse
-	_, _, err = e.vtbl.CreateWebResourceResponse.Call(
+	result, _, _ := e.vtbl.CreateWebResourceResponse.Call(
 		uintptr(unsafe.Pointer(e)),
 		stream,
 		uintptr(statusCode),
@@ -232,7 +232,7 @@ func (e *ICoreWebView2Environment) CreateWebResourceResponse(content []byte, sta
 		uintptr(unsafe.Pointer(_headers)),
 		uintptr(unsafe.Pointer(&response)),
 	)
-	if err != windows.ERROR_SUCCESS {
+	if err = hresult(result); err != nil {
 		return nil, err
 	}
 	return response, nil
@@ -435,12 +435,12 @@ func (i *ICoreWebView2) AddWebResourceRequestedFilter(uri string, resourceContex
 	if err != nil {
 		return err
 	}
-	_, _, err = i.vtbl.AddWebResourceRequestedFilter.Call(
+	result, _, _ := i.vtbl.AddWebResourceRequestedFilter.Call(
 		uintptr(unsafe.Pointer(i)),
 		uintptr(unsafe.Pointer(_uri)),
 		uintptr(resourceContext),
 	)
-	if err != windows.ERROR_SUCCESS {
+	if err = hresult(result); err != nil {
 		return err
 	}
 	return nil

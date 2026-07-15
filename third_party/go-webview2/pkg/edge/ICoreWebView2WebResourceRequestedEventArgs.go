@@ -1,10 +1,6 @@
 package edge
 
-import (
-	"unsafe"
-
-	"golang.org/x/sys/windows"
-)
+import "unsafe"
 
 type _ICoreWebView2WebResourceRequestedEventArgsVtbl struct {
 	_IUnknownVtbl
@@ -20,18 +16,18 @@ type ICoreWebView2WebResourceRequestedEventArgs struct {
 }
 
 func (i *ICoreWebView2WebResourceRequestedEventArgs) AddRef() uintptr {
-	r, _, _ := i.vtbl.AddRef.Call()
+	r, _, _ := i.vtbl.AddRef.Call(uintptr(unsafe.Pointer(i)))
 	return r
 }
 
 func (i *ICoreWebView2WebResourceRequestedEventArgs) PutResponse(response *ICoreWebView2WebResourceResponse) error {
 	var err error
 
-	_, _, err = i.vtbl.PutResponse.Call(
+	result, _, _ := i.vtbl.PutResponse.Call(
 		uintptr(unsafe.Pointer(i)),
 		uintptr(unsafe.Pointer(response)),
 	)
-	if err != windows.ERROR_SUCCESS {
+	if err = hresult(result); err != nil {
 		return err
 	}
 	return nil
@@ -40,11 +36,11 @@ func (i *ICoreWebView2WebResourceRequestedEventArgs) PutResponse(response *ICore
 func (i *ICoreWebView2WebResourceRequestedEventArgs) GetRequest() (*ICoreWebView2WebResourceRequest, error) {
 	var err error
 	var request *ICoreWebView2WebResourceRequest
-	_, _, err = i.vtbl.GetRequest.Call(
+	result, _, _ := i.vtbl.GetRequest.Call(
 		uintptr(unsafe.Pointer(i)),
 		uintptr(unsafe.Pointer(&request)),
 	)
-	if err != windows.ERROR_SUCCESS {
+	if err = hresult(result); err != nil {
 		return nil, err
 	}
 	return request, nil

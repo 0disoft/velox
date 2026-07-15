@@ -35,11 +35,11 @@ func (i *ICoreWebView2WebResourceRequest) GetUri() (string, error) {
 	var err error
 	// Create *uint16 to hold result
 	var _uri *uint16
-	_, _, err = i.vtbl.GetUri.Call(
+	result, _, _ := i.vtbl.GetUri.Call(
 		uintptr(unsafe.Pointer(i)),
 		uintptr(unsafe.Pointer(&_uri)),
 	)
-	if err != windows.ERROR_SUCCESS {
+	if err = hresult(result); err != nil {
 		return "", err
 	} // Get result and cleanup
 	uri := windows.UTF16PtrToString(_uri)
