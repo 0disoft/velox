@@ -42,6 +42,10 @@ func (f *fakeWebView) Navigate(string) {}
 
 func (f *fakeWebView) SetVirtualHostNameToFolderMapping(string, string) error { return nil }
 
+func (f *fakeWebView) SetWebResourceRequestHandler(string, webview.WebResourceRequestHandler) error {
+	return nil
+}
+
 func (f *fakeWebView) SetHtml(string) {}
 
 func (f *fakeWebView) Init(string) {}

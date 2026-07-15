@@ -498,6 +498,23 @@ func (w *webview) SetVirtualHostNameToFolderMapping(hostName, folderPath string)
 	return w.browser.SetVirtualHostNameToFolderMapping(hostName, folderPath)
 }
 
+func (w *webview) SetWebResourceRequestHandler(filter string, handler WebResourceRequestHandler) error {
+	if filter == "" || handler == nil {
+		return errors.New("web resource filter and handler are required")
+	}
+	chromium, ok := w.browser.(*edge.Chromium)
+	if !ok {
+		return errors.New("web resource interception requires the WebView2 backend")
+	}
+	return chromium.SetWebResourceRequestHandler(filter, func(uri string) (edge.WebResourceResponse, bool) {
+		response, handled := handler(uri)
+		return edge.WebResourceResponse{
+			Content: response.Content, StatusCode: response.StatusCode,
+			ReasonPhrase: response.ReasonPhrase, Headers: response.Headers,
+		}, handled
+	})
+}
+
 func (w *webview) SetHtml(html string) {
 	w.browser.NavigateToString(html)
 }

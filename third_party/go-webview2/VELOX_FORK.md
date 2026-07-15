@@ -8,6 +8,8 @@ Velox carries only the changes required by its Windows host boundary:
 
 - deny all WebView2 permission requests by default;
 - expose virtual-host-to-folder mapping through the public wrapper;
+- expose a synchronous benchmarkable web-resource response hook with balanced
+  request, response, and response-stream COM ownership;
 - validate WebMessage sources before dispatching bound callbacks;
 - bound accepted WebMessages to 64 KiB and reject native conversion failures;
 - deny untrusted top-level navigation and all frame navigation;

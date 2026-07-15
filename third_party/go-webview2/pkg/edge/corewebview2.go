@@ -70,6 +70,18 @@ type _IUnknownImpl interface {
 	Release() uintptr
 }
 
+type iUnknown struct {
+	vtbl *_IUnknownVtbl
+}
+
+func releaseIUnknown(pointer uintptr) {
+	if pointer == 0 {
+		return
+	}
+	object := (*iUnknown)(unsafe.Pointer(pointer))
+	_, _, _ = object.vtbl.Release.Call(pointer)
+}
+
 // ICoreWebView2
 
 type iCoreWebView2Vtbl struct {
@@ -198,6 +210,7 @@ func (e *ICoreWebView2Environment) CreateWebResourceResponse(content []byte, sta
 		if err != nil {
 			return nil, err
 		}
+		defer releaseIUnknown(stream)
 	}
 
 	// Convert string 'uri' to *uint16

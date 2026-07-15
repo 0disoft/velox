@@ -8,6 +8,15 @@ import "unsafe"
 // Hint is used to configure window sizing and resizing behavior.
 type Hint int
 
+type WebResourceResponse struct {
+	Content      []byte
+	StatusCode   int
+	ReasonPhrase string
+	Headers      string
+}
+
+type WebResourceRequestHandler func(uri string) (WebResourceResponse, bool)
+
 const (
 	// HintNone specifies that width and height are default size
 	HintNone Hint = iota
@@ -64,6 +73,10 @@ type WebView interface {
 	// SetVirtualHostNameToFolderMapping maps a virtual HTTPS host to a local
 	// folder without exposing the folder through a local network server.
 	SetVirtualHostNameToFolderMapping(hostName, folderPath string) error
+
+	// SetWebResourceRequestHandler intercepts matching requests synchronously.
+	// Returning false leaves the request unhandled.
+	SetWebResourceRequestHandler(filter string, handler WebResourceRequestHandler) error
 
 	// SetHtml sets the webview HTML directly.
 	// The origin of the page is `about:blank`.

@@ -72,6 +72,15 @@ type Chromium struct {
 	ShutdownPhase                func(name string)
 }
 
+type WebResourceResponse struct {
+	Content      []byte
+	StatusCode   int
+	ReasonPhrase string
+	Headers      string
+}
+
+type WebResourceRequestHandler func(uri string) (WebResourceResponse, bool)
+
 func NewChromium() *Chromium {
 	e := &Chromium{}
 	/*
@@ -459,12 +468,46 @@ func (e *Chromium) PermissionRequested(_ *ICoreWebView2, args *iCoreWebView2Perm
 func (e *Chromium) WebResourceRequested(sender *ICoreWebView2, args *ICoreWebView2WebResourceRequestedEventArgs) uintptr {
 	req, err := args.GetRequest()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("get WebResourceRequested request: %v", err)
+		return 0
 	}
+	defer req.Release()
 	if e.WebResourceRequestedCallback != nil {
 		e.WebResourceRequestedCallback(req, args)
 	}
 	return 0
+}
+
+func (e *Chromium) SetWebResourceRequestHandler(filter string, handler WebResourceRequestHandler) error {
+	if e.webview == nil || e.environment == nil {
+		return errors.New("WebView2 is not initialized")
+	}
+	if filter == "" || handler == nil {
+		return errors.New("web resource filter and handler are required")
+	}
+	e.WebResourceRequestedCallback = func(request *ICoreWebView2WebResourceRequest, args *ICoreWebView2WebResourceRequestedEventArgs) {
+		uri, err := request.GetUri()
+		if err != nil {
+			log.Printf("read WebResourceRequested URI: %v", err)
+			return
+		}
+		resource, handled := handler(uri)
+		if !handled {
+			return
+		}
+		response, err := e.environment.CreateWebResourceResponse(
+			resource.Content, resource.StatusCode, resource.ReasonPhrase, resource.Headers,
+		)
+		if err != nil {
+			log.Printf("create WebResourceRequested response: %v", err)
+			return
+		}
+		defer response.Release()
+		if err := args.PutResponse(response); err != nil {
+			log.Printf("set WebResourceRequested response: %v", err)
+		}
+	}
+	return e.webview.AddWebResourceRequestedFilter(filter, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL)
 }
 
 func (e *Chromium) AddWebResourceRequestedFilter(filter string, ctx COREWEBVIEW2_WEB_RESOURCE_CONTEXT) {

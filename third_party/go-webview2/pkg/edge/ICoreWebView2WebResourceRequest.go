@@ -22,7 +22,12 @@ type ICoreWebView2WebResourceRequest struct {
 }
 
 func (i *ICoreWebView2WebResourceRequest) AddRef() uintptr {
-	r, _, _ := i.vtbl.AddRef.Call()
+	r, _, _ := i.vtbl.AddRef.Call(uintptr(unsafe.Pointer(i)))
+	return r
+}
+
+func (i *ICoreWebView2WebResourceRequest) Release() uintptr {
+	r, _, _ := i.vtbl.Release.Call(uintptr(unsafe.Pointer(i)))
 	return r
 }
 
