@@ -69,6 +69,7 @@ type Chromium struct {
 	DenyDownloads                bool
 	PolicyBlocked                func(kind string)
 	StartupPhase                 func(name string)
+	ShutdownPhase                func(name string)
 }
 
 func NewChromium() *Chromium {
@@ -176,21 +177,33 @@ func (e *Chromium) SetVirtualHostNameToFolderMapping(hostName, folderPath string
 }
 
 func (e *Chromium) Destroy() {
+	e.markShutdown("chromium-destroy-entered")
 	e.removeEventHandlers()
+	e.markShutdown("event-handlers-removed")
 	if e.controller != nil {
 		_ = e.controller.Close()
+		e.markShutdown("controller-closed")
 	}
 	if e.webview != nil {
 		e.webview.Release()
 		e.webview = nil
+		e.markShutdown("webview-released")
 	}
 	if e.controller != nil {
 		e.controller.Release()
 		e.controller = nil
+		e.markShutdown("controller-released")
 	}
 	if e.environment != nil {
 		e.environment.Release()
 		e.environment = nil
+		e.markShutdown("environment-released")
+	}
+}
+
+func (e *Chromium) markShutdown(name string) {
+	if e.ShutdownPhase != nil {
+		e.ShutdownPhase(name)
 	}
 }
 

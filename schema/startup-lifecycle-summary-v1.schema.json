@@ -7,7 +7,7 @@
   "required": ["schemaVersion", "sourceSchemaVersion", "sourceSha256", "evidenceLevel", "outcome", "repetitions", "observedSamples", "successCount", "failureCount", "environment", "metrics", "correlation", "ordering", "failedSamples"],
   "properties": {
     "schemaVersion": { "const": "velox.startup-lifecycle-summary/v1" },
-    "sourceSchemaVersion": { "const": "velox.startup-lifecycle/v2" },
+    "sourceSchemaVersion": { "enum": ["velox.startup-lifecycle/v2", "velox.startup-lifecycle/v3"] },
     "sourceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "evidenceLevel": { "enum": ["controlled-local-observation", "hosted-runner-evidence"] },
     "outcome": { "enum": ["success", "failure"] },

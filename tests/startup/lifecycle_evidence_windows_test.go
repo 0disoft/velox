@@ -10,11 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0disoft/velox/internal/benchmarker"
 	veloxwebview2 "github.com/0disoft/velox/internal/webview2"
 )
 
 const (
-	lifecycleSchemaVersion = "velox.startup-lifecycle/v2"
+	lifecycleSchemaVersion = "velox.startup-lifecycle/v3"
 	lifecycleResultEnv     = "VELOX_STARTUP_LIFECYCLE_RESULT"
 	lifecycleRepetitionEnv = "VELOX_STARTUP_LIFECYCLE_REPETITIONS"
 )
@@ -77,10 +78,12 @@ type lifecycleTimeline struct {
 }
 
 type lifecycleLaunch struct {
-	ReadyMs                float64 `json:"readyMs"`
-	HostExitMs             float64 `json:"hostExitMs"`
-	BrowserProcessID       uint32  `json:"browserProcessId"`
-	BrowserExitAfterHostMs float64 `json:"browserExitAfterHostMs"`
+	ReadyMs                float64                       `json:"readyMs"`
+	HostExitMs             float64                       `json:"hostExitMs"`
+	BrowserProcessID       uint32                        `json:"browserProcessId"`
+	BrowserExitAfterHostMs float64                       `json:"browserExitAfterHostMs"`
+	StartupTimeline        *benchmarker.StartupTimeline  `json:"startupTimeline"`
+	ShutdownTimeline       *benchmarker.ShutdownTimeline `json:"shutdownTimeline"`
 }
 
 type lifecycleError struct {
@@ -116,7 +119,7 @@ func TestStartupLifecycleEvidence(t *testing.T) {
 			GitCommit: optionalEnvironment("GITHUB_SHA"),
 		},
 		Measurement: lifecycleMeasurement{
-			Tool: "tests/startup/TestStartupLifecycleEvidence", ToolVersion: 1,
+			Tool: "tests/startup/TestStartupLifecycleEvidence", ToolVersion: 2,
 			Unit: "milliseconds", Clock: "time.Time-with-process-local-monotonic-component", Concurrency: 1,
 			FreshProfilePerSample: true, ImmediateRelaunch: true,
 			ReadyBoundary:          "process-start-to-domcontentloaded-plus-two-animation-frames",
@@ -204,6 +207,7 @@ func launchWithoutBrowserExit(run hostRun) *lifecycleLaunch {
 	return &lifecycleLaunch{
 		ReadyMs: milliseconds(run.Ready), HostExitMs: milliseconds(run.Exit),
 		BrowserProcessID: run.BrowserProcessID,
+		StartupTimeline:  run.Timeline, ShutdownTimeline: run.ShutdownTimeline,
 	}
 }
 

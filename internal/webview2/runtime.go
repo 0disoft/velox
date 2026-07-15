@@ -34,6 +34,7 @@ type Config struct {
 	Debug                   bool
 	PolicyBlocked           func(kind string)
 	StartupPhase            func(name string)
+	ShutdownPhase           func(name string)
 }
 
 type Capabilities struct {

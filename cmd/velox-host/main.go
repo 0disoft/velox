@@ -19,6 +19,7 @@ func main() {
 
 func run(args []string) int {
 	timeline := benchmarker.NewTimelineRecorder(os.Getenv(benchmarker.PipeEnvironment) != "")
+	shutdownTimeline := benchmarker.NewShutdownTimelineRecorder(os.Getenv(benchmarker.PipeEnvironment) != "")
 	flags := flag.NewFlagSet("velox-host", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	configPath := flags.String("config", "velox.runtime.json", "path to the external runtime configuration")
@@ -60,6 +61,7 @@ func run(args []string) int {
 		Debug:                   *debug,
 		PolicyBlocked:           audit.record,
 		StartupPhase:            timeline.Mark,
+		ShutdownPhase:           shutdownTimeline.Mark,
 	}, func(phase string) error {
 		if audit.enabled {
 			audit.markIPCReady(phase)
@@ -105,6 +107,10 @@ func run(args []string) int {
 	defer runtime.Close()
 
 	runtime.Run()
+	if err := shutdownTimeline.Emit(os.Stderr); err != nil {
+		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+		return 6
+	}
 	return 0
 }
 

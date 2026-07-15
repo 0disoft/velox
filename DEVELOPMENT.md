@@ -123,6 +123,13 @@ DOM-plus-two-animation-frame boundary with a process-local monotonic clock.
 The recorder is disabled during ordinary application execution, carries no
 application data, and does not alter runtime policy decisions.
 
+The benchmark path also emits a separate shutdown timeline after the native
+message loop exits. It starts at the first runtime close request and records
+dispatcher closure, queued destruction, event-handler removal, controller
+close, WebView/controller/environment release, window destruction, and message
+loop exit. These host-local phases do not claim that the browser process or
+user-data folder has already been released.
+
 ## M0 Completion
 
 M0 development setup is complete only when:

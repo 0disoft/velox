@@ -137,7 +137,7 @@ jobs:
           if (-not (Test-Path -LiteralPath $env:VELOX_STARTUP_LIFECYCLE_RESULT -PathType Leaf)) {
             throw 'Startup lifecycle evidence was not written.'
           }
-          $schema = Get-Content -LiteralPath 'schema/startup-lifecycle-v2.schema.json' -Raw
+          $schema = Get-Content -LiteralPath 'schema/startup-lifecycle-v3.schema.json' -Raw
           $result = Get-Content -LiteralPath $env:VELOX_STARTUP_LIFECYCLE_RESULT -Raw
           if (-not ($result | Test-Json -Schema $schema)) {
             throw 'Startup lifecycle evidence failed JSON Schema validation.'

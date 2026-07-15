@@ -52,10 +52,12 @@ type sample struct {
 }
 
 type launch struct {
-	ReadyMs                float64 `json:"readyMs"`
-	HostExitMs             float64 `json:"hostExitMs"`
-	BrowserProcessID       uint32  `json:"browserProcessId"`
-	BrowserExitAfterHostMs float64 `json:"browserExitAfterHostMs"`
+	ReadyMs                float64         `json:"readyMs"`
+	HostExitMs             float64         `json:"hostExitMs"`
+	BrowserProcessID       uint32          `json:"browserProcessId"`
+	BrowserExitAfterHostMs float64         `json:"browserExitAfterHostMs"`
+	StartupTimeline        json.RawMessage `json:"startupTimeline"`
+	ShutdownTimeline       json.RawMessage `json:"shutdownTimeline"`
 }
 
 type timeline struct {
@@ -151,7 +153,7 @@ func run(args []string) error {
 }
 
 func summarize(raw evidence, source []byte) (summary, error) {
-	if raw.SchemaVersion != "velox.startup-lifecycle/v2" {
+	if raw.SchemaVersion != "velox.startup-lifecycle/v3" {
 		return summary{}, fmt.Errorf("unsupported source schema %q", raw.SchemaVersion)
 	}
 	if raw.Scope != "fresh-and-immediate-same-profile-startup" {

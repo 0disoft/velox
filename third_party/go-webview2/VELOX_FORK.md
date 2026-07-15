@@ -16,6 +16,8 @@ Velox carries only the changes required by its Windows host boundary:
 - expose the main WebView2 browser process ID for lifecycle measurement;
 - expose a phase-only startup observer for benchmark instrumentation without
   changing WebView2 initialization decisions;
+- expose a phase-only shutdown observer around handler removal, controller
+  close, COM release, native window destruction, and message-loop exit;
 - close and release the WebView2 controller, webview, and environment;
 - unregister native event handlers during shutdown;
 - fail initialization when mandatory WebMessage or permission policies cannot

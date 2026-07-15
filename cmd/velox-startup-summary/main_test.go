@@ -10,7 +10,7 @@ func TestSummarizePreservesFailuresAndComputesOrdering(t *testing.T) {
 	profile := 30.0
 	runID, runAttempt := "123", "2"
 	raw := evidence{
-		SchemaVersion: "velox.startup-lifecycle/v2",
+		SchemaVersion: "velox.startup-lifecycle/v3",
 		Scope:         "fresh-and-immediate-same-profile-startup",
 		EvidenceLevel: "controlled-local-observation",
 		Outcome:       "failure",
@@ -46,14 +46,14 @@ func TestSummarizePreservesFailuresAndComputesOrdering(t *testing.T) {
 }
 
 func TestSummarizeRejectsIncompleteSuccess(t *testing.T) {
-	_, err := summarize(evidence{SchemaVersion: "velox.startup-lifecycle/v2", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "success"}}}, nil)
+	_, err := summarize(evidence{SchemaVersion: "velox.startup-lifecycle/v3", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "success"}}}, nil)
 	if err == nil {
 		t.Fatal("summarize accepted an incomplete success sample")
 	}
 }
 
 func TestSummarizeRejectsOutcomeMismatch(t *testing.T) {
-	_, err := summarize(evidence{SchemaVersion: "velox.startup-lifecycle/v2", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "failure", Error: &runError{Phase: "first-launch", Code: "HOST_RUN_FAILED"}}}}, nil)
+	_, err := summarize(evidence{SchemaVersion: "velox.startup-lifecycle/v3", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "failure", Error: &runError{Phase: "first-launch", Code: "HOST_RUN_FAILED"}}}}, nil)
 	if err == nil {
 		t.Fatal("summarize accepted an outcome that disagrees with its samples")
 	}
@@ -64,7 +64,7 @@ func TestRunReadsCompleteLifecycleEvidence(t *testing.T) {
 	input := filepath.Join(directory, "input.json")
 	output := filepath.Join(directory, "output.json")
 	body := `{
-  "schemaVersion":"velox.startup-lifecycle/v2",
+  "schemaVersion":"velox.startup-lifecycle/v3",
   "scope":"fresh-and-immediate-same-profile-startup",
   "evidenceLevel":"hosted-runner-evidence",
   "outcome":"success",
@@ -72,7 +72,7 @@ func TestRunReadsCompleteLifecycleEvidence(t *testing.T) {
   "startedAtUtc":"2026-07-13T00:00:00Z",
   "finishedAtUtc":"2026-07-13T00:00:01Z",
   "environment":{"os":"windows","architecture":"amd64","webView2Version":"1.2.3","runnerImage":"win25","runnerImageVersion":"1","githubRunId":"123","githubRunAttempt":"1","gitCommit":"1111111111111111111111111111111111111111"},
-  "measurement":{"tool":"tests/startup/TestStartupLifecycleEvidence","toolVersion":1},
+  "measurement":{"tool":"tests/startup/TestStartupLifecycleEvidence","toolVersion":2},
   "samples":[{"index":0,"outcome":"success","first":{"readyMs":100,"hostExitMs":10,"browserProcessId":1,"browserExitAfterHostMs":500},"immediate":{"readyMs":700,"hostExitMs":10,"browserProcessId":2,"browserExitAfterHostMs":500},"profileReleaseMs":500,"timeline":{"immediateProcessStartAfterFirstHostExitMs":2,"firstBrowserExitAfterImmediateStartMs":500,"immediateReadyAfterFirstBrowserExitMs":200,"immediateReadyWaitedForFirstBrowserExit":true},"error":null}]
 }`
 	if err := os.WriteFile(input, []byte(body), 0o644); err != nil {
@@ -89,7 +89,7 @@ func TestRunReadsCompleteLifecycleEvidence(t *testing.T) {
 func TestRunRejectsTrailingJSON(t *testing.T) {
 	directory := t.TempDir()
 	input := filepath.Join(directory, "input.json")
-	if err := os.WriteFile(input, []byte(`{"schemaVersion":"velox.startup-lifecycle/v2"}{}`), 0o644); err != nil {
+	if err := os.WriteFile(input, []byte(`{"schemaVersion":"velox.startup-lifecycle/v3"}{}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := run([]string{"--input", input, "--output", filepath.Join(directory, "output.json")}); err == nil {

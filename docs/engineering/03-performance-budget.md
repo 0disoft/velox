@@ -229,16 +229,21 @@ measures first ready, host exit, browser-process exit, immediate same-profile
 ready, and UDF deletion readiness as separate events. Process-local elapsed
 times use Go's monotonic clock. Cross-process ordering is observed and timestamped
 by the single parent test harness rather than by subtracting child clocks.
+Lifecycle evidence additionally preserves process-local startup and shutdown
+timelines for both launches. Startup phases isolate environment, controller,
+WebView, and navigation work. Shutdown phases end after host-owned event-handler
+removal, controller close, COM release, window destruction, and message-loop
+exit. Browser-process exit and UDF release remain parent-observed boundaries.
 
 The hosted lifecycle evidence path runs three serial samples for pull requests
 and `quick` manual dispatches, and ten for `full` manual dispatches, the weekly
 schedule, and release-candidate tags. Every sample owns a fresh profile,
 performs one immediate same-profile
 relaunch, and records both launches plus their cross-process ordering under
-`velox.startup-lifecycle/v2`. A failed launch, browser-exit wait, or
+`velox.startup-lifecycle/v3`. A failed launch, browser-exit wait, or
 profile-release wait remains in the JSON result with a stable phase and error
 code. The workflow validates the result against
-`schema/startup-lifecycle-v2.schema.json`, derives a deterministic
+`schema/startup-lifecycle-v3.schema.json`, derives a deterministic
 `velox.startup-lifecycle-summary/v1` with p50, p95, ordering counts, and the
 Pearson correlation between first-browser exit timing and immediate ready
 timing, and uploads both files even when the measurement test fails. Runner

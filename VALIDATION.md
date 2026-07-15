@@ -72,8 +72,10 @@ The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`
 manual dispatch, weekly schedule, or release-candidate tag runs ten lifecycle
 and ten consumer samples. It validates
-`velox.startup-lifecycle/v2`, derives and validates
+`velox.startup-lifecycle/v3`, derives and validates
 `velox.startup-lifecycle-summary/v1`, and uploads both results with `always()`.
+Lifecycle v3 preserves the host-local startup and shutdown phase timelines for
+both the first launch and the immediate same-profile relaunch.
 This longer evidence path is intentionally separate from the local one-sample
 `velox_startup_smoke` intent.
 

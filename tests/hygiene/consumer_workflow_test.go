@@ -72,7 +72,7 @@ func TestConsumerEvidenceWorkflowOwnsLifecycleSummaryPolicy(t *testing.T) {
 	}
 	workflow := string(data)
 	for _, required := range []string{
-		"schema/startup-lifecycle-v2.schema.json",
+		"schema/startup-lifecycle-v3.schema.json",
 		"schema/startup-lifecycle-summary-v1.schema.json",
 		"go run ./cmd/velox-startup-summary",
 		"inputs.evidence_tier == 'full'",

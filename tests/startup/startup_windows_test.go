@@ -49,6 +49,7 @@ type hostRun struct {
 	BrowserProcessID   uint32
 	BrowserProcessExit <-chan time.Time
 	Timeline           *benchmarker.StartupTimeline
+	ShutdownTimeline   *benchmarker.ShutdownTimeline
 }
 
 func TestBuiltHostStartup(t *testing.T) {
@@ -62,8 +63,10 @@ func testBuiltHostLifecycle(t *testing.T) {
 	profile := managedProfileRoot(t, "velox-go-smoke-")
 	first := mustRunHost(t, host, profile)
 	assertStartupTimeline(t, first.Timeline)
+	assertShutdownTimeline(t, first.ShutdownTimeline)
 	immediate := mustRunHost(t, host, profile)
 	assertStartupTimeline(t, immediate.Timeline)
+	assertShutdownTimeline(t, immediate.ShutdownTimeline)
 	profileReleaseStarted := time.Now()
 	profileRelease := mustWaitForProfileRelease(t, profile, 10*time.Second)
 	firstBrowserExit := mustAwaitBrowserExit(t, first, 10*time.Second)
@@ -337,6 +340,10 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	if err != nil && host.expectedPhase == "dom-2raf" {
 		return hostRun{}, fmt.Errorf("%s startup timeline failed: %w; host output: %s", host.name, err, output.String())
 	}
+	shutdownTimeline, err := parseShutdownTimeline(output.String())
+	if err != nil && host.expectedPhase == "dom-2raf" {
+		return hostRun{}, fmt.Errorf("%s shutdown timeline failed: %w; host output: %s", host.name, err, output.String())
+	}
 	return hostRun{
 		Ready:              readyDuration,
 		Exit:               hostExitedAt.Sub(exitStarted),
@@ -346,6 +353,7 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 		BrowserProcessID:   ready.browserProcessID,
 		BrowserProcessExit: ready.browserExit,
 		Timeline:           timeline,
+		ShutdownTimeline:   shutdownTimeline,
 	}, nil
 }
 
@@ -366,6 +374,27 @@ func parseStartupTimeline(output string) (*benchmarker.StartupTimeline, error) {
 	}
 	if timeline == nil {
 		return nil, errors.New("startup timeline was not emitted")
+	}
+	return timeline, nil
+}
+
+func parseShutdownTimeline(output string) (*benchmarker.ShutdownTimeline, error) {
+	var timeline *benchmarker.ShutdownTimeline
+	for _, line := range strings.Split(output, "\n") {
+		if !strings.HasPrefix(line, benchmarker.ShutdownTimelinePrefix) {
+			continue
+		}
+		if timeline != nil {
+			return nil, errors.New("multiple shutdown timelines were emitted")
+		}
+		decoded := &benchmarker.ShutdownTimeline{}
+		if err := json.Unmarshal([]byte(strings.TrimPrefix(line, benchmarker.ShutdownTimelinePrefix)), decoded); err != nil {
+			return nil, fmt.Errorf("decode shutdown timeline: %w", err)
+		}
+		timeline = decoded
+	}
+	if timeline == nil {
+		return nil, errors.New("shutdown timeline was not emitted")
 	}
 	return timeline, nil
 }
@@ -401,6 +430,44 @@ func assertStartupTimeline(t *testing.T, timeline *benchmarker.StartupTimeline) 
 		}
 		if phase.ElapsedMS < previous {
 			t.Fatalf("startup phase %q elapsedMs %f precedes %f", phase.Name, phase.ElapsedMS, previous)
+		}
+		previous = phase.ElapsedMS
+	}
+}
+
+func assertShutdownTimeline(t *testing.T, timeline *benchmarker.ShutdownTimeline) {
+	t.Helper()
+	if timeline == nil {
+		t.Fatal("shutdown timeline is missing")
+	}
+	if timeline.SchemaVersion != benchmarker.ShutdownTimelineSchemaVersion || timeline.Clock != "time-since-shutdown-request-monotonic" {
+		t.Fatalf("shutdown timeline metadata = %#v", timeline)
+	}
+	want := []string{
+		"shutdown-requested",
+		"dispatcher-closed",
+		"destroy-queued",
+		"destroy-dispatched",
+		"window-close-dispatched",
+		"chromium-destroy-entered",
+		"event-handlers-removed",
+		"controller-closed",
+		"webview-released",
+		"controller-released",
+		"environment-released",
+		"window-destroyed",
+		"run-loop-exited",
+	}
+	if len(timeline.Phases) != len(want) {
+		t.Fatalf("shutdown timeline phases = %#v, want %v", timeline.Phases, want)
+	}
+	previous := -1.0
+	for index, phase := range timeline.Phases {
+		if phase.Name != want[index] {
+			t.Fatalf("shutdown phase %d = %q, want %q", index, phase.Name, want[index])
+		}
+		if phase.ElapsedMS < previous {
+			t.Fatalf("shutdown phase %q elapsedMs %f precedes %f", phase.Name, phase.ElapsedMS, previous)
 		}
 		previous = phase.ElapsedMS
 	}

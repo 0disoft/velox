@@ -60,15 +60,16 @@ func (w *webview) BrowserProcessID() (uint32, error) {
 }
 
 type webview struct {
-	hwnd       uintptr
-	mainthread uintptr
-	browser    browser
-	autofocus  bool
-	maxsz      w32.Point
-	minsz      w32.Point
-	m          sync.Mutex
-	bindings   map[string]interface{}
-	dispatchq  []func()
+	hwnd          uintptr
+	mainthread    uintptr
+	browser       browser
+	autofocus     bool
+	maxsz         w32.Point
+	minsz         w32.Point
+	m             sync.Mutex
+	bindings      map[string]interface{}
+	dispatchq     []func()
+	shutdownPhase func(name string)
 }
 
 type WindowOptions struct {
@@ -128,6 +129,10 @@ type WebViewOptions struct {
 	// It receives phase names only and must not affect initialization decisions.
 	StartupPhase func(name string)
 
+	// ShutdownPhase observes benchmark-only WebView2 teardown boundaries.
+	// It receives phase names only and must not alter shutdown decisions.
+	ShutdownPhase func(name string)
+
 	// WindowOptions customizes the window that is created to embed the
 	// WebView2 widget.
 	WindowOptions WindowOptions
@@ -161,6 +166,8 @@ func NewWithOptions(options WebViewOptions) WebView {
 	chromium.DenyDownloads = options.DenyDownloads
 	chromium.PolicyBlocked = options.PolicyBlocked
 	chromium.StartupPhase = options.StartupPhase
+	chromium.ShutdownPhase = options.ShutdownPhase
+	w.shutdownPhase = options.ShutdownPhase
 	if options.DenyAllPermissions {
 		chromium.SetGlobalPermission(edge.CoreWebView2PermissionStateDeny)
 	} else {
@@ -310,10 +317,12 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 				w.browser.Focus()
 			}
 		case w32.WMClose:
+			w.markShutdown("window-close-dispatched")
 			w.browser.Destroy()
 			_, _, _ = w32.User32DestroyWindow.Call(hwnd)
 		case w32.WMDestroy:
 			deleteWindowContext(hwnd)
+			w.markShutdown("window-destroyed")
 			w.Terminate()
 		case w32.WMGetMinMaxInfo:
 			lpmmi := (*w32.MinMaxInfo)(unsafe.Pointer(lp))
@@ -420,7 +429,14 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 }
 
 func (w *webview) Destroy() {
+	w.markShutdown("destroy-dispatched")
 	_, _, _ = w32.User32PostMessageW.Call(w.hwnd, w32.WMClose, 0, 0)
+}
+
+func (w *webview) markShutdown(name string) {
+	if w.shutdownPhase != nil {
+		w.shutdownPhase(name)
+	}
 }
 
 func (w *webview) Run() {
