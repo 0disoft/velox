@@ -59,6 +59,59 @@ func TestSummarizeRejectsOutcomeMismatch(t *testing.T) {
 	}
 }
 
+func TestSummarizePhasesFindsImmediateStartupDominantInterval(t *testing.T) {
+	startup := func(controller float64) phaseTimeline {
+		elapsed := []float64{0, 1, 2, 3, 4, 5, controller, controller + 1, controller + 2, controller + 3, controller + 20}
+		phases := make([]phasePoint, len(startupPhaseNames))
+		for index, name := range startupPhaseNames {
+			phases[index] = phasePoint{Name: name, ElapsedMS: elapsed[index]}
+		}
+		return phaseTimeline{SchemaVersion: "velox.host-startup-timeline/v1", Clock: "time-since-host-entry-monotonic", Phases: phases}
+	}
+	shutdownPhases := make([]phasePoint, len(shutdownPhaseNames))
+	for index, name := range shutdownPhaseNames {
+		shutdownPhases[index] = phasePoint{Name: name, ElapsedMS: float64(index)}
+	}
+	shutdown := phaseTimeline{SchemaVersion: "velox.host-shutdown-timeline/v1", Clock: "time-since-shutdown-request-monotonic", Phases: shutdownPhases}
+	raw := evidence{
+		SchemaVersion: "velox.startup-lifecycle/v3", EvidenceLevel: "hosted-runner-evidence", Outcome: "success",
+		Samples: []sample{
+			{Index: 0, Outcome: "success", First: &launch{StartupTimeline: startup(50), ShutdownTimeline: shutdown}, Immediate: &launch{StartupTimeline: startup(5800), ShutdownTimeline: shutdown}},
+			{Index: 1, Outcome: "success", First: &launch{StartupTimeline: startup(60), ShutdownTimeline: shutdown}, Immediate: &launch{StartupTimeline: startup(5900), ShutdownTimeline: shutdown}},
+		},
+	}
+
+	result, err := summarizePhases(raw, []byte("source"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Attribution.ImmediateStartupDominantInterval != "environment-created->controller-created" || result.Attribution.DominantSampleCount != 2 {
+		t.Fatalf("attribution = %#v", result.Attribution)
+	}
+	metric := result.Groups["immediateStartup"].Intervals["environment-created->controller-created"]
+	if metric.P50Ms != 5795 || metric.P95Ms != 5895 {
+		t.Fatalf("controller interval = %#v", metric)
+	}
+}
+
+func TestSummarizePhasesRejectsReorderedTimeline(t *testing.T) {
+	startupPhases := make([]phasePoint, len(startupPhaseNames))
+	for index, name := range startupPhaseNames {
+		startupPhases[index] = phasePoint{Name: name, ElapsedMS: float64(index)}
+	}
+	startupPhases[6].ElapsedMS = -1
+	startup := phaseTimeline{SchemaVersion: "velox.host-startup-timeline/v1", Clock: "time-since-host-entry-monotonic", Phases: startupPhases}
+	shutdownPhases := make([]phasePoint, len(shutdownPhaseNames))
+	for index, name := range shutdownPhaseNames {
+		shutdownPhases[index] = phasePoint{Name: name, ElapsedMS: float64(index)}
+	}
+	shutdown := phaseTimeline{SchemaVersion: "velox.host-shutdown-timeline/v1", Clock: "time-since-shutdown-request-monotonic", Phases: shutdownPhases}
+	_, err := summarizePhases(evidence{SchemaVersion: "velox.startup-lifecycle/v3", Samples: []sample{{Outcome: "success", First: &launch{StartupTimeline: startup, ShutdownTimeline: shutdown}, Immediate: &launch{StartupTimeline: startup, ShutdownTimeline: shutdown}}}}, nil)
+	if err == nil {
+		t.Fatal("summarizePhases accepted a reordered timeline")
+	}
+}
+
 func TestRunReadsCompleteLifecycleEvidence(t *testing.T) {
 	directory := t.TempDir()
 	input := filepath.Join(directory, "input.json")

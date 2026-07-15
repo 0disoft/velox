@@ -16,6 +16,20 @@ import (
 )
 
 const summarySchemaVersion = "velox.startup-lifecycle-summary/v1"
+const phaseSummarySchemaVersion = "velox.startup-lifecycle-phase-summary/v1"
+
+var startupPhaseNames = []string{
+	"host-entry", "config-loaded", "runtime-open-started", "window-create-started",
+	"environment-create-started", "environment-created", "controller-created",
+	"webview-created", "navigation-dispatched", "runtime-opened", "dom-2raf",
+}
+
+var shutdownPhaseNames = []string{
+	"shutdown-requested", "dispatcher-closed", "destroy-queued", "destroy-dispatched",
+	"window-close-dispatched", "chromium-destroy-entered", "event-handlers-removed",
+	"controller-closed", "webview-released", "controller-released", "environment-released",
+	"window-destroyed", "run-loop-exited",
+}
 
 type evidence struct {
 	SchemaVersion string          `json:"schemaVersion"`
@@ -52,12 +66,23 @@ type sample struct {
 }
 
 type launch struct {
-	ReadyMs                float64         `json:"readyMs"`
-	HostExitMs             float64         `json:"hostExitMs"`
-	BrowserProcessID       uint32          `json:"browserProcessId"`
-	BrowserExitAfterHostMs float64         `json:"browserExitAfterHostMs"`
-	StartupTimeline        json.RawMessage `json:"startupTimeline"`
-	ShutdownTimeline       json.RawMessage `json:"shutdownTimeline"`
+	ReadyMs                float64       `json:"readyMs"`
+	HostExitMs             float64       `json:"hostExitMs"`
+	BrowserProcessID       uint32        `json:"browserProcessId"`
+	BrowserExitAfterHostMs float64       `json:"browserExitAfterHostMs"`
+	StartupTimeline        phaseTimeline `json:"startupTimeline"`
+	ShutdownTimeline       phaseTimeline `json:"shutdownTimeline"`
+}
+
+type phaseTimeline struct {
+	SchemaVersion string       `json:"schemaVersion"`
+	Clock         string       `json:"clock"`
+	Phases        []phasePoint `json:"phases"`
+}
+
+type phasePoint struct {
+	Name      string  `json:"name"`
+	ElapsedMS float64 `json:"elapsedMs"`
 }
 
 type timeline struct {
@@ -115,6 +140,30 @@ type failedSample struct {
 	Code  string `json:"code"`
 }
 
+type phaseSummary struct {
+	SchemaVersion       string                `json:"schemaVersion"`
+	SourceSchemaVersion string                `json:"sourceSchemaVersion"`
+	SourceSHA256        string                `json:"sourceSha256"`
+	EvidenceLevel       string                `json:"evidenceLevel"`
+	Outcome             string                `json:"outcome"`
+	SuccessCount        int                   `json:"successCount"`
+	FailureCount        int                   `json:"failureCount"`
+	Environment         environment           `json:"environment"`
+	Groups              map[string]phaseGroup `json:"groups"`
+	Attribution         phaseAttribution      `json:"attribution"`
+}
+
+type phaseGroup struct {
+	TotalMS   *metricStats           `json:"totalMs"`
+	Intervals map[string]metricStats `json:"intervals"`
+}
+
+type phaseAttribution struct {
+	ImmediateStartupDominantInterval string `json:"immediateStartupDominantInterval"`
+	DominantSampleCount              int    `json:"dominantSampleCount"`
+	SuccessfulSampleCount            int    `json:"successfulSampleCount"`
+}
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, "velox-startup-summary:", err)
@@ -126,6 +175,7 @@ func run(args []string) error {
 	flags := flag.NewFlagSet("velox-startup-summary", flag.ContinueOnError)
 	input := flags.String("input", "", "startup lifecycle evidence JSON")
 	output := flags.String("output", "", "summary JSON output")
+	phaseOutput := flags.String("phase-output", "", "optional phase summary JSON output")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -149,7 +199,17 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	return writeJSON(*output, result)
+	if err := writeJSON(*output, result); err != nil {
+		return err
+	}
+	if *phaseOutput == "" {
+		return nil
+	}
+	phases, err := summarizePhases(raw, body)
+	if err != nil {
+		return err
+	}
+	return writeJSON(*phaseOutput, phases)
 }
 
 func summarize(raw evidence, source []byte) (summary, error) {
@@ -219,6 +279,117 @@ func summarize(raw evidence, source []byte) (summary, error) {
 		return summary{}, fmt.Errorf("outcome %q does not match sample results", raw.Outcome)
 	}
 	return result, nil
+}
+
+func summarizePhases(raw evidence, source []byte) (phaseSummary, error) {
+	if raw.SchemaVersion != "velox.startup-lifecycle/v3" {
+		return phaseSummary{}, fmt.Errorf("unsupported source schema %q", raw.SchemaVersion)
+	}
+	digest := sha256.Sum256(source)
+	values := map[string]map[string][]float64{
+		"firstStartup": {}, "immediateStartup": {}, "firstShutdown": {}, "immediateShutdown": {},
+	}
+	totals := map[string][]float64{}
+	dominantCounts := map[string]int{}
+	successCount, failureCount := 0, 0
+	for _, item := range raw.Samples {
+		if item.Outcome != "success" {
+			failureCount++
+			continue
+		}
+		if item.First == nil || item.Immediate == nil {
+			return phaseSummary{}, fmt.Errorf("successful sample %d is incomplete", item.Index)
+		}
+		successCount++
+		groups := []struct {
+			name     string
+			timeline phaseTimeline
+			phases   []string
+			schema   string
+			clock    string
+		}{
+			{"firstStartup", item.First.StartupTimeline, startupPhaseNames, "velox.host-startup-timeline/v1", "time-since-host-entry-monotonic"},
+			{"immediateStartup", item.Immediate.StartupTimeline, startupPhaseNames, "velox.host-startup-timeline/v1", "time-since-host-entry-monotonic"},
+			{"firstShutdown", item.First.ShutdownTimeline, shutdownPhaseNames, "velox.host-shutdown-timeline/v1", "time-since-shutdown-request-monotonic"},
+			{"immediateShutdown", item.Immediate.ShutdownTimeline, shutdownPhaseNames, "velox.host-shutdown-timeline/v1", "time-since-shutdown-request-monotonic"},
+		}
+		for _, group := range groups {
+			intervals, total, err := timelineIntervals(group.timeline, group.phases, group.schema, group.clock)
+			if err != nil {
+				return phaseSummary{}, fmt.Errorf("sample %d %s: %w", item.Index, group.name, err)
+			}
+			totals[group.name] = append(totals[group.name], total)
+			for name, value := range intervals {
+				values[group.name][name] = append(values[group.name][name], value)
+			}
+			if group.name == "immediateStartup" {
+				dominantCounts[dominantInterval(intervals)]++
+			}
+		}
+	}
+	groups := make(map[string]phaseGroup, len(values))
+	for groupName, intervalValues := range values {
+		intervals := make(map[string]metricStats, len(intervalValues))
+		for intervalName, samples := range intervalValues {
+			intervals[intervalName] = describe(samples)
+		}
+		group := phaseGroup{Intervals: intervals}
+		if len(totals[groupName]) > 0 {
+			total := describe(totals[groupName])
+			group.TotalMS = &total
+		}
+		groups[groupName] = group
+	}
+	dominantName, dominantCount := "unavailable", 0
+	for name, count := range dominantCounts {
+		if count > dominantCount || count == dominantCount && name < dominantName {
+			dominantName, dominantCount = name, count
+		}
+	}
+	return phaseSummary{
+		SchemaVersion: phaseSummarySchemaVersion, SourceSchemaVersion: raw.SchemaVersion,
+		SourceSHA256: hex.EncodeToString(digest[:]), EvidenceLevel: raw.EvidenceLevel,
+		Outcome: raw.Outcome, SuccessCount: successCount, FailureCount: failureCount,
+		Environment: raw.Environment, Groups: groups,
+		Attribution: phaseAttribution{ImmediateStartupDominantInterval: dominantName, DominantSampleCount: dominantCount, SuccessfulSampleCount: successCount},
+	}, nil
+}
+
+func timelineIntervals(timeline phaseTimeline, expectedNames []string, expectedSchema, expectedClock string) (map[string]float64, float64, error) {
+	if timeline.SchemaVersion != expectedSchema || timeline.Clock != expectedClock {
+		return nil, 0, errors.New("timeline schema or clock is invalid")
+	}
+	if len(timeline.Phases) != len(expectedNames) || timeline.Phases[0].ElapsedMS != 0 {
+		return nil, 0, errors.New("timeline phase count or origin is invalid")
+	}
+	result := make(map[string]float64, len(timeline.Phases)-1)
+	for index, phase := range timeline.Phases {
+		if phase.Name != expectedNames[index] {
+			return nil, 0, fmt.Errorf("timeline phase %d is %q, expected %q", index, phase.Name, expectedNames[index])
+		}
+	}
+	for index := 1; index < len(timeline.Phases); index++ {
+		previous, current := timeline.Phases[index-1], timeline.Phases[index]
+		if previous.Name == "" || current.Name == "" || current.ElapsedMS < previous.ElapsedMS {
+			return nil, 0, errors.New("timeline phases are empty or out of order")
+		}
+		name := previous.Name + "->" + current.Name
+		if _, exists := result[name]; exists {
+			return nil, 0, fmt.Errorf("duplicate interval %q", name)
+		}
+		result[name] = current.ElapsedMS - previous.ElapsedMS
+	}
+	return result, timeline.Phases[len(timeline.Phases)-1].ElapsedMS, nil
+}
+
+func dominantInterval(intervals map[string]float64) string {
+	name, maximum := "", -1.0
+	for candidate, value := range intervals {
+		if value > maximum || value == maximum && candidate < name {
+			name, maximum = candidate, value
+		}
+	}
+	return name
 }
 
 func describe(values []float64) metricStats {

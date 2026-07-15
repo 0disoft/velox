@@ -250,6 +250,12 @@ timing, and uploads both files even when the measurement test fails. Runner
 image, runner image version, Git commit, and WebView2 Runtime version are part
 of the evidence contract.
 
+The same raw v3 document also derives
+`velox.startup-lifecycle-phase-summary/v1`. It reports interval-level p50 and
+p95 statistics for first and immediate startup and shutdown, and counts the
+dominant immediate-startup interval per successful sample. This is generated
+evidence; phase numbers are never copied into documentation by hand.
+
 A single instrumented local run on 2026-07-13 observed first ready at 924 ms,
 the first browser process exiting 779 ms after its host, immediate same-profile
 ready at 1,406 ms with a new browser process ID, and both the second browser

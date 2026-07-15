@@ -73,7 +73,10 @@ lifecycle samples for pull requests and `quick` manual dispatches. A `full`
 manual dispatch, weekly schedule, or release-candidate tag runs ten lifecycle
 and ten consumer samples. It validates
 `velox.startup-lifecycle/v3`, derives and validates
-`velox.startup-lifecycle-summary/v1`, and uploads both results with `always()`.
+`velox.startup-lifecycle-summary/v1` plus
+`velox.startup-lifecycle-phase-summary/v1`, and uploads all results with
+`always()`. The phase summary computes interval p50 and p95 values and the
+dominant immediate-startup interval directly from raw v3 evidence.
 Lifecycle v3 preserves the host-local startup and shutdown phase timelines for
 both the first launch and the immediate same-profile relaunch.
 This longer evidence path is intentionally separate from the local one-sample

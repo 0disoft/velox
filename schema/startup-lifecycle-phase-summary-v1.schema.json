@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/startup-lifecycle-phase-summary/v1.json",
+  "title": "Velox startup lifecycle phase summary v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceSchemaVersion", "sourceSha256", "evidenceLevel", "outcome", "successCount", "failureCount", "environment", "groups", "attribution"],
+  "properties": {
+    "schemaVersion": { "const": "velox.startup-lifecycle-phase-summary/v1" },
+    "sourceSchemaVersion": { "const": "velox.startup-lifecycle/v3" },
+    "sourceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidenceLevel": { "enum": ["controlled-local-observation", "hosted-runner-evidence"] },
+    "outcome": { "enum": ["success", "failure"] },
+    "successCount": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "failureCount": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architecture", "webView2Version", "runnerImage", "runnerImageVersion", "githubRunId", "githubRunAttempt", "gitCommit"],
+      "properties": {
+        "os": { "const": "windows" },
+        "architecture": { "const": "amd64" },
+        "webView2Version": { "type": "string", "minLength": 1 },
+        "runnerImage": { "type": ["string", "null"] },
+        "runnerImageVersion": { "type": ["string", "null"] },
+        "githubRunId": { "type": ["string", "null"] },
+        "githubRunAttempt": { "type": ["string", "null"] },
+        "gitCommit": { "type": ["string", "null"] }
+      }
+    },
+    "groups": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["firstStartup", "immediateStartup", "firstShutdown", "immediateShutdown"],
+      "properties": {
+        "firstStartup": { "$ref": "#/$defs/group" },
+        "immediateStartup": { "$ref": "#/$defs/group" },
+        "firstShutdown": { "$ref": "#/$defs/group" },
+        "immediateShutdown": { "$ref": "#/$defs/group" }
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["immediateStartupDominantInterval", "dominantSampleCount", "successfulSampleCount"],
+      "properties": {
+        "immediateStartupDominantInterval": { "type": "string", "minLength": 1 },
+        "dominantSampleCount": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "successfulSampleCount": { "type": "integer", "minimum": 0, "maximum": 100 }
+      }
+    }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimumMs", "p50Ms", "p95Ms", "maximumMs"],
+      "properties": {
+        "minimumMs": { "type": "number", "minimum": 0 },
+        "p50Ms": { "type": "number", "minimum": 0 },
+        "p95Ms": { "type": "number", "minimum": 0 },
+        "maximumMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalMs", "intervals"],
+      "properties": {
+        "totalMs": { "oneOf": [{ "$ref": "#/$defs/metric" }, { "type": "null" }] },
+        "intervals": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/metric" }
+        }
+      }
+    }
+  }
+}

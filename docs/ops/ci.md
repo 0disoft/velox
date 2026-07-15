@@ -63,7 +63,9 @@ The full cross-framework benchmark matrix does not run on every pull request.
 - Ten isolated consumer end-to-end samples.
 - The Windows producer job records ten fresh/immediate same-profile startup
   lifecycle samples, validates `velox.startup-lifecycle/v3`, derives a
-  `velox.startup-lifecycle-summary/v1` correlation and ordering summary, and
+  `velox.startup-lifecycle-summary/v1` correlation and ordering summary plus a
+  `velox.startup-lifecycle-phase-summary/v1` interval and dominant-phase
+  summary, and
   preserves the lifecycle evidence for 90 days even when a sample fails. The
   weekly schedule also aggregates at most twelve history points. Release
   candidate tags use the same ten-sample lifecycle path without history

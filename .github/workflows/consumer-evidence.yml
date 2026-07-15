@@ -132,6 +132,7 @@ jobs:
           $env:VELOX_BUILT_HOST = Join-Path $env:RUNNER_TEMP 'release-input/velox-host.exe'
           $env:VELOX_STARTUP_LIFECYCLE_RESULT = Join-Path $env:GITHUB_WORKSPACE '.ci/startup/startup-lifecycle.json'
           $summaryPath = Join-Path $env:GITHUB_WORKSPACE '.ci/startup/startup-lifecycle-summary.json'
+          $phaseSummaryPath = Join-Path $env:GITHUB_WORKSPACE '.ci/startup/startup-lifecycle-phase-summary.json'
           go test -v -count=1 -run 'TestStartupLifecycleEvidence$' ./tests/startup
           $testExit = $LASTEXITCODE
           if (-not (Test-Path -LiteralPath $env:VELOX_STARTUP_LIFECYCLE_RESULT -PathType Leaf)) {
@@ -146,12 +147,17 @@ jobs:
           if ($document.samples.Count -ne $document.repetitions) {
             throw 'Startup lifecycle sample count does not match repetitions.'
           }
-          go run ./cmd/velox-startup-summary --input $env:VELOX_STARTUP_LIFECYCLE_RESULT --output $summaryPath
+          go run ./cmd/velox-startup-summary --input $env:VELOX_STARTUP_LIFECYCLE_RESULT --output $summaryPath --phase-output $phaseSummaryPath
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $summarySchema = Get-Content -LiteralPath 'schema/startup-lifecycle-summary-v1.schema.json' -Raw
           $summary = Get-Content -LiteralPath $summaryPath -Raw
           if (-not ($summary | Test-Json -Schema $summarySchema)) {
             throw 'Startup lifecycle summary failed JSON Schema validation.'
+          }
+          $phaseSummarySchema = Get-Content -LiteralPath 'schema/startup-lifecycle-phase-summary-v1.schema.json' -Raw
+          $phaseSummary = Get-Content -LiteralPath $phaseSummaryPath -Raw
+          if (-not ($phaseSummary | Test-Json -Schema $phaseSummarySchema)) {
+            throw 'Startup lifecycle phase summary failed JSON Schema validation.'
           }
           if ($testExit -ne 0) { exit $testExit }
 
@@ -201,6 +207,7 @@ jobs:
           path: |
             .ci/startup/startup-lifecycle.json
             .ci/startup/startup-lifecycle-summary.json
+            .ci/startup/startup-lifecycle-phase-summary.json
             .ci/startup/startup-history.json
           retention-days: 90
           if-no-files-found: warn
