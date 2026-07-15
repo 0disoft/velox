@@ -22,7 +22,7 @@ exists.
 
 Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
 policy remain UNDECIDED before public alpha. Local artifacts currently identify
-the development release as `0.5.1-dev`.
+the development release as `0.5.2-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 

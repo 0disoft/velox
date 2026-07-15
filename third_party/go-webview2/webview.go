@@ -69,6 +69,7 @@ type webview struct {
 	m             sync.Mutex
 	bindings      map[string]interface{}
 	dispatchq     []func()
+	closing       bool
 	shutdownPhase func(name string)
 }
 
@@ -224,18 +225,23 @@ func (w *webview) msgcb(msg string) {
 
 	id := strconv.Itoa(d.ID)
 	if res, err := w.callbinding(d); err != nil {
-		w.Dispatch(func() {
-			w.Eval("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); window._rpc[" + id + "] = undefined")
-		})
+		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); window._rpc[" + id + "] = undefined")
 	} else if b, err := json.Marshal(res); err != nil {
-		w.Dispatch(func() {
-			w.Eval("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); window._rpc[" + id + "] = undefined")
-		})
+		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); window._rpc[" + id + "] = undefined")
 	} else {
-		w.Dispatch(func() {
-			w.Eval("window._rpc[" + id + "].resolve(" + string(b) + "); window._rpc[" + id + "] = undefined")
-		})
+		w.dispatchBindingResponse("window._rpc[" + id + "].resolve(" + string(b) + "); window._rpc[" + id + "] = undefined")
 	}
+}
+
+func (w *webview) dispatchBindingResponse(script string) {
+	w.Dispatch(func() {
+		w.m.Lock()
+		closing := w.closing
+		w.m.Unlock()
+		if !closing {
+			w.Eval(script)
+		}
+	})
 }
 
 func (w *webview) callbinding(d rpcMessage) (interface{}, error) {
@@ -317,6 +323,13 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 				w.browser.Focus()
 			}
 		case w32.WMClose:
+			w.m.Lock()
+			if w.closing {
+				w.m.Unlock()
+				return 0
+			}
+			w.closing = true
+			w.m.Unlock()
 			w.markShutdown("window-close-dispatched")
 			w.browser.Destroy()
 			_, _, _ = w32.User32DestroyWindow.Call(hwnd)
