@@ -70,6 +70,9 @@ tamper resistance.
 ## Runtime Controls
 
 - Use one application-specific virtual HTTPS origin.
+- Keep file URL loading and origin rotation out of production; they are
+  diagnostic controls and are not security-equivalent fallbacks under ADR
+  0007.
 - Accept IPC only from the expected top-level origin.
 - Do not expose the bridge to frames.
 - Deny remote top-level navigation, popups, downloads, and browser permission

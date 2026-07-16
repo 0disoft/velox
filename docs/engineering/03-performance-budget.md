@@ -216,13 +216,14 @@ security adapter was enabled.
 The C++23 size included the 11,776-byte executable and 164,192-byte
 `WebView2Loader.dll`. The Go executable embeds its loader. These are local,
 directional results, not a release baseline: runner and WebView2 metadata are
-not yet captured and run order is fixed. Both implementations now show the
-same approximately seven-second immediate-relaunch delay, so the delay belongs
-to WebView2 browser-process teardown rather than the host language. Fresh Go
-and C++ results differ by about 104 ms at p50; this is not a sufficient basis
-for a startup marketing claim. The C++23 source and toolchain were retired
-after Go was selected; this table is immutable historical evidence, not an
-active benchmark target.
+not yet captured and run order is fixed. Both implementations showed a similar
+immediate-relaunch tail, which made host language an unlikely primary owner but
+did not distinguish UDF, browser-process, controller, or asset-transport
+ownership. ADR 0007 keeps that attribution open until the recovery matrix is
+complete. Fresh Go and C++ results differ by about 104 ms at p50; this is not a
+sufficient basis for a startup marketing claim. The C++23 source and toolchain
+were retired after Go was selected; this table is immutable historical
+evidence, not an active benchmark target.
 
 The Go lifecycle smoke now records the main WebView2 browser process ID and
 measures first ready, host exit, browser-process exit, immediate same-profile

@@ -21,6 +21,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0004 | Retired by 0005 | Bounded C++23 WebView2 reference used for the completed M0 comparison |
 | 0005 | Accepted | Use Go for both the CLI and production host; keep the WebView2 adapter repository-owned |
 | 0006 | Accepted | Bind the CLI and host with strict release metadata |
+| 0007 | Accepted | Retain virtual HTTPS asset delivery while immediate-relaunch recovery is diagnosed |
 
 ## Lifecycle
 

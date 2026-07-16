@@ -77,6 +77,9 @@ work; sidecar metadata alone is not a trust anchor.
 - An installed Evergreen WebView2 Runtime.
 - One top-level window.
 - A virtual HTTPS origin mapped to the local asset directory.
+- Virtual HTTPS remains the only production asset transport while
+  immediate-relaunch recovery is diagnosed under ADR 0007; file URL loading is
+  a benchmark control only.
 - Direct WebView2 web messaging with no listening socket.
 - Basic application information and window lifecycle methods only.
 

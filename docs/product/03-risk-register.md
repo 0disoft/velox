@@ -27,6 +27,7 @@
 | R-012 | Benchmark targets become marketing theater | Medium | Critical | Open | Keep setup in headline timing and make README claims mechanically derived from published evidence |
 | R-013 | A downloaded release bundle is tampered with | Low | Critical | Open | Pin checksums and publish provenance before alpha distribution |
 | R-014 | Static-only scope has too little user value | Medium | Critical | Open | Require external user attempts and a clear answer to why a PWA is insufficient before M5 |
+| R-015 | Virtual HTTPS and same-UDF relaunch ownership create a controller-startup tail | High | High | Monitoring | Keep file URL diagnostic-only under ADR 0007; publish the delay, UDF, origin, browser-process, and phase recovery matrix before changing transport or adding a workaround |
 
 ## Review Rules
 
