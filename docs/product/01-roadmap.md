@@ -91,7 +91,7 @@ remaining go-or-kill gates.
 ### Deliverable audit
 
 Audit baseline: `velox-bench` revision
-`e98c046cc235b6879fa4a9f692d536664f0c8943`.
+`fda27ea1b9440acea644cae0cea9cccdd0c98e94`.
 
 | Deliverable | State | Current evidence or gap |
 | --- | --- | --- |
@@ -99,8 +99,8 @@ Audit baseline: `velox-bench` revision
 | Pinned Velox, Wails, Neutralino, and Tauri adapters | Complete | `bench.lock.json` pins immutable revisions and the contract check enforces all four adapters and byte-identical hello assets |
 | Hello and deterministic asset-pack fixtures | Partial | The dependency-free hello fixture is canonical; no asset-pack fixture or deterministic generator exists |
 | Zero-cache and recommended-cache suites | Partial | The hosted zero-cache suite is executable and published; recommended-cache exists only as methodology text |
-| Raw versioned JSON results and generated summary tables | Partial | Versioned raw, summary, and decision artifacts are generated; no persistent machine-generated public table exists |
-| CI resource usage disclosure | Partial | Cache policy, job topology, and artifact retention are documented; aggregate runner time and artifact-volume reporting are not generated |
+| Raw versioned JSON results and generated summary tables | Complete | The pinned pair evidence, normalized run metadata, publication contract, and README table are committed; contract checks regenerate the publication and table in memory to reject hand-edited values |
+| CI resource usage disclosure | Complete | The publication reports workflow wall time, aggregate observed job runtime, job outcomes, artifact count and bytes, and cache upload while explicitly separating those observations from billed Actions minutes |
 
 `Partial` means the existing evidence remains valid but the named M3
 deliverable is not complete. A pair decision or adapter directory cannot be
