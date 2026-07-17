@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M2 complete; active for M3
+- Status: M2 complete; M3 active with the Wails cold-build gate passed
 
 ## Validation Source of Truth
 

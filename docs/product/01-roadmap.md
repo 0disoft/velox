@@ -82,6 +82,12 @@ Status: Complete.
 
 Status: Active.
 
+The Wails zero-cache cold-build gate is complete. Its machine-generated
+evidence and scope limits are recorded in
+`docs/engineering/03-performance-budget.md`. M3 remains active because that
+pairwise result does not complete the other benchmark deliverables or the
+remaining go-or-kill gates.
+
 ### Deliver
 
 - Separate public benchmark repository.
@@ -100,11 +106,13 @@ Status: Active.
 
 ### Go-or-kill gate
 
-- Consumer cache upload is exactly zero bytes.
-- Velox end-to-end cold build is at least 3x faster than the pinned Wails
+- [x] Consumer cache upload is exactly zero bytes for the publishable Wails
+  pair.
+- [x] Velox end-to-end cold build is at least 3x faster than the pinned Wails
   fixture.
-- Velox remains structurally simpler than the closest compile-free comparison.
-- Startup is either materially better or removed as a headline advantage.
+- [ ] Velox remains structurally simpler than the closest compile-free
+  comparison.
+- [ ] Startup is either materially better or removed as a headline advantage.
 
 ## M4: Alpha Distribution
 
@@ -126,6 +134,8 @@ Status: Active.
 
 ## M5: Product Decision
 
+Status: Not started. M3 and M4 remain open.
+
 Choose one:
 
 - Continue toward a stable narrow packager.
@@ -135,6 +145,12 @@ Choose one:
 
 The decision uses benchmark evidence, external user attempts, maintenance cost,
 security review findings, and the strength of the PWA and Neutralino
+counterarguments.
+
+The Wails cold-build result supplies one M5 input, not the product decision.
+Before M5 can start, the repository still needs the two unchecked M3
+go-or-kill gates, M4 distribution evidence, external user attempts, a bounded
+maintenance-cost record, a security review, and explicit PWA and Neutralino
 counterarguments.
 
 ## Deferred Until After M5

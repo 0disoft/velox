@@ -66,6 +66,26 @@ These are go-or-kill targets, not published performance claims.
 | Go host startup | Record regressions against its pinned Go baseline |
 | Startup claim | Publish only when the advantage exceeds noise and 10% |
 
+## Current Wails Gate Evidence
+
+The publishable `velox-wails` zero-cache pair from
+[velox-bench run 29569560999](https://github.com/0disoft/velox-bench/actions/runs/29569560999)
+is the current source for the Wails cold-build gate. The benchmark harness was
+at revision `0f83ff4156441044fa0c2290e8fe266d0d5fcb86`; it paired Velox revision
+`ae7a819f0ef9b22cb4f959451d0189d699c6e546` with Wails revision
+`474b677c9b9191d703607bea7d76143b1b2eeb0c`.
+
+| Framework | Successful samples | End-to-end p50 | End-to-end p95 |
+| --- | ---: | ---: | ---: |
+| Velox | 10 of 10 | 1,997 ms | 2,844 ms |
+| Wails | 10 of 10 | 72,140 ms | 124,112 ms |
+
+The generated pair decision reports a Wails-to-Velox p50 ratio of `36.124`,
+zero uploaded cache bytes, one pinned environment, balanced CPU allocation, and
+`publishable: true`. This passes the 3x Wails cold-build gate. It does not prove
+an all-framework performance lead, structural simplicity against a compile-free
+wrapper, or a startup advantage. Those remain separate evidence gates.
+
 If the Go host exceeds its startup allowance, investigate the repository-owned
 adapter and WebView2 lifecycle before changing languages. ADR 0005 permits
 reopening the language decision only if a bounded pure-Go adapter cannot safely

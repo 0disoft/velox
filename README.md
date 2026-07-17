@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M2 security contract implemented; M3 public benchmark active
+- Status: M2 complete; M3 active with the Wails cold-build gate passed
 - Scope: general
 - Repository type: cli-tool
 
@@ -14,9 +14,10 @@ and permission-checked IPC v1 bridge, manifest
 validation, an immutable build plan, atomic portable-directory assembly, a
 deterministic ZIP writer, all seven M1 CLI commands, an unsigned deterministic
 Windows x64 release bundle, startup fixtures, and a zero-cache consumer
-evidence workflow. It is not an alpha
-distribution; public release provenance, hosted benchmark results, and the
-cross-framework comparison remain incomplete.
+evidence workflow. It is not an alpha distribution. The publishable Wails
+zero-cache pair passes the cold-build gate, while release provenance, the
+remaining cross-framework evidence, and the non-performance product gates
+remain incomplete.
 
 ## Priorities
 
@@ -98,10 +99,11 @@ authoring contract.
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging
-slice, and M2 closed the minimum runtime security contract. The active product
-gate is a reproducible
-comparison with Wails, existing compile-free wrappers, and a PWA where
-applicable.
+slice, and M2 closed the minimum runtime security contract. M3 has passed its
+publishable Wails cold-build gate. Its remaining product gates are structural
+simplicity against the closest compile-free wrapper and either a material
+startup advantage or removal of startup from the headline. A PWA comparison
+also remains required before the M5 product decision.
 
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,
