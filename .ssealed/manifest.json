@@ -1,7 +1,7 @@
 {
   "tool": "ssealed",
   "version": "0.6.11",
-  "generatedAt": "2026-07-17T10:52:59.848Z",
+  "generatedAt": "2026-07-17T11:20:37.805Z",
   "scope": "general",
   "profile": "cli-tool",
   "addons": [],
@@ -758,13 +758,13 @@
     },
     {
       "path": "docs/product/01-roadmap.md",
-      "checksum": "sha256:e105d08cb653d8e381e403154c5ac3278f59bc2900a0c9cc8ba430800e25a147",
+      "checksum": "sha256:c17d0712c6ba82fa8eb235d507caadb383d4ab35685c3514ae4019ae70cab17c",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:950d7a44619b2ff2626421126a59af4ac1b98f258f252a78d9ead96b568640e4",
-      "acceptedChecksum": "sha256:e105d08cb653d8e381e403154c5ac3278f59bc2900a0c9cc8ba430800e25a147",
+      "acceptedChecksum": "sha256:c17d0712c6ba82fa8eb235d507caadb383d4ab35685c3514ae4019ae70cab17c",
       "generatedChecksum": "sha256:950d7a44619b2ff2626421126a59af4ac1b98f258f252a78d9ead96b568640e4"
     },
     {

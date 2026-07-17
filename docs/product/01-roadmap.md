@@ -91,13 +91,13 @@ remaining go-or-kill gates.
 ### Deliverable audit
 
 Audit baseline: `velox-bench` revision
-`73df231582b81f01fd5c58a37607a4d9f9f6be99`.
+`688eb89e2c35444a4860aed2c0397a92dffc25ba`.
 
 | Deliverable | State | Current evidence or gap |
 | --- | --- | --- |
 | Separate public benchmark repository | Complete | `0disoft/velox-bench` owns the public contracts, fixtures, workflows, and raw-evidence schemas |
 | Pinned Velox, Wails, Neutralino, and Tauri adapters | Complete | `bench.lock.json` pins immutable revisions and the contract check enforces all four adapters and byte-identical hello assets |
-| Hello and deterministic asset-pack fixtures | Partial | The dependency-free hello fixture is canonical; no asset-pack fixture or deterministic generator exists |
+| Hello and deterministic asset-pack fixtures | Complete | The dependency-free hello fixture remains canonical; the asset-pack manifest pins a dependency-free 1,000-file, exact-10-MiB generator contract and tree digest without committing generated payloads |
 | Zero-cache and recommended-cache suites | Partial | The hosted zero-cache suite is executable and published; recommended-cache exists only as methodology text |
 | Raw versioned JSON results and generated summary tables | Complete | The pinned pair evidence, normalized run metadata, publication contract, and README table are committed; contract checks regenerate the publication and table in memory to reject hand-edited values |
 | CI resource usage disclosure | Complete | The publication reports workflow wall time, aggregate observed job runtime, job outcomes, artifact count and bytes, and cache upload while explicitly separating those observations from billed Actions minutes |
