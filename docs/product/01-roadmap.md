@@ -91,7 +91,7 @@ remaining go-or-kill gates.
 ### Deliverable audit
 
 Audit baseline: `velox-bench` revision
-`fda27ea1b9440acea644cae0cea9cccdd0c98e94`.
+`73df231582b81f01fd5c58a37607a4d9f9f6be99`.
 
 | Deliverable | State | Current evidence or gap |
 | --- | --- | --- |
