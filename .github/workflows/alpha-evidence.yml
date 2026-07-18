@@ -148,24 +148,30 @@ jobs:
           Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath '.ci/release'
           $cli = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File -Filter 'velox.exe')
           if ($cli.Count -ne 1) { throw 'Release archive must contain exactly one velox.exe.' }
-          & $cli[0].FullName init '.ci/project' --json | ConvertFrom-Json | Out-Null
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $cli[0].FullName validate --config '.ci/project/velox.json' --json | ConvertFrom-Json | Out-Null
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $cli[0].FullName doctor --config '.ci/project/velox.json' --out '.ci/first' --json | ConvertFrom-Json | Out-Null
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $cli[0].FullName build --config '.ci/project/velox.json' --out '.ci/first' --json | ConvertFrom-Json | Out-Null
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $cli[0].FullName build --config '.ci/project/velox.json' --out '.ci/second' --json | ConvertFrom-Json | Out-Null
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $first = @(Get-ChildItem -LiteralPath '.ci/first' -File -Filter '*.zip')
-          $second = @(Get-ChildItem -LiteralPath '.ci/second' -File -Filter '*.zip')
-          if ($first.Count -ne 1 -or $second.Count -ne 1) { throw 'Consumer build outputs are incomplete.' }
-          $firstSha = (Get-FileHash -LiteralPath $first[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          $secondSha = (Get-FileHash -LiteralPath $second[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          function Invoke-VeloxJson {
+            param([string[]] $Arguments)
+            $raw = & $cli[0].FullName @Arguments
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) { throw "velox.exe failed with exit code $exitCode while running $($Arguments[0])." }
+            $document = $raw | ConvertFrom-Json
+            if (-not $document.ok) { throw "velox.exe returned a failed JSON envelope while running $($Arguments[0])." }
+            return $document
+          }
+          Invoke-VeloxJson -Arguments @('init', '.ci/project', '--json') | Out-Null
+          $project = (Resolve-Path -LiteralPath '.ci/project').Path
+          Invoke-VeloxJson -Arguments @('validate', '--config', '.ci/project/velox.json', '--json') | Out-Null
+          Invoke-VeloxJson -Arguments @('doctor', '--config', '.ci/project/velox.json', '--out', 'dist-first', '--json') | Out-Null
+          $firstBuild = Invoke-VeloxJson -Arguments @('build', '--config', '.ci/project/velox.json', '--out', 'dist-first', '--json')
+          $secondBuild = Invoke-VeloxJson -Arguments @('build', '--config', '.ci/project/velox.json', '--out', 'dist-second', '--json')
+          $firstArchive = Join-Path $project $firstBuild.result.archive
+          $secondArchive = Join-Path $project $secondBuild.result.archive
+          if (-not (Test-Path -LiteralPath $firstArchive -PathType Leaf) -or -not (Test-Path -LiteralPath $secondArchive -PathType Leaf)) {
+            throw 'Consumer build outputs are incomplete.'
+          }
+          $firstSha = (Get-FileHash -LiteralPath $firstArchive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $secondSha = (Get-FileHash -LiteralPath $secondArchive -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($firstSha -ne $secondSha) { throw 'Consumer builds are not deterministic.' }
-          & $cli[0].FullName inspect $first[0].FullName --json | ConvertFrom-Json | Out-Null
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Invoke-VeloxJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
           $finished = [DateTime]::UtcNow
           $started = [DateTime]::new([long] $env:VELOX_CLEAN_STARTED_TICKS, [DateTimeKind]::Utc)
           $result = [ordered]@{

@@ -172,6 +172,14 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 			t.Errorf("alpha evidence workflow is missing %q", required)
 		}
 	}
+	for _, required := range []string{"function Invoke-VeloxJson", "$firstBuild.result.archive", "$secondBuild.result.archive"} {
+		if !strings.Contains(consumer, required) {
+			t.Errorf("checkout-free consumer job does not use the CLI result contract %q", required)
+		}
+	}
+	if strings.Contains(consumer, "Get-ChildItem -LiteralPath '.ci/first'") || strings.Contains(consumer, "Get-ChildItem -LiteralPath '.ci/second'") {
+		t.Fatal("checkout-free consumer job must not guess build output directories")
+	}
 	if strings.Contains(workflow, "contents: write") || strings.Contains(workflow, "gh release") {
 		t.Fatal("alpha evidence must not publish a GitHub Release")
 	}
