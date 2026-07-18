@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.velox.invalid/manifest/v1.json",
-  "title": "Velox project manifest v1",
+  "$id": "https://schemas.actutum.invalid/manifest/v1.json",
+  "title": "Actutum project manifest v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "app"],

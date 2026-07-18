@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/0disoft/velox/internal/appidentity"
+	"github.com/0disoft/actutum/internal/appidentity"
 )
 
 const Version = 1

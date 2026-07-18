@@ -6,7 +6,7 @@
 
 ## Context
 
-Velox must determine whether one Go toolchain can produce a CGo-free generic
+Actutum must determine whether one Go toolchain can produce a CGo-free generic
 Windows host while keeping consumer application builds compile-free. The M0
 host needs to load static content and emit a two-frame ready marker before a
 larger CLI or packaging implementation is justified.
@@ -14,7 +14,7 @@ larger CLI or packaging implementation is justified.
 ## Decision
 
 Pin `github.com/jchv/go-webview2` at commit `56598839c808` for the M0 startup
-spike. Keep the dependency behind the `velox-host` command boundary. Use an
+spike. Keep the dependency behind the `actutum-host` command boundary. Use an
 external runtime JSON file, local static assets, and a benchmark-only named-pipe
 ready marker.
 
@@ -32,7 +32,7 @@ This decision does not select the production host implementation.
 - Navigation, popup, download, frame-origin, and permission policy controls
   required by the security baseline are not available at the wrapper boundary.
 - The wrapper enables clipboard-read permission during construction, contrary
-  to the Velox deny-by-default security contract.
+  to the Actutum deny-by-default security contract.
 
 ## Exit Criteria
 

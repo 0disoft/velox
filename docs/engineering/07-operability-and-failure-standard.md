@@ -5,7 +5,7 @@
 
 ## Scope
 
-Velox is a local CLI and desktop host, not a hosted service. Its first
+Actutum is a local CLI and desktop host, not a hosted service. Its first
 operability surface is deterministic diagnostics, artifact inspection, and
 clean failure recovery.
 

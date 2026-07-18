@@ -6,7 +6,7 @@
 
 ## Context
 
-Velox exists to reduce end-to-end cold build time, consumer GitHub Actions
+Actutum exists to reduce end-to-end cold build time, consumer GitHub Actions
 cache use, and application startup overhead for small desktop applications
 built from static web assets.
 
@@ -110,7 +110,7 @@ deferred.
 ### Compile each application in Go
 
 Rejected because it requires a consumer toolchain and cache, reproducing the
-cost Velox is intended to remove.
+cost Actutum is intended to remove.
 
 ### Patch configuration into the executable
 

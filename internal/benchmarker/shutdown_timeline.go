@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	ShutdownTimelinePrefix        = "velox-bench-shutdown-timeline "
-	ShutdownTimelineSchemaVersion = "velox.host-shutdown-timeline/v1"
+	ShutdownTimelinePrefix        = "actutum-bench-shutdown-timeline "
+	ShutdownTimelineSchemaVersion = "actutum.host-shutdown-timeline/v1"
 )
 
 type ShutdownTimeline struct {

@@ -15,13 +15,13 @@ func TestUnsignedDeveloperPreviewPolicyRemainsDormantUntilPublicIdentity(t *test
 			"managed devices can block",
 		},
 		"docs/product/01-roadmap.md": {
-			"Explicitly unsigned Velox CLI",
+			"Explicitly unsigned Actutum CLI",
 			"SignPath onboarding, Authenticode verification against real provider output",
 			"deferred until a real adoption trigger",
 		},
 		"docs/ops/release.md": {
-			"Unsigned developer-preview publication implemented; public executable blocked pending rename",
-			"This mechanism is dormant while ADR 0013's public-name gate is open",
+			"Actutum rename implemented; public executable blocked pending repository identity",
+			"This mechanism is dormant until `github.repository` is exactly",
 			"The isolated publication job",
 			"alone receives `contents: write`",
 			"not sign, attest, rebuild, or replace artifacts",
@@ -51,7 +51,7 @@ func TestM4RoadmapDoesNotRequireProviderAcceptance(t *testing.T) {
 	m4 := roadmap[start:end]
 	for _, forbidden := range []string{
 		"Obtain SignPath Foundation project acceptance",
-		"Signed Velox CLI and unchanged generic host",
+		"Signed Actutum CLI and unchanged generic host",
 		"provider-approved signing",
 	} {
 		if strings.Contains(m4, forbidden) {

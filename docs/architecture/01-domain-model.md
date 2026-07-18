@@ -37,7 +37,7 @@ case collisions, or archive path tricks.
 
 ### HostTemplate
 
-An immutable prebuilt host selected from the pinned Velox release.
+An immutable prebuilt host selected from the pinned Actutum release.
 
 Invariant: its digest and compatibility version are verified before copying;
 consumer builds do not modify its bytes.
@@ -118,4 +118,4 @@ Invariant: failed and timed-out runs remain in raw results.
 - The CLI owns build-domain validation and transitions.
 - The host owns runtime-domain lifecycle and dispatch.
 - The benchmark repository owns cross-framework fixtures and measurements.
-- Application business state and remote APIs remain outside Velox.
+- Application business state and remote APIs remain outside Actutum.

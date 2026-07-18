@@ -26,4 +26,4 @@ tmp/
 .pixi/
 
 # Ephemeral source-run configuration, removed after the host exits.
-.velox-run-*.json
+.actutum-run-*.json

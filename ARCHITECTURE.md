@@ -5,7 +5,7 @@
 
 ## Summary
 
-Velox separates build-time packaging from runtime hosting.
+Actutum separates build-time packaging from runtime hosting.
 
 The build side is a standalone Go CLI. The runtime side is a distinct prebuilt
 generic host. They share versioned contracts but do not share executable
@@ -66,7 +66,7 @@ runtime configuration, assembles an owned sibling staging directory, writes a
 normalized ZIP, and then promotes the directory and archive while preserving
 recoverable previous outputs on handled failures.
 
-The release bundle binds the CLI and host through `velox-host.json`. The CLI
+The release bundle binds the CLI and host through `actutum-host.json`. The CLI
 rejects a host when release version, target, host contract, runtime contract,
 file size, or SHA-256 differs. The sidecar is not a signature and does not make
 an untrusted download trustworthy. The unsigned developer preview ships an

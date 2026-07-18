@@ -5,7 +5,7 @@
 
 ## Security Model
 
-Velox assumes that manifests, static assets, web content, IPC messages, output
+Actutum assumes that manifests, static assets, web content, IPC messages, output
 paths, and downloaded release bundles can be malformed or malicious.
 
 Local content is not trusted merely because it is stored beside the host.
@@ -14,7 +14,7 @@ Local content is not trusted merely because it is stored beside the host.
 
 - Build input to CLI.
 - CLI staging output to promoted artifact.
-- Downloaded Velox release to local build.
+- Downloaded Actutum release to local build.
 - Web content to native host.
 - Host to installed WebView2 Runtime.
 - Packaged application to application-owned remote services.
@@ -106,7 +106,7 @@ tests, and performance impact evidence.
 - No telemetry by default.
 - No automatic crash upload.
 - No automatic update check.
-- No Velox cloud service.
+- No Actutum cloud service.
 - Logs remain local and redact configuration values not required for repair.
 - Application network and WebView2 profile data belong to the application.
 

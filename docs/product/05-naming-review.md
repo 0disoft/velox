@@ -1,6 +1,6 @@
 # Public Name Selection Review
 
-- Status: Replacement selected; implementation rename in progress
+- Status: Replacement selected and source rename verified locally; repository rename pending
 - Date: 2026-07-18
 - Owner: Project maintainer
 - Selected public name: Actutum
@@ -113,6 +113,26 @@ default manifest names, and runtime filenames all move to `actutum` because no
 published consumer depends on the working-name forms. Historical benchmark
 artifacts and ADR explanations are not rewritten as if they had been produced
 under the new name.
+
+## Local implementation evidence
+
+The renamed `0.6.0-alpha.1` source produced a deterministic local
+`actutum-windows-x64.zip` candidate on 2026-07-18:
+
+- archive bytes: `3224390`;
+- archive SHA-256:
+  `6df8d7ad2a81c9432dc53b2c16cd0c94a227ab718d8d3e8648c269c42fb315b7`;
+- SPDX SHA-256:
+  `134501655a699f217d8ac69717f48f6bc75320a644734b46b4292fa202336fb4`;
+- unsigned provenance was emitted for the same archive and source commit. Its
+  file hash is intentionally invocation-specific because the statement records
+  the evidence run's `invocationId`; it is not a reproducibility anchor.
+
+The compiler-free consumer smoke initialized `dev.actutum.*`, built twice,
+inspected the resulting ZIP, and the renamed host reached its ready callback.
+These are local verification results. They are not a GitHub Release, hosted
+same-commit evidence, an external-user attempt, a signature, or an
+authenticated attestation.
 
 ## Publication gate
 

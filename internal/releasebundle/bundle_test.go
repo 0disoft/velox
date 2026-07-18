@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/actutum/internal/hostmeta"
 )
 
 func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	root := t.TempDir()
 	sourceRoot := filepath.Join(root, "source")
-	cliPath := filepath.Join(root, "input", "velox.exe")
-	hostPath := filepath.Join(root, "input", "velox-host.exe")
+	cliPath := filepath.Join(root, "input", "actutum.exe")
+	hostPath := filepath.Join(root, "input", "actutum-host.exe")
 	writeReleaseFile(t, cliPath, []byte("cli-binary"))
 	writeReleaseFile(t, hostPath, []byte("host-binary"))
 	writeReleaseSchemas(t, sourceRoot)
@@ -36,11 +36,11 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 		t.Fatalf("release bundle is not deterministic: %s != %s", first.ArchiveSHA256, second.ArchiveSHA256)
 	}
 
-	metadata, err := hostmeta.Load(filepath.Join(first.Directory, "velox-host.json"))
+	metadata, err := hostmeta.Load(filepath.Join(first.Directory, "actutum-host.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if metadata.Host.File != "velox-host.exe" || metadata.Host.Bytes != int64(len("host-binary")) {
+	if metadata.Host.File != "actutum-host.exe" || metadata.Host.Bytes != int64(len("host-binary")) {
 		t.Fatalf("unexpected host metadata: %+v", metadata)
 	}
 	data, err := os.ReadFile(filepath.Join(first.Directory, "release-manifest.json"))
@@ -72,8 +72,8 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 func TestBuildReplacesExistingReleaseAtomically(t *testing.T) {
 	root := t.TempDir()
 	sourceRoot := filepath.Join(root, "source")
-	cliPath := filepath.Join(root, "velox.exe")
-	hostPath := filepath.Join(root, "velox-host.exe")
+	cliPath := filepath.Join(root, "actutum.exe")
+	hostPath := filepath.Join(root, "actutum-host.exe")
 	writeReleaseFile(t, cliPath, []byte("cli"))
 	writeReleaseFile(t, hostPath, []byte("host"))
 	writeReleaseSchemas(t, sourceRoot)
@@ -98,8 +98,8 @@ func TestBuildReplacesExistingReleaseAtomically(t *testing.T) {
 func TestBuildFailsWhenRequiredReleaseSchemaIsMissing(t *testing.T) {
 	root := t.TempDir()
 	sourceRoot := filepath.Join(root, "source")
-	cliPath := filepath.Join(root, "velox.exe")
-	hostPath := filepath.Join(root, "velox-host.exe")
+	cliPath := filepath.Join(root, "actutum.exe")
+	hostPath := filepath.Join(root, "actutum-host.exe")
 	writeReleaseFile(t, cliPath, []byte("cli"))
 	writeReleaseFile(t, hostPath, []byte("host"))
 	writeReleaseFile(t, filepath.Join(sourceRoot, "THIRD_PARTY_NOTICES.md"), []byte("notices"))

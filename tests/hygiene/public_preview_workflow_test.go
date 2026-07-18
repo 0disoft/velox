@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestPublicPreviewWorkflowUsesOnlyPublishedAssetsAndVelox(t *testing.T) {
+func TestPublicPreviewWorkflowUsesOnlyPublishedAssetsAndActutum(t *testing.T) {
 	path := filepath.Join("..", "..", ".github", "workflows", "public-preview-verification.yml")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -42,11 +42,11 @@ func TestPublicPreviewWorkflowUsesOnlyPublishedAssetsAndVelox(t *testing.T) {
 		"Invoke-WebRequest",
 		"github-release-public-url-no-checkout",
 		"The public tag, release manifest version, and target do not agree.",
-		"Invoke-VeloxJson -Arguments @('version', '--json')",
-		"Invoke-VeloxJson -Arguments @('build'",
-		"Invoke-VeloxJson -Arguments @('inspect'",
-		"Invoke-VeloxJson -Arguments @('run'",
-		"VELOX_BENCH_EXIT_AFTER_READY",
+		"Invoke-ActutumJson -Arguments @('version', '--json')",
+		"Invoke-ActutumJson -Arguments @('build'",
+		"Invoke-ActutumJson -Arguments @('inspect'",
+		"Invoke-ActutumJson -Arguments @('run'",
+		"ACTUTUM_BENCH_EXIT_AFTER_READY",
 		"schema/public-preview-verification-v1.schema.json",
 		"evidenceLevel = 'same-repository-public-download'",
 		"externalUserAttempt = $false",

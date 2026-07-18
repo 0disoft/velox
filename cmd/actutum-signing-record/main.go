@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/0disoft/velox/internal/authenticode"
-	"github.com/0disoft/velox/internal/signingrecord"
+	"github.com/0disoft/actutum/internal/authenticode"
+	"github.com/0disoft/actutum/internal/signingrecord"
 )
 
 var verifyAuthenticodeDirectory = authenticode.VerifyDirectory
@@ -29,7 +29,7 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "velox-signing-record: expected prepare, authenticode, dry-run, or verify")
+		fmt.Fprintln(stderr, "actutum-signing-record: expected prepare, authenticode, dry-run, or verify")
 		return 2
 	}
 	switch args[0] {
@@ -42,50 +42,50 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "verify":
 		return runVerify(args[1:], stdout, stderr)
 	default:
-		fmt.Fprintf(stderr, "velox-signing-record: unknown command %q\n", args[0])
+		fmt.Fprintf(stderr, "actutum-signing-record: unknown command %q\n", args[0])
 		return 2
 	}
 }
 
 func runAuthenticode(args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("velox-signing-record authenticode", flag.ContinueOnError)
+	flags := flag.NewFlagSet("actutum-signing-record authenticode", flag.ContinueOnError)
 	flags.SetOutput(stderr)
-	signedDirectory := flags.String("signed-dir", "", "directory containing provider-output velox.exe and velox-host.exe")
+	signedDirectory := flags.String("signed-dir", "", "directory containing provider-output actutum.exe and actutum-host.exe")
 	expectedSubject := flags.String("expected-subject", "", "exact approved Authenticode publisher subject")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
 	if flags.NArg() != 0 || *signedDirectory == "" || *expectedSubject == "" {
-		fmt.Fprintln(stderr, "velox-signing-record: authenticode requires --signed-dir and --expected-subject")
+		fmt.Fprintln(stderr, "actutum-signing-record: authenticode requires --signed-dir and --expected-subject")
 		return 2
 	}
 	result, err := verifyAuthenticodeDirectory(*signedDirectory, *expectedSubject)
 	if err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	if err := json.NewEncoder(stdout).Encode(result); err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	return 0
 }
 
 func runPrepare(args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("velox-signing-record prepare", flag.ContinueOnError)
+	flags := flag.NewFlagSet("actutum-signing-record prepare", flag.ContinueOnError)
 	flags.SetOutput(stderr)
-	unsignedDirectory := flags.String("unsigned-dir", "", "directory containing unsigned velox.exe and velox-host.exe")
-	out := flags.String("out", "", "output velox-signing-input.zip path")
+	unsignedDirectory := flags.String("unsigned-dir", "", "directory containing unsigned actutum.exe and actutum-host.exe")
+	out := flags.String("out", "", "output actutum-signing-input.zip path")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
 	if flags.NArg() != 0 || *unsignedDirectory == "" || *out == "" {
-		fmt.Fprintln(stderr, "velox-signing-record: prepare requires --unsigned-dir and --out")
+		fmt.Fprintln(stderr, "actutum-signing-record: prepare requires --unsigned-dir and --out")
 		return 2
 	}
 	result, err := signingrecord.PrepareSigningInput(*unsignedDirectory, *out)
 	if err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	if err := json.NewEncoder(stdout).Encode(struct {
@@ -93,19 +93,19 @@ func runPrepare(args []string, stdout, stderr io.Writer) int {
 		Command       string                           `json:"command"`
 		Publishable   bool                             `json:"publishable"`
 		Result        signingrecord.SigningInputResult `json:"result"`
-	}{SchemaVersion: "velox.signing-record-result/v1", Command: "prepare", Publishable: false, Result: result}); err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+	}{SchemaVersion: "actutum.signing-record-result/v1", Command: "prepare", Publishable: false, Result: result}); err != nil {
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	return 0
 }
 
 func runDryRun(args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("velox-signing-record dry-run", flag.ContinueOnError)
+	flags := flag.NewFlagSet("actutum-signing-record dry-run", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	out := flags.String("out", "", "output signing record path")
-	releaseVersion := flags.String("release-version", "", "Velox release version")
-	repository := flags.String("source-repository", "https://github.com/0disoft/velox", "canonical source repository URL")
+	releaseVersion := flags.String("release-version", "", "Actutum release version")
+	repository := flags.String("source-repository", "https://github.com/0disoft/actutum", "canonical source repository URL")
 	commit := flags.String("source-commit", "", "lowercase 40-character source commit")
 	tag := flags.String("source-tag", "", "immutable release tag")
 	workflow := flags.String("source-workflow", "", "workflow identity including immutable ref")
@@ -120,7 +120,7 @@ func runDryRun(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	if flags.NArg() != 0 || *out == "" || *releaseVersion == "" || *commit == "" || *tag == "" || *workflow == "" || *runID == "" || *providerProject == "" || *artifactConfiguration == "" || *signingPolicy == "" || *requestID == "" || !paths.complete() {
-		fmt.Fprintln(stderr, "velox-signing-record: dry-run metadata, evidence paths, and --out are required")
+		fmt.Fprintln(stderr, "actutum-signing-record: dry-run metadata, evidence paths, and --out are required")
 		return 2
 	}
 	record, err := signingrecord.BuildDryRun(signingrecord.DryRunOptions{
@@ -142,12 +142,12 @@ func runDryRun(args []string, stdout, stderr io.Writer) int {
 		Files: paths.files(),
 	})
 	if err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	result, err := signingrecord.Write(*out, record)
 	if err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	if err := json.NewEncoder(stdout).Encode(struct {
@@ -155,15 +155,15 @@ func runDryRun(args []string, stdout, stderr io.Writer) int {
 		Command       string                    `json:"command"`
 		Publishable   bool                      `json:"publishable"`
 		Result        signingrecord.WriteResult `json:"result"`
-	}{SchemaVersion: "velox.signing-record-result/v1", Command: "dry-run", Publishable: false, Result: result}); err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+	}{SchemaVersion: "actutum.signing-record-result/v1", Command: "dry-run", Publishable: false, Result: result}); err != nil {
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	return 0
 }
 
 func runVerify(args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("velox-signing-record verify", flag.ContinueOnError)
+	flags := flag.NewFlagSet("actutum-signing-record verify", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	recordPath := flags.String("record", "", "signing record path")
 	paths := addCommonFlags(flags)
@@ -171,16 +171,16 @@ func runVerify(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	if flags.NArg() != 0 || *recordPath == "" || !paths.complete() {
-		fmt.Fprintln(stderr, "velox-signing-record: --record and all evidence paths are required")
+		fmt.Fprintln(stderr, "actutum-signing-record: --record and all evidence paths are required")
 		return 2
 	}
 	record, err := signingrecord.DecodeFile(*recordPath)
 	if err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	if err := signingrecord.VerifyFiles(record, paths.files()); err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	if err := json.NewEncoder(stdout).Encode(struct {
@@ -189,8 +189,8 @@ func runVerify(args []string, stdout, stderr io.Writer) int {
 		Mode          string `json:"mode"`
 		Publishable   bool   `json:"publishable"`
 		Valid         bool   `json:"valid"`
-	}{SchemaVersion: "velox.signing-record-result/v1", Command: "verify", Mode: record.Mode, Publishable: record.Publishable, Valid: true}); err != nil {
-		fmt.Fprintln(stderr, "velox-signing-record:", err)
+	}{SchemaVersion: "actutum.signing-record-result/v1", Command: "verify", Mode: record.Mode, Publishable: record.Publishable, Valid: true}); err != nil {
+		fmt.Fprintln(stderr, "actutum-signing-record:", err)
 		return 6
 	}
 	return 0
@@ -198,11 +198,11 @@ func runVerify(args []string, stdout, stderr io.Writer) int {
 
 func addCommonFlags(flags *flag.FlagSet) commonFlags {
 	return commonFlags{
-		unsignedDirectory: flags.String("unsigned-dir", "", "directory containing unsigned velox.exe and velox-host.exe"),
-		signingInput:      flags.String("signing-input", "", "velox-signing-input.zip path"),
-		signedDirectory:   flags.String("signed-dir", "", "directory containing provider-output velox.exe and velox-host.exe"),
+		unsignedDirectory: flags.String("unsigned-dir", "", "directory containing unsigned actutum.exe and actutum-host.exe"),
+		signingInput:      flags.String("signing-input", "", "actutum-signing-input.zip path"),
+		signedDirectory:   flags.String("signed-dir", "", "directory containing provider-output actutum.exe and actutum-host.exe"),
 		releaseDirectory:  flags.String("release-dir", "", "final release directory containing release-manifest.json"),
-		releaseArchive:    flags.String("release-archive", "", "final velox-windows-x64.zip path"),
+		releaseArchive:    flags.String("release-archive", "", "final actutum-windows-x64.zip path"),
 		evidenceDirectory: flags.String("evidence-dir", "", "directory containing checksums.sha256 and the final SPDX SBOM"),
 	}
 }
@@ -213,14 +213,14 @@ func (flags commonFlags) complete() bool {
 
 func (flags commonFlags) files() signingrecord.Files {
 	return signingrecord.Files{
-		UnsignedCLI:     filepath.Join(*flags.unsignedDirectory, "velox.exe"),
-		UnsignedHost:    filepath.Join(*flags.unsignedDirectory, "velox-host.exe"),
+		UnsignedCLI:     filepath.Join(*flags.unsignedDirectory, "actutum.exe"),
+		UnsignedHost:    filepath.Join(*flags.unsignedDirectory, "actutum-host.exe"),
 		SigningInput:    *flags.signingInput,
-		SignedCLI:       filepath.Join(*flags.signedDirectory, "velox.exe"),
-		SignedHost:      filepath.Join(*flags.signedDirectory, "velox-host.exe"),
+		SignedCLI:       filepath.Join(*flags.signedDirectory, "actutum.exe"),
+		SignedHost:      filepath.Join(*flags.signedDirectory, "actutum-host.exe"),
 		ReleaseArchive:  *flags.releaseArchive,
 		ReleaseManifest: filepath.Join(*flags.releaseDirectory, "release-manifest.json"),
 		Checksums:       filepath.Join(*flags.evidenceDirectory, "checksums.sha256"),
-		SBOM:            filepath.Join(*flags.evidenceDirectory, "velox-windows-x64.spdx.json"),
+		SBOM:            filepath.Join(*flags.evidenceDirectory, "actutum-windows-x64.spdx.json"),
 	}
 }

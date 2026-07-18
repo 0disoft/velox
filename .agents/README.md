@@ -6,7 +6,7 @@
 ## Purpose
 
 This directory routes coding agents to the smallest procedure and checklist
-that owns a Velox change. It does not replace product, architecture, command,
+that owns a Actutum change. It does not replace product, architecture, command,
 or validation sources of truth.
 
 ## Read Order

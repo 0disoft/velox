@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/0disoft/velox/internal/cli"
+	"github.com/0disoft/actutum/internal/cli"
 )
 
 func main() {

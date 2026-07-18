@@ -40,7 +40,7 @@ func TestConfigValidateRejectsRelativeRuntimePaths(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			config := Config{
 				Title:      "Hello",
-				AppID:      "dev.velox.hello",
+				AppID:      "dev.actutum.hello",
 				AppVersion: "1.0.0",
 				Width:      640,
 				Height:     480,
@@ -57,11 +57,11 @@ func TestConfigValidateRejectsRelativeRuntimePaths(t *testing.T) {
 
 func TestVirtualEntryURL(t *testing.T) {
 	root := filepath.Join(`C:\apps`, "hello world")
-	got, err := virtualEntryURL("dev.velox.hello", root, filepath.Join(root, "nested", "index.html"))
+	got, err := virtualEntryURL("dev.actutum.hello", root, filepath.Join(root, "nested", "index.html"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "https://ef242f7dd279c18b516dfdcb0078dad6.app.invalid/nested/index.html"
+	want := "https://ecbdef39dbb1ea6f8e9bdf02c0ee1329.app.invalid/nested/index.html"
 	if got != want {
 		t.Fatalf("virtualEntryURL() = %q, want %q", got, want)
 	}
@@ -69,13 +69,13 @@ func TestVirtualEntryURL(t *testing.T) {
 
 func TestVirtualEntryURLRejectsEscape(t *testing.T) {
 	root := t.TempDir()
-	if _, err := virtualEntryURL("dev.velox.hello", root, filepath.Join(root, "..", "index.html")); err == nil {
+	if _, err := virtualEntryURL("dev.actutum.hello", root, filepath.Join(root, "..", "index.html")); err == nil {
 		t.Fatal("virtualEntryURL() accepted an entry outside the asset root")
 	}
 }
 
 func TestIsTrustedDocument(t *testing.T) {
-	appID := "dev.velox.hello"
+	appID := "dev.actutum.hello"
 	host := trustedHost(appID)
 	tests := []struct {
 		name    string

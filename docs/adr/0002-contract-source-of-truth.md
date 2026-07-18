@@ -6,7 +6,7 @@
 
 ## Context
 
-Velox has intentionally duplicated summaries for readers, but product scope,
+Actutum has intentionally duplicated summaries for readers, but product scope,
 CLI behavior, protocol details, and performance thresholds cannot have multiple
 equal authorities. Drift would let implementation or marketing choose the most
 convenient statement.

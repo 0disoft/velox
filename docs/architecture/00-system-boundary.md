@@ -5,13 +5,13 @@
 
 ## Owned Components
 
-### Velox CLI
+### Actutum CLI
 
 A standalone Go executable that owns manifest parsing, validation, path safety,
 build planning, output staging, asset copying, deterministic archiving,
 inspection, diagnostics, and machine-readable command output.
 
-### Velox Host
+### Actutum Host
 
 A separate prebuilt native executable that owns the Windows window lifecycle,
 WebView2 environment and controller lifecycle, virtual-host asset mapping,
@@ -46,7 +46,7 @@ during the MVP.
 - An installed Evergreen WebView2 Runtime.
 - Static application-owned HTML, CSS, JavaScript, and other assets.
 
-Velox does not own the browser engine, application network endpoints, or
+Actutum does not own the browser engine, application network endpoints, or
 application business data.
 
 ## Build-Time Flow
@@ -54,7 +54,7 @@ application business data.
 1. Resolve the project root and manifest.
 2. Parse and validate the manifest.
 3. Validate the asset tree and entry point.
-4. Resolve a pinned host template bundled with the Velox release.
+4. Resolve a pinned host template bundled with the Actutum release.
 5. Create an immutable build plan.
 6. Assemble output in a sibling staging directory.
 7. Copy the unchanged host, runtime configuration, and assets.
@@ -84,7 +84,7 @@ runs in this flow.
 - Web content is untrusted runtime input.
 - The host release bundle is trusted only after checksum verification.
 - WebView2 is an external runtime dependency.
-- Application network traffic is outside the Velox trust boundary.
+- Application network traffic is outside the Actutum trust boundary.
 - The output directory is not modified until staging completes.
 
 ## Dependency Direction

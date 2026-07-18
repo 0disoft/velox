@@ -5,11 +5,11 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing Velox vX.Y.Z-alpha.N release tag
+        description: Existing Actutum vX.Y.Z-alpha.N release tag
         required: true
         type: string
       expected_release_sha256:
-        description: Independently copied SHA-256 for velox-windows-x64.zip
+        description: Independently copied SHA-256 for actutum-windows-x64.zip
         required: true
         type: string
 
@@ -29,13 +29,13 @@ jobs:
       - name: Download, verify, build, and start
         shell: pwsh
         env:
-          VELOX_RELEASE_TAG: ${{ inputs.release_tag }}
-          VELOX_EXPECTED_RELEASE_SHA256: ${{ inputs.expected_release_sha256 }}
+          ACTUTUM_RELEASE_TAG: ${{ inputs.release_tag }}
+          ACTUTUM_EXPECTED_RELEASE_SHA256: ${{ inputs.expected_release_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
           $started = [DateTime]::UtcNow
-          $tag = $env:VELOX_RELEASE_TAG
-          $expectedSha = $env:VELOX_EXPECTED_RELEASE_SHA256.ToLowerInvariant()
+          $tag = $env:ACTUTUM_RELEASE_TAG
+          $expectedSha = $env:ACTUTUM_EXPECTED_RELEASE_SHA256.ToLowerInvariant()
           if ($tag -notmatch '^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][1-9][0-9]*$') {
             throw 'release_tag must match vX.Y.Z-alpha.N.'
           }
@@ -43,23 +43,23 @@ jobs:
             throw 'expected_release_sha256 must be a lowercase or uppercase SHA-256 digest.'
           }
 
-          $repository = '0disoft/velox'
+          $repository = '0disoft/actutum'
           $releaseUrl = "https://github.com/$repository/releases/tag/$tag"
           $downloadBase = "https://github.com/$repository/releases/download/$tag"
-          $acquired = Join-Path $env:RUNNER_TEMP 'velox-public-preview'
-          $unpacked = Join-Path $env:RUNNER_TEMP 'velox-public-preview-unpacked'
+          $acquired = Join-Path $env:RUNNER_TEMP 'actutum-public-preview'
+          $unpacked = Join-Path $env:RUNNER_TEMP 'actutum-public-preview-unpacked'
           New-Item -ItemType Directory -Path $acquired,$unpacked,'.ci/result' -Force | Out-Null
           $names = @(
             'checksums.sha256',
-            'velox-windows-x64.intoto.jsonl',
-            'velox-windows-x64.spdx.json',
-            'velox-windows-x64.zip'
+            'actutum-windows-x64.intoto.jsonl',
+            'actutum-windows-x64.spdx.json',
+            'actutum-windows-x64.zip'
           )
           foreach ($name in $names) {
             Invoke-WebRequest -Uri "$downloadBase/$name" -OutFile (Join-Path $acquired $name)
           }
 
-          $archive = Join-Path $acquired 'velox-windows-x64.zip'
+          $archive = Join-Path $acquired 'actutum-windows-x64.zip'
           $observedSha = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($observedSha -ne $expectedSha) {
             throw 'The downloaded release ZIP does not match the independently supplied SHA-256.'
@@ -75,16 +75,16 @@ jobs:
             }
           }
 
-          $sbom = Get-Content -LiteralPath (Join-Path $acquired 'velox-windows-x64.spdx.json') -Raw | ConvertFrom-Json
+          $sbom = Get-Content -LiteralPath (Join-Path $acquired 'actutum-windows-x64.spdx.json') -Raw | ConvertFrom-Json
           if ($sbom.spdxVersion -ne 'SPDX-2.3' -or $sbom.packages.Count -ne 1 -or $sbom.files.Count -lt 1) {
             throw 'The public SPDX document is incomplete.'
           }
-          $provenanceLines = @(Get-Content -LiteralPath (Join-Path $acquired 'velox-windows-x64.intoto.jsonl'))
+          $provenanceLines = @(Get-Content -LiteralPath (Join-Path $acquired 'actutum-windows-x64.intoto.jsonl'))
           if ($provenanceLines.Count -ne 1) {
             throw 'The public provenance JSONL must contain one statement.'
           }
           $provenance = $provenanceLines[0] | ConvertFrom-Json
-          $archiveSubject = @($provenance.subject | Where-Object name -EQ 'velox-windows-x64.zip')
+          $archiveSubject = @($provenance.subject | Where-Object name -EQ 'actutum-windows-x64.zip')
           if ($provenance._type -ne 'https://in-toto.io/Statement/v1' -or
               $provenance.predicateType -ne 'https://slsa.dev/provenance/v1' -or
               $archiveSubject.Count -ne 1 -or
@@ -94,7 +94,7 @@ jobs:
 
           Expand-Archive -LiteralPath $archive -DestinationPath $unpacked
           $releaseRoots = @(Get-ChildItem -LiteralPath $unpacked -Directory)
-          if ($releaseRoots.Count -ne 1 -or $releaseRoots[0].Name -ne 'velox-windows-x64') {
+          if ($releaseRoots.Count -ne 1 -or $releaseRoots[0].Name -ne 'actutum-windows-x64') {
             throw 'The release ZIP has an unexpected root layout.'
           }
           $releaseRoot = $releaseRoots[0].FullName
@@ -102,51 +102,51 @@ jobs:
           if ("v$($manifest.releaseVersion)" -cne $tag -or $manifest.target -ne 'windows-x64') {
             throw 'The public tag, release manifest version, and target do not agree.'
           }
-          $cli = Get-Item -LiteralPath (Join-Path $releaseRoot 'velox.exe')
-          function Invoke-VeloxJson {
+          $cli = Get-Item -LiteralPath (Join-Path $releaseRoot 'actutum.exe')
+          function Invoke-ActutumJson {
             param([string[]] $Arguments)
             $raw = & $cli.FullName @Arguments
             $exitCode = $LASTEXITCODE
             if ($exitCode -ne 0) {
-              throw "velox.exe failed with exit code $exitCode while running $($Arguments[0])."
+              throw "actutum.exe failed with exit code $exitCode while running $($Arguments[0])."
             }
             $document = $raw | ConvertFrom-Json
             if (-not $document.ok) {
-              throw "velox.exe returned a failed JSON envelope while running $($Arguments[0])."
+              throw "actutum.exe returned a failed JSON envelope while running $($Arguments[0])."
             }
             return $document
           }
 
-          $version = Invoke-VeloxJson -Arguments @('version', '--json')
+          $version = Invoke-ActutumJson -Arguments @('version', '--json')
           if ($version.result.version -cne $manifest.releaseVersion) {
             throw 'The CLI version does not match the release manifest.'
           }
-          Invoke-VeloxJson -Arguments @('init', '.ci/project', '--json') | Out-Null
+          Invoke-ActutumJson -Arguments @('init', '.ci/project', '--json') | Out-Null
           $project = (Resolve-Path -LiteralPath '.ci/project').Path
-          $config = Join-Path $project 'velox.json'
-          Invoke-VeloxJson -Arguments @('validate', '--config', $config, '--json') | Out-Null
-          $doctor = Invoke-VeloxJson -Arguments @('doctor', '--config', $config, '--out', 'dist-first', '--json')
+          $config = Join-Path $project 'actutum.json'
+          Invoke-ActutumJson -Arguments @('validate', '--config', $config, '--json') | Out-Null
+          $doctor = Invoke-ActutumJson -Arguments @('doctor', '--config', $config, '--out', 'dist-first', '--json')
           if (-not $doctor.result.ready) {
             throw 'The public preview doctor result is not ready.'
           }
-          $first = Invoke-VeloxJson -Arguments @('build', '--config', $config, '--out', 'dist-first', '--json')
-          $second = Invoke-VeloxJson -Arguments @('build', '--config', $config, '--out', 'dist-second', '--json')
+          $first = Invoke-ActutumJson -Arguments @('build', '--config', $config, '--out', 'dist-first', '--json')
+          $second = Invoke-ActutumJson -Arguments @('build', '--config', $config, '--out', 'dist-second', '--json')
           if ($first.result.archiveSha256 -ne $second.result.archiveSha256) {
             throw 'Two public-preview consumer builds are not deterministic.'
           }
           $firstArchive = Join-Path $project $first.result.archive
-          Invoke-VeloxJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
+          Invoke-ActutumJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
 
-          $env:VELOX_BENCH_EXIT_AFTER_READY = '1'
-          $env:VELOX_DATA_DIR = Join-Path $env:RUNNER_TEMP 'velox-public-preview-profile'
-          $run = Invoke-VeloxJson -Arguments @('run', '--config', $config, '--out', (Join-Path $env:RUNNER_TEMP 'velox-public-preview-run'), '--json')
+          $env:ACTUTUM_BENCH_EXIT_AFTER_READY = '1'
+          $env:ACTUTUM_DATA_DIR = Join-Path $env:RUNNER_TEMP 'actutum-public-preview-profile'
+          $run = Invoke-ActutumJson -Arguments @('run', '--config', $config, '--out', (Join-Path $env:RUNNER_TEMP 'actutum-public-preview-run'), '--json')
           if ($run.result.exitCode -ne 0) {
             throw 'The public preview did not complete its startup-ready smoke.'
           }
 
           $finished = [DateTime]::UtcNow
           $result = [ordered]@{
-            schemaVersion = 'velox.public-preview-verification/v1'
+            schemaVersion = 'actutum.public-preview-verification/v1'
             repository = $repository
             releaseTag = $tag
             releaseVersion = $manifest.releaseVersion
@@ -165,7 +165,7 @@ jobs:
             endToEndMs = ($finished - $started).TotalMilliseconds
             evidenceLevel = 'same-repository-public-download'
             externalUserAttempt = $false
-            invokedTools = @('velox.exe')
+            invokedTools = @('actutum.exe')
             environment = [ordered]@{
               runnerImage = $env:ImageOS
               runnerImageVersion = $env:ImageVersion

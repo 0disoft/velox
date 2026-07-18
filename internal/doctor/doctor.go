@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/actutum/internal/buildplan"
 )
 
 const (
@@ -71,7 +71,7 @@ func Evaluate(evidence Evidence) (Result, *Failure) {
 	if evidence.GOOS == "windows" && evidence.GOARCH == "amd64" {
 		result.Checks = append(result.Checks, Check{Name: "platform", Status: StatusPass, Actual: platform, Expected: "windows-amd64", Message: "Windows x64 is supported."})
 	} else {
-		result.Checks = append(result.Checks, Check{Name: "platform", Status: StatusFail, Actual: platform, Expected: "windows-amd64", Message: "Velox currently requires Windows x64."})
+		result.Checks = append(result.Checks, Check{Name: "platform", Status: StatusFail, Actual: platform, Expected: "windows-amd64", Message: "Actutum currently requires Windows x64."})
 		failure = &Failure{ExitCode: 5, Code: "RUNTIME_PLATFORM_UNSUPPORTED", Message: "The current platform is unsupported."}
 	}
 
@@ -82,7 +82,7 @@ func Evaluate(evidence Evidence) (Result, *Failure) {
 	} else {
 		result.Checks = append(result.Checks, Check{Name: "windows", Status: StatusFail, Actual: formatWindowsVersion(evidence.WindowsVersion), Expected: expectedWindows(evidence.WindowsVersion.IsServer), Message: "The Windows version is unsupported."})
 		if failure == nil {
-			failure = &Failure{ExitCode: 5, Code: "RUNTIME_WINDOWS_VERSION_UNSUPPORTED", Message: "Velox requires Windows 10 version 1709 or Windows Server 2016 and a supported x64 build."}
+			failure = &Failure{ExitCode: 5, Code: "RUNTIME_WINDOWS_VERSION_UNSUPPORTED", Message: "Actutum requires Windows 10 version 1709 or Windows Server 2016 and a supported x64 build."}
 		}
 	}
 
@@ -107,7 +107,7 @@ func Evaluate(evidence Evidence) (Result, *Failure) {
 		} else if comparison < 0 {
 			result.Checks = append(result.Checks, Check{Name: "webview2", Status: StatusFail, Actual: evidence.WebView2Version, Expected: "Evergreen WebView2 Runtime >= " + MinimumWebView2Version, Message: "The installed WebView2 Runtime is too old."})
 			if failure == nil {
-				failure = &Failure{ExitCode: 5, Code: "RUNTIME_WEBVIEW2_UNSUPPORTED", Message: "Velox requires WebView2 Runtime 92.0.902.49 or newer."}
+				failure = &Failure{ExitCode: 5, Code: "RUNTIME_WEBVIEW2_UNSUPPORTED", Message: "Actutum requires WebView2 Runtime 92.0.902.49 or newer."}
 			}
 		} else {
 			result.Checks = append(result.Checks, Check{Name: "webview2", Status: StatusPass, Actual: evidence.WebView2Version, Expected: "Evergreen WebView2 Runtime >= " + MinimumWebView2Version, Message: "WebView2 Runtime is installed and supported."})

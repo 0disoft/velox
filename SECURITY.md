@@ -2,14 +2,14 @@
 
 ## Supported Versions
 
-Velox has no public release yet. Development on `main` receives security fixes,
+Actutum has no public release yet. Development on `main` receives security fixes,
 but no published version currently carries a support or response-time promise.
 
 ## Reporting a Vulnerability
 
 Use GitHub private vulnerability reporting:
 
-https://github.com/0disoft/velox/security/advisories/new
+https://github.com/0disoft/actutum/security/advisories/new
 
 Do not open a public issue containing an exploit, credential, private path,
 provider token, signing request, or sensitive application data. If the private

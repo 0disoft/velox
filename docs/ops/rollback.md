@@ -5,7 +5,7 @@
 
 ## Scope
 
-Velox rollback means selecting a previous immutable release bundle. There is no
+Actutum rollback means selecting a previous immutable release bundle. There is no
 service deployment, database migration, account state, or server-side data
 rollback.
 
@@ -39,7 +39,7 @@ rollback.
 
 ## Consumer Recovery
 
-Consumers pin an exact known-good Velox release and checksum. Velox does not
+Consumers pin an exact known-good Actutum release and checksum. Actutum does not
 silently downgrade itself or perform an automatic update.
 
 Artifacts built with the affected version may need rebuilding. The
@@ -52,7 +52,7 @@ tags are never replaced.
 
 ## Data Policy
 
-Velox owns no authoritative user data. WebView2 profile and application
+Actutum owns no authoritative user data. WebView2 profile and application
 business-data recovery belong to the packaged application and are outside this
 runbook.
 

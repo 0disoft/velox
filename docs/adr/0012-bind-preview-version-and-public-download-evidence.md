@@ -1,6 +1,6 @@
 # ADR 0012: Bind preview version and public-download evidence
 
-- Status: Accepted
+- Status: Accepted for evidence rules; candidate identity superseded by ADR 0014
 - Date: 2026-07-18
 - Owner: Project maintainer
 
@@ -12,14 +12,16 @@ host metadata, and release manifest report another version. Same-workflow
 artifact consumption also cannot prove that the immutable GitHub Release URL
 serves the intended files.
 
-The current development line is `0.5.10-dev`. No public version has been
-published, so the first candidate can adopt a prerelease version without a
-compatibility migration.
+The original decision selected the unpublished `0.5.10-alpha.1` working-name
+candidate. ADR 0014 replaces that identity with Actutum and
+`0.6.0-alpha.1`; the version-binding and public-download evidence rules below
+remain accepted.
 
 ## Decision
 
-Use `0.5.10-alpha.1` as the first public developer-preview candidate and
-`v0.5.10-alpha.1` as its only valid tag.
+Use the candidate selected by the current identity ADR as the first public
+developer-preview and `v<releaseVersion>` as its only valid tag. ADR 0014
+currently selects `0.6.0-alpha.1` and `v0.6.0-alpha.1`.
 
 Every preview publication must enforce these rules:
 

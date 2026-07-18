@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.velox.invalid/startup-lifecycle/v3.json",
-  "title": "Velox startup lifecycle evidence v3",
+  "$id": "https://schemas.actutum.invalid/startup-lifecycle/v3.json",
+  "title": "Actutum startup lifecycle evidence v3",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "scope", "evidenceLevel", "outcome", "repetitions", "startedAtUtc", "finishedAtUtc", "environment", "measurement", "samples"],
   "properties": {
-    "schemaVersion": { "const": "velox.startup-lifecycle/v3" },
+    "schemaVersion": { "const": "actutum.startup-lifecycle/v3" },
     "scope": { "const": "fresh-and-immediate-same-profile-startup" },
     "evidenceLevel": { "enum": ["controlled-local-observation", "hosted-runner-evidence"] },
     "outcome": { "enum": ["success", "failure"] },
@@ -72,7 +72,7 @@
       "additionalProperties": false,
       "required": ["schemaVersion", "clock", "phases"],
       "properties": {
-        "schemaVersion": { "const": "velox.host-startup-timeline/v1" },
+        "schemaVersion": { "const": "actutum.host-startup-timeline/v1" },
         "clock": { "const": "time-since-host-entry-monotonic" },
         "phases": {
           "type": "array",
@@ -92,7 +92,7 @@
       "additionalProperties": false,
       "required": ["schemaVersion", "clock", "phases"],
       "properties": {
-        "schemaVersion": { "const": "velox.host-shutdown-timeline/v1" },
+        "schemaVersion": { "const": "actutum.host-shutdown-timeline/v1" },
         "clock": { "const": "time-since-shutdown-request-monotonic" },
         "phases": {
           "type": "array",

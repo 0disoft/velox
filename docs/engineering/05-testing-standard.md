@@ -82,7 +82,7 @@ window.
 
 ## Reproducibility Tests
 
-Equivalent normalized inputs and the same pinned Velox release must produce
+Equivalent normalized inputs and the same pinned Actutum release must produce
 byte-identical unsigned ZIP files on independent clean workspaces.
 
 The test compares artifact bytes, not only extracted file contents.
@@ -91,7 +91,7 @@ The test compares artifact bytes, not only extracted file contents.
 
 Performance evidence follows docs/engineering/03-performance-budget.md.
 
-- Pull requests run a bounded Velox-only smoke sample.
+- Pull requests run a bounded Actutum-only smoke sample.
 - Scheduled and release-candidate jobs run full cross-framework measurements.
 - Raw failures and timeouts remain visible.
 - Tests do not pass by silently retrying a failed first run.

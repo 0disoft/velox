@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0disoft/velox/internal/builder"
-	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/actutum/internal/builder"
+	"github.com/0disoft/actutum/internal/buildplan"
 )
 
 func TestInspectValidatesDirectoryAndZIP(t *testing.T) {
@@ -22,7 +22,7 @@ func TestInspectValidatesDirectoryAndZIP(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Inspect(%s): %v", test.kind, err)
 		}
-		if result.Kind != test.kind || result.ReleaseVersion != "0.5.10-alpha.1" || result.App.ID != "com.example.inspect" || result.PortableFiles != 4 {
+		if result.Kind != test.kind || result.ReleaseVersion != "0.6.0-alpha.1" || result.App.ID != "com.example.inspect" || result.PortableFiles != 4 {
 			t.Fatalf("unexpected %s result: %+v", test.kind, result)
 		}
 	}
@@ -92,14 +92,14 @@ func buildFixture(t *testing.T) builder.Result {
 	t.Helper()
 	root := t.TempDir()
 	host := []byte("host")
-	hostPath := filepath.Join(root, "release", "velox-host.exe")
+	hostPath := filepath.Join(root, "release", "actutum-host.exe")
 	writeInspectFile(t, hostPath, host)
 	digest := sha256.Sum256(host)
-	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
-	writeInspectFile(t, filepath.Join(filepath.Dir(hostPath), "velox-host.json"), []byte(metadata))
+	metadata := fmt.Sprintf(`{"schemaVersion":"actutum.host/v1","releaseVersion":"0.6.0-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"actutum-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
+	writeInspectFile(t, filepath.Join(filepath.Dir(hostPath), "actutum-host.json"), []byte(metadata))
 	writeInspectFile(t, filepath.Join(root, "web", "index.html"), []byte("<title>Inspect</title>"))
 	manifest := `{"schemaVersion":1,"app":{"id":"com.example.inspect","name":"Inspect","version":"1.0.0"}}`
-	manifestPath := filepath.Join(root, "velox.json")
+	manifestPath := filepath.Join(root, "actutum.json")
 	writeInspectFile(t, manifestPath, []byte(manifest))
 	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
 	if err != nil {

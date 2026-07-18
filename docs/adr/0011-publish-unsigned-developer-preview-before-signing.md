@@ -12,7 +12,7 @@ distribution trust improvement with the ability to build and publish the
 software. Windows can run an unsigned executable, although SmartScreen can
 warn and managed-device policy can block unknown code.
 
-Velox is still a developer-facing alpha. Its unanswered M4 question is whether
+Actutum is still a developer-facing alpha. Its unanswered M4 question is whether
 an external user can download the portable bundle and complete the documented
 compile-free path. Provider onboarding does not answer that question and can
 delay the first useful distribution evidence.
@@ -47,8 +47,8 @@ signed channel. They do not authorize provider submission or publication.
 
 ## Scope
 
-This decision covers Velox's own developer-preview bundle. Applications built
-with Velox remain unsigned unless their publisher signs them separately.
+This decision covers Actutum's own developer-preview bundle. Applications built
+with Actutum remain unsigned unless their publisher signs them separately.
 
 No installer, updater, Microsoft Store package, certificate purchase, provider
 account, or application-signing API is added.

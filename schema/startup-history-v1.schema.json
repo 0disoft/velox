@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.example.invalid/velox/startup-history-v1.schema.json",
-  "title": "Velox startup history v1",
+  "$id": "https://schemas.example.invalid/actutum/startup-history-v1.schema.json",
+  "title": "Actutum startup history v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,7 +16,7 @@
     "collectionIssues"
   ],
   "properties": {
-    "schemaVersion": { "const": "velox.startup-history/v1" },
+    "schemaVersion": { "const": "actutum.startup-history/v1" },
     "generatedAtUtc": { "type": "string", "format": "date-time" },
     "repository": { "type": "string", "minLength": 3 },
     "workflow": { "type": "string", "minLength": 1 },

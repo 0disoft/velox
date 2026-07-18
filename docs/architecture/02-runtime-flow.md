@@ -76,6 +76,6 @@ The host does not upload crash data or preserve a background process.
 
 ## Data Flow Boundary
 
-Velox processes local configuration, assets, build output, WebView2 messages,
+Actutum processes local configuration, assets, build output, WebView2 messages,
 and local diagnostics. Application network requests and business data do not
-flow through a Velox service.
+flow through a Actutum service.

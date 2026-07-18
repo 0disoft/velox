@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.velox.invalid/startup-profile-comparison/v1.json",
-  "title": "Velox startup profile comparison v1",
+  "$id": "https://schemas.actutum.invalid/startup-profile-comparison/v1.json",
+  "title": "Actutum startup profile comparison v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "scope", "evidenceLevel", "outcome", "repetitions", "startedAtUtc", "finishedAtUtc", "environment", "measurement", "samples", "summary"],
   "properties": {
-    "schemaVersion": { "const": "velox.startup-profile-comparison/v1" },
+    "schemaVersion": { "const": "actutum.startup-profile-comparison/v1" },
     "scope": { "const": "same-profile-versus-fresh-profile-immediate-relaunch" },
     "evidenceLevel": { "enum": ["controlled-local-observation", "hosted-runner-evidence"] },
     "outcome": { "enum": ["success", "failure"] },

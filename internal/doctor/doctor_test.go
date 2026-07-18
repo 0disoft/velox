@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/actutum/internal/buildplan"
 )
 
 func TestEvaluateReportsUnavailableRuntimeWithoutClaimingReadiness(t *testing.T) {

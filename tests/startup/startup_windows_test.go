@@ -13,7 +13,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/0disoft/velox/internal/benchmarker"
+	"github.com/0disoft/actutum/internal/benchmarker"
 	"golang.org/x/sys/windows"
 )
 
@@ -60,7 +60,7 @@ func TestBuiltHostStartup(t *testing.T) {
 func testBuiltHostLifecycle(t *testing.T) {
 	repoRoot := repositoryRoot(t)
 	host := goHost(t, repoRoot)
-	profile := managedProfileRoot(t, "velox-go-smoke-")
+	profile := managedProfileRoot(t, "actutum-go-smoke-")
 	first := mustRunHost(t, host, profile)
 	assertStartupTimeline(t, first.Timeline)
 	assertShutdownTimeline(t, first.ShutdownTimeline)
@@ -87,7 +87,7 @@ func testBuiltHostLifecycle(t *testing.T) {
 
 func testBuiltHostSecurityPolicy(t *testing.T) {
 	repoRoot := repositoryRoot(t)
-	profile := managedProfileRoot(t, "velox-go-security-")
+	profile := managedProfileRoot(t, "actutum-go-security-")
 	run := mustRunHost(t, securityHost(t, repoRoot), profile)
 	browserExit := mustAwaitBrowserExit(t, run, 10*time.Second)
 	profileRelease := mustWaitForProfileRelease(t, profile, 10*time.Second)
@@ -148,8 +148,8 @@ func mustWaitForProfileRelease(t *testing.T, root string, timeout time.Duration)
 
 func goHost(t *testing.T, repoRoot string) hostAdapter {
 	t.Helper()
-	executable := requiredExecutable(t, "VELOX_BUILT_HOST")
-	config := filepath.Join(repoRoot, "examples", "hello", "velox.runtime.json")
+	executable := requiredExecutable(t, "ACTUTUM_BUILT_HOST")
+	config := filepath.Join(repoRoot, "examples", "hello", "actutum.runtime.json")
 	return hostAdapter{
 		name:       "go",
 		executable: executable,
@@ -157,7 +157,7 @@ func goHost(t *testing.T, repoRoot string) hostAdapter {
 			return []string{"--config", config}
 		},
 		environment: func(profile string) []string {
-			return []string{"VELOX_DATA_DIR=" + profile}
+			return []string{"ACTUTUM_DATA_DIR=" + profile}
 		},
 		expectedPhase:         "dom-2raf",
 		requireBrowserProcess: true,
@@ -166,8 +166,8 @@ func goHost(t *testing.T, repoRoot string) hostAdapter {
 
 func securityHost(t *testing.T, repoRoot string) hostAdapter {
 	t.Helper()
-	executable := requiredExecutable(t, "VELOX_BUILT_HOST")
-	config := filepath.Join(repoRoot, "tests", "fixtures", "security", "velox.runtime.json")
+	executable := requiredExecutable(t, "ACTUTUM_BUILT_HOST")
+	config := filepath.Join(repoRoot, "tests", "fixtures", "security", "actutum.runtime.json")
 	return hostAdapter{
 		name:       "go-security",
 		executable: executable,
@@ -176,8 +176,8 @@ func securityHost(t *testing.T, repoRoot string) hostAdapter {
 		},
 		environment: func(profile string) []string {
 			return []string{
-				"VELOX_DATA_DIR=" + profile,
-				"VELOX_BENCH_POLICY_AUDIT=1",
+				"ACTUTUM_DATA_DIR=" + profile,
+				"ACTUTUM_BENCH_POLICY_AUDIT=1",
 			}
 		},
 		expectedPhase:         "security-ok",
@@ -207,7 +207,7 @@ func testUnavailableRuntime(t *testing.T, host hostAdapter, missingRuntime strin
 	cmd := exec.Command(host.executable, host.arguments(profile)...)
 	cmd.Env = append(os.Environ(),
 		append(host.environment(profile),
-			"VELOX_BENCH_WEBVIEW2_BROWSER_DIR="+missingRuntime,
+			"ACTUTUM_BENCH_WEBVIEW2_BROWSER_DIR="+missingRuntime,
 		)...,
 	)
 	output, err := cmd.CombinedOutput()
@@ -243,7 +243,7 @@ func mustRunHost(t *testing.T, host hostAdapter, profile string) hostRun {
 }
 
 func runHost(host hostAdapter, profile string) (hostRun, error) {
-	pipeName := fmt.Sprintf(`\\.\pipe\velox-%d`, time.Now().UnixNano())
+	pipeName := fmt.Sprintf(`\\.\pipe\actutum-%d`, time.Now().UnixNano())
 	pipe, err := createPipe(pipeName)
 	if err != nil {
 		return hostRun{}, err
@@ -254,8 +254,8 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	cmd := exec.Command(host.executable, host.arguments(profile)...)
 	cmd.Env = append(os.Environ(),
 		append(host.environment(profile),
-			"VELOX_BENCH_PIPE="+pipeName,
-			"VELOX_BENCH_EXIT_AFTER_READY=1",
+			"ACTUTUM_BENCH_PIPE="+pipeName,
+			"ACTUTUM_BENCH_EXIT_AFTER_READY=1",
 		)...,
 	)
 	output := &strings.Builder{}

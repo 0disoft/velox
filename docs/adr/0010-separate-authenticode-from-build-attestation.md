@@ -25,16 +25,16 @@ signing runs are byte-identical.
 
 ## Decision
 
-Use two independent controls when Velox opens a signed distribution channel:
+Use two independent controls when Actutum opens a signed distribution channel:
 
 1. GitHub artifact attestations authenticate the final distribution artifact
    and its SBOM through GitHub OIDC and Sigstore.
 2. SignPath Foundation is the first Authenticode provider candidate,
    contingent on project acceptance and an approved signing
-   policy. SignPath holds the private signing key; Velox stores no certificate
+   policy. SignPath holds the private signing key; Actutum stores no certificate
    private key or PFX.
 
-Microsoft Artifact Signing is the migration candidate when Velox needs its own
+Microsoft Artifact Signing is the migration candidate when Actutum needs its own
 legal publisher identity, paid service terms, or a less approval-dependent
 signing path. Provider-specific workflow code must remain an adapter around the
 repository-owned signing contract in `docs/ops/signing.md`.
@@ -51,9 +51,9 @@ predecessor. A separate signing record must bind the unsigned executable
 digests, provider request and policy identity, signed executable digests, and
 final bundle digest.
 
-Only `velox.exe` and `velox-host.exe` are Authenticode subjects. The ZIP is
+Only `actutum.exe` and `actutum-host.exe` are Authenticode subjects. The ZIP is
 protected by checksum and artifact attestation. Application executables created
-by Velox remain the application publisher's signing responsibility.
+by Actutum remain the application publisher's signing responsibility.
 
 ## Alternatives
 
@@ -141,7 +141,7 @@ signed or replace an existing release asset.
 - The certificate publisher identity is unsuitable for intended users.
 - Manual approval or provider availability makes releases impractical.
 - Microsoft Artifact Signing identity and cost prerequisites become acceptable.
-- Velox starts signing application-specific executables.
+- Actutum starts signing application-specific executables.
 - GitHub changes artifact-attestation availability or identity semantics.
 
 ## Synchronized Surfaces

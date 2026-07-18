@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/0disoft/velox/internal/ipc"
+	"github.com/0disoft/actutum/internal/ipc"
 	webview "github.com/jchv/go-webview2"
 )
 
@@ -73,14 +73,14 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("map virtual asset host: %w", err)
 	}
-	if err := view.Bind("__veloxInvoke", func(request json.RawMessage) ipc.Response {
+	if err := view.Bind("__actutumInvoke", func(request json.RawMessage) ipc.Response {
 		return runtime.dispatcher.Dispatch(request)
 	}); err != nil {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("bind native invocation bridge: %w", err)
 	}
 	view.Init(ipc.BridgeSource())
-	if err := view.Bind("__veloxReady", onReady); err != nil {
+	if err := view.Bind("__actutumReady", onReady); err != nil {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("bind ready marker: %w", err)
 	}

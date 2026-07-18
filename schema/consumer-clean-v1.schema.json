@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.0disoft.dev/velox/consumer-clean-v1.schema.json",
-  "title": "Velox checkout-free consumer smoke result v1",
+  "$id": "https://schemas.0disoft.dev/actutum/consumer-clean-v1.schema.json",
+  "title": "Actutum checkout-free consumer smoke result v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "sourceCommit", "acquisitionMode", "releaseSha256", "startedAtUtc", "finishedAtUtc", "endToEndMs", "firstBuildSha256", "secondBuildSha256", "deterministic", "invokedTools"],
   "properties": {
-    "schemaVersion": { "const": "velox.consumer-clean/v1" },
+    "schemaVersion": { "const": "actutum.consumer-clean/v1" },
     "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
     "acquisitionMode": { "const": "github-actions-artifact-no-checkout" },
     "releaseSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
@@ -16,6 +16,6 @@
     "firstBuildSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "secondBuildSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "deterministic": { "const": true },
-    "invokedTools": { "const": ["velox.exe"] }
+    "invokedTools": { "const": ["actutum.exe"] }
   }
 }

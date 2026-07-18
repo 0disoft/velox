@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 
-function Initialize-VeloxSnapshotPoller {
-    if ('Velox.ProcessTrace.SnapshotPoller' -as [type]) {
+function Initialize-ActutumSnapshotPoller {
+    if ('Actutum.ProcessTrace.SnapshotPoller' -as [type]) {
         return
     }
     Add-Type -TypeDefinition @'
@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Velox.ProcessTrace {
+namespace Actutum.ProcessTrace {
     public sealed class ProcessRecord {
         public int pid;
         public int parentPid;
@@ -52,7 +52,7 @@ namespace Velox.ProcessTrace {
 
         public void Start() {
             foreach (var item in Snapshot()) known.Add(item.pid);
-            thread = new Thread(Poll) { IsBackground = true, Name = "velox-process-trace" };
+            thread = new Thread(Poll) { IsBackground = true, Name = "actutum-process-trace" };
             thread.Start();
         }
 
@@ -99,10 +99,10 @@ namespace Velox.ProcessTrace {
 '@
 }
 
-function Start-VeloxProcessTrace {
-    $sourceIdentifier = 'velox-process-trace-' + [guid]::NewGuid().ToString('N')
+function Start-ActutumProcessTrace {
+    $sourceIdentifier = 'actutum-process-trace-' + [guid]::NewGuid().ToString('N')
     $manualRecords = [System.Collections.Generic.List[object]]::new()
-    if ($env:VELOX_PROCESS_TRACE_BACKEND -ne 'snapshot-poller') {
+    if ($env:ACTUTUM_PROCESS_TRACE_BACKEND -ne 'snapshot-poller') {
         try {
             Register-WmiEvent -Class Win32_ProcessStartTrace -SourceIdentifier $sourceIdentifier -ErrorAction Stop | Out-Null
             return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $null; ManualRecords = $manualRecords }
@@ -130,8 +130,8 @@ function Start-VeloxProcessTrace {
         Unregister-Event -SourceIdentifier $sourceIdentifier -ErrorAction SilentlyContinue
         Remove-Event -SourceIdentifier $sourceIdentifier -ErrorAction SilentlyContinue
         try {
-            Initialize-VeloxSnapshotPoller
-            $poller = [Velox.ProcessTrace.SnapshotPoller]::new()
+            Initialize-ActutumSnapshotPoller
+            $poller = [Actutum.ProcessTrace.SnapshotPoller]::new()
             $poller.Start()
             return [pscustomobject]@{ SourceIdentifier = $sourceIdentifier; Available = $true; Watcher = $null; Poller = $poller; ManualRecords = $manualRecords }
         } catch {
@@ -140,7 +140,7 @@ function Start-VeloxProcessTrace {
     }
 }
 
-function Complete-VeloxProcessTrace {
+function Complete-ActutumProcessTrace {
     param(
         [Parameter(Mandatory = $true)]
         $Trace,

@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-Velox M0 source depends on the following software. Release automation must
+Actutum M0 source depends on the following software. Release automation must
 regenerate and verify this notice before distributing binaries.
 
 ## github.com/jchv/go-webview2
@@ -17,7 +17,7 @@ regenerate and verify this notice before distributing binaries.
 
 The upstream MIT license is preserved at
 `third_party/go-webview2/LICENSE`. Fork maintenance notes are recorded in
-`third_party/go-webview2/VELOX_FORK.md`.
+`third_party/go-webview2/ACTUTUM_FORK.md`.
 
 ## github.com/jchv/go-winloader
 

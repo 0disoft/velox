@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.velox.invalid/build-result/v1.json",
-  "title": "Velox build result v1",
+  "$id": "https://schemas.actutum.invalid/build-result/v1.json",
+  "title": "Actutum build result v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "releaseVersion", "app", "target", "contracts", "host", "assets", "permissions", "outputs"],
   "properties": {
-    "schemaVersion": { "const": "velox.build-result/v1" },
+    "schemaVersion": { "const": "actutum.build-result/v1" },
     "releaseVersion": { "type": "string", "minLength": 1 },
     "app": {
       "type": "object",

@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.velox.invalid/authenticode-verification/v1.json",
-  "title": "Velox Authenticode verification",
+  "$id": "https://schemas.actutum.invalid/authenticode-verification/v1.json",
+  "title": "Actutum Authenticode verification",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "target", "expectedSubject", "artifacts"],
   "properties": {
-    "schemaVersion": { "const": "velox.authenticode-verification/v1" },
+    "schemaVersion": { "const": "actutum.authenticode-verification/v1" },
     "target": { "const": "windows-x64" },
     "expectedSubject": { "$ref": "#/$defs/text" },
     "artifacts": {
@@ -44,13 +44,13 @@
     "host": {
       "allOf": [
         { "$ref": "#/$defs/artifact" },
-        { "properties": { "file": { "const": "velox-host.exe" } } }
+        { "properties": { "file": { "const": "actutum-host.exe" } } }
       ]
     },
     "cli": {
       "allOf": [
         { "$ref": "#/$defs/artifact" },
-        { "properties": { "file": { "const": "velox.exe" } } }
+        { "properties": { "file": { "const": "actutum.exe" } } }
       ]
     }
   }

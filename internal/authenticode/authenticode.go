@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	SchemaVersion = "velox.authenticode-verification/v1"
+	SchemaVersion = "actutum.authenticode-verification/v1"
 	Target        = "windows-x64"
 	DigestOID     = "2.16.840.1.101.3.4.2.1"
 	DigestName    = "sha256"
@@ -104,9 +104,9 @@ func exactArtifactPaths(directory string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read signed directory: %w", err)
 	}
-	want := map[string]bool{"velox-host.exe": true, "velox.exe": true}
+	want := map[string]bool{"actutum-host.exe": true, "actutum.exe": true}
 	if len(entries) != len(want) {
-		return nil, errors.New("signed directory must contain exactly velox-host.exe and velox.exe")
+		return nil, errors.New("signed directory must contain exactly actutum-host.exe and actutum.exe")
 	}
 	paths := make([]string, 0, len(entries))
 	for _, entry := range entries {

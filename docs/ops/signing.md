@@ -14,8 +14,8 @@ promotion. It does not authorize a release or define credentials.
 
 | Claim | Mechanism | Subject |
 | --- | --- | --- |
-| Two clean builds produced the same native inputs | Repository-owned equality check | Unsigned `velox.exe` and `velox-host.exe` |
-| Windows can identify and validate the publisher | SignPath Foundation Authenticode | Signed `velox.exe` and `velox-host.exe` |
+| Two clean builds produced the same native inputs | Repository-owned equality check | Unsigned `actutum.exe` and `actutum-host.exe` |
+| Windows can identify and validate the publisher | SignPath Foundation Authenticode | Signed `actutum.exe` and `actutum-host.exe` |
 | The expected GitHub workflow produced the distribution | GitHub artifact attestation | Final signed release ZIP |
 | The SBOM belongs to that distribution | GitHub artifact attestation | Final SPDX SBOM |
 | The signed output descends from the verified unsigned input | Repository-owned signing record | Unsigned digests, signing request, signed digests, final digest |
@@ -67,10 +67,10 @@ cannot splice in an unverified self-hosted build step.
 1. Check out an immutable release tag and record commit, workflow, runner, and
    dependency identities.
 2. Build the CLI and host twice in independent clean workspaces.
-3. Require byte-identical unsigned `velox.exe` and `velox-host.exe` digests.
+3. Require byte-identical unsigned `actutum.exe` and `actutum-host.exe` digests.
 4. Emit unsigned checksums, SBOM, and source-to-unsigned provenance. Preserve
    these as evidence; do not publish them as the final distribution.
-5. Use `velox-signing-record prepare` to package only the two unsigned
+5. Use `actutum-signing-record prepare` to package only the two unsigned
    executables as the deterministic signing request input and record its
    digest.
 6. Submit the exact input to the approved SignPath project, artifact
@@ -97,17 +97,17 @@ cannot splice in an unverified self-hosted build step.
 
 `schema/signing-record-v1.schema.json` and `internal/signingrecord` now own the
 machine-readable record shape and semantic validation. The maintainer-only
-`velox-signing-record prepare` command creates `velox-signing-input.zip` from
-exactly `velox-host.exe` and `velox.exe` in deterministic name order. It rejects
+`actutum-signing-record prepare` command creates `actutum-signing-input.zip` from
+exactly `actutum-host.exe` and `actutum.exe` in deterministic name order. It rejects
 missing, linked, empty, or changed inputs, refuses to overwrite an existing
 output, normalizes ZIP metadata, and verifies the generated archive against the
 source digests before returning success.
 
-`velox-signing-record dry-run` hashes the unsigned inputs, prepared
+`actutum-signing-record dry-run` hashes the unsigned inputs, prepared
 signing-input ZIP, provider-output placeholders, final bundle, manifest,
 checksums, and SBOM; it then cross-checks their lineage before writing a record.
-The provider-output directory must contain exactly `velox-host.exe` and
-`velox.exe`; added files, alternate names, links, and split directories fail
+The provider-output directory must contain exactly `actutum-host.exe` and
+`actutum.exe`; added files, alternate names, links, and split directories fail
 closed before artifact lineage is accepted.
 
 Dry-run output is always `mode: dry-run`, `publishable: false`, records
@@ -135,9 +135,9 @@ OIDC token, environment secret, or unredacted provider response.
 
 ## Authenticode Verification Command
 
-`velox-signing-record authenticode` is the maintainer-only verification boundary
+`actutum-signing-record authenticode` is the maintainer-only verification boundary
 for provider output. It runs on Windows, accepts one directory containing only
-`velox-host.exe` and `velox.exe`, and requires the exact approved publisher
+`actutum-host.exe` and `actutum.exe`, and requires the exact approved publisher
 subject through `--expected-subject`. It rejects linked, empty, renamed, added,
 or split files before signature inspection.
 

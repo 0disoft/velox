@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.0disoft.dev/velox/public-preview-verification-v1.schema.json",
-  "title": "Velox public developer-preview verification result v1",
+  "$id": "https://schemas.0disoft.dev/actutum/public-preview-verification-v1.schema.json",
+  "title": "Actutum public developer-preview verification result v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,8 +28,8 @@
     "environment"
   ],
   "properties": {
-    "schemaVersion": { "const": "velox.public-preview-verification/v1" },
-    "repository": { "const": "0disoft/velox" },
+    "schemaVersion": { "const": "actutum.public-preview-verification/v1" },
+    "repository": { "const": "0disoft/actutum" },
     "releaseTag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+-alpha\\.[1-9][0-9]*$" },
     "releaseVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+-alpha\\.[1-9][0-9]*$" },
     "releaseUrl": { "type": "string", "format": "uri" },
@@ -47,7 +47,7 @@
     "endToEndMs": { "type": "number", "minimum": 0 },
     "evidenceLevel": { "const": "same-repository-public-download" },
     "externalUserAttempt": { "const": false },
-    "invokedTools": { "const": ["velox.exe"] },
+    "invokedTools": { "const": ["actutum.exe"] },
     "environment": {
       "type": "object",
       "additionalProperties": false,

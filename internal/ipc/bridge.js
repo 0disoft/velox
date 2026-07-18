@@ -1,12 +1,12 @@
 (() => {
   "use strict";
 
-  const nativeInvoke = window.__veloxInvoke;
+  const nativeInvoke = window.__actutumInvoke;
   if (window.top !== window || typeof nativeInvoke !== "function") {
     return;
   }
 
-  Object.defineProperty(window, "__veloxInvoke", {
+  Object.defineProperty(window, "__actutumInvoke", {
     value: nativeInvoke,
     configurable: false,
     enumerable: false,
@@ -61,7 +61,7 @@
     }
   }
 
-  Object.defineProperty(window, "velox", {
+  Object.defineProperty(window, "actutum", {
     value: Object.freeze({ invoke: Object.freeze(invoke) }),
     configurable: false,
     enumerable: true,

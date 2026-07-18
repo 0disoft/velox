@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.velox.invalid/consumer-benchmark/v1.json",
-  "title": "Velox consumer build benchmark v1",
+  "$id": "https://schemas.actutum.invalid/consumer-benchmark/v1.json",
+  "title": "Actutum consumer build benchmark v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "scope", "evidenceLevel", "releaseVersion", "repetitions", "measurement", "fixture", "environment", "summary", "cache", "workspace", "gates", "samples"],
   "properties": {
-    "schemaVersion": { "const": "velox.consumer-benchmark/v1" },
+    "schemaVersion": { "const": "actutum.consumer-benchmark/v1" },
     "scope": { "const": "local-clean-output-build-command" },
     "evidenceLevel": { "const": "controlled-local-observation" },
     "releaseVersion": { "type": "string", "minLength": 1 },
@@ -21,8 +21,8 @@
         "metric": { "const": "build-command-duration" },
         "unit": { "const": "milliseconds" },
         "clock": { "const": "System.Diagnostics.Stopwatch" },
-        "startsAt": { "const": "immediately-before-velox-process-launch" },
-        "endsAt": { "const": "velox-process-exit" },
+        "startsAt": { "const": "immediately-before-actutum-process-launch" },
+        "endsAt": { "const": "actutum-process-exit" },
         "warmupSamples": { "const": 0 },
         "concurrency": { "const": 1 },
         "projectState": { "const": "same-initialized-project" },
@@ -66,7 +66,7 @@
     },
     "cache": {
       "type": "object",
-      "required": ["workflowDeclaredActionsCacheUploadBytes", "veloxOwnedBytesBefore", "veloxOwnedBytesAfter", "veloxOwnedDeltaBytes", "paths"]
+      "required": ["workflowDeclaredActionsCacheUploadBytes", "actutumOwnedBytesBefore", "actutumOwnedBytesAfter", "actutumOwnedDeltaBytes", "paths"]
     },
     "workspace": {
       "type": "object",
@@ -74,10 +74,10 @@
     },
     "gates": {
       "type": "object",
-      "required": ["p95AtOrBelowTwoSeconds", "zeroVeloxCacheGrowth", "zeroSurvivingIntermediates", "noCompilerOrPackageManagerChildren"],
+      "required": ["p95AtOrBelowTwoSeconds", "zeroActutumCacheGrowth", "zeroSurvivingIntermediates", "noCompilerOrPackageManagerChildren"],
       "properties": {
         "p95AtOrBelowTwoSeconds": { "enum": ["pass", "fail"] },
-        "zeroVeloxCacheGrowth": { "enum": ["pass", "fail"] },
+        "zeroActutumCacheGrowth": { "enum": ["pass", "fail"] },
         "zeroSurvivingIntermediates": { "enum": ["pass", "fail"] },
         "noCompilerOrPackageManagerChildren": { "enum": ["pass", "fail", "unverified"] }
       }

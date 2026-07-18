@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0disoft/velox/internal/benchmarker"
-	veloxwebview2 "github.com/0disoft/velox/internal/webview2"
+	"github.com/0disoft/actutum/internal/benchmarker"
+	actutumwebview2 "github.com/0disoft/actutum/internal/webview2"
 )
 
 const (
-	lifecycleSchemaVersion = "velox.startup-lifecycle/v3"
-	lifecycleResultEnv     = "VELOX_STARTUP_LIFECYCLE_RESULT"
-	lifecycleRepetitionEnv = "VELOX_STARTUP_LIFECYCLE_REPETITIONS"
+	lifecycleSchemaVersion = "actutum.startup-lifecycle/v3"
+	lifecycleResultEnv     = "ACTUTUM_STARTUP_LIFECYCLE_RESULT"
+	lifecycleRepetitionEnv = "ACTUTUM_STARTUP_LIFECYCLE_REPETITIONS"
 )
 
 type lifecycleEvidence struct {
@@ -100,7 +100,7 @@ func TestStartupLifecycleEvidence(t *testing.T) {
 	repetitions := lifecycleRepetitions(t)
 	repoRoot := repositoryRoot(t)
 	host := goHost(t, repoRoot)
-	webView2Version, err := veloxwebview2.InstalledVersion()
+	webView2Version, err := actutumwebview2.InstalledVersion()
 	if err != nil {
 		t.Fatalf("read WebView2 version: %v", err)
 	}
@@ -155,7 +155,7 @@ func measureLifecycleSample(repoRoot string, host hostAdapter, index int) lifecy
 	if err := os.MkdirAll(profileBase, 0o755); err != nil {
 		return failLifecycleSample(sample, "profile-create", "PROFILE_CREATE_FAILED")
 	}
-	profile, err := os.MkdirTemp(profileBase, fmt.Sprintf("velox-lifecycle-%02d-", index))
+	profile, err := os.MkdirTemp(profileBase, fmt.Sprintf("actutum-lifecycle-%02d-", index))
 	if err != nil {
 		return failLifecycleSample(sample, "profile-create", "PROFILE_CREATE_FAILED")
 	}

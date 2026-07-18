@@ -12,10 +12,10 @@ import (
 const artifactConfiguration = `<?xml version="1.0" encoding="utf-8"?>
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
   <zip-file>
-    <pe-file path="velox-host.exe">
+    <pe-file path="actutum-host.exe">
       <authenticode-sign />
     </pe-file>
-    <pe-file path="velox.exe">
+    <pe-file path="actutum.exe">
       <authenticode-sign />
     </pe-file>
   </zip-file>
@@ -57,7 +57,7 @@ func TestSignPathArtifactConfigurationIsExact(t *testing.T) {
 	if configuration.XMLName.Space != "http://signpath.io/artifact-configuration/v1" || len(configuration.ZIP.PEFiles) != 2 {
 		t.Fatalf("artifact configuration = %#v", configuration)
 	}
-	want := []string{"velox-host.exe", "velox.exe"}
+	want := []string{"actutum-host.exe", "actutum.exe"}
 	for index, file := range configuration.ZIP.PEFiles {
 		if file.Path != want[index] || len(file.Signs) != 1 {
 			t.Fatalf("PE file %d = %#v", index, file)
@@ -66,7 +66,7 @@ func TestSignPathArtifactConfigurationIsExact(t *testing.T) {
 }
 
 func TestSignPathSourcePolicyIsFailClosed(t *testing.T) {
-	data := readNormalized(t, repositoryPath(".signpath", "policies", "velox", "release-signing.yml"))
+	data := readNormalized(t, repositoryPath(".signpath", "policies", "actutum", "release-signing.yml"))
 	if data != sourcePolicy {
 		t.Fatalf("SignPath source policy drifted:\n%s", data)
 	}

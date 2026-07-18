@@ -1,9 +1,9 @@
 {
-  "$schema": "../../schema/velox-v1.schema.json",
+  "$schema": "../../schema/actutum-v1.schema.json",
   "schemaVersion": 1,
   "app": {
-    "id": "dev.velox.hello",
-    "name": "Velox Hello",
+    "id": "dev.actutum.hello",
+    "name": "Actutum Hello",
     "version": "0.1.0"
   },
   "assets": {

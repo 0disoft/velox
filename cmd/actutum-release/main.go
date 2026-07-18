@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/0disoft/velox/internal/releasebundle"
+	"github.com/0disoft/actutum/internal/releasebundle"
 )
 
 func main() {
@@ -14,10 +14,10 @@ func main() {
 }
 
 func run(args []string) int {
-	flags := flag.NewFlagSet("velox-release", flag.ContinueOnError)
+	flags := flag.NewFlagSet("actutum-release", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
-	cliPath := flags.String("cli", "", "path to the prebuilt Velox CLI")
-	hostPath := flags.String("host", "", "path to the prebuilt Velox host")
+	cliPath := flags.String("cli", "", "path to the prebuilt Actutum CLI")
+	hostPath := flags.String("host", "", "path to the prebuilt Actutum host")
 	sourceRoot := flags.String("source-root", ".", "repository source root")
 	outputRoot := flags.String("out", "dist/release", "release output root")
 	jsonOutput := flags.Bool("json", false, "emit JSON output")
@@ -25,12 +25,12 @@ func run(args []string) int {
 		return 2
 	}
 	if *cliPath == "" || *hostPath == "" || flags.NArg() != 0 {
-		fmt.Fprintln(os.Stderr, "velox-release: --cli and --host are required")
+		fmt.Fprintln(os.Stderr, "actutum-release: --cli and --host are required")
 		return 2
 	}
 	result, err := releasebundle.Build(releasebundle.Options{CLIPath: *cliPath, HostPath: *hostPath, SourceRoot: *sourceRoot, OutputRoot: *outputRoot})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "velox-release: %v\n", err)
+		fmt.Fprintf(os.Stderr, "actutum-release: %v\n", err)
 		return 6
 	}
 	if *jsonOutput {

@@ -14,7 +14,7 @@ import (
 func TestDownloadLogsAndDetectKnownWarning(t *testing.T) {
 	archive := logArchive(t, "2026-07-13T00:00:00Z [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues\n")
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		if request.URL.Path != "/repos/0disoft/velox/actions/runs/42/logs" {
+		if request.URL.Path != "/repos/0disoft/actutum/actions/runs/42/logs" {
 			http.NotFound(response, request)
 			return
 		}
@@ -27,11 +27,11 @@ func TestDownloadLogsAndDetectKnownWarning(t *testing.T) {
 	defer server.Close()
 
 	m := monitor{client: server.Client(), baseURL: server.URL, token: "secret"}
-	body, err := m.downloadLogs(context.Background(), "0disoft/velox", 42)
+	body, err := m.downloadLogs(context.Background(), "0disoft/actutum", 42)
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := inspectLogs("0disoft/velox", 42, body, time.Date(2026, 7, 13, 1, 0, 0, 0, time.UTC))
+	result, err := inspectLogs("0disoft/actutum", 42, body, time.Date(2026, 7, 13, 1, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestDownloadLogsAndDetectKnownWarning(t *testing.T) {
 }
 
 func TestInspectLogsReportsAbsentWithoutKnownWarning(t *testing.T) {
-	result, err := inspectLogs("0disoft/velox", 42, logArchive(t, "ordinary action output\n"), time.Now())
+	result, err := inspectLogs("0disoft/actutum", 42, logArchive(t, "ordinary action output\n"), time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestInspectLogsReportsAbsentWithoutKnownWarning(t *testing.T) {
 }
 
 func TestInspectLogsRejectsInvalidArchive(t *testing.T) {
-	if _, err := inspectLogs("0disoft/velox", 42, []byte("not a zip"), time.Now()); err == nil {
+	if _, err := inspectLogs("0disoft/actutum", 42, []byte("not a zip"), time.Now()); err == nil {
 		t.Fatal("expected invalid archive to fail")
 	}
 }

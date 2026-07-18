@@ -4,10 +4,10 @@ on:
   pull_request:
     paths:
       - ".github/workflows/alpha-evidence.yml"
-      - "cmd/velox/**"
-      - "cmd/velox-host/**"
-      - "cmd/velox-release/**"
-      - "cmd/velox-release-evidence/**"
+      - "cmd/actutum/**"
+      - "cmd/actutum-host/**"
+      - "cmd/actutum-release/**"
+      - "cmd/actutum-release-evidence/**"
       - "internal/releasebundle/**"
       - "internal/releaseevidence/**"
       - "schema/**"
@@ -79,18 +79,18 @@ jobs:
             $input = Join-Path $env:RUNNER_TEMP "alpha-$name-input"
             $output = Join-Path $env:GITHUB_WORKSPACE "dist/alpha-$name"
             New-Item -ItemType Directory -Path $input -Force | Out-Null
-            go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'velox.exe') ./cmd/velox
+            go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'actutum.exe') ./cmd/actutum
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'velox-host.exe') ./cmd/velox-host
+            go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'actutum-host.exe') ./cmd/actutum-host
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            $raw = go run ./cmd/velox-release --cli (Join-Path $input 'velox.exe') --host (Join-Path $input 'velox-host.exe') --source-root $env:GITHUB_WORKSPACE --out $output --json
+            $raw = go run ./cmd/actutum-release --cli (Join-Path $input 'actutum.exe') --host (Join-Path $input 'actutum-host.exe') --source-root $env:GITHUB_WORKSPACE --out $output --json
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             $results += ($raw | ConvertFrom-Json)
           }
           if ($results.Count -ne 2 -or $results[0].archiveSha256 -ne $results[1].archiveSha256) {
             throw 'Independent unsigned release builds are not byte-identical.'
           }
-          $evidence = go run ./cmd/velox-release-evidence `
+          $evidence = go run ./cmd/actutum-release-evidence `
             --release-directory $results[0].directory `
             --release-archive $results[0].archive `
             --out (Join-Path $env:GITHUB_WORKSPACE 'dist/release-evidence') `
@@ -100,7 +100,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $evidence | ConvertFrom-Json | Out-Null
           New-Item -ItemType Directory -Path 'dist/release' -Force | Out-Null
-          Copy-Item -LiteralPath $results[0].archive -Destination 'dist/release/velox-windows-x64.zip'
+          Copy-Item -LiteralPath $results[0].archive -Destination 'dist/release/actutum-windows-x64.zip'
           $manifest = Get-Content -LiteralPath (Join-Path $results[0].directory 'release-manifest.json') -Raw | ConvertFrom-Json
           "release_sha256=$($results[0].archiveSha256)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "release_version=$($manifest.releaseVersion)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
@@ -109,24 +109,24 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $sbom = Get-Content -LiteralPath 'dist/release-evidence/velox-windows-x64.spdx.json' -Raw | ConvertFrom-Json
+          $sbom = Get-Content -LiteralPath 'dist/release-evidence/actutum-windows-x64.spdx.json' -Raw | ConvertFrom-Json
           if ($sbom.spdxVersion -ne 'SPDX-2.3' -or $sbom.packages.Count -ne 1 -or $sbom.files.Count -lt 1) { throw 'SPDX evidence is incomplete.' }
-          $provenanceLines = @(Get-Content -LiteralPath 'dist/release-evidence/velox-windows-x64.intoto.jsonl')
+          $provenanceLines = @(Get-Content -LiteralPath 'dist/release-evidence/actutum-windows-x64.intoto.jsonl')
           if ($provenanceLines.Count -ne 1) { throw 'Provenance JSONL must contain one statement.' }
           $provenance = $provenanceLines[0] | ConvertFrom-Json
           if ($provenance._type -ne 'https://in-toto.io/Statement/v1' -or $provenance.predicateType -ne 'https://slsa.dev/provenance/v1') { throw 'Provenance statement identity is invalid.' }
           $checksums = Get-Content -LiteralPath 'dist/release-evidence/checksums.sha256'
-          if ($checksums.Count -ne 3 -or $checksums[0] -notmatch '^${{ steps.build.outputs.release_sha256 }}  velox-windows-x64[.]zip$') { throw 'Checksum manifest is incomplete.' }
+          if ($checksums.Count -ne 3 -or $checksums[0] -notmatch '^${{ steps.build.outputs.release_sha256 }}  actutum-windows-x64[.]zip$') { throw 'Checksum manifest is incomplete.' }
 
       - name: Upload alpha evidence bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: velox-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          name: actutum-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
           path: |
-            dist/release/velox-windows-x64.zip
+            dist/release/actutum-windows-x64.zip
             dist/release-evidence/checksums.sha256
-            dist/release-evidence/velox-windows-x64.spdx.json
-            dist/release-evidence/velox-windows-x64.intoto.jsonl
+            dist/release-evidence/actutum-windows-x64.spdx.json
+            dist/release-evidence/actutum-windows-x64.intoto.jsonl
           compression-level: 0
           retention-days: 7
           if-no-files-found: error
@@ -140,42 +140,42 @@ jobs:
       - name: Start acquisition clock
         shell: pwsh
         run: |
-          "VELOX_CLEAN_STARTED_TICKS=$([DateTime]::UtcNow.Ticks)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "ACTUTUM_CLEAN_STARTED_TICKS=$([DateTime]::UtcNow.Ticks)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Download alpha evidence bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: velox-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          name: actutum-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
           path: .ci/acquired
 
       - name: Build without source checkout or language toolchain
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $zip = @(Get-ChildItem -LiteralPath '.ci/acquired' -Recurse -File -Filter 'velox-windows-x64.zip')
+          $zip = @(Get-ChildItem -LiteralPath '.ci/acquired' -Recurse -File -Filter 'actutum-windows-x64.zip')
           $checksums = @(Get-ChildItem -LiteralPath '.ci/acquired' -Recurse -File -Filter 'checksums.sha256')
           if ($zip.Count -ne 1 -or $checksums.Count -ne 1) { throw 'Downloaded alpha evidence is incomplete or ambiguous.' }
           $releaseSha = (Get-FileHash -LiteralPath $zip[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($releaseSha -ne '${{ needs.producer.outputs.release_sha256 }}') { throw 'Release artifact digest differs from producer output.' }
-          if (-not (Select-String -LiteralPath $checksums[0].FullName -Pattern "^$releaseSha  velox-windows-x64[.]zip$" -Quiet)) { throw 'Release artifact is absent from checksums.sha256.' }
+          if (-not (Select-String -LiteralPath $checksums[0].FullName -Pattern "^$releaseSha  actutum-windows-x64[.]zip$" -Quiet)) { throw 'Release artifact is absent from checksums.sha256.' }
           Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath '.ci/release'
-          $cli = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File -Filter 'velox.exe')
-          if ($cli.Count -ne 1) { throw 'Release archive must contain exactly one velox.exe.' }
-          function Invoke-VeloxJson {
+          $cli = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File -Filter 'actutum.exe')
+          if ($cli.Count -ne 1) { throw 'Release archive must contain exactly one actutum.exe.' }
+          function Invoke-ActutumJson {
             param([string[]] $Arguments)
             $raw = & $cli[0].FullName @Arguments
             $exitCode = $LASTEXITCODE
-            if ($exitCode -ne 0) { throw "velox.exe failed with exit code $exitCode while running $($Arguments[0])." }
+            if ($exitCode -ne 0) { throw "actutum.exe failed with exit code $exitCode while running $($Arguments[0])." }
             $document = $raw | ConvertFrom-Json
-            if (-not $document.ok) { throw "velox.exe returned a failed JSON envelope while running $($Arguments[0])." }
+            if (-not $document.ok) { throw "actutum.exe returned a failed JSON envelope while running $($Arguments[0])." }
             return $document
           }
-          Invoke-VeloxJson -Arguments @('init', '.ci/project', '--json') | Out-Null
+          Invoke-ActutumJson -Arguments @('init', '.ci/project', '--json') | Out-Null
           $project = (Resolve-Path -LiteralPath '.ci/project').Path
-          Invoke-VeloxJson -Arguments @('validate', '--config', '.ci/project/velox.json', '--json') | Out-Null
-          Invoke-VeloxJson -Arguments @('doctor', '--config', '.ci/project/velox.json', '--out', 'dist-first', '--json') | Out-Null
-          $firstBuild = Invoke-VeloxJson -Arguments @('build', '--config', '.ci/project/velox.json', '--out', 'dist-first', '--json')
-          $secondBuild = Invoke-VeloxJson -Arguments @('build', '--config', '.ci/project/velox.json', '--out', 'dist-second', '--json')
+          Invoke-ActutumJson -Arguments @('validate', '--config', '.ci/project/actutum.json', '--json') | Out-Null
+          Invoke-ActutumJson -Arguments @('doctor', '--config', '.ci/project/actutum.json', '--out', 'dist-first', '--json') | Out-Null
+          $firstBuild = Invoke-ActutumJson -Arguments @('build', '--config', '.ci/project/actutum.json', '--out', 'dist-first', '--json')
+          $secondBuild = Invoke-ActutumJson -Arguments @('build', '--config', '.ci/project/actutum.json', '--out', 'dist-second', '--json')
           $firstArchive = Join-Path $project $firstBuild.result.archive
           $secondArchive = Join-Path $project $secondBuild.result.archive
           if (-not (Test-Path -LiteralPath $firstArchive -PathType Leaf) -or -not (Test-Path -LiteralPath $secondArchive -PathType Leaf)) {
@@ -184,11 +184,11 @@ jobs:
           $firstSha = (Get-FileHash -LiteralPath $firstArchive -Algorithm SHA256).Hash.ToLowerInvariant()
           $secondSha = (Get-FileHash -LiteralPath $secondArchive -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($firstSha -ne $secondSha) { throw 'Consumer builds are not deterministic.' }
-          Invoke-VeloxJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
+          Invoke-ActutumJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
           $finished = [DateTime]::UtcNow
-          $started = [DateTime]::new([long] $env:VELOX_CLEAN_STARTED_TICKS, [DateTimeKind]::Utc)
+          $started = [DateTime]::new([long] $env:ACTUTUM_CLEAN_STARTED_TICKS, [DateTimeKind]::Utc)
           $result = [ordered]@{
-            schemaVersion = 'velox.consumer-clean/v1'
+            schemaVersion = 'actutum.consumer-clean/v1'
             sourceCommit = '${{ github.sha }}'
             acquisitionMode = 'github-actions-artifact-no-checkout'
             releaseSha256 = $releaseSha
@@ -198,7 +198,7 @@ jobs:
             firstBuildSha256 = $firstSha
             secondBuildSha256 = $secondSha
             deterministic = $true
-            invokedTools = @('velox.exe')
+            invokedTools = @('actutum.exe')
           }
           New-Item -ItemType Directory -Path '.ci/result' -Force | Out-Null
           $result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath '.ci/result/consumer-clean.json' -Encoding utf8
@@ -210,14 +210,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: velox-clean-consumer-${{ github.sha }}-${{ github.run_attempt }}
+          name: actutum-clean-consumer-${{ github.sha }}-${{ github.run_attempt }}
           path: .ci/result/consumer-clean.json
           retention-days: 30
           if-no-files-found: error
 
   publish-preview:
     name: Publish unsigned developer preview
-    if: false && github.event_name == 'workflow_dispatch' && inputs.publish_preview
+    if: github.repository == '0disoft/actutum' && github.event_name == 'workflow_dispatch' && inputs.publish_preview
     needs: [producer, clean-consumer]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -227,36 +227,36 @@ jobs:
       - name: Validate publication request
         shell: pwsh
         env:
-          VELOX_CONFIRMATION: ${{ inputs.confirmation }}
-          VELOX_REF_NAME: ${{ github.ref_name }}
-          VELOX_REF_TYPE: ${{ github.ref_type }}
+          ACTUTUM_CONFIRMATION: ${{ inputs.confirmation }}
+          ACTUTUM_REF_NAME: ${{ github.ref_name }}
+          ACTUTUM_REF_TYPE: ${{ github.ref_type }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:VELOX_CONFIRMATION -cne 'publish unsigned developer preview') {
+          if ($env:ACTUTUM_CONFIRMATION -cne 'publish unsigned developer preview') {
             throw 'Unsigned preview publication requires the exact confirmation phrase.'
           }
-          if ($env:VELOX_REF_TYPE -ne 'tag' -or $env:VELOX_REF_NAME -notmatch '^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$') {
+          if ($env:ACTUTUM_REF_TYPE -ne 'tag' -or $env:ACTUTUM_REF_NAME -notmatch '^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$') {
             throw 'Unsigned previews must be dispatched from an existing vX.Y.Z-alpha.N tag.'
           }
 
       - name: Download verified preview evidence
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: velox-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          name: actutum-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
           path: .ci/release
 
       - name: Verify publication payload
         shell: pwsh
         env:
-          VELOX_REF_NAME: ${{ github.ref_name }}
-          VELOX_RELEASE_VERSION: ${{ needs.producer.outputs.release_version }}
+          ACTUTUM_REF_NAME: ${{ github.ref_name }}
+          ACTUTUM_RELEASE_VERSION: ${{ needs.producer.outputs.release_version }}
         run: |
           $ErrorActionPreference = 'Stop'
           $expected = @(
             'checksums.sha256',
-            'velox-windows-x64.intoto.jsonl',
-            'velox-windows-x64.spdx.json',
-            'velox-windows-x64.zip'
+            'actutum-windows-x64.intoto.jsonl',
+            'actutum-windows-x64.spdx.json',
+            'actutum-windows-x64.zip'
           )
           $files = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File)
           $names = @($files.Name | Sort-Object)
@@ -271,7 +271,7 @@ jobs:
               throw "Publication checksum mismatch for $name."
             }
           }
-          if ("v$env:VELOX_RELEASE_VERSION" -cne $env:VELOX_REF_NAME) {
+          if ("v$env:ACTUTUM_RELEASE_VERSION" -cne $env:ACTUTUM_REF_NAME) {
             throw 'The selected tag does not match the release manifest version.'
           }
 
@@ -279,12 +279,12 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          VELOX_REF_NAME: ${{ github.ref_name }}
-          VELOX_RELEASE_SHA256: ${{ needs.producer.outputs.release_sha256 }}
+          ACTUTUM_REF_NAME: ${{ github.ref_name }}
+          ACTUTUM_RELEASE_SHA256: ${{ needs.producer.outputs.release_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $false
-          $existing = gh release view $env:VELOX_REF_NAME --repo $env:GITHUB_REPOSITORY 2>$null
+          $existing = gh release view $env:ACTUTUM_REF_NAME --repo $env:GITHUB_REPOSITORY 2>$null
           if ($LASTEXITCODE -eq 0) { throw 'The release already exists and will not be replaced.' }
           @"
           ## Unsigned developer preview
@@ -295,13 +295,13 @@ jobs:
 
           The checksum file, SPDX SBOM, and provenance statement describe the files in this release. They do not provide a Windows publisher identity, and the provenance statement is not an authenticated attestation.
 
-          The independently recorded release ZIP SHA-256 is $env:VELOX_RELEASE_SHA256.
+          The independently recorded release ZIP SHA-256 is $env:ACTUTUM_RELEASE_SHA256.
           "@ | Set-Content -LiteralPath '.ci/release-notes.md' -Encoding utf8
           $assets = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File | Sort-Object Name | ForEach-Object FullName)
-          gh release create $env:VELOX_REF_NAME @assets `
+          gh release create $env:ACTUTUM_REF_NAME @assets `
             --repo $env:GITHUB_REPOSITORY `
-            --title "Velox $env:VELOX_REF_NAME (unsigned developer preview)" `
+            --title "Actutum $env:ACTUTUM_REF_NAME (unsigned developer preview)" `
             --notes-file '.ci/release-notes.md' `
             --prerelease `
             --verify-tag
-          "release_sha256=$env:VELOX_RELEASE_SHA256" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "release_sha256=$env:ACTUTUM_RELEASE_SHA256" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

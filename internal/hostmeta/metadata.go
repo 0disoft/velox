@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	SchemaVersion   = "velox.host/v1"
+	SchemaVersion   = "actutum.host/v1"
 	ContractVersion = 1
 )
 

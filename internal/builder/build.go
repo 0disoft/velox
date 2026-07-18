@@ -10,11 +10,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/0disoft/velox/internal/archive"
-	"github.com/0disoft/velox/internal/buildplan"
-	"github.com/0disoft/velox/internal/buildreport"
-	"github.com/0disoft/velox/internal/ipc"
-	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/actutum/internal/archive"
+	"github.com/0disoft/actutum/internal/buildplan"
+	"github.com/0disoft/actutum/internal/buildreport"
+	"github.com/0disoft/actutum/internal/ipc"
+	"github.com/0disoft/actutum/internal/runtimeconfig"
 )
 
 type Result struct {
@@ -62,7 +62,7 @@ func Build(plan buildplan.Plan) (Result, error) {
 	}
 
 	runtimeValue := runtimeconfig.FromManifest(snapshot.Manifest, "web")
-	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue); err != nil {
+	if err := writeJSON(filepath.Join(stageDirectory, "actutum.runtime.json"), runtimeValue); err != nil {
 		return Result{}, err
 	}
 	report := buildreport.Report{

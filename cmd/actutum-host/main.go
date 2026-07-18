@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/0disoft/velox/internal/benchmarker"
-	"github.com/0disoft/velox/internal/runtimeconfig"
-	"github.com/0disoft/velox/internal/webview2"
+	"github.com/0disoft/actutum/internal/benchmarker"
+	"github.com/0disoft/actutum/internal/runtimeconfig"
+	"github.com/0disoft/actutum/internal/webview2"
 )
 
 func main() {
@@ -20,9 +20,9 @@ func main() {
 func run(args []string) int {
 	timeline := benchmarker.NewTimelineRecorder(os.Getenv(benchmarker.PipeEnvironment) != "")
 	shutdownTimeline := benchmarker.NewShutdownTimelineRecorder(os.Getenv(benchmarker.PipeEnvironment) != "")
-	flags := flag.NewFlagSet("velox-host", flag.ContinueOnError)
+	flags := flag.NewFlagSet("actutum-host", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
-	configPath := flags.String("config", "velox.runtime.json", "path to the external runtime configuration")
+	configPath := flags.String("config", "actutum.runtime.json", "path to the external runtime configuration")
 	debug := flags.Bool("debug", false, "enable WebView2 development tools")
 	if err := flags.Parse(args); err != nil {
 		return 2
@@ -30,22 +30,22 @@ func run(args []string) int {
 
 	cfg, err := runtimeconfig.Load(*configPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+		fmt.Fprintf(os.Stderr, "actutum-host: %v\n", err)
 		return 2
 	}
 	timeline.Mark("config-loaded")
 
-	dataPath := os.Getenv("VELOX_DATA_DIR")
+	dataPath := os.Getenv("ACTUTUM_DATA_DIR")
 	if dataPath == "" {
 		dataPath, err = defaultDataPath(cfg.App.ID)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+			fmt.Fprintf(os.Stderr, "actutum-host: %v\n", err)
 			return 6
 		}
 	}
 
 	var runtime *webview2.Runtime
-	audit := newPolicyAudit(os.Getenv("VELOX_BENCH_POLICY_AUDIT") == "1")
+	audit := newPolicyAudit(os.Getenv("ACTUTUM_BENCH_POLICY_AUDIT") == "1")
 	timeline.Mark("runtime-open-started")
 	runtime, err = webview2.Open(webview2.Config{
 		Title:                   cfg.App.Name,
@@ -55,7 +55,7 @@ func run(args []string) int {
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
 		DataPath:                dataPath,
-		BrowserExecutableFolder: os.Getenv("VELOX_BENCH_WEBVIEW2_BROWSER_DIR"),
+		BrowserExecutableFolder: os.Getenv("ACTUTUM_BENCH_WEBVIEW2_BROWSER_DIR"),
 		AssetRoot:               cfg.AssetRoot,
 		EntryPath:               cfg.EntryPath,
 		Debug:                   *debug,
@@ -78,13 +78,13 @@ func run(args []string) int {
 		if err := timeline.Emit(os.Stderr); err != nil {
 			return err
 		}
-		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {
+		if os.Getenv("ACTUTUM_BENCH_EXIT_AFTER_READY") == "1" {
 			runtime.Close()
 		}
 		return nil
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+		fmt.Fprintf(os.Stderr, "actutum-host: %v\n", err)
 		if errors.Is(err, webview2.ErrRuntimeUnavailable) {
 			return 5
 		}
@@ -94,13 +94,13 @@ func run(args []string) int {
 	audit.complete = func() {
 		browserProcessID, err := runtime.BrowserProcessID()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "velox-host: policy audit browser process: %v\n", err)
+			fmt.Fprintf(os.Stderr, "actutum-host: policy audit browser process: %v\n", err)
 			return
 		}
 		if err := benchmarker.NotifyReady("security-ok", browserProcessID); err != nil {
-			fmt.Fprintf(os.Stderr, "velox-host: policy audit marker: %v\n", err)
+			fmt.Fprintf(os.Stderr, "actutum-host: policy audit marker: %v\n", err)
 		}
-		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {
+		if os.Getenv("ACTUTUM_BENCH_EXIT_AFTER_READY") == "1" {
 			runtime.Close()
 		}
 	}
@@ -108,7 +108,7 @@ func run(args []string) int {
 
 	runtime.Run()
 	if err := shutdownTimeline.Emit(os.Stderr); err != nil {
-		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+		fmt.Fprintf(os.Stderr, "actutum-host: %v\n", err)
 		return 6
 	}
 	return 0
@@ -122,7 +122,7 @@ func defaultDataPath(appID string) (string, error) {
 	if !filepath.IsAbs(base) {
 		return "", errors.New("local application data path is not absolute")
 	}
-	return filepath.Join(base, "Velox", "profiles", appID), nil
+	return filepath.Join(base, "Actutum", "profiles", appID), nil
 }
 
 type policyAudit struct {
@@ -140,7 +140,7 @@ func newPolicyAudit(enabled bool) *policyAudit {
 func (a *policyAudit) record(kind string) {
 	if a.enabled {
 		a.blocked[kind] = true
-		fmt.Fprintf(os.Stderr, "velox-policy-blocked: %s\n", kind)
+		fmt.Fprintf(os.Stderr, "actutum-policy-blocked: %s\n", kind)
 		a.tryComplete()
 	}
 }
@@ -150,11 +150,11 @@ func (a *policyAudit) markIPCReady(phase string) {
 		return
 	}
 	if phase != "ipc-ok" {
-		fmt.Fprintf(os.Stderr, "velox-ipc-audit: %s\n", phase)
+		fmt.Fprintf(os.Stderr, "actutum-ipc-audit: %s\n", phase)
 		return
 	}
 	a.ipcReady = true
-	fmt.Fprintln(os.Stderr, "velox-policy-blocked: ipc-contract-passed")
+	fmt.Fprintln(os.Stderr, "actutum-policy-blocked: ipc-contract-passed")
 	a.tryComplete()
 }
 

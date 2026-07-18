@@ -63,7 +63,7 @@ func Create(directory string) (Result, error) {
 	if name == "" {
 		name = slug
 	}
-	appID := "dev.velox." + slug
+	appID := "dev.actutum." + slug
 	rootExisted := pathExists(absolute)
 	webExisted := pathExists(filepath.Join(absolute, "web"))
 
@@ -79,7 +79,7 @@ func Create(directory string) (Result, error) {
 	manifestData = append(manifestData, '\n')
 
 	files := []plannedFile{
-		{path: "velox.json", data: manifestData},
+		{path: "actutum.json", data: manifestData},
 		{path: "web/index.html", data: []byte(indexHTML(name))},
 		{path: "web/style.css", data: []byte(styleCSS)},
 		{path: "web/app.js", data: []byte(appJS)},
@@ -128,7 +128,7 @@ func Create(directory string) (Result, error) {
 	}
 
 	relative := filepath.ToSlash(directory)
-	return Result{Directory: relative, AppID: appID, AppName: name, Files: []string{"velox.json", "web/index.html", "web/style.css", "web/app.js"}}, nil
+	return Result{Directory: relative, AppID: appID, AppName: name, Files: []string{"actutum.json", "web/index.html", "web/style.css", "web/app.js"}}, nil
 }
 
 func projectSlug(value string) string {
@@ -170,7 +170,7 @@ func indexHTML(name string) string {
   </head>
   <body>
     <main>
-      <p class="eyebrow">Velox</p>
+      <p class="eyebrow">Actutum</p>
       <h1>%s</h1>
       <p>Static HTML, CSS, and JavaScript in a lightweight desktop shell.</p>
     </main>
@@ -215,5 +215,5 @@ p {
 }
 `
 
-const appJS = `document.documentElement.dataset.velox = "ready";
+const appJS = `document.documentElement.dataset.actutum = "ready";
 `

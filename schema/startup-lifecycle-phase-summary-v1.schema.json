@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.velox.invalid/startup-lifecycle-phase-summary/v1.json",
-  "title": "Velox startup lifecycle phase summary v1",
+  "$id": "https://schemas.actutum.invalid/startup-lifecycle-phase-summary/v1.json",
+  "title": "Actutum startup lifecycle phase summary v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "sourceSchemaVersion", "sourceSha256", "evidenceLevel", "outcome", "successCount", "failureCount", "environment", "groups", "attribution"],
   "properties": {
-    "schemaVersion": { "const": "velox.startup-lifecycle-phase-summary/v1" },
-    "sourceSchemaVersion": { "const": "velox.startup-lifecycle/v3" },
+    "schemaVersion": { "const": "actutum.startup-lifecycle-phase-summary/v1" },
+    "sourceSchemaVersion": { "const": "actutum.startup-lifecycle/v3" },
     "sourceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "evidenceLevel": { "enum": ["controlled-local-observation", "hosted-runner-evidence"] },
     "outcome": { "enum": ["success", "failure"] },

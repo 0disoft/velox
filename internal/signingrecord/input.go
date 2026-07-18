@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	veloxarchive "github.com/0disoft/velox/internal/archive"
+	actutumarchive "github.com/0disoft/actutum/internal/archive"
 )
 
-const SigningInputName = "velox-signing-input.zip"
+const SigningInputName = "actutum-signing-input.zip"
 
 type SigningInputResult struct {
 	Path     string   `json:"path"`
@@ -24,15 +24,15 @@ func PrepareSigningInput(unsignedDirectory, output string) (result SigningInputR
 		return SigningInputResult{}, fmt.Errorf("signing input output must be named %s", SigningInputName)
 	}
 	unsigned := NativeSet{Artifacts: make([]Artifact, 0, 2)}
-	inputs := make([]veloxarchive.Input, 0, 2)
-	for _, name := range []string{"velox.exe", "velox-host.exe"} {
+	inputs := make([]actutumarchive.Input, 0, 2)
+	for _, name := range []string{"actutum.exe", "actutum-host.exe"} {
 		source := filepath.Join(unsignedDirectory, name)
 		artifact, inspectErr := inspectArtifact(source, name)
 		if inspectErr != nil {
 			return SigningInputResult{}, fmt.Errorf("inspect unsigned %s: %w", name, inspectErr)
 		}
 		unsigned.Artifacts = append(unsigned.Artifacts, artifact)
-		inputs = append(inputs, veloxarchive.Input{Source: source, Name: name})
+		inputs = append(inputs, actutumarchive.Input{Source: source, Name: name})
 	}
 	if err := os.MkdirAll(filepath.Dir(output), 0o755); err != nil {
 		return SigningInputResult{}, fmt.Errorf("create signing input directory: %w", err)
@@ -43,7 +43,7 @@ func PrepareSigningInput(unsignedDirectory, output string) (result SigningInputR
 			_ = os.Remove(output)
 		}
 	}()
-	archiveResult, err := veloxarchive.CreateFiles(output, inputs)
+	archiveResult, err := actutumarchive.CreateFiles(output, inputs)
 	if err != nil {
 		return SigningInputResult{}, fmt.Errorf("create signing input: %w", err)
 	}

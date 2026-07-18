@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const monitorSchemaVersion = "velox.actions-warning-monitor/v1"
+const monitorSchemaVersion = "actutum.actions-warning-monitor/v1"
 
 var downloadArtifactBufferWarning = warningSignature{
 	Action: "actions/download-artifact",
@@ -57,13 +57,13 @@ type monitor struct {
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "velox-actions-warning-monitor:", err)
+		fmt.Fprintln(os.Stderr, "actutum-actions-warning-monitor:", err)
 		os.Exit(1)
 	}
 }
 
 func run(args []string) error {
-	flags := flag.NewFlagSet("velox-actions-warning-monitor", flag.ContinueOnError)
+	flags := flag.NewFlagSet("actutum-actions-warning-monitor", flag.ContinueOnError)
 	repository := flags.String("repository", "", "GitHub owner/repository")
 	runIDText := flags.String("run-id", "", "completed GitHub Actions run ID")
 	output := flags.String("output", "", "monitor JSON output")
@@ -103,7 +103,7 @@ func (m monitor) downloadLogs(ctx context.Context, repository string, runID int6
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("Authorization", "Bearer "+m.token)
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("User-Agent", "velox-actions-warning-monitor")
+	request.Header.Set("User-Agent", "actutum-actions-warning-monitor")
 	response, err := m.client.Do(request)
 	if err != nil {
 		return nil, err

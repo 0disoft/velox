@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	veloxwebview2 "github.com/0disoft/velox/internal/webview2"
+	actutumwebview2 "github.com/0disoft/actutum/internal/webview2"
 )
 
 const (
-	profileComparisonSchemaVersion = "velox.startup-profile-comparison/v1"
-	profileComparisonResultEnv     = "VELOX_STARTUP_PROFILE_COMPARISON_RESULT"
-	profileComparisonRepetitionEnv = "VELOX_STARTUP_PROFILE_COMPARISON_REPETITIONS"
+	profileComparisonSchemaVersion = "actutum.startup-profile-comparison/v1"
+	profileComparisonResultEnv     = "ACTUTUM_STARTUP_PROFILE_COMPARISON_RESULT"
+	profileComparisonRepetitionEnv = "ACTUTUM_STARTUP_PROFILE_COMPARISON_REPETITIONS"
 )
 
 type profileComparisonEvidence struct {
@@ -77,7 +77,7 @@ func TestStartupProfileComparisonEvidence(t *testing.T) {
 	repetitions := profileComparisonRepetitions(t)
 	repoRoot := repositoryRoot(t)
 	host := goHost(t, repoRoot)
-	webView2Version, err := veloxwebview2.InstalledVersion()
+	webView2Version, err := actutumwebview2.InstalledVersion()
 	if err != nil {
 		t.Fatalf("read WebView2 version: %v", err)
 	}
@@ -156,13 +156,13 @@ func measureProfileComparisonTrial(repoRoot string, host hostAdapter, index int,
 	if err := os.MkdirAll(profileBase, 0o755); err != nil {
 		return nil, err
 	}
-	firstProfile, err := os.MkdirTemp(profileBase, fmt.Sprintf("velox-profile-comparison-%02d-first-", index))
+	firstProfile, err := os.MkdirTemp(profileBase, fmt.Sprintf("actutum-profile-comparison-%02d-first-", index))
 	if err != nil {
 		return nil, err
 	}
 	secondProfile := firstProfile
 	if mode == "fresh-profile" {
-		secondProfile, err = os.MkdirTemp(profileBase, fmt.Sprintf("velox-profile-comparison-%02d-second-", index))
+		secondProfile, err = os.MkdirTemp(profileBase, fmt.Sprintf("actutum-profile-comparison-%02d-second-", index))
 		if err != nil {
 			_ = os.RemoveAll(firstProfile)
 			return nil, err

@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/0disoft/velox/internal/buildplan"
-	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/actutum/internal/buildplan"
+	"github.com/0disoft/actutum/internal/runtimeconfig"
 )
 
 type Launcher func(hostPath, configPath string, stdout, stderr io.Writer) (int, error)
@@ -31,7 +31,7 @@ func Execute(plan buildplan.Plan, launcher Launcher, stdout, stderr io.Writer) (
 		launcher = Launch
 	}
 	snapshot := plan.Snapshot()
-	configFile, err := os.CreateTemp(snapshot.Manifest.ProjectRoot, ".velox-run-*.json")
+	configFile, err := os.CreateTemp(snapshot.Manifest.ProjectRoot, ".actutum-run-*.json")
 	if err != nil {
 		return Result{}, fmt.Errorf("create temporary runtime config: %w", err)
 	}

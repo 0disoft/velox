@@ -78,7 +78,7 @@ $statistics = if ($durations.Count -gt 0) {
 }
 
 $result = [ordered]@{
-    schemaVersion = 'velox.consumer-e2e-summary/v1'
+    schemaVersion = 'actutum.consumer-e2e-summary/v1'
     scope = 'checkout-complete-to-portable-zip'
     evidenceLevel = if ($hostedOnly) { 'hosted-runner-summary' } else { 'local-contract-summary' }
     expectedSamples = $ExpectedSamples

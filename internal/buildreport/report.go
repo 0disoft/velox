@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = "velox.build-result/v1"
+const SchemaVersion = "actutum.build-result/v1"
 
 type Report struct {
 	SchemaVersion  string       `json:"schemaVersion"`

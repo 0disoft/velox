@@ -147,11 +147,11 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"ADR 0014 selects Actutum",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
-		"public executable blocked pending rename",
-		"create the candidate tag as a shortcut around the rename",
+		"public executable blocked pending repository identity",
+		"github.repository` is exactly",
 	})
 	assertSourceMarkers(t, filepath.Join(root, ".github", "workflows", "alpha-evidence.yml"), []string{
-		"if: false && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
+		"if: github.repository == '0disoft/actutum' && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
 	})
 
 	for path, forbidden := range map[string][]string{

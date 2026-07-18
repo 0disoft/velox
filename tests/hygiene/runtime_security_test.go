@@ -33,7 +33,7 @@ func TestProductionHostOpensNoListeningSocket(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, relativeRoot := range []string{
-		filepath.Join("cmd", "velox-host"),
+		filepath.Join("cmd", "actutum-host"),
 		filepath.Join("internal", "ipc"),
 		filepath.Join("internal", "webview2"),
 	} {

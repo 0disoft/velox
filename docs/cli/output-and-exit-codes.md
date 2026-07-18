@@ -104,7 +104,7 @@ Doctor currently uses `RUNTIME_PLATFORM_UNSUPPORTED`,
 
 Successful build JSON should include:
 
-- Velox release and contract versions.
+- Actutum release and contract versions.
 - Target.
 - Project-relative input summary.
 - Output paths relative to the selected output root.

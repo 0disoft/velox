@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/actutum/internal/buildplan"
 )
 
 func TestBuildIsDeterministicAndKeepsHostUnchanged(t *testing.T) {
@@ -158,11 +158,11 @@ func TestBuildRejectsInvalidExistingArchiveBeforePromotion(t *testing.T) {
 func fixture(t *testing.T) (string, string, string) {
 	t.Helper()
 	root := t.TempDir()
-	manifestPath := filepath.Join(root, "velox.json")
-	hostPath := filepath.Join(root, "release", "velox-host.exe")
+	manifestPath := filepath.Join(root, "actutum.json")
+	hostPath := filepath.Join(root, "release", "actutum-host.exe")
 	host := []byte("prebuilt-host\x00bytes")
 	writeFixture(t, hostPath, host)
-	writeFixture(t, filepath.Join(filepath.Dir(hostPath), "velox-host.json"), hostMetadata(host))
+	writeFixture(t, filepath.Join(filepath.Dir(hostPath), "actutum-host.json"), hostMetadata(host))
 	writeFixture(t, filepath.Join(root, "web", "index.html"), []byte("<!doctype html><title>Hello</title>"))
 	writeFixture(t, filepath.Join(root, "web", "app.js"), []byte("console.log('hello')\n"))
 	writeFixture(t, manifestPath, []byte(`{
@@ -177,7 +177,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"actutum.host/v1","releaseVersion":"0.6.0-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"actutum-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {
