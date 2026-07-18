@@ -26,10 +26,12 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "velox-signing-record: expected dry-run or verify")
+		fmt.Fprintln(stderr, "velox-signing-record: expected prepare, dry-run, or verify")
 		return 2
 	}
 	switch args[0] {
+	case "prepare":
+		return runPrepare(args[1:], stdout, stderr)
 	case "dry-run":
 		return runDryRun(args[1:], stdout, stderr)
 	case "verify":
@@ -38,6 +40,35 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "velox-signing-record: unknown command %q\n", args[0])
 		return 2
 	}
+}
+
+func runPrepare(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("velox-signing-record prepare", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	unsignedDirectory := flags.String("unsigned-dir", "", "directory containing unsigned velox.exe and velox-host.exe")
+	out := flags.String("out", "", "output velox-signing-input.zip path")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if flags.NArg() != 0 || *unsignedDirectory == "" || *out == "" {
+		fmt.Fprintln(stderr, "velox-signing-record: prepare requires --unsigned-dir and --out")
+		return 2
+	}
+	result, err := signingrecord.PrepareSigningInput(*unsignedDirectory, *out)
+	if err != nil {
+		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		return 6
+	}
+	if err := json.NewEncoder(stdout).Encode(struct {
+		SchemaVersion string                           `json:"schemaVersion"`
+		Command       string                           `json:"command"`
+		Publishable   bool                             `json:"publishable"`
+		Result        signingrecord.SigningInputResult `json:"result"`
+	}{SchemaVersion: "velox.signing-record-result/v1", Command: "prepare", Publishable: false, Result: result}); err != nil {
+		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		return 6
+	}
+	return 0
 }
 
 func runDryRun(args []string, stdout, stderr io.Writer) int {

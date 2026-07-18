@@ -54,6 +54,42 @@ func TestDryRunAndVerifyCommands(t *testing.T) {
 	}
 }
 
+func TestPrepareCommandCreatesSigningInput(t *testing.T) {
+	root := t.TempDir()
+	unsigned := filepath.Join(root, "unsigned")
+	writeCommandFile(t, filepath.Join(unsigned, "velox.exe"), "unsigned cli")
+	writeCommandFile(t, filepath.Join(unsigned, "velox-host.exe"), "unsigned host")
+	out := filepath.Join(root, "input", signingrecord.SigningInputName)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := run([]string{"prepare", "--unsigned-dir", unsigned, "--out", out}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("prepare code = %d, stderr = %s", code, stderr.String())
+	}
+	var created struct {
+		SchemaVersion string                           `json:"schemaVersion"`
+		Command       string                           `json:"command"`
+		Publishable   bool                             `json:"publishable"`
+		Result        signingrecord.SigningInputResult `json:"result"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.SchemaVersion != "velox.signing-record-result/v1" || created.Command != "prepare" || created.Publishable || created.Result.Path != out || created.Result.Artifact.File != signingrecord.SigningInputName {
+		t.Fatalf("prepare output = %#v", created)
+	}
+	if _, err := os.Stat(out); err != nil {
+		t.Fatal(err)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	code = run([]string{"prepare", "--unsigned-dir", unsigned, "--out", out}, &stdout, &stderr)
+	if code != 6 || !strings.Contains(stderr.String(), "already exists") {
+		t.Fatalf("second prepare code = %d, stderr = %s", code, stderr.String())
+	}
+}
+
 func TestVerifyCommandRejectsChangedEvidence(t *testing.T) {
 	fixture := commandFixture(t)
 	recordPath := filepath.Join(fixture.root, "signing-record.json")
@@ -82,6 +118,10 @@ func TestCommandRejectsIncompleteArguments(t *testing.T) {
 	stderr.Reset()
 	if code := run([]string{"verify"}, &stdout, &stderr); code != 2 {
 		t.Fatalf("verify code = %d", code)
+	}
+	stderr.Reset()
+	if code := run([]string{"prepare", "--out", signingrecord.SigningInputName}, &stdout, &stderr); code != 2 {
+		t.Fatalf("prepare code = %d", code)
 	}
 }
 
@@ -123,7 +163,7 @@ func commandFixture(t *testing.T) signingCommandFixture {
 	}
 	unsignedCLI := filepath.Join(fixture.unsigned, "velox.exe")
 	unsignedHost := filepath.Join(fixture.unsigned, "velox-host.exe")
-	writeCommandZIP(t, fixture.signingInput, []commandZIPFile{{Name: "velox.exe", Path: unsignedCLI}, {Name: "velox-host.exe", Path: unsignedHost}})
+	writeCommandZIP(t, fixture.signingInput, []commandZIPFile{{Name: "velox-host.exe", Path: unsignedHost}, {Name: "velox.exe", Path: unsignedCLI}})
 	signedCLIPath := filepath.Join(fixture.signed, "velox.exe")
 	signedHostPath := filepath.Join(fixture.signed, "velox-host.exe")
 	signedCLI := commandArtifact(t, signedCLIPath, "velox.exe")

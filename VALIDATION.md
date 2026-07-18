@@ -35,10 +35,11 @@ The parent workspace command contract currently provides these bounded intents:
   deterministic Windows x64 release bundle.
 - `velox_alpha_evidence_smoke` verifies the release manifest and emits local
   checksum, SPDX, and unsigned provenance evidence for that bundle.
-- `velox_signing_record_smoke` runs the repository-owned signing-record package
-  and maintainer CLI tests, emits a non-publishable dry-run record, validates it
-  against `velox.signing-record/v1`, and proves `publishable: true` is rejected
-  for dry-run evidence.
+- `velox_signing_record_smoke` runs the deterministic signing-input packager,
+  repository-owned signing-record package, and maintainer CLI tests; emits a
+  non-publishable dry-run record; validates it against
+  `velox.signing-record/v1`; and proves `publishable: true` is rejected for
+  dry-run evidence.
 - `velox_consumer_build_smoke` invokes only the assembled release CLI, creates
   a dependency-free starter, diagnoses its platform, WebView2, project, and
   bundled-host compatibility, builds it twice, checks

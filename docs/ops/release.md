@@ -95,6 +95,9 @@ the migration candidate for a project-owned publisher identity or paid service
 operation.
 
 The provider signs the reproducibly built `velox.exe` and `velox-host.exe`.
+The repository-owned `velox-signing-record prepare` command packages exactly
+those two unsigned files into a deterministic, self-verified signing input
+without contacting the provider.
 The final bundle is then assembled from those exact signed inputs so
 `velox-host.json` and `release-manifest.json` describe signed bytes. The generic
 host remains byte-identical after release and during application packaging, so
@@ -113,7 +116,8 @@ rebuild or re-sign different bytes for stable.
 The current workflow does not promote or publish anything and has only
 `contents: read`. Tag and manual runs produce retained workflow artifacts for
 review. A future publishing workflow requires successful provider onboarding,
-a dry-run lineage verifier, protected-environment approval, final artifact
+a deterministic signing-input packager, dry-run lineage verifier,
+protected-environment approval, final artifact
 attestations, and a narrowly isolated `contents: write` publication job.
 
 ## Stop Conditions

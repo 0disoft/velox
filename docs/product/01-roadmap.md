@@ -154,6 +154,9 @@ The repository-owned `velox.signing-record/v1` contract, dry-run generator, and
 lineage verifier now bind every unsigned, provider-output, final bundle,
 manifest, checksum, and SBOM digest. Dry-run evidence is mechanically
 non-publishable and does not claim signature or attestation verification.
+The maintainer `prepare` command also produces the provider input from exactly
+the two unsigned executables with deterministic ZIP metadata, no overwrite,
+and an immediate source-digest verification pass.
 
 ### Deliver
 
@@ -176,6 +179,8 @@ non-publishable and does not claim signature or attestation verification.
 - Obtain SignPath Foundation project acceptance and approve the exact artifact
   configuration, signing policy, publisher/profile identity, and protected
   environment.
+- Submit the repository-generated signing input through the accepted provider
+  configuration and preserve the returned request identity.
 - Implement real Authenticode verification and release-mode signing-record
   creation using provider output.
 - Implement final artifact attestations and the immutable publication gate.

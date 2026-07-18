@@ -232,7 +232,7 @@ func Validate(record Record) error {
 	if err := validateNativeSet("unsigned", record.Unsigned); err != nil {
 		return err
 	}
-	if err := validateArtifact("signing input", record.SigningInput, "velox-signing-input.zip"); err != nil {
+	if err := validateArtifact("signing input", record.SigningInput, SigningInputName); err != nil {
 		return err
 	}
 	if err := validateNativeSet("signed", record.Signed); err != nil {
@@ -335,7 +335,7 @@ func inspectFiles(files Files) (NativeSet, NativeSet, Distribution, Artifact, er
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect unsigned host: %w", err)
 	}
-	signingInput, err := inspectArtifact(files.SigningInput, "velox-signing-input.zip")
+	signingInput, err := inspectArtifact(files.SigningInput, SigningInputName)
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect signing input: %w", err)
 	}
@@ -425,7 +425,11 @@ func verifySigningInput(path string, unsigned NativeSet) error {
 	if len(reader.File) != 2 {
 		return errors.New("signing input must contain exactly two entries")
 	}
-	for index, name := range []string{"velox.exe", "velox-host.exe"} {
+	unsignedByName := map[string]Artifact{
+		unsigned.Artifacts[0].File: unsigned.Artifacts[0],
+		unsigned.Artifacts[1].File: unsigned.Artifacts[1],
+	}
+	for index, name := range []string{"velox-host.exe", "velox.exe"} {
 		entry := reader.File[index]
 		if entry.Name != name {
 			return fmt.Errorf("signing input entry %d must be %s", index, name)
@@ -434,7 +438,7 @@ func verifySigningInput(path string, unsigned NativeSet) error {
 		if err != nil {
 			return err
 		}
-		if artifact != unsigned.Artifacts[index] {
+		if artifact != unsignedByName[name] {
 			return fmt.Errorf("signing input %s differs from unsigned artifact", name)
 		}
 	}

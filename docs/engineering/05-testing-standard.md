@@ -74,6 +74,9 @@ window.
 - Signing-record schema, strict decoder, dry-run non-publishability, exact
   unsigned and signed artifact sets, signing-input ZIP contents, final manifest
   and ZIP lineage, checksums, and SBOM archive identity.
+- Signing-input preparation determinism, normalized ZIP metadata, exact
+  root-level executable set, missing or linked input rejection, and existing
+  output preservation.
 
 ## Reproducibility Tests
 
@@ -110,7 +113,7 @@ Fuzzing targets runtime configuration and IPC parsing once those parsers exist.
 | IPC method | dispatcher, permission denial, bridge, end-to-end |
 | Performance-sensitive path | correctness plus before-and-after measurement |
 | Release packaging | reproducibility, checksums, smoke, inspect |
-| Signing record | schema, semantic lineage, tamper failures, dry-run non-publishability |
+| Signing input or record | deterministic archive, schema, semantic lineage, tamper failures, dry-run non-publishability |
 
 ## Skipped Evidence
 

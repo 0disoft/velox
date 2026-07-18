@@ -291,8 +291,8 @@ func dryRunFixture(t *testing.T) DryRunOptions {
 		}
 	}
 	writeTestZIP(t, files.SigningInput, []testZIPFile{
-		{Name: "velox.exe", Path: files.UnsignedCLI},
 		{Name: "velox-host.exe", Path: files.UnsignedHost},
+		{Name: "velox.exe", Path: files.UnsignedCLI},
 	})
 	signedCLI := testArtifact(t, files.SignedCLI, "velox.exe")
 	signedHost := testArtifact(t, files.SignedHost, "velox-host.exe")

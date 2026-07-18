@@ -65,8 +65,9 @@ cannot splice in an unverified self-hosted build step.
 3. Require byte-identical unsigned `velox.exe` and `velox-host.exe` digests.
 4. Emit unsigned checksums, SBOM, and source-to-unsigned provenance. Preserve
    these as evidence; do not publish them as the final distribution.
-5. Package only the two unsigned executables as the signing request input and
-   record its digest.
+5. Use `velox-signing-record prepare` to package only the two unsigned
+   executables as the deterministic signing request input and record its
+   digest.
 6. Submit the exact input to the approved SignPath project, artifact
    configuration, and signing policy.
 7. Download the provider output and require exactly the two expected file
@@ -91,9 +92,15 @@ cannot splice in an unverified self-hosted build step.
 
 `schema/signing-record-v1.schema.json` and `internal/signingrecord` now own the
 machine-readable record shape and semantic validation. The maintainer-only
-`velox-signing-record dry-run` command hashes the unsigned inputs, signing-input
-ZIP, provider-output placeholders, final bundle, manifest, checksums, and SBOM;
-it then cross-checks their lineage before writing a record.
+`velox-signing-record prepare` command creates `velox-signing-input.zip` from
+exactly `velox-host.exe` and `velox.exe` in deterministic name order. It rejects
+missing, linked, empty, or changed inputs, refuses to overwrite an existing
+output, normalizes ZIP metadata, and verifies the generated archive against the
+source digests before returning success.
+
+`velox-signing-record dry-run` hashes the unsigned inputs, prepared
+signing-input ZIP, provider-output placeholders, final bundle, manifest,
+checksums, and SBOM; it then cross-checks their lineage before writing a record.
 
 Dry-run output is always `mode: dry-run`, `publishable: false`, records
 certificate status as `not-performed` without certificate identity fields, and
@@ -177,6 +184,7 @@ Do not add the signing workflow until all of these external values exist:
 - implemented release-mode record creation backed by real Authenticode and
   artifact-attestation verification.
 
-The no-publication dry-run and lineage checks now exist. They do not inspect an
-Authenticode signature or contact GitHub's attestation service, so release-mode
+The deterministic signing-input packager, no-publication dry-run, and lineage
+checks now exist. They do not submit the archive to a provider, inspect an
+Authenticode signature, or contact GitHub's attestation service, so release-mode
 record creation and release-write permission remain blocked.
