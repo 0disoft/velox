@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M2 complete; M3 active with all product go-or-kill gates resolved
+- Status: M3 complete; M4 alpha distribution evidence active
 
 ## Validation Source of Truth
 

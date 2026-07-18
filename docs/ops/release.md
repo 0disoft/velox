@@ -19,6 +19,14 @@ twice, checks deterministic ZIP hashes, and inspects the result. Hosted runner
 images can still contain preinstalled toolchains; the claim is that the
 consumer job does not invoke them.
 
+[Alpha evidence run 29631165931](https://github.com/0disoft/velox/actions/runs/29631165931)
+completed both jobs at commit
+`744b7809a0f82cad66a2936702abd4518287a551`. A separate artifact download
+verified all three checksum entries, the SPDX 2.3 and in-toto/SLSA document
+identities, the bundled consumer-result schema, and identical first and second
+consumer build hashes. This remains same-workflow evidence, not an independent
+public-download verification.
+
 ## Proposed Release Unit
 
 During MVP, the CLI, generic host, JavaScript bridge, schemas, and

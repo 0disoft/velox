@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M2 complete; M3 active with all product go-or-kill gates resolved
+- Status: M3 complete; M4 alpha distribution evidence active
 - Scope: general
 - Repository type: cli-tool
 
@@ -18,6 +18,12 @@ and an alpha evidence workflow. The workflow builds the release twice, emits
 checksums, a file-level SPDX SBOM, an unsigned in-toto/SLSA provenance
 statement, and then exercises it from a checkout-free consumer job. It still
 does not publish or sign an alpha release.
+
+[Hosted run 29631165931](https://github.com/0disoft/velox/actions/runs/29631165931)
+completed the reproducible producer and checkout-free consumer jobs. The
+downloaded evidence passed checksum and bundled consumer-schema verification;
+the provenance remains unsigned metadata rather than an authenticated
+attestation.
 
 ## Headline Metrics
 
