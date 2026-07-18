@@ -83,7 +83,7 @@ func runnerPlan(t *testing.T) buildplan.Plan {
 		t.Fatal(err)
 	}
 	digest := sha256.Sum256([]byte("host"))
-	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.5-dev","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest)
+	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.6-dev","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest)
 	if err := os.WriteFile(filepath.Join(filepath.Dir(host), "velox-host.json"), []byte(metadata), 0o644); err != nil {
 		t.Fatal(err)
 	}

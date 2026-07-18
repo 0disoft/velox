@@ -150,6 +150,11 @@ the final ZIP and SBOM, while SignPath Foundation is the conditional
 Authenticode provider for the CLI and unchanged host. This is a selected design,
 not provider onboarding or signed-release evidence.
 
+The repository-owned `velox.signing-record/v1` contract, dry-run generator, and
+lineage verifier now bind every unsigned, provider-output, final bundle,
+manifest, checksum, and SBOM digest. Dry-run evidence is mechanically
+non-publishable and does not claim signature or attestation verification.
+
 ### Deliver
 
 - Checksums and software bill of materials.
@@ -171,8 +176,9 @@ not provider onboarding or signed-release evidence.
 - Obtain SignPath Foundation project acceptance and approve the exact artifact
   configuration, signing policy, publisher/profile identity, and protected
   environment.
-- Implement and dry-run the unsigned-to-signed lineage record, Authenticode
-  verification, final artifact attestations, and immutable publication gate.
+- Implement real Authenticode verification and release-mode signing-record
+  creation using provider output.
+- Implement final artifact attestations and the immutable publication gate.
 - Publish immutable compatibility and limitation notes beside a real alpha.
 - Run the documented path from a repository and account not controlled by the
   implementation workflow.

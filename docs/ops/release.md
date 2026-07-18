@@ -6,11 +6,17 @@
 ## Current State
 
 Velox has no published release, package registry entry, implemented signing
-workflow, or stable version policy. Maintainer tooling builds the Go CLI and host, assembles
-the deterministic unsigned Windows x64 bundle, verifies artifact entries
-against the release manifest, and emits checksums, a file-level SPDX 2.3 SBOM,
-and one unsigned in-toto/SLSA provenance statement. The alpha-evidence workflow
-builds the bundle twice and rejects differing ZIP bytes.
+workflow, or stable version policy. Maintainer tooling builds the Go CLI and
+host, assembles the deterministic unsigned Windows x64 bundle, verifies
+artifact entries against the release manifest, and emits checksums, a
+file-level SPDX 2.3 SBOM, and one unsigned in-toto/SLSA provenance statement.
+The alpha-evidence workflow builds the bundle twice and rejects differing ZIP
+bytes.
+
+The repository also owns `velox.signing-record/v1` and a non-publishable
+dry-run verifier. It binds unsigned inputs, the signing-input ZIP, signed-output
+placeholders, the final manifest and ZIP, checksums, and SBOM without contacting
+a provider or claiming Authenticode or artifact-attestation success.
 
 A separate consumer job performs no source checkout and invokes no Go, Node,
 Rust, C++, Bun, or package-manager command. It downloads the producer artifact,
@@ -39,7 +45,7 @@ exists.
 
 Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
 policy remain UNDECIDED before public alpha. Local artifacts currently identify
-the development release as `0.5.5-dev`.
+the development release as `0.5.6-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 

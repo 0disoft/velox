@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/signing-record/v1.json",
+  "title": "Velox signing record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "publishable",
+    "releaseVersion",
+    "target",
+    "source",
+    "unsigned",
+    "signingInput",
+    "provider",
+    "signed",
+    "certificate",
+    "distribution",
+    "attestations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "velox.signing-record/v1" },
+    "mode": { "enum": ["dry-run", "release"] },
+    "publishable": { "type": "boolean" },
+    "releaseVersion": { "$ref": "#/$defs/text" },
+    "target": { "const": "windows-x64" },
+    "source": { "$ref": "#/$defs/source" },
+    "unsigned": { "$ref": "#/$defs/nativeSet" },
+    "signingInput": {
+      "allOf": [
+        { "$ref": "#/$defs/artifact" },
+        { "properties": { "file": { "const": "velox-signing-input.zip" } } }
+      ]
+    },
+    "provider": { "$ref": "#/$defs/provider" },
+    "signed": { "$ref": "#/$defs/nativeSet" },
+    "certificate": { "$ref": "#/$defs/certificate" },
+    "distribution": { "$ref": "#/$defs/distribution" },
+    "attestations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/attestation" },
+            {
+              "properties": {
+                "kind": { "const": "build-provenance" },
+                "subject": {
+                  "properties": { "file": { "const": "velox-windows-x64.zip" } }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/attestation" },
+            {
+              "properties": {
+                "kind": { "const": "sbom" },
+                "subject": {
+                  "properties": { "file": { "const": "velox-windows-x64.spdx.json" } }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "dry-run" } } },
+      "then": {
+        "properties": {
+          "publishable": { "const": false },
+          "certificate": {
+            "maxProperties": 1,
+            "properties": { "status": { "const": "not-performed" } }
+          },
+          "attestations": {
+            "not": {
+              "contains": {
+                "required": ["status"],
+                "properties": { "status": { "const": "verified" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "mode": { "const": "release" } } },
+      "then": {
+        "properties": {
+          "publishable": { "const": true },
+          "certificate": {
+            "required": ["status", "subject", "issuer", "serial", "timestampAuthority"],
+            "properties": { "status": { "const": "verified" } }
+          },
+          "attestations": {
+            "not": {
+              "contains": {
+                "required": ["status"],
+                "properties": { "status": { "const": "not-performed" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "bytes", "sha256"],
+      "properties": {
+        "file": { "$ref": "#/$defs/text" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "nativeSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifacts"],
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            {
+              "allOf": [
+                { "$ref": "#/$defs/artifact" },
+                { "properties": { "file": { "const": "velox.exe" } } }
+              ]
+            },
+            {
+              "allOf": [
+                { "$ref": "#/$defs/artifact" },
+                { "properties": { "file": { "const": "velox-host.exe" } } }
+              ]
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "tag", "workflow", "runId"],
+      "properties": {
+        "repository": { "type": "string", "format": "uri", "maxLength": 512 },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "tag": { "type": "string", "pattern": "^v[0-9A-Za-z][0-9A-Za-z.+-]*$", "maxLength": 128 },
+        "workflow": { "$ref": "#/$defs/text" },
+        "runId": { "type": "string", "pattern": "^[1-9][0-9]*$", "maxLength": 32 }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "project", "artifactConfiguration", "signingPolicy", "requestId"],
+      "properties": {
+        "name": { "enum": ["signpath-foundation", "microsoft-artifact-signing"] },
+        "project": { "$ref": "#/$defs/text" },
+        "artifactConfiguration": { "$ref": "#/$defs/text" },
+        "signingPolicy": { "$ref": "#/$defs/text" },
+        "requestId": { "$ref": "#/$defs/text" }
+      }
+    },
+    "certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["not-performed", "verified"] },
+        "subject": { "$ref": "#/$defs/text" },
+        "issuer": { "$ref": "#/$defs/text" },
+        "serial": { "$ref": "#/$defs/text" },
+        "timestampAuthority": { "$ref": "#/$defs/text" }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archive", "manifest", "checksums", "sbom"],
+      "properties": {
+        "archive": {
+          "allOf": [
+            { "$ref": "#/$defs/artifact" },
+            { "properties": { "file": { "const": "velox-windows-x64.zip" } } }
+          ]
+        },
+        "manifest": {
+          "allOf": [
+            { "$ref": "#/$defs/artifact" },
+            { "properties": { "file": { "const": "release-manifest.json" } } }
+          ]
+        },
+        "checksums": {
+          "allOf": [
+            { "$ref": "#/$defs/artifact" },
+            { "properties": { "file": { "const": "checksums.sha256" } } }
+          ]
+        },
+        "sbom": {
+          "allOf": [
+            { "$ref": "#/$defs/artifact" },
+            { "properties": { "file": { "const": "velox-windows-x64.spdx.json" } } }
+          ]
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "subject", "status"],
+      "properties": {
+        "kind": { "enum": ["build-provenance", "sbom"] },
+        "subject": { "$ref": "#/$defs/artifact" },
+        "status": { "enum": ["not-performed", "verified"] }
+      }
+    }
+  }
+}

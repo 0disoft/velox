@@ -71,6 +71,9 @@ window.
 - Build-result JSON.
 - CLI JSON envelope and process exit code.
 - Release manifest and artifact checksums.
+- Signing-record schema, strict decoder, dry-run non-publishability, exact
+  unsigned and signed artifact sets, signing-input ZIP contents, final manifest
+  and ZIP lineage, checksums, and SBOM archive identity.
 
 ## Reproducibility Tests
 
@@ -107,6 +110,7 @@ Fuzzing targets runtime configuration and IPC parsing once those parsers exist.
 | IPC method | dispatcher, permission denial, bridge, end-to-end |
 | Performance-sensitive path | correctness plus before-and-after measurement |
 | Release packaging | reproducibility, checksums, smoke, inspect |
+| Signing record | schema, semantic lineage, tamper failures, dry-run non-publishability |
 
 ## Skipped Evidence
 

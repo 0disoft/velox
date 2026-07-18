@@ -19,6 +19,7 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	writeReleaseFile(t, hostPath, []byte("host-binary"))
 	writeReleaseSchemas(t, sourceRoot)
 	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "consumer-e2e-v1.schema.json"), []byte("must-not-ship\n"))
+	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "signing-record-v1.schema.json"), []byte("must-not-ship\n"))
 	writeReleaseFile(t, filepath.Join(sourceRoot, "THIRD_PARTY_NOTICES.md"), []byte("notices\n"))
 
 	first, err := Build(Options{CLIPath: cliPath, HostPath: hostPath, SourceRoot: sourceRoot, OutputRoot: filepath.Join(root, "first")})
@@ -53,8 +54,10 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 11 {
 		t.Fatalf("unexpected release manifest: %+v", manifest)
 	}
-	if _, err := os.Stat(filepath.Join(first.Directory, "schema", "consumer-e2e-v1.schema.json")); !os.IsNotExist(err) {
-		t.Fatalf("maintainer-only schema shipped in consumer release: %v", err)
+	for _, name := range []string{"consumer-e2e-v1.schema.json", "signing-record-v1.schema.json"} {
+		if _, err := os.Stat(filepath.Join(first.Directory, "schema", name)); !os.IsNotExist(err) {
+			t.Fatalf("maintainer-only schema %s shipped in consumer release: %v", name, err)
+		}
 	}
 	for index := 1; index < len(manifest.Artifacts); index++ {
 		if manifest.Artifacts[index-1].File >= manifest.Artifacts[index].File {

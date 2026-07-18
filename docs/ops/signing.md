@@ -89,7 +89,21 @@ cannot splice in an unverified self-hosted build step.
 
 ## Signing Record
 
-The future machine-readable signing record must contain at least:
+`schema/signing-record-v1.schema.json` and `internal/signingrecord` now own the
+machine-readable record shape and semantic validation. The maintainer-only
+`velox-signing-record dry-run` command hashes the unsigned inputs, signing-input
+ZIP, provider-output placeholders, final bundle, manifest, checksums, and SBOM;
+it then cross-checks their lineage before writing a record.
+
+Dry-run output is always `mode: dry-run`, `publishable: false`, records
+certificate status as `not-performed` without certificate identity fields, and
+marks both attestations `not-performed`. The verifier
+rejects unknown JSON fields, extra JSON values, credential-bearing source URLs,
+linked evidence inputs, mismatched signing-input ZIP entries, unsigned/signed
+digest equality, final-manifest drift, final-ZIP drift, checksum drift, and an
+SBOM that does not identify the final ZIP digest.
+
+The machine-readable signing record contains at least:
 
 - schema version and release version;
 - source repository, commit, tag, workflow identity, and workflow run ID;
@@ -160,7 +174,9 @@ Do not add the signing workflow until all of these external values exist:
 - protected GitHub environment and named approver;
 - provider API-token scope and rotation owner;
 - tested signature-verification command path;
-- repository-owned signing-record schema and validator.
+- implemented release-mode record creation backed by real Authenticode and
+  artifact-attestation verification.
 
-The first implementation must support a no-publication dry run and prove its
-lineage checks before it receives release-write permission.
+The no-publication dry-run and lineage checks now exist. They do not inspect an
+Authenticode signature or contact GitHub's attestation service, so release-mode
+record creation and release-write permission remain blocked.
