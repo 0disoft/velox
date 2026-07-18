@@ -118,9 +118,18 @@ network, font, or framework dependency.
 
 ### Asset pack
 
-A deterministic fixture containing many small files and approximately 10 MiB
-of static assets. The exact file count, seed, and digest remain UNDECIDED until
-the benchmark repository is created.
+A deterministic fixture containing exactly 1,000 `.bin` files and 10,485,760
+bytes beneath ten directories. `velox.asset-pack-fixture/v1` pins
+`xorshift32-v1` with seed `1447383631`; `velox-bench` pins tree SHA-256
+`8b7fb697154d4fb91ae7a4f9c797109ff2b83f25cad8d0d947b9f523ef83005f`.
+
+[Hosted run 29627187122](https://github.com/0disoft/velox-bench/actions/runs/29627187122)
+completed one successful result-v2 sample for Velox, Wails, Neutralinojs, and
+Tauri. It is integration evidence, not a publishable comparison. The first run
+also exposed that the harness counted Velox's declared ZIP as an intermediate.
+[Run 29627976497](https://github.com/0disoft/velox-bench/actions/runs/29627976497)
+reused that ZIP as the final archive and recorded zero surviving intermediate
+files and bytes. Both runs uploaded zero Actions cache bytes.
 
 ## CI Frequency
 
