@@ -62,6 +62,10 @@ Reject a dependency that:
 
 - Pin release and benchmark inputs exactly.
 - Do not use latest in reproducible contracts.
+- Development builds use `X.Y.Z-dev`; public alpha artifacts use
+  `X.Y.Z-alpha.N` and an exact `v<releaseVersion>` immutable tag.
+- The first selected public candidate is `0.5.10-alpha.1`; any changed bytes
+  after publication require a higher alpha sequence.
 - Record host, manifest, IPC, and build-result compatibility independently.
 - Major dependency upgrades require compatibility and performance evidence.
 - Security updates remain narrow unless broader migration is explicitly

@@ -69,6 +69,7 @@ Foundation application and protected-environment handoff steps remain in
 - docs/ops/release.md
 - docs/ops/signing.md
 - docs/ops/signpath-onboarding.md
+- docs/ops/external-user-attempt.md
 - docs/ops/rollback.md
 
 Service-oriented backup, environment, secret, incident, and observability

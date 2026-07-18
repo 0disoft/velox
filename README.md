@@ -79,7 +79,9 @@ Explicitly deferred:
 - Security policy: SECURITY.md
 - Privacy policy: PRIVACY.md
 - Unsigned preview decision: docs/adr/0011-publish-unsigned-developer-preview-before-signing.md
+- Preview identity decision: docs/adr/0012-bind-preview-version-and-public-download-evidence.md
 - Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
+- External user attempt: docs/ops/external-user-attempt.md
 
 ## Current CLI Slice
 
@@ -119,7 +121,9 @@ developer-preview publication path. Deterministic signing-input, lineage, and
 fail-closed Authenticode verification tooling remain dormant for a future
 signed channel. Public distribution and a real external-user attempt remain
 open before M5; provider-approved signing and authenticated provenance are no
-longer M4 gates.
+longer M4 gates. The first candidate is `0.5.10-alpha.1`. A separate no-checkout
+workflow is ready to verify its eventual public GitHub Release URL, but it
+cannot count itself as an external-user attempt.
 
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,

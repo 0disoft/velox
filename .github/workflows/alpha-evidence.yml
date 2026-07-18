@@ -44,6 +44,7 @@ jobs:
     timeout-minutes: 15
     outputs:
       release_sha256: ${{ steps.build.outputs.release_sha256 }}
+      release_version: ${{ steps.build.outputs.release_version }}
     steps:
       - name: Check out source
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -100,7 +101,9 @@ jobs:
           $evidence | ConvertFrom-Json | Out-Null
           New-Item -ItemType Directory -Path 'dist/release' -Force | Out-Null
           Copy-Item -LiteralPath $results[0].archive -Destination 'dist/release/velox-windows-x64.zip'
+          $manifest = Get-Content -LiteralPath (Join-Path $results[0].directory 'release-manifest.json') -Raw | ConvertFrom-Json
           "release_sha256=$($results[0].archiveSha256)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "release_version=$($manifest.releaseVersion)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Verify evidence documents
         shell: pwsh
@@ -244,6 +247,9 @@ jobs:
 
       - name: Verify publication payload
         shell: pwsh
+        env:
+          VELOX_REF_NAME: ${{ github.ref_name }}
+          VELOX_RELEASE_VERSION: ${{ needs.producer.outputs.release_version }}
         run: |
           $ErrorActionPreference = 'Stop'
           $expected = @(
@@ -265,26 +271,32 @@ jobs:
               throw "Publication checksum mismatch for $name."
             }
           }
+          if ("v$env:VELOX_RELEASE_VERSION" -cne $env:VELOX_REF_NAME) {
+            throw 'The selected tag does not match the release manifest version.'
+          }
 
       - name: Publish immutable prerelease
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           VELOX_REF_NAME: ${{ github.ref_name }}
+          VELOX_RELEASE_SHA256: ${{ needs.producer.outputs.release_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $false
           $existing = gh release view $env:VELOX_REF_NAME --repo $env:GITHUB_REPOSITORY 2>$null
           if ($LASTEXITCODE -eq 0) { throw 'The release already exists and will not be replaced.' }
-          @'
+          @"
           ## Unsigned developer preview
 
           This preview is intended for developers evaluating the compile-free Windows x64 packaging path.
 
-          The executables are not Authenticode-signed. Windows SmartScreen may show an unknown-publisher warning, and managed Windows devices may block execution entirely. Verify `checksums.sha256` before running the archive.
+          The executables are not Authenticode-signed. Windows SmartScreen may show an unknown-publisher warning, and managed Windows devices may block execution entirely. Verify checksums.sha256 before running the archive.
 
           The checksum file, SPDX SBOM, and provenance statement describe the files in this release. They do not provide a Windows publisher identity, and the provenance statement is not an authenticated attestation.
-          '@ | Set-Content -LiteralPath '.ci/release-notes.md' -Encoding utf8
+
+          The independently recorded release ZIP SHA-256 is $env:VELOX_RELEASE_SHA256.
+          "@ | Set-Content -LiteralPath '.ci/release-notes.md' -Encoding utf8
           $assets = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File | Sort-Object Name | ForEach-Object FullName)
           gh release create $env:VELOX_REF_NAME @assets `
             --repo $env:GITHUB_REPOSITORY `
@@ -292,3 +304,4 @@ jobs:
             --notes-file '.ci/release-notes.md' `
             --prerelease `
             --verify-tag
+          "release_sha256=$env:VELOX_RELEASE_SHA256" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

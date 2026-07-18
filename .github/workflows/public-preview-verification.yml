@@ -1,0 +1,195 @@
+name: Public preview verification
+run-name: Verify ${{ inputs.release_tag }} from the public GitHub Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing Velox vX.Y.Z-alpha.N release tag
+        required: true
+        type: string
+      expected_release_sha256:
+        description: Independently copied SHA-256 for velox-windows-x64.zip
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-preview-verification-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Download and exercise public preview
+    runs-on: windows-2025
+    timeout-minutes: 8
+    steps:
+      - name: Download, verify, build, and start
+        shell: pwsh
+        env:
+          VELOX_RELEASE_TAG: ${{ inputs.release_tag }}
+          VELOX_EXPECTED_RELEASE_SHA256: ${{ inputs.expected_release_sha256 }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $started = [DateTime]::UtcNow
+          $tag = $env:VELOX_RELEASE_TAG
+          $expectedSha = $env:VELOX_EXPECTED_RELEASE_SHA256.ToLowerInvariant()
+          if ($tag -notmatch '^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][1-9][0-9]*$') {
+            throw 'release_tag must match vX.Y.Z-alpha.N.'
+          }
+          if ($expectedSha -notmatch '^[0-9a-f]{64}$') {
+            throw 'expected_release_sha256 must be a lowercase or uppercase SHA-256 digest.'
+          }
+
+          $repository = '0disoft/velox'
+          $releaseUrl = "https://github.com/$repository/releases/tag/$tag"
+          $downloadBase = "https://github.com/$repository/releases/download/$tag"
+          $acquired = Join-Path $env:RUNNER_TEMP 'velox-public-preview'
+          $unpacked = Join-Path $env:RUNNER_TEMP 'velox-public-preview-unpacked'
+          New-Item -ItemType Directory -Path $acquired,$unpacked,'.ci/result' -Force | Out-Null
+          $names = @(
+            'checksums.sha256',
+            'velox-windows-x64.intoto.jsonl',
+            'velox-windows-x64.spdx.json',
+            'velox-windows-x64.zip'
+          )
+          foreach ($name in $names) {
+            Invoke-WebRequest -Uri "$downloadBase/$name" -OutFile (Join-Path $acquired $name)
+          }
+
+          $archive = Join-Path $acquired 'velox-windows-x64.zip'
+          $observedSha = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($observedSha -ne $expectedSha) {
+            throw 'The downloaded release ZIP does not match the independently supplied SHA-256.'
+          }
+          $checksumLines = @(Get-Content -LiteralPath (Join-Path $acquired 'checksums.sha256'))
+          if ($checksumLines.Count -ne 3) {
+            throw 'checksums.sha256 must contain exactly three entries.'
+          }
+          foreach ($name in $names | Where-Object { $_ -ne 'checksums.sha256' }) {
+            $sha = (Get-FileHash -LiteralPath (Join-Path $acquired $name) -Algorithm SHA256).Hash.ToLowerInvariant()
+            if (-not ($checksumLines -contains "$sha  $name")) {
+              throw "checksums.sha256 does not describe $name."
+            }
+          }
+
+          $sbom = Get-Content -LiteralPath (Join-Path $acquired 'velox-windows-x64.spdx.json') -Raw | ConvertFrom-Json
+          if ($sbom.spdxVersion -ne 'SPDX-2.3' -or $sbom.packages.Count -ne 1 -or $sbom.files.Count -lt 1) {
+            throw 'The public SPDX document is incomplete.'
+          }
+          $provenanceLines = @(Get-Content -LiteralPath (Join-Path $acquired 'velox-windows-x64.intoto.jsonl'))
+          if ($provenanceLines.Count -ne 1) {
+            throw 'The public provenance JSONL must contain one statement.'
+          }
+          $provenance = $provenanceLines[0] | ConvertFrom-Json
+          $archiveSubject = @($provenance.subject | Where-Object name -EQ 'velox-windows-x64.zip')
+          if ($provenance._type -ne 'https://in-toto.io/Statement/v1' -or
+              $provenance.predicateType -ne 'https://slsa.dev/provenance/v1' -or
+              $archiveSubject.Count -ne 1 -or
+              $archiveSubject[0].digest.sha256 -ne $observedSha) {
+            throw 'The public provenance statement does not describe the release ZIP.'
+          }
+
+          Expand-Archive -LiteralPath $archive -DestinationPath $unpacked
+          $releaseRoots = @(Get-ChildItem -LiteralPath $unpacked -Directory)
+          if ($releaseRoots.Count -ne 1 -or $releaseRoots[0].Name -ne 'velox-windows-x64') {
+            throw 'The release ZIP has an unexpected root layout.'
+          }
+          $releaseRoot = $releaseRoots[0].FullName
+          $manifest = Get-Content -LiteralPath (Join-Path $releaseRoot 'release-manifest.json') -Raw | ConvertFrom-Json
+          if ("v$($manifest.releaseVersion)" -cne $tag -or $manifest.target -ne 'windows-x64') {
+            throw 'The public tag, release manifest version, and target do not agree.'
+          }
+          $cli = Get-Item -LiteralPath (Join-Path $releaseRoot 'velox.exe')
+          function Invoke-VeloxJson {
+            param([string[]] $Arguments)
+            $raw = & $cli.FullName @Arguments
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) {
+              throw "velox.exe failed with exit code $exitCode while running $($Arguments[0])."
+            }
+            $document = $raw | ConvertFrom-Json
+            if (-not $document.ok) {
+              throw "velox.exe returned a failed JSON envelope while running $($Arguments[0])."
+            }
+            return $document
+          }
+
+          $version = Invoke-VeloxJson -Arguments @('version', '--json')
+          if ($version.result.version -cne $manifest.releaseVersion) {
+            throw 'The CLI version does not match the release manifest.'
+          }
+          Invoke-VeloxJson -Arguments @('init', '.ci/project', '--json') | Out-Null
+          $project = (Resolve-Path -LiteralPath '.ci/project').Path
+          $config = Join-Path $project 'velox.json'
+          Invoke-VeloxJson -Arguments @('validate', '--config', $config, '--json') | Out-Null
+          $doctor = Invoke-VeloxJson -Arguments @('doctor', '--config', $config, '--out', 'dist-first', '--json')
+          if (-not $doctor.result.ready) {
+            throw 'The public preview doctor result is not ready.'
+          }
+          $first = Invoke-VeloxJson -Arguments @('build', '--config', $config, '--out', 'dist-first', '--json')
+          $second = Invoke-VeloxJson -Arguments @('build', '--config', $config, '--out', 'dist-second', '--json')
+          if ($first.result.archiveSha256 -ne $second.result.archiveSha256) {
+            throw 'Two public-preview consumer builds are not deterministic.'
+          }
+          $firstArchive = Join-Path $project $first.result.archive
+          Invoke-VeloxJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
+
+          $env:VELOX_BENCH_EXIT_AFTER_READY = '1'
+          $env:VELOX_DATA_DIR = Join-Path $env:RUNNER_TEMP 'velox-public-preview-profile'
+          $run = Invoke-VeloxJson -Arguments @('run', '--config', $config, '--out', (Join-Path $env:RUNNER_TEMP 'velox-public-preview-run'), '--json')
+          if ($run.result.exitCode -ne 0) {
+            throw 'The public preview did not complete its startup-ready smoke.'
+          }
+
+          $finished = [DateTime]::UtcNow
+          $result = [ordered]@{
+            schemaVersion = 'velox.public-preview-verification/v1'
+            repository = $repository
+            releaseTag = $tag
+            releaseVersion = $manifest.releaseVersion
+            releaseUrl = $releaseUrl
+            acquisitionMode = 'github-release-public-url-no-checkout'
+            expectedReleaseSha256 = $expectedSha
+            observedReleaseSha256 = $observedSha
+            checksumsVerified = $true
+            sbomVerified = $true
+            provenanceVerified = $true
+            deterministicBuild = $true
+            doctorReady = $true
+            startupReady = $true
+            startedAtUtc = $started.ToString('o')
+            finishedAtUtc = $finished.ToString('o')
+            endToEndMs = ($finished - $started).TotalMilliseconds
+            evidenceLevel = 'same-repository-public-download'
+            externalUserAttempt = $false
+            invokedTools = @('velox.exe')
+            environment = [ordered]@{
+              runnerImage = $env:ImageOS
+              runnerImageVersion = $env:ImageVersion
+              architecture = $env:PROCESSOR_ARCHITECTURE
+              githubRunId = $env:GITHUB_RUN_ID
+              githubRunAttempt = $env:GITHUB_RUN_ATTEMPT
+            }
+          }
+          $resultPath = '.ci/result/public-preview-verification.json'
+          $result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $resultPath -Encoding utf8
+          $schema = Get-Content -LiteralPath (Join-Path $releaseRoot 'schema/public-preview-verification-v1.schema.json') -Raw
+          $body = Get-Content -LiteralPath $resultPath -Raw
+          if (-not ($body | Test-Json -Schema $schema)) {
+            throw 'Public-preview verification evidence failed JSON Schema validation.'
+          }
+          "release=$releaseUrl" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "release_sha256=$observedSha" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "external_user_attempt=false" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Upload public-download evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: public-preview-verification-${{ inputs.release_tag }}-${{ github.run_attempt }}
+          path: .ci/result/public-preview-verification.json
+          retention-days: 30
+          if-no-files-found: warn

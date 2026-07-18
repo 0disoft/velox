@@ -1,0 +1,82 @@
+name: External user attempt
+description: Report an independent Velox developer-preview download, build, or startup attempt
+title: "[External attempt] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report only public, non-sensitive evidence. Do not include tokens, private paths, proprietary assets, or personal data.
+  - type: input
+    id: release_tag
+    attributes:
+      label: Release tag
+      placeholder: v0.5.10-alpha.1
+    validations:
+      required: true
+  - type: input
+    id: release_sha256
+    attributes:
+      label: Release ZIP SHA-256
+      placeholder: 64 lowercase hexadecimal characters
+    validations:
+      required: true
+  - type: input
+    id: evidence_url
+    attributes:
+      label: Public evidence URL
+      description: Optional workflow run, repository, or reproduction URL.
+    validations:
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: Windows and WebView2 versions
+      placeholder: Windows 11 24H2; WebView2 1xx.x.x.x
+    validations:
+      required: true
+  - type: dropdown
+    id: windows_reputation
+    attributes:
+      label: SmartScreen or managed-device result
+      options:
+        - Warning shown, execution allowed
+        - No warning shown
+        - Execution blocked by policy
+        - Not observed
+    validations:
+      required: true
+  - type: textarea
+    id: command_boundary
+    attributes:
+      label: Command boundary and outcome
+      description: List the last successful command, first failing command and safe error code, or the complete successful path.
+      placeholder: version -> init -> doctor -> build -> inspect -> run
+    validations:
+      required: true
+  - type: dropdown
+    id: toolchain_required
+    attributes:
+      label: Was a compiler, Node.js, or package-manager command required?
+      options:
+        - "No"
+        - "Yes"
+        - Unknown
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Overall outcome
+      options:
+        - Success
+        - Failure
+        - Blocked by environment or policy
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Submission safety
+      options:
+        - label: I removed tokens, private paths, proprietary assets, and personal data from this report.
+          required: true

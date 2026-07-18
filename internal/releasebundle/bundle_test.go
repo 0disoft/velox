@@ -51,8 +51,11 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 11 {
+	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 12 {
 		t.Fatalf("unexpected release manifest: %+v", manifest)
+	}
+	if _, err := os.Stat(filepath.Join(first.Directory, "schema", "public-preview-verification-v1.schema.json")); err != nil {
+		t.Fatalf("public-preview verification schema is absent from consumer release: %v", err)
 	}
 	for _, name := range []string{"consumer-e2e-v1.schema.json", "signing-record-v1.schema.json"} {
 		if _, err := os.Stat(filepath.Join(first.Directory, "schema", name)); !os.IsNotExist(err) {

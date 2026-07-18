@@ -41,7 +41,8 @@ The parent workspace command contract currently provides these bounded intents:
   `velox.signing-record/v1`; and proves `publishable: true` is rejected for
   dry-run evidence. The Go test suite also exercises the fail-closed
   Authenticode policy boundary and `velox.authenticode-verification/v1`; a real
-  signed-provider success remains an external M4 gate.
+  signed-provider success remains a deferred future-channel gate rather than an
+  M4 requirement.
 - `velox_signpath_onboarding_smoke` verifies the repository-owned SignPath
   artifact configuration, GitHub source policy, dual-license files,
   CODEOWNERS, security policy, privacy policy, and application handoff packet.
@@ -92,6 +93,13 @@ entered. The isolated publication job alone receives `contents: write`, refuses
 replacement, and creates a prerelease with SmartScreen and managed-device
 warnings. Workflow validation proves this contract; it does not publish a
 release.
+
+The manual `Public preview verification` workflow performs no source checkout
+and downloads the ZIP, checksum, SPDX, and provenance assets from the public
+GitHub Release URL. It requires an independently supplied ZIP SHA-256, binds the
+tag to the release manifest and CLI version, builds twice, inspects, and reaches
+the startup-ready marker. Its schema fixes `externalUserAttempt` to `false`, so
+this same-repository check cannot satisfy the independent-user M4 gate.
 
 The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`

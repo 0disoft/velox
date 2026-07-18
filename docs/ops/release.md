@@ -49,10 +49,10 @@ exists.
 
 ## Channels
 
-Planned channels are alpha, beta, and stable. The first public artifact is an
-unsigned developer preview using an immutable `vX.Y.Z-alpha.N` tag. Broader
-SemVer and support policy remain UNDECIDED before that preview. Local artifacts
-currently identify the development release as `0.5.10-dev`.
+Planned channels are alpha, beta, and stable. The first public artifact is the
+unsigned `0.5.10-alpha.1` developer preview using immutable tag
+`v0.5.10-alpha.1`. Broader beta, stable, and support policy remain UNDECIDED
+before M5.
 
 Nightly distribution is not planned during the initial project stage.
 
@@ -150,7 +150,8 @@ alone receives `contents: write`.
 That job downloads the producer evidence after the checkout-free consumer job
 passes, rejects missing or extra files, verifies every checksum, refuses an
 existing release, and creates an immutable GitHub prerelease with the unsigned
-warning. It does not sign, attest, rebuild, or replace artifacts.
+warning. It also rejects a tag that is not exactly `v<releaseVersion>`. It does
+not sign, attest, rebuild, or replace artifacts.
 
 Promotion to a future signed, beta, or stable channel reuses an already
 verified immutable candidate. It does not relabel unsigned bytes as signed or
@@ -170,3 +171,9 @@ After the first preview is published, an independent repository and account
 must verify download, checksum, version inspection, hello build, and application
 startup from the public asset. Same-workflow artifact consumption is necessary
 prepublication evidence but does not satisfy this external M4 gate.
+
+The repository-owned `Public preview verification` workflow covers the public
+URL, independently supplied digest, checksum, SPDX, provenance, tag/version,
+build, inspection, and startup boundaries without source checkout. Its result
+is explicitly same-repository evidence and cannot substitute for the qualifying
+attempt defined in `docs/ops/external-user-attempt.md`.

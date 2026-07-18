@@ -71,7 +71,7 @@ func buildReleaseFixture(t *testing.T) releasebundle.Result {
 	source := filepath.Join(root, "source")
 	writeEvidenceFixture(t, filepath.Join(input, "velox.exe"), []byte("cli"))
 	writeEvidenceFixture(t, filepath.Join(input, "velox-host.exe"), []byte("host"))
-	for _, name := range []string{"build-result-v1.schema.json", "consumer-clean-v1.schema.json", "host-metadata-v1.schema.json", "ipc-v1.schema.json", "release-manifest-v1.schema.json", "runtime-config-v1.schema.json", "velox-v1.schema.json"} {
+	for _, name := range []string{"build-result-v1.schema.json", "consumer-clean-v1.schema.json", "host-metadata-v1.schema.json", "ipc-v1.schema.json", "public-preview-verification-v1.schema.json", "release-manifest-v1.schema.json", "runtime-config-v1.schema.json", "velox-v1.schema.json"} {
 		writeEvidenceFixture(t, filepath.Join(source, "schema", name), []byte("{}\n"))
 	}
 	writeEvidenceFixture(t, filepath.Join(source, "THIRD_PARTY_NOTICES.md"), []byte("notices\n"))

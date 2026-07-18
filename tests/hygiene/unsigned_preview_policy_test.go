@@ -23,7 +23,7 @@ func TestUnsignedDeveloperPreviewIsTheM4DistributionGate(t *testing.T) {
 			"Unsigned developer-preview publication implemented but not yet exercised",
 			"The isolated publication job",
 			"alone receives `contents: write`",
-			"It does not sign, attest, rebuild, or replace artifacts",
+			"not sign, attest, rebuild, or replace artifacts",
 		},
 		"docs/ops/signing.md": {
 			"Dormant future-channel tooling",

@@ -135,7 +135,7 @@ func TestBuildDryRunRejectsBrokenArtifactLineage(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				writeTestFile(t, options.Files.ReleaseManifest, strings.Replace(string(data), "0.5.10-dev", "0.5.11-dev", 1))
+				writeTestFile(t, options.Files.ReleaseManifest, strings.Replace(string(data), "0.5.10-alpha.1", "0.5.10-alpha.2", 1))
 			},
 			message: "verify final release manifest",
 		},
@@ -318,7 +318,7 @@ func dryRunFixture(t *testing.T) DryRunOptions {
 	signedHost := testArtifact(t, files.SignedHost, "velox-host.exe")
 	manifest := releasebundle.Manifest{
 		SchemaVersion:  releasebundle.SchemaVersion,
-		ReleaseVersion: "0.5.10-dev",
+		ReleaseVersion: "0.5.10-alpha.1",
 		Target:         Target,
 		Artifacts: []releasebundle.Artifact{
 			{File: signedCLI.File, Bytes: signedCLI.Bytes, SHA256: signedCLI.SHA256},
@@ -339,7 +339,7 @@ func dryRunFixture(t *testing.T) DryRunOptions {
 	sbom := testArtifact(t, files.SBOM, "velox-windows-x64.spdx.json")
 	writeTestFile(t, files.Checksums, fmt.Sprintf("%s  %s\n%s  %s\n", archive.SHA256, archive.File, sbom.SHA256, sbom.File))
 	return DryRunOptions{
-		ReleaseVersion: "0.5.10-dev",
+		ReleaseVersion: "0.5.10-alpha.1",
 		Source: Source{
 			Repository: "https://github.com/0disoft/velox",
 			Commit:     strings.Repeat("a", 40),

@@ -184,13 +184,18 @@ still needs accepted provider output and the approved publisher subject.
 
 ### Remaining gates
 
-- Select and push one immutable `vX.Y.Z-alpha.N` tag.
+- Push the selected immutable `v0.5.10-alpha.1` tag.
 - Run the manual unsigned-preview publication gate with its exact confirmation.
-- Verify the downloaded public artifact rather than a same-run workflow artifact.
+- Run the no-checkout public-download verifier with the independently recorded
+  release SHA-256.
 - Publish immutable compatibility, SmartScreen, managed-device, directory-
   tampering, and branding limitations beside the preview.
 - Run the documented path from a repository and account not controlled by the
   implementation workflow.
+
+The tag/version binding, public-download result schema, workflow, and external-
+attempt issue contract are implemented but remain unexercised until the public
+release exists.
 
 SignPath onboarding, Authenticode verification against real provider output,
 release-mode signing records, and authenticated artifact attestations are

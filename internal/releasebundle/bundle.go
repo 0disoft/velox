@@ -29,6 +29,7 @@ var releaseSchemaFiles = []string{
 	"consumer-clean-v1.schema.json",
 	"host-metadata-v1.schema.json",
 	"ipc-v1.schema.json",
+	"public-preview-verification-v1.schema.json",
 	"release-manifest-v1.schema.json",
 	"runtime-config-v1.schema.json",
 	"velox-v1.schema.json",

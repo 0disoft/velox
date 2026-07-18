@@ -66,7 +66,9 @@ are implemented and tested.
 
 ## Current Gap
 
-The local runtime, deterministic unsigned release builder, and hosted alpha
-evidence workflow exist. ADR 0010 defines the signing and attestation boundary,
-but provider onboarding, signed artifacts, public distribution, independent
-public-download verification, and release operational history do not exist.
+The local runtime, deterministic unsigned release builder, hosted alpha
+evidence workflow, guarded prerelease publisher, and no-checkout public-download
+verifier exist. ADR 0012 selects `0.5.10-alpha.1` and the external-user evidence
+contract. No public distribution, executed public-download result, qualifying
+external-user attempt, or release operational history exists. ADR 0010's signed
+channel remains deferred.
