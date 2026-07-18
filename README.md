@@ -13,11 +13,11 @@ The repository now contains a policy-enforcing pure-Go WebView2 host, a frozen
 and permission-checked IPC v1 bridge, manifest
 validation, an immutable build plan, atomic portable-directory assembly, a
 deterministic ZIP writer, all seven M1 CLI commands, an unsigned deterministic
-Windows x64 release bundle, startup fixtures, and a zero-cache consumer
-evidence workflow. It is not an alpha distribution. The publishable Wails
-zero-cache pair passes the cold-build gate, while release provenance, the
-remaining cross-framework evidence, and the non-performance product gates
-remain incomplete.
+Windows x64 release bundle, startup fixtures, zero-cache consumer evidence,
+and an alpha evidence workflow. The workflow builds the release twice, emits
+checksums, a file-level SPDX SBOM, an unsigned in-toto/SLSA provenance
+statement, and then exercises it from a checkout-free consumer job. It still
+does not publish or sign an alpha release.
 
 ## Headline Metrics
 
@@ -102,9 +102,10 @@ M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging
 slice, and M2 closed the minimum runtime security contract. M3 has passed its
 publishable Wails cold-build gate and its narrowly defined structural-
 simplicity gate. Startup has been removed from the headline and retained as a
-release guardrail. M3 remains active because the recommended-cache suite is not
-implemented. External user attempts and the PWA counterargument remain required
-before the M5 product decision.
+release guardrail. M3's recommended-cache execution path is implemented in the
+benchmark repository, with hosted completion evidence still required. M4 has a
+local and hosted alpha-evidence path, but signing, authenticated provenance,
+public distribution, and a real external-user attempt remain open before M5.
 
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,

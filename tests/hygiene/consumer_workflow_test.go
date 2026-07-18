@@ -149,3 +149,30 @@ func TestActionsWarningMonitorIsBoundedAndDiagnostic(t *testing.T) {
 		t.Fatal("known upstream warning presence must remain diagnostic")
 	}
 }
+
+func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T) {
+	path := filepath.Join("..", "..", ".github", "workflows", "alpha-evidence.yml")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := string(data)
+	consumerIndex := strings.Index(workflow, "\n  clean-consumer:\n")
+	if consumerIndex < 0 {
+		t.Fatal("checkout-free consumer job is missing")
+	}
+	consumer := workflow[consumerIndex:]
+	for _, forbidden := range []string{"actions/checkout@", "actions/setup-go@", "actions/cache@", "go build", "go run", "go test", "node ", "npm ", "bun "} {
+		if strings.Contains(consumer, forbidden) {
+			t.Errorf("checkout-free consumer job contains forbidden surface %q", forbidden)
+		}
+	}
+	for _, required := range []string{"velox-release-evidence", "SPDX-2.3", "https://in-toto.io/Statement/v1", "Independent unsigned release builds are not byte-identical", "github-actions-artifact-no-checkout", "schema/consumer-clean-v1.schema.json", "retention-days: 7", "retention-days: 30"} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("alpha evidence workflow is missing %q", required)
+		}
+	}
+	if strings.Contains(workflow, "contents: write") || strings.Contains(workflow, "gh release") {
+		t.Fatal("alpha evidence must not publish a GitHub Release")
+	}
+}

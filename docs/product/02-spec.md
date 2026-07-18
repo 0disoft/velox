@@ -68,8 +68,10 @@ build path. It accepts a smaller feature set in exchange.
 The M1 implementation produces these outputs for `windows-x64`. An unsigned,
 deterministic consumer release bundle now carries strict host metadata and the
 CLI verifies its release, target, contract versions, size, and SHA-256 before a
-build. Public distribution, signatures, and provenance remain later release
-work; sidecar metadata alone is not a trust anchor.
+build. The alpha-evidence path now emits checksums, SPDX, and an unsigned
+provenance statement. Public distribution, signatures, and authenticated
+provenance remain later release work; sidecar metadata alone is not a trust
+anchor.
 
 ### Runtime
 

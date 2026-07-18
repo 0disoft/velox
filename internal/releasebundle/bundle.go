@@ -26,6 +26,7 @@ const (
 
 var releaseSchemaFiles = []string{
 	"build-result-v1.schema.json",
+	"consumer-clean-v1.schema.json",
 	"host-metadata-v1.schema.json",
 	"ipc-v1.schema.json",
 	"release-manifest-v1.schema.json",

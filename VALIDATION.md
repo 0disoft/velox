@@ -33,6 +33,8 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_build` maps to the production Go host build.
 - `velox_release_bundle` builds the Go CLI and host and assembles the unsigned,
   deterministic Windows x64 release bundle.
+- `velox_alpha_evidence_smoke` verifies the release manifest and emits local
+  checksum, SPDX, and unsigned provenance evidence for that bundle.
 - `velox_consumer_build_smoke` invokes only the assembled release CLI, creates
   a dependency-free starter, diagnoses its platform, WebView2, project, and
   bundled-host compatibility, builds it twice, checks
@@ -67,6 +69,12 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_workflow_validate` parses the repository-owned GitHub Actions workflow
   with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
+
+The hosted `Alpha release evidence` workflow builds the unsigned release twice,
+requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance
+artifacts, and passes the artifact to a checkout-free consumer job. That job
+invokes only `velox.exe`; it does not prove signing, authenticated provenance,
+public-release download, or adoption by an external user.
 
 The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`

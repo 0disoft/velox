@@ -98,7 +98,7 @@ Audit baseline: `velox-bench` revision
 | Separate public benchmark repository | Complete | `0disoft/velox-bench` owns the public contracts, fixtures, workflows, and raw-evidence schemas |
 | Pinned Velox, Wails, Neutralino, and Tauri adapters | Complete | `bench.lock.json` pins immutable revisions and the contract check enforces all four adapters and byte-identical hello assets |
 | Hello and deterministic asset-pack fixtures | Complete | The dependency-free hello fixture remains canonical; the asset-pack manifest pins a dependency-free 1,000-file, exact-10-MiB generator contract and tree digest without committing generated payloads. [Run 29627187122](https://github.com/0disoft/velox-bench/actions/runs/29627187122) completed one non-publishable hosted sample for all four adapters; [run 29627976497](https://github.com/0disoft/velox-bench/actions/runs/29627976497) then verified Velox declared-ZIP accounting at zero surviving intermediate files and bytes |
-| Zero-cache and recommended-cache suites | Partial | The hosted zero-cache suite is executable and published; recommended-cache exists only as methodology text |
+| Zero-cache and recommended-cache suites | Partial | The hosted zero-cache suite is published. Recommended-cache now has versioned prime/warm results, exact GitHub cache archive bytes, separate-runner restore, failure preservation, and run-owned cache cleanup; a hosted completion run is still required |
 | Raw versioned JSON results and generated summary tables | Complete | The pinned pair evidence, normalized run metadata, publication contract, and README table are committed; contract checks regenerate the publication and table in memory to reject hand-edited values |
 | CI resource usage disclosure | Complete | The publication reports workflow wall time, aggregate observed job runtime, job outcomes, artifact count and bytes, and cache upload while explicitly separating those observations from billed Actions minutes |
 
@@ -135,6 +135,13 @@ used to promote these rows to `Complete`.
 
 ## M4: Alpha Distribution
 
+Status: Active.
+
+The repository now owns an unsigned evidence pipeline. It produces two
+independent release builds, checks byte identity, emits checksums, a file-level
+SPDX SBOM, and an unsigned in-toto/SLSA provenance statement, then runs a
+checkout-free consumer build. This is release evidence, not a published alpha.
+
 ### Deliver
 
 - Checksums and software bill of materials.
@@ -150,6 +157,15 @@ used to promote these rows to `Complete`.
 - Missing WebView2 and unsupported Windows environments produce actionable
   diagnostics.
 - Directory asset tampering and branding limitations are prominent.
+
+### Remaining gates
+
+- Authenticate provenance and sign the distributed CLI and unchanged host.
+- Publish immutable compatibility and limitation notes beside a real alpha.
+- Run the documented path from a repository and account not controlled by the
+  implementation workflow.
+- Verify the downloaded public artifact rather than a same-run workflow
+  artifact.
 
 ## M5: Product Decision
 

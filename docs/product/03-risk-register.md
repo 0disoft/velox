@@ -25,7 +25,7 @@
 | R-010 | External WebView2 policy or runtime availability blocks users | Medium | High | Open | M0 records runtime versions; doctor must fail with actionable local diagnostics |
 | R-011 | Working name conflicts with existing products or namespaces | High | Medium | Open | Treat Velox as a working name and complete naming review before public package release |
 | R-012 | Benchmark targets become marketing theater | Medium | Critical | Open | Keep setup in headline timing; scope the current decision to the generated Velox-Wails pair artifact and make any future README numeric claim mechanically derived from published evidence |
-| R-013 | A downloaded release bundle is tampered with | Low | Critical | Open | Pin checksums and publish provenance before alpha distribution |
+| R-013 | A downloaded release bundle is tampered with | Low | Critical | Open | The alpha-evidence workflow emits checksums, SPDX, and unsigned provenance and verifies same-run artifacts without checkout. Keep the risk open until provenance is authenticated, binaries are signed, and a public download is verified independently |
 | R-014 | Static-only scope has too little user value | Medium | Critical | Open | ADR 0008 limits the answer to offline portable deterministic artifacts; require external user attempts to prove that distinction matters before M5 |
 | R-015 | Virtual HTTPS and same-UDF relaunch ownership create a controller-startup tail | High | High | Monitoring | Keep file URL diagnostic-only under ADR 0007; publish the delay, UDF, origin, browser-process, and phase recovery matrix before changing transport or adding a workaround |
 

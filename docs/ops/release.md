@@ -1,14 +1,23 @@
 # Release
 
-- Status: Unsigned local bundle implemented
+- Status: Unsigned alpha evidence pipeline implemented; public distribution unavailable
 - Owner: Project maintainer
 
 ## Current State
 
 Velox has no published release, package registry entry, signing process, or
-stable version policy. A maintainer-only local command now builds the Go CLI
-and host and assembles a deterministic unsigned Windows x64 bundle for M1
-consumer smoke tests. That local artifact is not a public software release.
+stable version policy. Maintainer tooling builds the Go CLI and host, assembles
+the deterministic unsigned Windows x64 bundle, verifies artifact entries
+against the release manifest, and emits checksums, a file-level SPDX 2.3 SBOM,
+and one unsigned in-toto/SLSA provenance statement. The alpha-evidence workflow
+builds the bundle twice and rejects differing ZIP bytes.
+
+A separate consumer job performs no source checkout and invokes no Go, Node,
+Rust, C++, Bun, or package-manager command. It downloads the producer artifact,
+verifies its checksum, initializes and validates a project, runs doctor, builds
+twice, checks deterministic ZIP hashes, and inspects the result. Hosted runner
+images can still contain preinstalled toolchains; the claim is that the
+consumer job does not invoke them.
 
 ## Proposed Release Unit
 
@@ -22,7 +31,7 @@ exists.
 
 Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
 policy remain UNDECIDED before public alpha. Local artifacts currently identify
-the development release as `0.5.4-dev`.
+the development release as `0.5.5-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 
@@ -39,12 +48,17 @@ Nightly distribution is not planned during the initial project stage.
 - Provenance before public alpha.
 
 The current local bundle includes the CLI, unchanged host, strict host
-metadata, the five product JSON schemas, release manifest, and third-party
-notices. The release builder uses an explicit schema allowlist and fails when a
-required product schema is missing. Benchmark and CI evidence schemas remain
-maintainer contracts and are not copied into the consumer archive. SBOM,
-signatures, provenance, compatibility notes, and public checksums remain alpha
-gates rather than claimed M1 output.
+metadata, product and checkout-free-consumer JSON schemas, release manifest,
+and third-party notices. The release builder uses an explicit schema allowlist
+and fails when a required product schema is missing. Benchmark and other CI
+evidence schemas remain maintainer contracts and are not copied into the
+consumer archive.
+
+Checksums, SPDX, and provenance are workflow artifacts, not contents of the
+consumer ZIP. The provenance statement is deterministic metadata but is not a
+signed attestation. An attacker who can replace both release and evidence can
+still forge the complete unsigned set. Authenticated provenance, signatures,
+compatibility notes, and public release publication therefore remain M4 gates.
 
 ## Release Gates
 
@@ -70,6 +84,11 @@ and promotion workflow remain UNDECIDED.
 
 Promotion reuses an already verified immutable artifact. It does not rebuild
 different bytes for stable.
+
+The current workflow does not promote or publish anything and has only
+`contents: read`. Tag and manual runs produce retained workflow artifacts for
+review. A future publishing workflow requires a separate approval, signing
+decision, and writable GitHub permission boundary.
 
 ## Stop Conditions
 

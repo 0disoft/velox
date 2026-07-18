@@ -1,0 +1,197 @@
+name: Alpha release evidence
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/alpha-evidence.yml"
+      - "cmd/velox/**"
+      - "cmd/velox-host/**"
+      - "cmd/velox-release/**"
+      - "cmd/velox-release-evidence/**"
+      - "internal/releasebundle/**"
+      - "internal/releaseevidence/**"
+      - "schema/**"
+      - "tests/hygiene/**"
+      - "go.mod"
+      - "go.sum"
+      - "THIRD_PARTY_NOTICES.md"
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*-alpha.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-evidence-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  producer:
+    name: Build reproducible unsigned alpha evidence
+    runs-on: windows-2025
+    timeout-minutes: 15
+    outputs:
+      release_sha256: ${{ steps.build.outputs.release_sha256 }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          check-latest: false
+          cache: false
+
+      - name: Test release contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'alpha-test-go-build'
+          go test -count=1 ./internal/releasebundle ./internal/releaseevidence ./tests/hygiene
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build release twice and generate evidence
+        id: build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'alpha-release-go-build'
+          $createdAt = (git show -s --format=%cI $env:GITHUB_SHA).Trim()
+          if ($LASTEXITCODE -ne 0 -or -not $createdAt) { throw 'Source commit timestamp is unavailable.' }
+          $results = @()
+          foreach ($name in @('first', 'second')) {
+            $input = Join-Path $env:RUNNER_TEMP "alpha-$name-input"
+            $output = Join-Path $env:GITHUB_WORKSPACE "dist/alpha-$name"
+            New-Item -ItemType Directory -Path $input -Force | Out-Null
+            go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'velox.exe') ./cmd/velox
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'velox-host.exe') ./cmd/velox-host
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $raw = go run ./cmd/velox-release --cli (Join-Path $input 'velox.exe') --host (Join-Path $input 'velox-host.exe') --source-root $env:GITHUB_WORKSPACE --out $output --json
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $results += ($raw | ConvertFrom-Json)
+          }
+          if ($results.Count -ne 2 -or $results[0].archiveSha256 -ne $results[1].archiveSha256) {
+            throw 'Independent unsigned release builds are not byte-identical.'
+          }
+          $evidence = go run ./cmd/velox-release-evidence `
+            --release-directory $results[0].directory `
+            --release-archive $results[0].archive `
+            --out (Join-Path $env:GITHUB_WORKSPACE 'dist/release-evidence') `
+            --source-commit $env:GITHUB_SHA `
+            --invocation-id "$($env:GITHUB_RUN_ID)/$($env:GITHUB_RUN_ATTEMPT)" `
+            --created-at $createdAt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence | ConvertFrom-Json | Out-Null
+          New-Item -ItemType Directory -Path 'dist/release' -Force | Out-Null
+          Copy-Item -LiteralPath $results[0].archive -Destination 'dist/release/velox-windows-x64.zip'
+          "release_sha256=$($results[0].archiveSha256)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Verify evidence documents
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sbom = Get-Content -LiteralPath 'dist/release-evidence/velox-windows-x64.spdx.json' -Raw | ConvertFrom-Json
+          if ($sbom.spdxVersion -ne 'SPDX-2.3' -or $sbom.packages.Count -ne 1 -or $sbom.files.Count -lt 1) { throw 'SPDX evidence is incomplete.' }
+          $provenanceLines = @(Get-Content -LiteralPath 'dist/release-evidence/velox-windows-x64.intoto.jsonl')
+          if ($provenanceLines.Count -ne 1) { throw 'Provenance JSONL must contain one statement.' }
+          $provenance = $provenanceLines[0] | ConvertFrom-Json
+          if ($provenance._type -ne 'https://in-toto.io/Statement/v1' -or $provenance.predicateType -ne 'https://slsa.dev/provenance/v1') { throw 'Provenance statement identity is invalid.' }
+          $checksums = Get-Content -LiteralPath 'dist/release-evidence/checksums.sha256'
+          if ($checksums.Count -ne 3 -or $checksums[0] -notmatch '^${{ steps.build.outputs.release_sha256 }}  velox-windows-x64[.]zip$') { throw 'Checksum manifest is incomplete.' }
+
+      - name: Upload alpha evidence bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: velox-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            dist/release/velox-windows-x64.zip
+            dist/release-evidence/checksums.sha256
+            dist/release-evidence/velox-windows-x64.spdx.json
+            dist/release-evidence/velox-windows-x64.intoto.jsonl
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
+  clean-consumer:
+    name: Checkout-free consumer smoke
+    needs: producer
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - name: Start acquisition clock
+        shell: pwsh
+        run: |
+          "VELOX_CLEAN_STARTED_TICKS=$([DateTime]::UtcNow.Ticks)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Download alpha evidence bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: velox-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          path: .ci/acquired
+
+      - name: Build without source checkout or language toolchain
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = @(Get-ChildItem -LiteralPath '.ci/acquired' -Recurse -File -Filter 'velox-windows-x64.zip')
+          $checksums = @(Get-ChildItem -LiteralPath '.ci/acquired' -Recurse -File -Filter 'checksums.sha256')
+          if ($zip.Count -ne 1 -or $checksums.Count -ne 1) { throw 'Downloaded alpha evidence is incomplete or ambiguous.' }
+          $releaseSha = (Get-FileHash -LiteralPath $zip[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($releaseSha -ne '${{ needs.producer.outputs.release_sha256 }}') { throw 'Release artifact digest differs from producer output.' }
+          if (-not (Select-String -LiteralPath $checksums[0].FullName -Pattern "^$releaseSha  velox-windows-x64[.]zip$" -Quiet)) { throw 'Release artifact is absent from checksums.sha256.' }
+          Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath '.ci/release'
+          $cli = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File -Filter 'velox.exe')
+          if ($cli.Count -ne 1) { throw 'Release archive must contain exactly one velox.exe.' }
+          & $cli[0].FullName init '.ci/project' --json | ConvertFrom-Json | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $cli[0].FullName validate --config '.ci/project/velox.json' --json | ConvertFrom-Json | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $cli[0].FullName doctor --config '.ci/project/velox.json' --out '.ci/first' --json | ConvertFrom-Json | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $cli[0].FullName build --config '.ci/project/velox.json' --out '.ci/first' --json | ConvertFrom-Json | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $cli[0].FullName build --config '.ci/project/velox.json' --out '.ci/second' --json | ConvertFrom-Json | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $first = @(Get-ChildItem -LiteralPath '.ci/first' -File -Filter '*.zip')
+          $second = @(Get-ChildItem -LiteralPath '.ci/second' -File -Filter '*.zip')
+          if ($first.Count -ne 1 -or $second.Count -ne 1) { throw 'Consumer build outputs are incomplete.' }
+          $firstSha = (Get-FileHash -LiteralPath $first[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $secondSha = (Get-FileHash -LiteralPath $second[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($firstSha -ne $secondSha) { throw 'Consumer builds are not deterministic.' }
+          & $cli[0].FullName inspect $first[0].FullName --json | ConvertFrom-Json | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $finished = [DateTime]::UtcNow
+          $started = [DateTime]::new([long] $env:VELOX_CLEAN_STARTED_TICKS, [DateTimeKind]::Utc)
+          $result = [ordered]@{
+            schemaVersion = 'velox.consumer-clean/v1'
+            sourceCommit = '${{ github.sha }}'
+            acquisitionMode = 'github-actions-artifact-no-checkout'
+            releaseSha256 = $releaseSha
+            startedAtUtc = $started.ToString('o')
+            finishedAtUtc = $finished.ToString('o')
+            endToEndMs = ($finished - $started).TotalMilliseconds
+            firstBuildSha256 = $firstSha
+            secondBuildSha256 = $secondSha
+            deterministic = $true
+            invokedTools = @('velox.exe')
+          }
+          New-Item -ItemType Directory -Path '.ci/result' -Force | Out-Null
+          $result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath '.ci/result/consumer-clean.json' -Encoding utf8
+          $schema = Get-Content -LiteralPath (Join-Path $cli[0].Directory.FullName 'schema/consumer-clean-v1.schema.json') -Raw
+          $body = Get-Content -LiteralPath '.ci/result/consumer-clean.json' -Raw
+          if (-not ($body | Test-Json -Schema $schema)) { throw 'Checkout-free consumer result failed JSON Schema validation.' }
+
+      - name: Upload checkout-free consumer evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: velox-clean-consumer-${{ github.sha }}-${{ github.run_attempt }}
+          path: .ci/result/consumer-clean.json
+          retention-days: 30
+          if-no-files-found: error
