@@ -71,7 +71,10 @@ docs/engineering/03-performance-budget.md.
 ## Compatibility
 
 - Windows x64 and Evergreen WebView2 are the only initial compatibility promise.
-- Exact minimum Windows and WebView2 versions remain UNDECIDED until M0.
+- The supported floor is Windows 10 version 1709 x64 or Windows Server 2016
+  x64 with Evergreen WebView2 Runtime `92.0.902.49` or newer. This is the
+  intersection of the Go runtime floor and the `ICoreWebView2_4` security API
+  required to deny downloads.
 - Manifest, IPC, host, and build-result versions reject unsupported required
   versions rather than guessing.
 - Cross-platform support requires a separate ADR and benchmark.

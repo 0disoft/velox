@@ -171,7 +171,7 @@ func commandFixture(t *testing.T) signingCommandFixture {
 	manifestPath := filepath.Join(fixture.release, "release-manifest.json")
 	writeCommandJSON(t, manifestPath, releasebundle.Manifest{
 		SchemaVersion:  releasebundle.SchemaVersion,
-		ReleaseVersion: "0.5.6-dev",
+		ReleaseVersion: "0.5.7-dev",
 		Target:         signingrecord.Target,
 		Artifacts: []releasebundle.Artifact{
 			{File: signedCLI.File, Bytes: signedCLI.Bytes, SHA256: signedCLI.SHA256},
@@ -205,7 +205,7 @@ func (fixture signingCommandFixture) pathArgs() []string {
 func (fixture signingCommandFixture) args(recordPath string) []string {
 	return append([]string{
 		"--out", recordPath,
-		"--release-version", "0.5.6-dev",
+		"--release-version", "0.5.7-dev",
 		"--source-commit", strings.Repeat("a", 40),
 		"--source-tag", "v0.5.6-alpha.1",
 		"--source-workflow", ".github/workflows/release.yml@refs/tags/v0.5.6-alpha.1",

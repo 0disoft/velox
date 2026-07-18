@@ -108,9 +108,9 @@ M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging
 slice, and M2 closed the minimum runtime security contract. M3 has passed its
 publishable Wails cold-build gate and its narrowly defined structural-
 simplicity gate. Startup has been removed from the headline and retained as a
-release guardrail. M3's recommended-cache execution path is implemented in the
-benchmark repository, with hosted completion evidence still required. M4 has a
-local and hosted alpha-evidence path, but signing, authenticated provenance,
+release guardrail. M3's public benchmark deliverables and hosted evidence are
+complete. M4 has local and hosted unsigned alpha evidence plus deterministic
+signing-input and lineage tooling, but signing, authenticated provenance,
 public distribution, and a real external-user attempt remain open before M5.
 
 Consumer release packaging is not published yet. `init` creates a

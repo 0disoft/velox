@@ -1,6 +1,6 @@
 # CLI Configuration
 
-- Status: Draft
+- Status: Active
 - Repository type: cli-tool
 - Owner: Project maintainer
 
@@ -17,7 +17,7 @@ Precedence is:
 Velox does not merge parent-directory manifests, user-global configuration, or
 environment-derived application permissions.
 
-## Proposed Manifest Shape
+## Manifest Shape
 
 The machine-readable contract is `schema/velox-v1.schema.json`. Its top-level
 shape is:
@@ -30,20 +30,19 @@ shape is:
         "version": "0.1.0"
       },
       "assets": {
-        "dir": "web",
+        "root": "web",
         "entry": "index.html"
       },
       "window": {
         "width": 960,
-        "height": 640,
-        "resizable": true
+        "height": 640
       },
       "security": {
         "permissions": []
       }
     }
 
-This example is a design target, not an implemented parser contract.
+This example matches the implemented parser and JSON Schema contract.
 
 ## Field Ownership
 
@@ -64,8 +63,9 @@ the canonical project root after validation.
 
 ### window
 
-Initial width, height, resizable state, position policy, and background color.
-Exact defaults and accepted ranges remain UNDECIDED until the host spike.
+Initial width and height. Zero or omitted values resolve to 960 by 640. Widths
+below 320 and heights below 240 are rejected. Resizable state, position policy,
+and background color are not manifest fields in v1.
 
 ### security
 

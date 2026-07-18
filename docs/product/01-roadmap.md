@@ -159,6 +159,8 @@ the two unsigned executables with deterministic ZIP metadata, no overwrite,
 and an immediate source-digest verification pass.
 The lineage verifier rejects provider output unless one directory contains only
 the two expected signed executable names.
+Doctor now gates the documented Windows and Evergreen WebView2 compatibility
+floor instead of treating any installed runtime as supported.
 
 ### Deliver
 

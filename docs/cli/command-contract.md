@@ -44,16 +44,19 @@ output.
 
 ### velox doctor
 
-Report local prerequisites and compatibility, including Windows architecture,
-WebView2 Runtime availability, project configuration, and bundled host
+Report local prerequisites and compatibility, including Windows architecture
+and build, WebView2 Runtime availability and version, project configuration,
+and bundled host
 compatibility. Doctor is read-only.
 
 - Query the installed runtime through the same bundled WebView2 loader used by
   the host instead of inferring availability from registry paths.
-- Report platform, runtime, project, and host checks in stable order.
+- Report platform, Windows build, runtime, project, and host checks in stable
+  order.
 - Keep the complete check result in JSON on failure while returning the
   corresponding non-zero prerequisite, project, or host exit code.
-- Report the installed WebView2 version without enforcing an undecided minimum.
+- Require Windows 10 version 1709 x64 or Windows Server 2016 x64, and Evergreen
+  WebView2 Runtime `92.0.902.49` or newer.
 
 ### velox run
 
@@ -196,9 +199,11 @@ Stable diagnostic codes provide detail within these broad process exit codes.
 - CLI release artifacts: Windows x64 first.
 - Packaged host: Windows x64 first.
 - Web runtime: Evergreen WebView2.
-- Minimum Windows and WebView2 versions: UNDECIDED pending a compatibility
-  support policy; doctor currently reports but does not gate the detected
-  WebView2 version.
+- Minimum client: Windows 10 version 1709 x64, build 16299.
+- Minimum server: Windows Server 2016 x64, build 14393.
+- Minimum WebView2 Runtime: `92.0.902.49`, the first stable runtime that exposes
+  the `ICoreWebView2_4` download-denial interface required by the security
+  baseline.
 - Maintainer implementation language: Go.
 - Consumer machine compiler and Node.js requirement: none.
 

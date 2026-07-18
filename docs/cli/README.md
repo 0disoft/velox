@@ -49,10 +49,12 @@ docs/cli/output-and-exit-codes.md.
 
 ## Compatibility
 
-The first CLI artifact and host target Windows x64. Doctor reports the installed
-WebView2 version through the bundled loader. The exact minimum Windows and
-WebView2 versions remain UNDECIDED until a compatibility support policy is
-accepted.
+The first CLI artifact and host target Windows x64. Supported clients start at
+Windows 10 version 1709 x64; supported servers start at Windows Server 2016
+x64. The host requires the automatically updated Evergreen WebView2 Runtime,
+version `92.0.902.49` or newer. Doctor reads the actual Windows build and the
+installed runtime through platform APIs and fails before build readiness when
+either prerequisite is too old.
 
 Application authors do not install Go or another compiler to use a released
 Velox build.

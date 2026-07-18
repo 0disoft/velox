@@ -73,7 +73,7 @@ Diagnostics do not contain:
 | 2 | Usage or configuration | Unknown option, invalid manifest |
 | 3 | Project input | Missing entry point, unsafe asset path |
 | 4 | Host compatibility | Unsupported host or protocol version |
-| 5 | Runtime prerequisite | WebView2 unavailable |
+| 5 | Runtime prerequisite | Windows build unsupported, WebView2 unavailable or too old |
 | 6 | Packaging or filesystem | Copy, staging, archive, promotion failure |
 | 10 | Internal failure | Unhandled invariant violation |
 
@@ -94,6 +94,11 @@ The exact registry is created with implementation. Initial families are:
 - Internal invariant failures.
 
 Codes are added centrally and are never reused for a different meaning.
+
+Doctor currently uses `RUNTIME_PLATFORM_UNSUPPORTED`,
+`RUNTIME_WINDOWS_VERSION_UNSUPPORTED`, `RUNTIME_WEBVIEW2_UNAVAILABLE`,
+`RUNTIME_WEBVIEW2_PROBE_FAILED`, `RUNTIME_WEBVIEW2_VERSION_INVALID`, and
+`RUNTIME_WEBVIEW2_UNSUPPORTED` for prerequisite failures.
 
 ## Build Result
 

@@ -20,6 +20,7 @@ import (
 	"github.com/0disoft/velox/internal/inspector"
 	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/platformversion"
 	"github.com/0disoft/velox/internal/runner"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 	"github.com/0disoft/velox/internal/webview2"
@@ -31,6 +32,7 @@ type Dependencies struct {
 	HostPath             string
 	GOOS                 string
 	GOARCH               string
+	WindowsVersionProbe  func() doctor.WindowsVersion
 	WebView2VersionProbe func() (string, error)
 	HostLauncher         runner.Launcher
 }
@@ -205,6 +207,13 @@ func runDoctor(args []string, dependencies Dependencies) int {
 	if goarch == "" {
 		goarch = runtime.GOARCH
 	}
+	windowsProbe := dependencies.WindowsVersionProbe
+	if windowsProbe == nil {
+		windowsProbe = func() doctor.WindowsVersion {
+			value := platformversion.Current()
+			return doctor.WindowsVersion{Major: value.Major, Minor: value.Minor, Build: value.Build, IsServer: value.IsServer}
+		}
+	}
 	probe := dependencies.WebView2VersionProbe
 	if probe == nil {
 		probe = webview2.InstalledVersion
@@ -212,7 +221,7 @@ func runDoctor(args []string, dependencies Dependencies) int {
 	version, probeErr := probe()
 	plan, planErr := createPlan(*options, dependencies.HostPath)
 	result, failure := doctor.Evaluate(doctor.Evidence{
-		GOOS: goos, GOARCH: goarch, WebView2Version: version,
+		GOOS: goos, GOARCH: goarch, WindowsVersion: windowsProbe(), WebView2Version: version,
 		WebView2ProbeError: probeErr, Plan: plan, PlanError: planErr,
 	})
 	if failure != nil {

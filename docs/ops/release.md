@@ -45,7 +45,7 @@ exists.
 
 Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
 policy remain UNDECIDED before public alpha. Local artifacts currently identify
-the development release as `0.5.6-dev`.
+the development release as `0.5.7-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 
@@ -85,6 +85,21 @@ notes, and public release publication remain M4 gates.
 - Critical risks are mitigated, accepted explicitly, or stop the release.
 - Directory asset tampering, branding, signing, and platform limitations are
   visible.
+
+## Compatibility Floor
+
+The alpha contract supports Windows 10 version 1709 x64 and newer client
+builds, or Windows Server 2016 x64 and newer server builds. Evergreen WebView2
+Runtime `92.0.902.49` is the minimum because Velox requires
+`ICoreWebView2_4` to cancel downloads as part of its security baseline. Doctor
+checks both floors; ordinary Evergreen updates remain supported and are the
+recommended runtime path.
+
+The floor is derived from the
+[Go Windows minimum](https://go.dev/wiki/MinimumRequirements), the
+[WebView2 supported Windows list](https://learn.microsoft.com/en-us/microsoft-edge/webview2/),
+and Microsoft's archived WebView2 SDK release notes that bind
+`ICoreWebView2_4` SDK `1.0.902.49` to Runtime `92.0.902.49`.
 
 ## Signing Boundary
 
