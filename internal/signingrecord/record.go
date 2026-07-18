@@ -339,6 +339,9 @@ func inspectFiles(files Files) (NativeSet, NativeSet, Distribution, Artifact, er
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect signing input: %w", err)
 	}
+	if err := verifyExactSignedDirectory(files.SignedCLI, files.SignedHost); err != nil {
+		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect signed output directory: %w", err)
+	}
 	signedCLI, err := inspectArtifact(files.SignedCLI, "velox.exe")
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect signed CLI: %w", err)
@@ -364,6 +367,44 @@ func inspectFiles(files Files) (NativeSet, NativeSet, Distribution, Artifact, er
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect SBOM: %w", err)
 	}
 	return NativeSet{Artifacts: []Artifact{unsignedCLI, unsignedHost}}, NativeSet{Artifacts: []Artifact{signedCLI, signedHost}}, Distribution{Archive: archive, Manifest: manifest, Checksums: checksums, SBOM: sbom}, signingInput, nil
+}
+
+func verifyExactSignedDirectory(cliPath, hostPath string) error {
+	cliDirectory := filepath.Clean(filepath.Dir(cliPath))
+	hostDirectory := filepath.Clean(filepath.Dir(hostPath))
+	if cliDirectory != hostDirectory {
+		return errors.New("signed executables must share one directory")
+	}
+	if filepath.Base(cliPath) != "velox.exe" || filepath.Base(hostPath) != "velox-host.exe" {
+		return errors.New("signed executables must use the expected file names")
+	}
+	entries, err := os.ReadDir(cliDirectory)
+	if err != nil {
+		return err
+	}
+	if len(entries) != 2 {
+		return fmt.Errorf("signed output directory must contain exactly two entries, found %d", len(entries))
+	}
+	expected := map[string]bool{"velox.exe": false, "velox-host.exe": false}
+	for _, entry := range entries {
+		if _, ok := expected[entry.Name()]; !ok {
+			return fmt.Errorf("signed output directory contains unexpected entry %s", entry.Name())
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return fmt.Errorf("inspect signed output %s: %w", entry.Name(), err)
+		}
+		if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("signed output %s must be a regular file", entry.Name())
+		}
+		expected[entry.Name()] = true
+	}
+	for name, found := range expected {
+		if !found {
+			return fmt.Errorf("signed output directory is missing %s", name)
+		}
+	}
+	return nil
 }
 
 func inspectArtifact(path, name string) (Artifact, error) {

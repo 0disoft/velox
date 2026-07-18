@@ -77,6 +77,8 @@ window.
 - Signing-input preparation determinism, normalized ZIP metadata, exact
   root-level executable set, missing or linked input rejection, and existing
   output preservation.
+- Provider-output directory exactness, unexpected-file rejection, shared
+  directory ownership, and regular-file enforcement.
 
 ## Reproducibility Tests
 

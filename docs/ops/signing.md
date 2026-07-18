@@ -101,6 +101,9 @@ source digests before returning success.
 `velox-signing-record dry-run` hashes the unsigned inputs, prepared
 signing-input ZIP, provider-output placeholders, final bundle, manifest,
 checksums, and SBOM; it then cross-checks their lineage before writing a record.
+The provider-output directory must contain exactly `velox-host.exe` and
+`velox.exe`; added files, alternate names, links, and split directories fail
+closed before artifact lineage is accepted.
 
 Dry-run output is always `mode: dry-run`, `publishable: false`, records
 certificate status as `not-performed` without certificate identity fields, and

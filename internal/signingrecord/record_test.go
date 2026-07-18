@@ -77,6 +77,26 @@ func TestVerifyFilesRejectsTampering(t *testing.T) {
 	}
 }
 
+func TestBuildDryRunRejectsUnexpectedProviderOutput(t *testing.T) {
+	fixture := dryRunFixture(t)
+	extra := filepath.Join(filepath.Dir(fixture.Files.SignedCLI), "provider-response.json")
+	writeTestFile(t, extra, "untrusted provider metadata")
+	if _, err := BuildDryRun(fixture); err == nil || !strings.Contains(err.Error(), "must contain exactly two entries") {
+		t.Fatalf("BuildDryRun error = %v", err)
+	}
+}
+
+func TestBuildDryRunRejectsSplitProviderOutputDirectories(t *testing.T) {
+	fixture := dryRunFixture(t)
+	otherDirectory := filepath.Join(filepath.Dir(filepath.Dir(fixture.Files.SignedHost)), "other-signed")
+	otherHost := filepath.Join(otherDirectory, "velox-host.exe")
+	writeTestFile(t, otherHost, "signed host")
+	fixture.Files.SignedHost = otherHost
+	if _, err := BuildDryRun(fixture); err == nil || !strings.Contains(err.Error(), "must share one directory") {
+		t.Fatalf("BuildDryRun error = %v", err)
+	}
+}
+
 func TestBuildDryRunRejectsUnchangedSignedArtifact(t *testing.T) {
 	options := dryRunFixture(t)
 	unsigned, err := os.ReadFile(options.Files.UnsignedCLI)

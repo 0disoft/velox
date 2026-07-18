@@ -157,6 +157,8 @@ non-publishable and does not claim signature or attestation verification.
 The maintainer `prepare` command also produces the provider input from exactly
 the two unsigned executables with deterministic ZIP metadata, no overwrite,
 and an immediate source-digest verification pass.
+The lineage verifier rejects provider output unless one directory contains only
+the two expected signed executable names.
 
 ### Deliver
 
