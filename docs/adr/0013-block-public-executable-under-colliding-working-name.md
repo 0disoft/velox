@@ -1,6 +1,6 @@
 # ADR 0013: Block the public executable under the colliding working name
 
-- Status: Accepted
+- Status: Superseded by ADR 0014
 - Date: 2026-07-18
 - Owner: Project maintainer
 
@@ -70,3 +70,5 @@ search collisions remain observable user problems.
   agree on the public identity.
 - The release candidate is rebuilt and its new digest is recorded before tag
   creation.
+
+ADR 0014 selects Actutum and owns the replacement and compatibility decision.

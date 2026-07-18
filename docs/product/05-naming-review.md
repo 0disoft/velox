@@ -1,9 +1,11 @@
-# Public Name Collision Review
+# Public Name Selection Review
 
-- Status: Complete collision scan; replacement name required before public executable release
+- Status: Replacement selected; implementation rename in progress
 - Date: 2026-07-18
 - Owner: Project maintainer
-- Current working name: Velox
+- Selected public name: Actutum
+- Selected CLI spelling: `actutum`
+- Intended pronunciation: `ak-TOO-tum`
 
 ## Scope
 
@@ -47,52 +49,74 @@ TypeScript framework and CLI family. Other Go modules and database products
 also use the name. None is individually decisive, but together they show that
 the bare namespace is crowded.
 
-## Decision
+## Original-name decision
 
-`Velox` remains a repository working name and historical benchmark label. It is
-not approved as the public executable or final product identity.
+`Velox` is not approved as the public executable or final product identity.
+It remains only in historical evidence and the ADRs that explain why the name
+was replaced.
 
-Do not create the first public downloadable executable release until a
-replacement name has been selected and checked. The internal candidate version
-`0.5.10-alpha.1` remains valid; its tag and artifact names are not published
-until the rename contract is synchronized.
+## Selected replacement
 
-## Replacement Gate
+The selected replacement is **Actutum**. The Latin adverb *actutum* means
+"immediately", "instantly", or "without delay". It keeps the original speed
+idea while pointing at the product's actual promise: minimal setup and build
+work before a static desktop application can run.
 
-Before publication, verify the selected name against all of these surfaces:
+The public command is `actutum`, the Windows CLI is `actutum.exe`, and the
+generic host is `actutum-host.exe`. The next candidate is
+`0.6.0-alpha.1`; the unpublished `0.5.10-alpha.1` working-name candidate will
+not be tagged or released.
 
-1. GitHub repository and organization search.
-2. Exact Windows executable and common shell command names.
-3. Go module and `go install` command search.
-4. npm, crates.io, PyPI, Homebrew, Winget, Scoop, and Chocolatey search where
-   future distribution is plausible.
-5. General developer search and adjacent desktop-framework products.
-6. Basic trademark and domain checks performed by the maintainer; legal advice
-   remains external when commercial use is planned.
+This is a product and developer-namespace decision, not a legal opinion.
+
+## Replacement evidence
+
+The 2026-07-18 screen checked the selected ASCII spelling against these
+surfaces:
+
+1. GitHub repository-name and user-name search returned no exact `actutum`
+   match.
+2. npm, crates.io, PyPI, NuGet, and pkg.go.dev returned no exact package.
+3. General developer search found no active software product or CLI using the
+   exact name.
+4. General company search found an unrelated Czech company whose listed fields
+   are wholesale, retail, property, advertising, and administration rather
+   than software.
+
+The search does not reserve a namespace. The GitHub repository rename must
+claim `0disoft/actutum` before the first public release. Homebrew, Winget,
+Scoop, Chocolatey, domain, and formal trademark availability remain publication
+or distribution-channel checks because no package is being submitted to those
+channels now.
 
 The selected name must have a written meaning, intended pronunciation, and
 stable ASCII CLI spelling. Search uniqueness matters more than preserving the
 Latin speed metaphor.
 
-## Rename Surfaces
+## Compatibility decision
 
-A replacement affects more than README prose. The rename change must update in
-one atomic review:
+No public release exists, so the working-name contracts are not a compatibility
+surface. The implementation rename must update in one atomic review:
 
 - repository title and public release artifact names;
-- `velox.exe`, `velox-host.exe`, and maintainer helper names as decided;
-- Go module path only if the GitHub repository is renamed;
+- `actutum.exe`, `actutum-host.exe`, and maintainer helper names;
+- Go module path to `github.com/0disoft/actutum` together with the GitHub
+  repository rename;
 - CLI command text, JSON envelopes, environment variable prefix, schemas and
   schema IDs;
 - application profile directory, virtual-origin labels, examples, docs, issue
   templates, workflows, benchmark adapters, and release evidence;
 - compatibility policy for the working-name alpha candidate.
 
-Do not perform a blind global replacement. Protocol identifiers and historical
-evidence need an explicit compatibility decision.
+Protocol identifiers, schema IDs, environment variables, the JavaScript bridge,
+default manifest names, and runtime filenames all move to `actutum` because no
+published consumer depends on the working-name forms. Historical benchmark
+artifacts and ADR explanations are not rewritten as if they had been produced
+under the new name.
 
-## Revisit
+## Publication gate
 
-Close this gate only with a named replacement and current collision evidence.
-If the maintainer deliberately keeps `Velox`, record the legal and operational
-acceptance in a new ADR and choose a non-colliding executable command anyway.
+Do not publish until the source rename is complete, the GitHub repository owns
+the selected slug, release evidence has been rebuilt from the renamed source,
+and current exact-name searches are repeated immediately before publication.
+Formal trademark review remains external if commercial use begins.

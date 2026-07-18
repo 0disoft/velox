@@ -136,12 +136,15 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"released Go internet-speed-test CLI",
 		"ships `velox.exe`",
 		"not approved as the public executable",
-		"Do not perform a blind global replacement",
+		"Historical benchmark",
+		"artifacts and ADR explanations are not rewritten",
+		"Selected public name: Actutum",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0013-block-public-executable-under-colliding-working-name.md"), []string{
 		"publish the first downloadable executable under that identity",
 		"public tag and release is blocked",
 		"A replacement is explicitly selected by the maintainer",
+		"ADR 0014 selects Actutum",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
 		"public executable blocked pending rename",
