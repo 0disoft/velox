@@ -161,7 +161,7 @@ func validate(cfg Config) error {
 }
 
 func containedPath(root, relative string) (string, error) {
-	if filepath.IsAbs(relative) {
+	if filepath.IsAbs(relative) || filepath.VolumeName(relative) != "" {
 		return "", errors.New("absolute paths are not allowed")
 	}
 	clean := filepath.Clean(relative)

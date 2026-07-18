@@ -125,8 +125,12 @@ An embedded or sealed profile is deferred and must be benchmarked separately.
 - Untrusted paths can escape their roots.
 - Build cleanup can delete pre-existing user files.
 - Release artifacts are not checksummed.
-- Public release executables are unsigned, signatures do not match the approved
-  profile, or final artifacts lack authenticated attestations.
+- The unsigned developer preview is not labeled prominently, its checksum,
+  SBOM, provenance, tag, or release-manifest bytes disagree, or publication can
+  replace an existing release.
+- A future signed channel claims publisher identity without a valid approved
+  signature profile, or claims authenticated provenance without verified
+  attestation evidence.
 - Signing private material enters the repository, workflow secrets, artifacts,
   caches, or logs.
 - Runtime failure exposes secrets, source contents, or native stack traces.
@@ -139,9 +143,15 @@ An embedded or sealed profile is deferred and must be benchmarked separately.
 - Navigation, popup, frame, and browser-permission tests.
 - Missing-runtime and invalid-configuration failure tests.
 - Dependency and release checksum verification.
-- Authenticode chain, publisher/profile, digest, and timestamp verification.
-- Final release ZIP and SBOM artifact-attestation verification.
 - A current threat model before alpha.
+
+Authenticode chain, publisher/profile, digest, timestamp, and authenticated
+artifact-attestation verification are required only when a future signed or
+authenticated channel makes those claims. The unsigned preview must not
+simulate them.
+
+The current bounded source review is recorded in
+`docs/engineering/08-m4-security-review.md`. It is not an independent audit.
 
 ## Current Runtime Evidence
 

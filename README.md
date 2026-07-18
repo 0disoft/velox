@@ -125,6 +125,17 @@ longer M4 gates. The first candidate is `0.5.10-alpha.1`. A separate no-checkout
 workflow is ready to verify its eventual public GitHub Release URL, but it
 cannot count itself as an external-user attempt.
 
+The bounded maintenance-cost snapshot and internal M4 security review are now
+complete M5 inputs. They explicitly record the maintained WebView2 fork,
+weekly hosted-job ceiling, unsigned-channel trust limit, and accepted mutable-
+asset boundary. They are not person-hour estimates or an independent audit.
+
+`Velox` remains a working name. The current collision review found an existing
+released Go CLI that already ships the exact `velox` command and `velox.exe`,
+in addition to Meta's established Velox project. ADR 0013 therefore blocks the
+first public executable until a replacement product and command name is
+selected and synchronized.
+
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,
 and bundled-host compatibility, `run` launches source assets through the

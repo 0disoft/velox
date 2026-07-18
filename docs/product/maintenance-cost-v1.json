@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "velox.maintenance-cost/v1",
+  "releaseVersion": "0.5.10-alpha.1",
+  "capturedOn": "2026-07-18",
+  "observationWindow": {
+    "from": "2026-07-12",
+    "through": "2026-07-18",
+    "baselineCommit": "cf3b6e38fd5c7322113e3c49f16743a474582671",
+    "headCommit": "7d39d89b9ecfff339518b065ba78a13d69737160",
+    "commits": 42,
+    "changedFiles": 271,
+    "insertions": 29416,
+    "deletions": 0
+  },
+  "repositorySurface": {
+    "productionGoFiles": 46,
+    "productionGoLines": 6909,
+    "testGoFiles": 39,
+    "testGoLines": 5145,
+    "vendoredGoFiles": 42,
+    "vendoredGoLines": 3859,
+    "workflowFiles": 4,
+    "workflowLines": 825,
+    "schemaFiles": 20,
+    "documentationMarkdownFiles": 43,
+    "directModuleDependencies": 2,
+    "indirectModuleDependencies": 1,
+    "supportedTargets": 1,
+    "publicCLICommands": 7,
+    "nativeIPCMethods": 6
+  },
+  "recurringHostedWork": {
+    "scheduledWorkflowsPerWeek": 1,
+    "windowsJobsPerWeek": 12,
+    "maximumWindowsJobMinutesPerWeek": 63,
+    "ubuntuJobsPerWeek": 1,
+    "maximumUbuntuJobMinutesPerWeek": 5
+  },
+  "manualPreviewSteps": [
+    "push the immutable alpha tag",
+    "dispatch the unsigned-preview publication gate",
+    "dispatch the public-download verifier with an independently recorded SHA-256"
+  ],
+  "nonClaims": [
+    "The record does not estimate human engineering hours.",
+    "Configured timeout minutes are ceilings, not billed or observed duration.",
+    "The record does not predict external support volume or future platform cost.",
+    "Vendored binding lines are counted separately from project-owned production lines."
+  ]
+}

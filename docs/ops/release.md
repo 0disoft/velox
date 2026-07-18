@@ -1,6 +1,6 @@
 # Release
 
-- Status: Unsigned developer-preview publication implemented but not yet exercised
+- Status: Unsigned developer-preview publication implemented; public executable blocked pending rename
 - Owner: Project maintainer
 
 ## Current State
@@ -12,6 +12,10 @@ artifact entries against the release manifest, and emits checksums, a
 file-level SPDX 2.3 SBOM, and one unsigned in-toto/SLSA provenance statement.
 The alpha-evidence workflow builds the bundle twice and rejects differing ZIP
 bytes.
+
+ADR 0013 keeps `Velox` as a working name but blocks public executable
+publication because an existing released Go CLI already distributes the exact
+`velox` command and `velox.exe`. The pipeline remains testable while dormant.
 
 The repository also owns `velox.signing-record/v1` and a non-publishable
 dry-run verifier. It binds unsigned inputs, the signing-input ZIP, signed-output
@@ -49,10 +53,11 @@ exists.
 
 ## Channels
 
-Planned channels are alpha, beta, and stable. The first public artifact is the
-unsigned `0.5.10-alpha.1` developer preview using immutable tag
-`v0.5.10-alpha.1`. Broader beta, stable, and support policy remain UNDECIDED
-before M5.
+Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` is the internal
+unsigned developer-preview candidate. Its eventual immutable tag remains
+`v0.5.10-alpha.1`, but the public artifact and executable names must use the
+replacement identity selected under ADR 0013. Broader beta, stable, and support
+policy remain UNDECIDED before M5.
 
 Nightly distribution is not planned during the initial project stage.
 
@@ -85,6 +90,9 @@ authenticated provenance and Authenticode controls for a later signed channel.
 
 ## Release Gates
 
+- The public product and executable identity passes the collision gate in ADR
+  0013 and all current-name artifact references are intentionally migrated or
+  classified as historical compatibility identifiers.
 - All configured correctness and Windows smoke checks pass.
 - Unsigned reproducibility passes where applicable.
 - Consumer build requires no compiler, Node.js, or Actions cache.
@@ -141,6 +149,9 @@ write permission belong to separate protected-environment gates.
 
 ## Developer-Preview Publication
 
+This mechanism is dormant while ADR 0013's public-name gate is open. Do not
+create the candidate tag as a shortcut around the rename.
+
 Ordinary pull-request, tag, and evidence runs retain workflow artifacts and
 have only `contents: read`. A manual dispatch can publish only when
 `publish_preview` is true, the exact confirmation phrase is supplied, and the
@@ -163,6 +174,7 @@ rebuild different bytes under the same version.
 - Release artifact behavior differs from tested artifacts.
 - Required WebView2 support cannot be stated accurately.
 - Benchmark results fail the roadmap go-or-kill gate.
+- Public product or executable identity remains unresolved.
 - Security reporting and release ownership are not ready for public use.
 
 ## Post-Release Verification

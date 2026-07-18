@@ -217,7 +217,7 @@ jobs:
 
   publish-preview:
     name: Publish unsigned developer preview
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_preview
+    if: false && github.event_name == 'workflow_dispatch' && inputs.publish_preview
     needs: [producer, clean-consumer]
     runs-on: ubuntu-24.04
     timeout-minutes: 5

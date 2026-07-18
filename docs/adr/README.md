@@ -27,6 +27,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0010 | Accepted for future signed channels; M4 gate superseded by 0011 | Separate GitHub build attestation from SignPath Authenticode signing and preserve both release lineages |
 | 0011 | Accepted | Publish an explicitly unsigned developer preview before provider onboarding or signing |
 | 0012 | Accepted | Bind the first preview tag to the embedded version and separate public-download evidence from an external-user attempt |
+| 0013 | Accepted | Keep Velox as a working name but block the first public executable until a non-colliding product and command identity is selected |
 
 ## Lifecycle
 

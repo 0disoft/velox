@@ -71,4 +71,6 @@ evidence workflow, guarded prerelease publisher, and no-checkout public-download
 verifier exist. ADR 0012 selects `0.5.10-alpha.1` and the external-user evidence
 contract. No public distribution, executed public-download result, qualifying
 external-user attempt, or release operational history exists. ADR 0010's signed
-channel remains deferred.
+channel remains deferred. ADR 0013 additionally blocks the public executable
+under the `Velox` working name until a non-colliding identity is selected and
+synchronized.

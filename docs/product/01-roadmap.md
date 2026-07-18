@@ -184,6 +184,8 @@ still needs accepted provider output and the approved publisher subject.
 
 ### Remaining gates
 
+- Select a non-colliding public product and executable name under ADR 0013,
+  synchronize the rename contract, and rebuild the candidate.
 - Push the selected immutable `v0.5.10-alpha.1` tag.
 - Run the manual unsigned-preview publication gate with its exact confirmation.
 - Run the no-checkout public-download verifier with the independently recorded
@@ -195,7 +197,20 @@ still needs accepted provider output and the approved publisher subject.
 
 The tag/version binding, public-download result schema, workflow, and external-
 attempt issue contract are implemented but remain unexercised until the public
-release exists.
+release exists. ADR 0013 now blocks that publication under the `Velox` working
+name because another released Go CLI already distributes `velox.exe`.
+
+The bounded M4 internal security review is complete in
+`docs/engineering/08-m4-security-review.md`. It traces build, browser/IPC, and
+release flows, records one resolved Windows drive-relative runtime-path gap,
+and preserves the local-tampering, unsigned-channel, and pure-Go COM residual
+risks without calling the review independent.
+
+The first maintenance-cost snapshot is complete in
+`docs/product/04-maintenance-cost-record.md` and
+`docs/product/maintenance-cost-v1.json`. It records the implementation window,
+repository surface, recurring scheduled job ceiling, and manual preview steps
+without inventing person-hours.
 
 SignPath onboarding, Authenticode verification against real provider output,
 release-mode signing records, and authenticated artifact attestations are
@@ -218,12 +233,13 @@ The decision uses benchmark evidence, external user attempts, maintenance cost,
 security review findings, and the strength of the PWA and Neutralino
 counterarguments.
 
-The Wails cold-build result and the two accepted M3 product decisions supply M5
-inputs, not the product decision. Before M5 can start, the repository still
-needs M4 distribution evidence, external user attempts, a bounded
-maintenance-cost record, and a security review. ADR 0008 records the explicit
-PWA and Neutralino counterarguments; user attempts must now test whether its
-narrow portable-artifact boundary has real value.
+The Wails cold-build result, two accepted M3 product decisions, bounded
+maintenance-cost record, and internal security review supply M5 inputs, not the
+product decision. Before M5 can start, the repository still needs a public
+identity decision, the public M4 distribution evidence, and an independent
+external-user attempt. ADR 0008 records the explicit PWA and Neutralino
+counterarguments; user attempts must now test whether its narrow portable-
+artifact boundary has real value.
 
 ## Deferred Until After M5
 

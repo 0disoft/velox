@@ -183,7 +183,7 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 	for _, required := range []string{
 		"publish_preview:",
 		"publish unsigned developer preview",
-		"github.event_name == 'workflow_dispatch' && inputs.publish_preview",
+		"false && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
 		"github.ref_type",
 		"^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$",
 		"release_version=$($manifest.releaseVersion)",

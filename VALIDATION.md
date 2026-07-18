@@ -94,12 +94,25 @@ replacement, and creates a prerelease with SmartScreen and managed-device
 warnings. Workflow validation proves this contract; it does not publish a
 release.
 
+ADR 0013 keeps that publication path dormant until a non-colliding public
+product and executable name is selected. The current `velox.exe` name conflicts
+with an already released Go CLI. The publication job condition is mechanically
+false while this gate is open. Passing release tests does not authorize tag
+creation under the working name.
+
 The manual `Public preview verification` workflow performs no source checkout
 and downloads the ZIP, checksum, SPDX, and provenance assets from the public
 GitHub Release URL. It requires an independently supplied ZIP SHA-256, binds the
 tag to the release manifest and CLI version, builds twice, inspects, and reaches
 the startup-ready marker. Its schema fixes `externalUserAttempt` to `false`, so
 this same-repository check cannot satisfy the independent-user M4 gate.
+
+The bounded M5 readiness records are `docs/product/maintenance-cost-v1.json`,
+`docs/product/04-maintenance-cost-record.md`, and
+`docs/engineering/08-m4-security-review.md`. Hygiene tests validate their
+version, observation boundary, non-claim language, roadmap synchronization,
+and the unsigned-preview security baseline. The security review remains
+internal and does not replace external-user evidence.
 
 The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`

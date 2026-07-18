@@ -69,14 +69,19 @@ The M1 implementation produces these outputs for `windows-x64`. An unsigned,
 deterministic consumer release bundle now carries strict host metadata and the
 CLI verifies its release, target, contract versions, size, and SHA-256 before a
 build. The alpha-evidence path now emits checksums, SPDX, and an unsigned
-provenance statement. Public distribution, signatures, and authenticated
-provenance remain later release work; sidecar metadata alone is not a trust
-anchor.
+provenance statement. The first public candidate is the explicitly unsigned
+`0.5.10-alpha.1` developer preview. Its tag, public publication, and independent
+consumer evidence remain pending. Signatures and authenticated provenance are
+future-channel work; sidecar metadata alone is not a trust anchor.
 
 ### Runtime
 
 - Windows x64.
+- Windows 10 version 1709 build 16299 or newer clients, or Windows Server 2016
+  build 14393 or newer servers.
 - An installed Evergreen WebView2 Runtime.
+- Minimum WebView2 Runtime `92.0.902.49`, required for the download-denial
+  interface used by the security baseline.
 - One top-level window.
 - A virtual HTTPS origin mapped to the local asset directory.
 - Virtual HTTPS remains the only production asset transport while
@@ -181,8 +186,6 @@ Pause feature development and reassess the product if:
 
 ## Deferred Decisions
 
-- Minimum supported Windows release.
-- Minimum supported WebView2 Runtime version.
 - Public product name and package namespaces.
 - Asset sealing, installers, code signing, and automatic updates.
 - macOS and Linux feasibility.

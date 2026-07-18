@@ -3,6 +3,7 @@ package runtimeconfig
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -111,5 +112,14 @@ func TestLoadRejectsLinkedAssetBoundary(t *testing.T) {
 	_, err := Load(path)
 	if err == nil || !strings.Contains(err.Error(), "link or reparse point") {
 		t.Fatalf("Load() error = %v, want linked asset rejection", err)
+	}
+}
+
+func TestContainedPathRejectsWindowsDriveRelativePath(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Windows drive-relative paths are platform-specific")
+	}
+	if _, err := containedPath(t.TempDir(), `C:outside`); err == nil || !strings.Contains(err.Error(), "absolute paths") {
+		t.Fatalf("containedPath() error = %v, want a Windows volume rejection", err)
 	}
 }

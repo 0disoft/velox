@@ -20,6 +20,10 @@ Summary pages must not silently broaden these sources.
 - docs/product/01-roadmap.md: evidence-gated implementation sequence.
 - docs/product/02-spec.md: canonical scope, capabilities, and stop conditions.
 - docs/product/03-risk-register.md: current product and engineering risks.
+- docs/product/04-maintenance-cost-record.md: bounded M5 maintenance-cost input.
+- docs/product/maintenance-cost-v1.json: machine-readable maintenance snapshot.
+- docs/product/05-naming-review.md: public product, executable, and package-
+  namespace collision evidence.
 
 ## Architecture
 
@@ -52,6 +56,8 @@ Summary pages must not silently broaden these sources.
   removal policy.
 - docs/engineering/07-operability-and-failure-standard.md: diagnostics and
   failure behavior.
+- docs/engineering/08-m4-security-review.md: bounded internal source and trust-
+  boundary review for the unsigned preview.
 
 ## Operations
 

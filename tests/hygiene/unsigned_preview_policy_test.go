@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestUnsignedDeveloperPreviewIsTheM4DistributionGate(t *testing.T) {
+func TestUnsignedDeveloperPreviewPolicyRemainsDormantUntilPublicIdentity(t *testing.T) {
 	checks := map[string][]string{
 		"docs/adr/0011-publish-unsigned-developer-preview-before-signing.md": {
 			"Publish the first public M4 artifact as an explicitly unsigned",
@@ -20,7 +20,8 @@ func TestUnsignedDeveloperPreviewIsTheM4DistributionGate(t *testing.T) {
 			"deferred until a real adoption trigger",
 		},
 		"docs/ops/release.md": {
-			"Unsigned developer-preview publication implemented but not yet exercised",
+			"Unsigned developer-preview publication implemented; public executable blocked pending rename",
+			"This mechanism is dormant while ADR 0013's public-name gate is open",
 			"The isolated publication job",
 			"alone receives `contents: write`",
 			"not sign, attest, rebuild, or replace artifacts",
