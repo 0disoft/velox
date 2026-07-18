@@ -37,6 +37,10 @@ project-owned legal publisher identity or predictable paid operation. A local
 PFX, self-signed certificate, and repository-held private key are not fallback
 paths.
 
+The application packet, requested provider slugs, repository-owned artifact
+configuration, source policy, and maintainer-only steps are in
+`docs/ops/signpath-onboarding.md` and `.signpath/`.
+
 The current SignPath Foundation GitHub connector requires the signing input to
 be a GitHub workflow artifact and all preceding jobs in that trusted build to
 run on GitHub-hosted runners. The signing workflow must preserve that chain; it

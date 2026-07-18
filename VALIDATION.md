@@ -42,6 +42,9 @@ The parent workspace command contract currently provides these bounded intents:
   dry-run evidence. The Go test suite also exercises the fail-closed
   Authenticode policy boundary and `velox.authenticode-verification/v1`; a real
   signed-provider success remains an external M4 gate.
+- `velox_signpath_onboarding_smoke` verifies the repository-owned SignPath
+  artifact configuration, GitHub source policy, dual-license files,
+  CODEOWNERS, security policy, privacy policy, and application handoff packet.
 - `velox_consumer_build_smoke` invokes only the assembled release CLI, creates
   a dependency-free starter, diagnoses its platform, WebView2, project, and
   bundled-host compatibility, builds it twice, checks

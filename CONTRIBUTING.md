@@ -49,12 +49,13 @@ Feature breadth is not a current goal.
 
 ## Commits and Releases
 
-No contributor sign-off, CLA, release automation, or public versioning policy is
-currently configured. Do not infer one. Release policy becomes active only
-after docs/ops/release.md exits its pre-implementation state.
+Unless explicitly stated otherwise, intentional contributions submitted for
+inclusion are licensed under the project's `MIT OR Apache-2.0` terms. No CLA or
+DCO sign-off bot is currently configured. Release automation and public
+versioning remain gated by `docs/ops/release.md`.
 
 ## Security Reports
 
 Do not open a public issue containing a working exploit, credential, private
-path, or sensitive application data. A private vulnerability reporting channel
-must be configured before alpha distribution.
+path, or sensitive application data. Follow `SECURITY.md` and use GitHub private
+vulnerability reporting.

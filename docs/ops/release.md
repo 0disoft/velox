@@ -18,6 +18,12 @@ dry-run verifier. It binds unsigned inputs, the signing-input ZIP, signed-output
 placeholders, the final manifest and ZIP, checksums, and SBOM without contacting
 a provider or claiming Authenticode or artifact-attestation success.
 
+The public repository now declares `MIT OR Apache-2.0`, identifies the
+maintainer in CODEOWNERS, and includes security and privacy policies. The
+SignPath application packet and exact proposed provider configuration live in
+`docs/ops/signpath-onboarding.md` and `.signpath/`; provider acceptance and
+authenticated account setup remain external gates.
+
 A separate consumer job performs no source checkout and invokes no Go, Node,
 Rust, C++, Bun, or package-manager command. It downloads the producer artifact,
 verifies its checksum, initializes and validates a project, runs doctor, builds
@@ -45,7 +51,7 @@ exists.
 
 Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
 policy remain UNDECIDED before public alpha. Local artifacts currently identify
-the development release as `0.5.8-dev`.
+the development release as `0.5.9-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 

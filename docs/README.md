@@ -59,10 +59,15 @@ The current repository has no service deployment, database, user secrets, or
 production telemetry. Active operational documents cover CI readiness,
 artifact release, and rollback of immutable releases only.
 
+Public project policies are in `LICENSE`, `SECURITY.md`, and `PRIVACY.md`.
+SignPath Foundation application and protected-environment handoff steps are in
+`docs/ops/signpath-onboarding.md`.
+
 - docs/ops/00-operational-contract.md
 - docs/ops/ci.md
 - docs/ops/release.md
 - docs/ops/signing.md
+- docs/ops/signpath-onboarding.md
 - docs/ops/rollback.md
 
 Service-oriented backup, environment, secret, incident, and observability

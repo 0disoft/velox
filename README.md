@@ -75,6 +75,9 @@ Explicitly deferred:
 - Initial decision: docs/adr/0001-initial-architecture-boundaries.md
 - CLI contract: docs/cli/command-contract.md
 - Performance budget: docs/engineering/03-performance-budget.md
+- Security policy: SECURITY.md
+- Privacy policy: PRIVACY.md
+- SignPath onboarding: docs/ops/signpath-onboarding.md
 
 ## Current CLI Slice
 
@@ -133,3 +136,9 @@ portable ZIP inspection, and publishes raw and aggregated result contracts.
 - Checklist router: CHECKLIST.md
 - Documentation index: docs/README.md
 - Scaffold state: .ssealed/manifest.json
+
+## License
+
+Velox is licensed under `MIT OR Apache-2.0`, at your option. See `LICENSE-MIT`
+and `LICENSE-APACHE`. Third-party attributions are listed in
+`THIRD_PARTY_NOTICES.md`.
