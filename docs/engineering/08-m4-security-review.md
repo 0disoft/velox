@@ -3,8 +3,10 @@
 - Status: Completed internal source review for the unsigned developer preview
 - Date: 2026-07-18
 - Owner: Project maintainer
-- Review boundary: `0.5.10-alpha.1` candidate through commit
-  `7d39d89b9ecfff339518b065ba78a13d69737160`
+- Original review boundary: `0.5.10-alpha.1` working-name candidate through
+  commit `7d39d89b9ecfff339518b065ba78a13d69737160`
+- Actutum identity refresh: `0.6.0-alpha.1` product source through commit
+  `f6e7677f77abf60eb22af2f273d80727aacdc18f`
 
 ## Claim Boundary
 
@@ -13,6 +15,13 @@ penetration test, independent audit, malware analysis, Authenticode review, or
 claim that directory assets resist a local attacker. It satisfies the M5 input
 requirement for a bounded security review; it does not close the separate M4
 public-download or external-user gates.
+
+The Actutum identity refresh rechecked the source and workflow changes from the
+original boundary through the named commit. That range changes product,
+command, module, manifest, environment, bridge, schema, and release identity,
+but adds no native capability, target, asset transport, or trust boundary. The
+review below therefore applies to the selected Actutum candidate while the
+original maintenance-cost snapshot remains immutable historical evidence.
 
 ## Reviewed Flows
 
@@ -46,8 +55,8 @@ public-download or external-user gates.
 
 - Sources: tagged source checkout, two independently built release bundles,
   workflow artifacts, manual publication input, public GitHub Release assets.
-- Sinks: prerelease assets and the downloaded `velox.exe`/host pair executed by
-  a consumer job.
+- Sinks: prerelease assets and the downloaded `actutum.exe`/
+  `actutum-host.exe` pair executed by a consumer job.
 - Controls: pinned Actions, disabled checkout credentials, producer digest,
   byte-equality gate, exact artifact allowlist, checksum/SBOM/provenance
   generation, isolated `contents: write` publisher, no replacement, tag-to-
@@ -59,10 +68,10 @@ public-download or external-user gates.
 | ID | Severity | State | Finding and disposition |
 | --- | --- | --- | --- |
 | SEC-001 | Medium | Resolved | Runtime configuration rejected absolute paths but did not explicitly reject a Windows drive-relative volume such as `C:outside`. `internal/runtimeconfig.containedPath` now rejects every non-empty `filepath.VolumeName`, matching the authoring-manifest boundary, with a Windows regression test. |
-| SEC-002 | High | Accepted for preview | External assets and `velox.runtime.json` remain mutable by a local writer. The preview prominently disclaims tamper resistance; sealing remains a separately benchmarked post-M5 decision. |
+| SEC-002 | High | Accepted for preview | External assets and `actutum.runtime.json` remain mutable by a local writer. The preview prominently disclaims tamper resistance; sealing remains a separately benchmarked post-M5 decision. |
 | SEC-003 | High | Open until public verification | An unsigned ZIP and checksum downloaded from the same compromised release channel do not authenticate each other. The manual public verifier requires a separately recorded SHA-256, but that control remains unexercised until the release exists. |
 | SEC-004 | Medium | Monitoring | The pure-Go WebView2 adapter owns COM and `unsafe.Pointer` lifetime risk. The binding is pinned and vendored, the production surface is bounded, and Windows lifecycle/security tests exercise it; no independent memory-safety review exists. |
-| SEC-005 | Low | Accepted | The host binary exposes an explicit `--debug` launch flag. Web content cannot enable it, normal `velox run` does not pass it, and local process invocation is already inside the accepted local-writer boundary. |
+| SEC-005 | Low | Accepted | The host binary exposes an explicit `--debug` launch flag. Web content cannot enable it, normal `actutum run` does not pass it, and local process invocation is already inside the accepted local-writer boundary. |
 | SEC-006 | Informational | Deferred | Authenticode identity and authenticated build attestation are absent by design for the unsigned preview. They are future-channel trust improvements, not claims made by M4. |
 
 ## Negative Evidence Reviewed
@@ -82,7 +91,7 @@ public-download or external-user gates.
 ## Privacy and Secret Review
 
 The CLI and host have no telemetry, update request, crash upload, credential
-store, or Velox service. Runtime diagnostics are local. The public verifier
+store, or Actutum service. Runtime diagnostics are local. The public verifier
 uses fixed GitHub URLs and accepts only a constrained alpha tag and digest. No
 repository secret is required for the unsigned preview. The WebView2 profile
 contains application-owned browser data and remains outside release artifacts.

@@ -110,6 +110,10 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	root := repositoryRoot(t)
 	assertSourceMarkers(t, filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"), []string{
 		"penetration test, independent audit",
+		"Actutum identity refresh",
+		"`0.6.0-alpha.1` product source through commit",
+		"`actutum.runtime.json` remain mutable",
+		"normal `actutum run` does not pass it",
 		"SEC-001 | Medium | Resolved",
 		"SEC-002 | High | Accepted for preview",
 		"SEC-003 | High | Open until public verification",
@@ -128,6 +132,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"independent external-user attempt",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "02-spec.md"), []string{
+		"Public name: Actutum",
 		"Windows 10 version 1709 build 16299",
 		"Minimum WebView2 Runtime `92.0.902.49`",
 		"explicitly unsigned",
@@ -161,6 +166,8 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		filepath.Join(root, "docs", "product", "02-spec.md"): {
 			"- Minimum supported Windows release.",
 			"- Minimum supported WebView2 Runtime version.",
+			"- Public product name and package namespaces.",
+			"Working name: Actutum",
 		},
 		filepath.Join(root, "docs", "product", "01-roadmap.md"): {
 			"needs M4 distribution evidence, external user attempts, a bounded",

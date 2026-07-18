@@ -2,7 +2,7 @@
 
 - Status: Draft
 - Owner: Project maintainer
-- Working name: Actutum
+- Public name: Actutum
 
 ## Product Statement
 
@@ -186,7 +186,7 @@ Pause feature development and reassess the product if:
 
 ## Deferred Decisions
 
-- Public product name and package namespaces.
+- Package-manager publication and namespace reservation strategy.
 - Asset sealing, installers, code signing, and automatic updates.
 - macOS and Linux feasibility.
 - Whether any native API beyond basic window control belongs in core.
