@@ -22,6 +22,11 @@ Use these values in the SignPath Foundation application.
 | Telemetry | None in the CLI or runtime host |
 | Security policy | `SECURITY.md` |
 | Privacy policy | `PRIVACY.md` |
+| Private vulnerability reporting | Enabled for `0disoft/velox`, verified 2026-07-18 |
+
+The public repository description and discovery topics are also populated.
+These repository-owner setup items are complete and do not need to be repeated
+during the SignPath application.
 
 ## Application Description
 
@@ -61,16 +66,18 @@ These steps require the repository owner's authenticated account and acceptance
 of provider terms. An automation agent must not perform them on the maintainer's
 behalf.
 
-1. Open https://signpath.org/apply and submit the application facts and
+1. Confirm that you own or can license all project code under
+   `MIT OR Apache-2.0`. This is a maintainer legal assertion, not an automated
+   source scan or legal opinion.
+2. Open https://signpath.org/apply and submit the application facts and
    description above.
-2. Review and accept the SignPath Foundation terms as the project maintainer.
-3. After approval, install the SignPath GitHub App with access limited to
+3. Review and accept the SignPath Foundation terms as the project maintainer.
+4. After approval, install the SignPath GitHub App with access limited to
    `0disoft/velox` and link the predefined `GitHub.com` trusted build system.
-4. Create or confirm the `velox`, `windows-x64`, and `release-signing` provider
+5. Create or confirm the `velox`, `windows-x64`, and `release-signing` provider
    objects using the repository-owned configuration files.
-5. Confirm the exact Authenticode publisher subject and timestamp policy with
+6. Confirm the exact Authenticode publisher subject and timestamp policy with
    SignPath.
-6. In GitHub, enable private vulnerability reporting for the repository.
 7. Create a protected GitHub environment named `alpha-signing`, restrict it to
    release tags, and require maintainer approval.
 8. Add `SIGNPATH_API_TOKEN` only as an `alpha-signing` environment secret. Do
