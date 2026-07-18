@@ -47,6 +47,7 @@ who can replace installed directory assets or the external runtime config.
 | Browser features escape the product boundary | popup, download, permission, and remote-navigation denial |
 | Project paths overwrite unrelated files | canonical containment, link/reparse checks, owned staging, atomic promotion |
 | A release swaps the generic host | target, contract, size, and SHA-256 verification |
+| A signing or publication step substitutes different bytes | unsigned equality gate, provider request binding, signed manifest, Authenticode verification, and final artifact attestation |
 | Production inspection exposes privileged tooling | development tools and default context menus disabled outside debug runs |
 
 ### Residual risk
@@ -123,6 +124,10 @@ An embedded or sealed profile is deferred and must be benchmarked separately.
 - Untrusted paths can escape their roots.
 - Build cleanup can delete pre-existing user files.
 - Release artifacts are not checksummed.
+- Public release executables are unsigned, signatures do not match the approved
+  profile, or final artifacts lack authenticated attestations.
+- Signing private material enters the repository, workflow secrets, artifacts,
+  caches, or logs.
 - Runtime failure exposes secrets, source contents, or native stack traces.
 - A security control exists only in prose and has no executable negative test.
 
@@ -133,6 +138,8 @@ An embedded or sealed profile is deferred and must be benchmarked separately.
 - Navigation, popup, frame, and browser-permission tests.
 - Missing-runtime and invalid-configuration failure tests.
 - Dependency and release checksum verification.
+- Authenticode chain, publisher/profile, digest, and timestamp verification.
+- Final release ZIP and SBOM artifact-attestation verification.
 - A current threat model before alpha.
 
 ## Current Runtime Evidence

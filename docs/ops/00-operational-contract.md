@@ -66,5 +66,7 @@ are implemented and tested.
 
 ## Current Gap
 
-No implementation, CI workflow, release artifact, signing process, or
-operational history exists. This document defines intended gates only.
+The local runtime, deterministic unsigned release builder, and hosted alpha
+evidence workflow exist. ADR 0010 defines the signing and attestation boundary,
+but provider onboarding, signed artifacts, public distribution, independent
+public-download verification, and release operational history do not exist.

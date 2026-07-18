@@ -84,9 +84,9 @@ Status: Complete.
 
 The Wails zero-cache cold-build gate is complete. Its machine-generated
 evidence and scope limits are recorded in
-`docs/engineering/03-performance-budget.md`. M3 remains active because that
-pairwise result does not complete the other benchmark deliverables or the
-remaining go-or-kill gates.
+`docs/engineering/03-performance-budget.md`. The pairwise result did not by
+itself complete M3; the deliverable audit below records the additional evidence
+that closed the milestone.
 
 ### Deliverable audit
 
@@ -145,6 +145,11 @@ checkout-free consumer build. This is release evidence, not a published alpha.
 completed both jobs, and the downloaded artifacts passed their checksum and
 bundled consumer-result schema checks.
 
+ADR 0010 now fixes the M4 trust design: GitHub artifact attestations authenticate
+the final ZIP and SBOM, while SignPath Foundation is the conditional
+Authenticode provider for the CLI and unchanged host. This is a selected design,
+not provider onboarding or signed-release evidence.
+
 ### Deliver
 
 - Checksums and software bill of materials.
@@ -163,7 +168,11 @@ bundled consumer-result schema checks.
 
 ### Remaining gates
 
-- Authenticate provenance and sign the distributed CLI and unchanged host.
+- Obtain SignPath Foundation project acceptance and approve the exact artifact
+  configuration, signing policy, publisher/profile identity, and protected
+  environment.
+- Implement and dry-run the unsigned-to-signed lineage record, Authenticode
+  verification, final artifact attestations, and immutable publication gate.
 - Publish immutable compatibility and limitation notes beside a real alpha.
 - Run the documented path from a repository and account not controlled by the
   implementation workflow.
@@ -187,11 +196,10 @@ counterarguments.
 
 The Wails cold-build result and the two accepted M3 product decisions supply M5
 inputs, not the product decision. Before M5 can start, the repository still
-needs the incomplete recommended-cache deliverable, M4 distribution evidence,
-external user attempts, a bounded maintenance-cost record, and a security
-review. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
-attempts must now test whether its narrow portable-artifact boundary has real
-value.
+needs M4 distribution evidence, external user attempts, a bounded
+maintenance-cost record, and a security review. ADR 0008 records the explicit
+PWA and Neutralino counterarguments; user attempts must now test whether its
+narrow portable-artifact boundary has real value.
 
 ## Deferred Until After M5
 

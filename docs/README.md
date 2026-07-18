@@ -62,6 +62,7 @@ artifact release, and rollback of immutable releases only.
 - docs/ops/00-operational-contract.md
 - docs/ops/ci.md
 - docs/ops/release.md
+- docs/ops/signing.md
 - docs/ops/rollback.md
 
 Service-oriented backup, environment, secret, incident, and observability

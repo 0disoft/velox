@@ -12,6 +12,9 @@ rollback.
 ## Triggers
 
 - Published checksum or provenance mismatch.
+- Missing, invalid, revoked, or wrongly scoped Authenticode signature.
+- Signing record does not bind the published bytes to the verified unsigned
+  inputs and approved provider request.
 - CLI or host fails the published hello smoke test.
 - New release requires an undeclared consumer toolchain.
 - Startup, security, or output integrity regresses materially.
@@ -26,7 +29,10 @@ rollback.
 4. Point documentation or distribution metadata to that release only through an
    explicit reviewed change.
 5. Re-run download, checksum, inspect, build, and startup verification.
-6. Publish a concise limitation or incident notice when users may be affected.
+6. Re-run artifact-attestation and Authenticode verification.
+7. Revoke exposed provider tokens, suspend the signing policy, or contact the
+   provider when credential or certificate integrity is involved.
+8. Publish a concise limitation or incident notice when users may be affected.
 
 ## Consumer Recovery
 
@@ -49,6 +55,7 @@ runbook.
 
 ## Current Gap
 
-No promotion metadata, release workflow, or rollback automation exists. Exact
-operator commands remain UNDECIDED until release tooling is implemented and
-tested.
+ADR 0010 and `docs/ops/signing.md` define the promotion and signing trust
+boundaries. No signed artifact, provider onboarding, public release workflow,
+or rollback automation exists. Exact operator commands remain UNDECIDED until
+release tooling is implemented and tested.

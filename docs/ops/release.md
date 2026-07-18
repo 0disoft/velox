@@ -1,12 +1,12 @@
 # Release
 
-- Status: Unsigned alpha evidence pipeline implemented; public distribution unavailable
+- Status: Signing design accepted; provider onboarding and public distribution unavailable
 - Owner: Project maintainer
 
 ## Current State
 
-Velox has no published release, package registry entry, signing process, or
-stable version policy. Maintainer tooling builds the Go CLI and host, assembles
+Velox has no published release, package registry entry, implemented signing
+workflow, or stable version policy. Maintainer tooling builds the Go CLI and host, assembles
 the deterministic unsigned Windows x64 bundle, verifies artifact entries
 against the release manifest, and emits checksums, a file-level SPDX 2.3 SBOM,
 and one unsigned in-toto/SLSA provenance statement. The alpha-evidence workflow
@@ -65,8 +65,9 @@ consumer archive.
 Checksums, SPDX, and provenance are workflow artifacts, not contents of the
 consumer ZIP. The provenance statement is deterministic metadata but is not a
 signed attestation. An attacker who can replace both release and evidence can
-still forge the complete unsigned set. Authenticated provenance, signatures,
-compatibility notes, and public release publication therefore remain M4 gates.
+still forge the complete unsigned set. ADR 0010 selects separate authenticated
+provenance and Authenticode controls, but their implementation, compatibility
+notes, and public release publication remain M4 gates.
 
 ## Release Gates
 
@@ -81,22 +82,33 @@ compatibility notes, and public release publication therefore remain M4 gates.
 
 ## Signing Boundary
 
-The generic host remains byte-identical when packaged, so its vendor signature
-can remain valid. Application-specific executable branding and signing are not
-part of the initial release.
+ADR 0010 and `docs/ops/signing.md` own this boundary. SignPath Foundation is the
+conditional Authenticode provider for public alpha; GitHub artifact attestations
+authenticate the final release ZIP and SBOM. Microsoft Artifact Signing remains
+the migration candidate for a project-owned publisher identity or paid service
+operation.
 
-Signing credentials stay outside this repository. The exact signing provider
-and promotion workflow remain UNDECIDED.
+The provider signs the reproducibly built `velox.exe` and `velox-host.exe`.
+The final bundle is then assembled from those exact signed inputs so
+`velox-host.json` and `release-manifest.json` describe signed bytes. The generic
+host remains byte-identical after release and during application packaging, so
+its signature is preserved. Application-specific executable branding and
+signing are not part of the initial release.
+
+Signing credentials stay outside this repository. No private key or PFX enters
+GitHub secret storage. Provider submission credentials, approval, and release
+write permission belong to separate protected-environment gates.
 
 ## Promotion
 
-Promotion reuses an already verified immutable artifact. It does not rebuild
-different bytes for stable.
+Promotion reuses an already verified immutable signed artifact. It does not
+rebuild or re-sign different bytes for stable.
 
 The current workflow does not promote or publish anything and has only
 `contents: read`. Tag and manual runs produce retained workflow artifacts for
-review. A future publishing workflow requires a separate approval, signing
-decision, and writable GitHub permission boundary.
+review. A future publishing workflow requires successful provider onboarding,
+a dry-run lineage verifier, protected-environment approval, final artifact
+attestations, and a narrowly isolated `contents: write` publication job.
 
 ## Stop Conditions
 
