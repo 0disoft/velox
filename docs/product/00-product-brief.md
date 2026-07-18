@@ -33,13 +33,16 @@ copying, and deterministic packaging.
 - Teams for which clean CI time and cache consumption matter more than native
   plugin breadth.
 
-## Priority Order
+## Headline Metrics
 
 1. End-to-end cold build time.
 2. GitHub Actions cache bytes uploaded by a consumer build.
-3. Process-to-ready application startup time.
-4. Deterministic and inspectable output.
-5. Minimal security-sensitive native surface.
+
+## Guardrail Order
+
+1. Process-to-ready startup and shutdown reliability.
+2. Deterministic and inspectable output.
+3. Minimal security-sensitive native surface.
 
 Binary size, plugin breadth, deep OS integration, and frontend framework
 convenience are secondary.
@@ -69,8 +72,9 @@ Velox does not initially own:
 The product proceeds only if a clean, public benchmark shows a material
 end-to-end cold-build advantage over Wails, no consumer Actions cache upload,
 and a simpler operating surface than the nearest compile-free alternatives.
-Startup time is a measured constraint, not a promised advantage until evidence
-exists.
+ADR 0008 passes that structural gate only for portable static Windows apps and
+keeps PWA as the default when browser-managed deployment is acceptable. ADR
+0009 retains startup as a measured release guardrail, not a promised advantage.
 
 ## Data and Privacy
 

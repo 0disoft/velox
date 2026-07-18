@@ -3,16 +3,16 @@
 - Status: Draft
 - Owner: Project maintainer
 
-## Priority
+## Headline Metrics
 
-Velox optimizes, in order:
+Velox makes comparative product claims about, in order:
 
 1. End-to-end cold build time.
 2. Consumer GitHub Actions cache upload.
-3. Process-to-ready application startup.
 
-Artifact size and memory use are collected as guardrails but are not headline
-metrics unless product scope changes.
+Process-to-ready startup is the first runtime guardrail. Artifact size and
+memory use are additional guardrails. None is a headline metric unless a new
+accepted ADR changes the evidence boundary.
 
 ## Measurement Profiles
 
@@ -64,7 +64,7 @@ These are go-or-kill targets, not published performance claims.
 | Hello local clean-output build command | p95 at or below 2 seconds on the pinned runner |
 | End-to-end cold build | At least 3x faster than the pinned Wails fixture |
 | Go host startup | Record regressions against its pinned Go baseline |
-| Startup claim | Publish only when the advantage exceeds noise and 10% |
+| Startup guardrail | Investigate a 10% or greater p95 regression; make no comparative headline claim |
 
 ## Current Wails Gate Evidence
 
@@ -83,8 +83,9 @@ at revision `0f83ff4156441044fa0c2290e8fe266d0d5fcb86`; it paired Velox revision
 The generated pair decision reports a Wails-to-Velox p50 ratio of `36.124`,
 zero uploaded cache bytes, one pinned environment, balanced CPU allocation, and
 `publishable: true`. This passes the 3x Wails cold-build gate. It does not prove
-an all-framework performance lead, structural simplicity against a compile-free
-wrapper, or a startup advantage. Those remain separate evidence gates.
+an all-framework performance lead. ADR 0008 separately resolves the narrow
+structural-simplicity gate, and ADR 0009 removes startup from the headline
+instead of claiming an unsupported advantage.
 
 If the Go host exceeds its startup allowance, investigate the repository-owned
 adapter and WebView2 lifecycle before changing languages. ADR 0005 permits
@@ -288,8 +289,9 @@ evidence is still required before assigning the delay to a fixed WebView2 grace
 period or singleton handover timeout.
 
 The provisional immediate-relaunch ceiling remains 10 seconds as a regression
-guard, not an expected duration. Startup remains a guardrail metric, not a
-product advantage, until cross-framework evidence exceeds the documented noise
+guard, not an expected duration. ADR 0009 makes startup a guardrail metric
+rather than a product advantage. Reopening a comparative claim requires a new
+accepted ADR and cross-framework evidence that exceeds the documented noise
 gate.
 
 An explicit manual diagnostic may additionally produce

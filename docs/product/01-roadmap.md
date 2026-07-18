@@ -7,7 +7,7 @@
 
 Milestones are evidence gates, not dates. A later milestone does not start
 until the previous milestone's exit criteria are met. Features that do not
-improve or protect the three priority metrics stay deferred.
+improve or protect the headline metrics and runtime guardrails stay deferred.
 
 ## M0: Feasibility and Kill Test
 
@@ -128,9 +128,10 @@ used to promote these rows to `Complete`.
   pair.
 - [x] Velox end-to-end cold build is at least 3x faster than the pinned Wails
   fixture.
-- [ ] Velox remains structurally simpler than the closest compile-free
-  comparison.
-- [ ] Startup is either materially better or removed as a headline advantage.
+- [x] Velox remains structurally simpler than the closest compile-free
+  comparison within the portable static-app boundary defined by ADR 0008.
+- [x] Startup is removed as a headline advantage by ADR 0009 and retained as a
+  release guardrail.
 
 ## M4: Alpha Distribution
 
@@ -165,11 +166,13 @@ The decision uses benchmark evidence, external user attempts, maintenance cost,
 security review findings, and the strength of the PWA and Neutralino
 counterarguments.
 
-The Wails cold-build result supplies one M5 input, not the product decision.
-Before M5 can start, the repository still needs the two unchecked M3
-go-or-kill gates, M4 distribution evidence, external user attempts, a bounded
-maintenance-cost record, a security review, and explicit PWA and Neutralino
-counterarguments.
+The Wails cold-build result and the two accepted M3 product decisions supply M5
+inputs, not the product decision. Before M5 can start, the repository still
+needs the incomplete recommended-cache deliverable, M4 distribution evidence,
+external user attempts, a bounded maintenance-cost record, and a security
+review. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
+attempts must now test whether its narrow portable-artifact boundary has real
+value.
 
 ## Deferred Until After M5
 
@@ -181,5 +184,6 @@ counterarguments.
 - Frontend bundling, hot reload, and development server.
 - macOS, Linux, ARM64, multi-window, tray, menu, and global shortcuts.
 
-Each deferred item requires a new ADR, measured impact on the priority metrics,
-and a clear reason it belongs in core rather than an external tool.
+Each deferred item requires a new ADR, measured impact on the headline metrics
+and guardrails, and a clear reason it belongs in core rather than an external
+tool.

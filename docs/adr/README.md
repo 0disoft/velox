@@ -22,6 +22,8 @@ choice inside that scope and cannot silently add a product capability.
 | 0005 | Accepted | Use Go for both the CLI and production host; keep the WebView2 adapter repository-owned |
 | 0006 | Accepted | Bind the CLI and host with strict release metadata |
 | 0007 | Accepted | Retain virtual HTTPS asset delivery while immediate-relaunch recovery is diagnosed |
+| 0008 | Accepted | Pass structural simplicity only for the portable static-app topology and keep the PWA counterargument explicit |
+| 0009 | Accepted | Remove startup from the product headline and retain it as a release guardrail |
 
 ## Lifecycle
 

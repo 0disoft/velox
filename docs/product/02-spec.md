@@ -157,10 +157,11 @@ benchmark environment:
   compiler or Node.js.
 - The consumer workflow uploads zero bytes to GitHub Actions cache.
 - End-to-end cold build is materially faster than the equivalent Wails sample.
-- Installation and runtime structure are demonstrably simpler than the closest
-  compile-free comparison.
-- Fresh-profile and warm-profile process-to-ready results are published without
-  hiding setup, failures, or outliers.
+- Installation and runtime structure stay within ADR 0008's narrow advantage
+  over the closest compile-free comparison.
+- Fresh-profile, settled warm-profile, and immediate-relaunch process-to-ready
+  results remain release guardrails without being presented as a product
+  advantage.
 - The security contract is covered by executable tests.
 
 ## Stop Conditions
@@ -171,9 +172,10 @@ Pause feature development and reassess the product if:
 - A practical implementation requires a local server or broad native API.
 - The cold-build advantage over Wails is less than 3x in the agreed headline
   fixture after benchmark noise is controlled.
-- The product cannot explain a meaningful advantage over a PWA or existing
-  compile-free desktop wrapper.
-- Startup claims depend on measuring a blank window instead of usable content.
+- The product cannot preserve ADR 0008's portable-artifact distinction from a
+  PWA or existing compile-free desktop wrapper.
+- Startup reliability measurements stop at a blank window instead of usable
+  content.
 
 ## Deferred Decisions
 

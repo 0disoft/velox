@@ -29,7 +29,10 @@ docs/engineering/03-performance-budget.md.
 - Ready means usable content after DOMContentLoaded and two animation frames.
 - Fresh and warm WebView2 profiles are distinct measurements.
 - Startup claims include failures and environment metadata.
-- Host-language choice remains reversible until M0 evidence exists.
+- ADR 0009 treats startup as a release guardrail and lifecycle diagnostic, not
+  a product headline.
+- ADR 0005 fixes the production language unless its explicit safety revisit
+  trigger is met.
 
 ## Determinism
 

@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M2 complete; M3 active with the Wails cold-build gate passed
+- Status: M2 complete; M3 active with all product go-or-kill gates resolved
 - Scope: general
 - Repository type: cli-tool
 
@@ -19,14 +19,14 @@ zero-cache pair passes the cold-build gate, while release provenance, the
 remaining cross-framework evidence, and the non-performance product gates
 remain incomplete.
 
-## Priorities
+## Headline Metrics
 
 1. End-to-end cold build time.
 2. Consumer GitHub Actions cache upload.
-3. Process-to-ready application startup.
 
-Velox intentionally trades native feature breadth for a smaller build and
-runtime surface. Startup is a hypothesis to measure, not a proven advantage.
+Process-to-ready startup is a release guardrail and lifecycle diagnostic, not a
+headline advantage. Velox intentionally trades native feature breadth for a
+smaller build and runtime surface.
 
 ## Proposed Shape
 
@@ -100,10 +100,11 @@ authoring contract.
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging
 slice, and M2 closed the minimum runtime security contract. M3 has passed its
-publishable Wails cold-build gate. Its remaining product gates are structural
-simplicity against the closest compile-free wrapper and either a material
-startup advantage or removal of startup from the headline. A PWA comparison
-also remains required before the M5 product decision.
+publishable Wails cold-build gate and its narrowly defined structural-
+simplicity gate. Startup has been removed from the headline and retained as a
+release guardrail. M3 remains active because the recommended-cache suite is not
+implemented. External user attempts and the PWA counterargument remain required
+before the M5 product decision.
 
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,

@@ -13,8 +13,8 @@
 
 | ID | Risk | Likelihood | Impact | State | Response and evidence gate |
 | --- | --- | --- | --- | --- | --- |
-| R-001 | Velox duplicates an existing compile-free wrapper | High | Critical | Open | M0 compares architecture and workflow with Neutralino and a PWA; stop if the difference is only fewer features |
-| R-002 | WebView2 initialization dominates startup | High | High | Open | Publish fresh and warm process-to-ready data; remove startup from headline claims when the difference is noise |
+| R-001 | Velox duplicates an existing compile-free wrapper | High | Critical | Mitigated | ADR 0008 passes only the smaller runtime/build topology and rejects a broad superiority claim; adding a local server, extensions, updater, or broad native API reopens the risk |
+| R-002 | WebView2 initialization dominates startup | High | High | Mitigated | ADR 0009 removes startup from the headline while preserving fresh, settled warm, immediate-relaunch, failure, and regression evidence |
 | R-003 | Pure-Go COM lifecycle code is unsafe or costly | Medium | Critical | Monitoring | Keep the WebView2 adapter bounded and reopen ADR 0005 only if required COM lifetime or security controls cannot be represented safely |
 | R-004 | Feature requests recreate Tauri or Wails | High | Critical | Open | Enforce project invariants; require an ADR and metric impact for every new native surface |
 | R-005 | Unchanged generic host prevents application branding | High | Medium | Accepted | Keep branding out of M0; revisit only after product viability |
@@ -26,7 +26,7 @@
 | R-011 | Working name conflicts with existing products or namespaces | High | Medium | Open | Treat Velox as a working name and complete naming review before public package release |
 | R-012 | Benchmark targets become marketing theater | Medium | Critical | Open | Keep setup in headline timing; scope the current decision to the generated Velox-Wails pair artifact and make any future README numeric claim mechanically derived from published evidence |
 | R-013 | A downloaded release bundle is tampered with | Low | Critical | Open | Pin checksums and publish provenance before alpha distribution |
-| R-014 | Static-only scope has too little user value | Medium | Critical | Open | Require external user attempts and a clear answer to why a PWA is insufficient before M5 |
+| R-014 | Static-only scope has too little user value | Medium | Critical | Open | ADR 0008 limits the answer to offline portable deterministic artifacts; require external user attempts to prove that distinction matters before M5 |
 | R-015 | Virtual HTTPS and same-UDF relaunch ownership create a controller-startup tail | High | High | Monitoring | Keep file URL diagnostic-only under ADR 0007; publish the delay, UDF, origin, browser-process, and phase recovery matrix before changing transport or adding a workaround |
 
 ## Review Rules
