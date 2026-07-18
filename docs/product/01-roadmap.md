@@ -161,6 +161,10 @@ The lineage verifier rejects provider output unless one directory contains only
 the two expected signed executable names.
 Doctor now gates the documented Windows and Evergreen WebView2 compatibility
 floor instead of treating any installed runtime as supported.
+The maintainer Authenticode verifier now rejects unexpected provider files,
+non-valid signatures, publisher-subject drift, non-SHA-256 signatures, missing
+timestamp identities, and different signer certificates. Its successful path
+still needs accepted provider output and the approved publisher subject.
 
 ### Deliver
 
@@ -185,8 +189,8 @@ floor instead of treating any installed runtime as supported.
   environment.
 - Submit the repository-generated signing input through the accepted provider
   configuration and preserve the returned request identity.
-- Implement real Authenticode verification and release-mode signing-record
-  creation using provider output.
+- Exercise the implemented Authenticode verifier against real provider output,
+  then implement release-mode signing-record creation from that evidence.
 - Implement final artifact attestations and the immutable publication gate.
 - Publish immutable compatibility and limitation notes beside a real alpha.
 - Run the documented path from a repository and account not controlled by the

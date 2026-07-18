@@ -1,6 +1,6 @@
 # Signing and Attestation
 
-- Status: Design accepted; provider onboarding and workflow implementation pending
+- Status: Local signing input and Authenticode verification implemented; provider onboarding pending
 - Owner: Project maintainer
 - Decision: ADR 0010
 
@@ -128,6 +128,31 @@ The machine-readable signing record contains at least:
 The record must not contain an API token, certificate private material, raw
 OIDC token, environment secret, or unredacted provider response.
 
+## Authenticode Verification Command
+
+`velox-signing-record authenticode` is the maintainer-only verification boundary
+for provider output. It runs on Windows, accepts one directory containing only
+`velox-host.exe` and `velox.exe`, and requires the exact approved publisher
+subject through `--expected-subject`. It rejects linked, empty, renamed, added,
+or split files before signature inspection.
+
+The Go command resolves the Windows and system directories through Win32,
+invokes the absolute inbox Windows PowerShell 5.1 executable with no profile,
+and imports the inbox security module by absolute path. The
+artifact path crosses that boundary only through a process environment value;
+it is never interpolated into PowerShell source. The probe requires PowerShell
+to report `Valid`, parses the embedded PE PKCS#7 payload through .NET
+`SignedCms`, requires SHA-256 OID `2.16.840.1.101.3.4.2.1`, requires a timestamp
+certificate, and records signer and timestamp subjects, serials, and
+thumbprints. Both executable results must identify one signer certificate.
+
+Successful output conforms to
+`schema/authenticode-verification-v1.schema.json`. This evidence is not itself
+a signing record, artifact attestation, provider request, or publication
+authorization. The exact expected subject remains an external onboarding value,
+and real provider output must exercise the successful path before release-mode
+record creation can be enabled.
+
 ## Workflow Permission Boundary
 
 The workflow default is read-only. Jobs receive only the permission they need:
@@ -183,11 +208,12 @@ Do not add the signing workflow until all of these external values exist:
 - confirmed GitHub-hosted trusted-build topology;
 - protected GitHub environment and named approver;
 - provider API-token scope and rotation owner;
-- tested signature-verification command path;
+- tested signature-verification command path against real provider output;
 - implemented release-mode record creation backed by real Authenticode and
   artifact-attestation verification.
 
-The deterministic signing-input packager, no-publication dry-run, and lineage
-checks now exist. They do not submit the archive to a provider, inspect an
-Authenticode signature, or contact GitHub's attestation service, so release-mode
+The deterministic signing-input packager, no-publication dry-run, lineage
+checks, and fail-closed Authenticode verifier now exist. The verifier has no
+approved expected publisher or real provider output yet. Nothing submits the
+archive to a provider or contacts GitHub's attestation service, so release-mode
 record creation and release-write permission remain blocked.

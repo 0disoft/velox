@@ -39,7 +39,9 @@ The parent workspace command contract currently provides these bounded intents:
   repository-owned signing-record package, and maintainer CLI tests; emits a
   non-publishable dry-run record; validates it against
   `velox.signing-record/v1`; and proves `publishable: true` is rejected for
-  dry-run evidence.
+  dry-run evidence. The Go test suite also exercises the fail-closed
+  Authenticode policy boundary and `velox.authenticode-verification/v1`; a real
+  signed-provider success remains an external M4 gate.
 - `velox_consumer_build_smoke` invokes only the assembled release CLI, creates
   a dependency-free starter, diagnoses its platform, WebView2, project, and
   bundled-host compatibility, builds it twice, checks

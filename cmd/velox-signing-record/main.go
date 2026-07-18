@@ -8,8 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/0disoft/velox/internal/authenticode"
 	"github.com/0disoft/velox/internal/signingrecord"
 )
+
+var verifyAuthenticodeDirectory = authenticode.VerifyDirectory
 
 type commonFlags struct {
 	unsignedDirectory *string
@@ -26,12 +29,14 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "velox-signing-record: expected prepare, dry-run, or verify")
+		fmt.Fprintln(stderr, "velox-signing-record: expected prepare, authenticode, dry-run, or verify")
 		return 2
 	}
 	switch args[0] {
 	case "prepare":
 		return runPrepare(args[1:], stdout, stderr)
+	case "authenticode":
+		return runAuthenticode(args[1:], stdout, stderr)
 	case "dry-run":
 		return runDryRun(args[1:], stdout, stderr)
 	case "verify":
@@ -40,6 +45,30 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "velox-signing-record: unknown command %q\n", args[0])
 		return 2
 	}
+}
+
+func runAuthenticode(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("velox-signing-record authenticode", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	signedDirectory := flags.String("signed-dir", "", "directory containing provider-output velox.exe and velox-host.exe")
+	expectedSubject := flags.String("expected-subject", "", "exact approved Authenticode publisher subject")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if flags.NArg() != 0 || *signedDirectory == "" || *expectedSubject == "" {
+		fmt.Fprintln(stderr, "velox-signing-record: authenticode requires --signed-dir and --expected-subject")
+		return 2
+	}
+	result, err := verifyAuthenticodeDirectory(*signedDirectory, *expectedSubject)
+	if err != nil {
+		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		return 6
+	}
+	if err := json.NewEncoder(stdout).Encode(result); err != nil {
+		fmt.Fprintln(stderr, "velox-signing-record:", err)
+		return 6
+	}
+	return 0
 }
 
 func runPrepare(args []string, stdout, stderr io.Writer) int {

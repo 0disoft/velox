@@ -45,7 +45,7 @@ exists.
 
 Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
 policy remain UNDECIDED before public alpha. Local artifacts currently identify
-the development release as `0.5.7-dev`.
+the development release as `0.5.8-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 
@@ -113,6 +113,10 @@ The provider signs the reproducibly built `velox.exe` and `velox-host.exe`.
 The repository-owned `velox-signing-record prepare` command packages exactly
 those two unsigned files into a deterministic, self-verified signing input
 without contacting the provider.
+The separate `authenticode` command then fails closed unless the returned
+directory contains exactly those two names, both signatures are valid, both
+use the approved exact publisher subject and SHA-256, both have timestamp
+certificate identities, and both share one signer certificate.
 The final bundle is then assembled from those exact signed inputs so
 `velox-host.json` and `release-manifest.json` describe signed bytes. The generic
 host remains byte-identical after release and during application packaging, so
@@ -132,6 +136,7 @@ The current workflow does not promote or publish anything and has only
 `contents: read`. Tag and manual runs produce retained workflow artifacts for
 review. A future publishing workflow requires successful provider onboarding,
 a deterministic signing-input packager, dry-run lineage verifier,
+fail-closed Authenticode verifier,
 protected-environment approval, final artifact
 attestations, and a narrowly isolated `contents: write` publication job.
 

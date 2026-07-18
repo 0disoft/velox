@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.velox.invalid/authenticode-verification/v1.json",
+  "title": "Velox Authenticode verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "target", "expectedSubject", "artifacts"],
+  "properties": {
+    "schemaVersion": { "const": "velox.authenticode-verification/v1" },
+    "target": { "const": "windows-x64" },
+    "expectedSubject": { "$ref": "#/$defs/text" },
+    "artifacts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/host" },
+        { "$ref": "#/$defs/cli" }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "hex": { "type": "string", "pattern": "^[0-9a-f]+$", "minLength": 2, "maxLength": 256 },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "status", "subject", "issuer", "serial", "thumbprint", "digestAlgorithm", "digestOid", "timestampAuthority", "timestampSerial", "timestampThumbprint"],
+      "properties": {
+        "file": { "type": "string" },
+        "status": { "const": "verified" },
+        "subject": { "$ref": "#/$defs/text" },
+        "issuer": { "$ref": "#/$defs/text" },
+        "serial": { "$ref": "#/$defs/hex" },
+        "thumbprint": { "$ref": "#/$defs/hex" },
+        "digestAlgorithm": { "const": "sha256" },
+        "digestOid": { "const": "2.16.840.1.101.3.4.2.1" },
+        "timestampAuthority": { "$ref": "#/$defs/text" },
+        "timestampSerial": { "$ref": "#/$defs/hex" },
+        "timestampThumbprint": { "$ref": "#/$defs/hex" }
+      }
+    },
+    "host": {
+      "allOf": [
+        { "$ref": "#/$defs/artifact" },
+        { "properties": { "file": { "const": "velox-host.exe" } } }
+      ]
+    },
+    "cli": {
+      "allOf": [
+        { "$ref": "#/$defs/artifact" },
+        { "properties": { "file": { "const": "velox.exe" } } }
+      ]
+    }
+  }
+}

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0disoft/velox/internal/authenticode"
 	"github.com/0disoft/velox/internal/releasebundle"
 	"github.com/0disoft/velox/internal/signingrecord"
 )
@@ -90,6 +91,37 @@ func TestPrepareCommandCreatesSigningInput(t *testing.T) {
 	}
 }
 
+func TestAuthenticodeCommandEmitsVerifiedEvidence(t *testing.T) {
+	previous := verifyAuthenticodeDirectory
+	verifyAuthenticodeDirectory = func(directory, expectedSubject string) (authenticode.Result, error) {
+		if directory != "signed" || expectedSubject != "CN=Velox Publisher" {
+			t.Fatalf("arguments = %q, %q", directory, expectedSubject)
+		}
+		return authenticode.Result{SchemaVersion: authenticode.SchemaVersion, Target: authenticode.Target, ExpectedSubject: expectedSubject}, nil
+	}
+	t.Cleanup(func() { verifyAuthenticodeDirectory = previous })
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := run([]string{"authenticode", "--signed-dir", "signed", "--expected-subject", "CN=Velox Publisher"}, &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), `"schemaVersion":"velox.authenticode-verification/v1"`) {
+		t.Fatalf("code = %d, stdout = %s, stderr = %s", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestAuthenticodeCommandFailsClosed(t *testing.T) {
+	previous := verifyAuthenticodeDirectory
+	verifyAuthenticodeDirectory = func(string, string) (authenticode.Result, error) {
+		return authenticode.Result{}, fmt.Errorf("signature is not trusted")
+	}
+	t.Cleanup(func() { verifyAuthenticodeDirectory = previous })
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := run([]string{"authenticode", "--signed-dir", "signed", "--expected-subject", "CN=Velox Publisher"}, &stdout, &stderr)
+	if code != 6 || !strings.Contains(stderr.String(), "not trusted") || stdout.Len() != 0 {
+		t.Fatalf("code = %d, stdout = %s, stderr = %s", code, stdout.String(), stderr.String())
+	}
+}
+
 func TestVerifyCommandRejectsChangedEvidence(t *testing.T) {
 	fixture := commandFixture(t)
 	recordPath := filepath.Join(fixture.root, "signing-record.json")
@@ -122,6 +154,10 @@ func TestCommandRejectsIncompleteArguments(t *testing.T) {
 	stderr.Reset()
 	if code := run([]string{"prepare", "--out", signingrecord.SigningInputName}, &stdout, &stderr); code != 2 {
 		t.Fatalf("prepare code = %d", code)
+	}
+	stderr.Reset()
+	if code := run([]string{"authenticode", "--signed-dir", "signed"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("authenticode code = %d", code)
 	}
 }
 
@@ -171,7 +207,7 @@ func commandFixture(t *testing.T) signingCommandFixture {
 	manifestPath := filepath.Join(fixture.release, "release-manifest.json")
 	writeCommandJSON(t, manifestPath, releasebundle.Manifest{
 		SchemaVersion:  releasebundle.SchemaVersion,
-		ReleaseVersion: "0.5.7-dev",
+		ReleaseVersion: "0.5.8-dev",
 		Target:         signingrecord.Target,
 		Artifacts: []releasebundle.Artifact{
 			{File: signedCLI.File, Bytes: signedCLI.Bytes, SHA256: signedCLI.SHA256},
@@ -205,7 +241,7 @@ func (fixture signingCommandFixture) pathArgs() []string {
 func (fixture signingCommandFixture) args(recordPath string) []string {
 	return append([]string{
 		"--out", recordPath,
-		"--release-version", "0.5.7-dev",
+		"--release-version", "0.5.8-dev",
 		"--source-commit", strings.Repeat("a", 40),
 		"--source-tag", "v0.5.6-alpha.1",
 		"--source-workflow", ".github/workflows/release.yml@refs/tags/v0.5.6-alpha.1",
