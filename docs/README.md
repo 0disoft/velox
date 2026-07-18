@@ -60,8 +60,9 @@ production telemetry. Active operational documents cover CI readiness,
 artifact release, and rollback of immutable releases only.
 
 Public project policies are in `LICENSE`, `SECURITY.md`, and `PRIVACY.md`.
-SignPath Foundation application and protected-environment handoff steps are in
-`docs/ops/signpath-onboarding.md`.
+The unsigned developer-preview decision is in ADR 0011. Deferred SignPath
+Foundation application and protected-environment handoff steps remain in
+`docs/ops/signpath-onboarding.md` for a future signed channel.
 
 - docs/ops/00-operational-contract.md
 - docs/ops/ci.md

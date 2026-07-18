@@ -180,7 +180,31 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 	if strings.Contains(consumer, "Get-ChildItem -LiteralPath '.ci/first'") || strings.Contains(consumer, "Get-ChildItem -LiteralPath '.ci/second'") {
 		t.Fatal("checkout-free consumer job must not guess build output directories")
 	}
-	if strings.Contains(workflow, "contents: write") || strings.Contains(workflow, "gh release") {
-		t.Fatal("alpha evidence must not publish a GitHub Release")
+	for _, required := range []string{
+		"publish_preview:",
+		"publish unsigned developer preview",
+		"github.event_name == 'workflow_dispatch' && inputs.publish_preview",
+		"github.ref_type",
+		"^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$",
+		"name: Publish unsigned developer preview",
+		"contents: write",
+		"gh release create",
+		"--prerelease",
+		"--verify-tag",
+		"The release already exists and will not be replaced.",
+		"$PSNativeCommandUseErrorActionPreference = $false",
+		"Windows SmartScreen may show an unknown-publisher warning",
+	} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("alpha evidence workflow is missing guarded preview publication contract %q", required)
+		}
+	}
+	if strings.Count(workflow, "contents: write") != 1 {
+		t.Fatal("only the isolated preview publication job may receive contents: write")
+	}
+	for _, forbidden := range []string{"SIGNPATH_", "velox-signing-record authenticode", "attest-build-provenance"} {
+		if strings.Contains(workflow, forbidden) {
+			t.Errorf("unsigned preview workflow contains deferred signing surface %q", forbidden)
+		}
 	}
 }

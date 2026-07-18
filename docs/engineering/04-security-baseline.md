@@ -47,7 +47,8 @@ who can replace installed directory assets or the external runtime config.
 | Browser features escape the product boundary | popup, download, permission, and remote-navigation denial |
 | Project paths overwrite unrelated files | canonical containment, link/reparse checks, owned staging, atomic promotion |
 | A release swaps the generic host | target, contract, size, and SHA-256 verification |
-| A signing or publication step substitutes different bytes | unsigned equality gate, provider request binding, signed manifest, Authenticode verification, and final artifact attestation |
+| Unsigned preview publication substitutes different bytes | unsigned equality gate, checkout-free consumer dependency, exact artifact allowlist, checksum verification, immutable tag, and no-replacement publication |
+| A future signing step substitutes different bytes | provider request binding, signed manifest, Authenticode verification, and final artifact attestation |
 | Production inspection exposes privileged tooling | development tools and default context menus disabled outside debug runs |
 
 ### Residual risk

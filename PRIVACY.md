@@ -22,6 +22,8 @@ and require its own privacy disclosure. They are not Velox data collection.
 ## Maintainer Services
 
 GitHub Actions processes source and build evidence for repository automation.
-SignPath will process only the two release executables and signing metadata once
-provider onboarding is approved. These maintainer services do not receive
-end-user application data from the Velox runtime.
+The unsigned developer-preview workflow does not contact a signing provider.
+If ADR 0011 later reactivates SignPath, it will process only the two release
+executables and signing metadata after provider onboarding is approved. These
+maintainer services do not receive end-user application data from the Velox
+runtime.

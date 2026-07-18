@@ -1,7 +1,8 @@
 # SignPath Configuration
 
-These files are the reviewed repository copies of the proposed SignPath
-Foundation configuration.
+These files are dormant repository copies of a proposed future SignPath
+Foundation configuration. ADR 0011 defers provider onboarding until an actual
+developer-preview adoption trigger exists.
 
 - Project slug: `velox`
 - Artifact configuration slug: `windows-x64`
@@ -17,5 +18,6 @@ The provider organization ID, accepted project identity, certificate publisher
 subject, API token, and protected GitHub environment are external values. Never
 commit those credentials or copy provider responses into this directory.
 
-This directory does not authorize a signing workflow or release. Follow
+This directory does not authorize provider submission, a signing workflow, or
+a release. Follow
 `docs/ops/signpath-onboarding.md` and `docs/ops/signing.md`.

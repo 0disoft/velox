@@ -16,6 +16,16 @@ on:
       - "go.sum"
       - "THIRD_PARTY_NOTICES.md"
   workflow_dispatch:
+    inputs:
+      publish_preview:
+        description: Publish this tag as an unsigned developer preview
+        required: true
+        default: false
+        type: boolean
+      confirmation:
+        description: Type "publish unsigned developer preview" to confirm publication
+        required: false
+        type: string
   push:
     tags:
       - "v*-alpha.*"
@@ -201,3 +211,84 @@ jobs:
           path: .ci/result/consumer-clean.json
           retention-days: 30
           if-no-files-found: error
+
+  publish-preview:
+    name: Publish unsigned developer preview
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_preview
+    needs: [producer, clean-consumer]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Validate publication request
+        shell: pwsh
+        env:
+          VELOX_CONFIRMATION: ${{ inputs.confirmation }}
+          VELOX_REF_NAME: ${{ github.ref_name }}
+          VELOX_REF_TYPE: ${{ github.ref_type }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:VELOX_CONFIRMATION -cne 'publish unsigned developer preview') {
+            throw 'Unsigned preview publication requires the exact confirmation phrase.'
+          }
+          if ($env:VELOX_REF_TYPE -ne 'tag' -or $env:VELOX_REF_NAME -notmatch '^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$') {
+            throw 'Unsigned previews must be dispatched from an existing vX.Y.Z-alpha.N tag.'
+          }
+
+      - name: Download verified preview evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: velox-alpha-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          path: .ci/release
+
+      - name: Verify publication payload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expected = @(
+            'checksums.sha256',
+            'velox-windows-x64.intoto.jsonl',
+            'velox-windows-x64.spdx.json',
+            'velox-windows-x64.zip'
+          )
+          $files = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File)
+          $names = @($files.Name | Sort-Object)
+          if ($files.Count -ne $expected.Count -or (Compare-Object $expected $names)) {
+            throw 'Downloaded publication payload contains missing or unexpected files.'
+          }
+          $checksums = Get-Content -LiteralPath ($files | Where-Object Name -EQ 'checksums.sha256').FullName
+          foreach ($name in $expected | Where-Object { $_ -ne 'checksums.sha256' }) {
+            $file = $files | Where-Object Name -EQ $name
+            $sha = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            if (-not ($checksums -contains "$sha  $name")) {
+              throw "Publication checksum mismatch for $name."
+            }
+          }
+
+      - name: Publish immutable prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VELOX_REF_NAME: ${{ github.ref_name }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $existing = gh release view $env:VELOX_REF_NAME --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) { throw 'The release already exists and will not be replaced.' }
+          @'
+          ## Unsigned developer preview
+
+          This preview is intended for developers evaluating the compile-free Windows x64 packaging path.
+
+          The executables are not Authenticode-signed. Windows SmartScreen may show an unknown-publisher warning, and managed Windows devices may block execution entirely. Verify `checksums.sha256` before running the archive.
+
+          The checksum file, SPDX SBOM, and provenance statement describe the files in this release. They do not provide a Windows publisher identity, and the provenance statement is not an authenticated attestation.
+          '@ | Set-Content -LiteralPath '.ci/release-notes.md' -Encoding utf8
+          $assets = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File | Sort-Object Name | ForEach-Object FullName)
+          gh release create $env:VELOX_REF_NAME @assets `
+            --repo $env:GITHUB_REPOSITORY `
+            --title "Velox $env:VELOX_REF_NAME (unsigned developer preview)" `
+            --notes-file '.ci/release-notes.md' `
+            --prerelease `
+            --verify-tag

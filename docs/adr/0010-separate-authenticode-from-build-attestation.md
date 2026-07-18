@@ -1,6 +1,6 @@
 # ADR 0010: Separate Authenticode from build attestation
 
-- Status: Accepted
+- Status: Accepted for future signed channels; M4 gate superseded by ADR 0011
 - Date: 2026-07-18
 - Owner: Project maintainer
 
@@ -25,12 +25,12 @@ signing runs are byte-identical.
 
 ## Decision
 
-Use two independent controls for public alpha distribution:
+Use two independent controls when Velox opens a signed distribution channel:
 
 1. GitHub artifact attestations authenticate the final distribution artifact
    and its SBOM through GitHub OIDC and Sigstore.
-2. SignPath Foundation is the first Authenticode provider for the public
-   open-source alpha, contingent on project acceptance and an approved signing
+2. SignPath Foundation is the first Authenticode provider candidate,
+   contingent on project acceptance and an approved signing
    policy. SignPath holds the private signing key; Velox stores no certificate
    private key or PFX.
 
@@ -95,7 +95,7 @@ provider credentials and approvals belong to a protected GitHub environment.
 
 ### Negative
 
-- Public alpha depends on SignPath Foundation acceptance and service
+- A future signed channel depends on SignPath Foundation acceptance and service
   availability.
 - A signing request can require manual approval and add release latency.
 - The current SignPath Foundation GitHub trust path requires the preceding
@@ -106,8 +106,10 @@ provider credentials and approvals belong to a protected GitHub environment.
 
 ## Validation
 
-This ADR is a design decision, not completed signing evidence. M4 remains open
-until an implemented workflow proves all of the following:
+This ADR is a design decision, not completed signing evidence. ADR 0011 removes
+these checks from the unsigned M4 developer-preview gate. A future signed
+channel remains incomplete until an implemented workflow proves all of the
+following:
 
 - two unsigned builds produce byte-identical executables;
 - the signing provider receives the recorded unsigned digests;
@@ -123,14 +125,15 @@ workflow is implemented.
 
 ## Rollback or Fallback
 
-If SignPath onboarding fails, public alpha signing remains blocked; the project
+If SignPath onboarding fails, the signed channel remains blocked; the project
 does not fall back to a repository-stored key. The maintainer may adopt
 Microsoft Artifact Signing through a superseding ADR after identity, cost,
 roles, and dry-run evidence are available.
 
-If signing or attestation fails after an unsigned build, discard that release
-candidate and preserve the unsigned evidence. Never publish unsigned bytes
-under a signed-release version and never replace an existing release asset.
+If signing or attestation fails after an unsigned build, discard that signed
+candidate and preserve the unsigned evidence. ADR 0011 separately permits an
+explicitly labeled unsigned developer preview. Never relabel unsigned bytes as
+signed or replace an existing release asset.
 
 ## Revisit Triggers
 

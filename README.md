@@ -16,8 +16,9 @@ deterministic ZIP writer, all seven M1 CLI commands, an unsigned deterministic
 Windows x64 release bundle, startup fixtures, zero-cache consumer evidence,
 and an alpha evidence workflow. The workflow builds the release twice, emits
 checksums, a file-level SPDX SBOM, an unsigned in-toto/SLSA provenance
-statement, and then exercises it from a checkout-free consumer job. It still
-does not publish or sign an alpha release.
+statement, and then exercises it from a checkout-free consumer job. A guarded
+manual job can publish those exact files as an explicitly unsigned developer
+preview; no preview has been published yet.
 
 [Hosted run 29631165931](https://github.com/0disoft/velox/actions/runs/29631165931)
 completed the reproducible producer and checkout-free consumer jobs. The
@@ -77,7 +78,8 @@ Explicitly deferred:
 - Performance budget: docs/engineering/03-performance-budget.md
 - Security policy: SECURITY.md
 - Privacy policy: PRIVACY.md
-- SignPath onboarding: docs/ops/signpath-onboarding.md
+- Unsigned preview decision: docs/adr/0011-publish-unsigned-developer-preview-before-signing.md
+- Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
 
 ## Current CLI Slice
 
@@ -112,10 +114,12 @@ slice, and M2 closed the minimum runtime security contract. M3 has passed its
 publishable Wails cold-build gate and its narrowly defined structural-
 simplicity gate. Startup has been removed from the headline and retained as a
 release guardrail. M3's public benchmark deliverables and hosted evidence are
-complete. M4 has local and hosted unsigned alpha evidence plus deterministic
-signing-input, lineage, and fail-closed Authenticode verification tooling, but
-provider-approved signing, authenticated provenance,
-public distribution, and a real external-user attempt remain open before M5.
+complete. M4 has local and hosted unsigned alpha evidence plus a guarded
+developer-preview publication path. Deterministic signing-input, lineage, and
+fail-closed Authenticode verification tooling remain dormant for a future
+signed channel. Public distribution and a real external-user attempt remain
+open before M5; provider-approved signing and authenticated provenance are no
+longer M4 gates.
 
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,

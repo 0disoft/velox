@@ -69,8 +69,10 @@ recoverable previous outputs on handled failures.
 The release bundle binds the CLI and host through `velox-host.json`. The CLI
 rejects a host when release version, target, host contract, runtime contract,
 file size, or SHA-256 differs. The sidecar is not a signature and does not make
-an untrusted download trustworthy; users must acquire the complete bundle by a
-pinned external checksum until signed release provenance exists.
+an untrusted download trustworthy. The unsigned developer preview ships an
+external checksum, SBOM, and provenance metadata with an explicit warning; a
+later signed channel adds publisher identity without changing the internal
+compatibility contract.
 
 The retired C++23 M0 comparison remains documented in ADR 0004 and the
 performance budget. Its source and Pixi toolchain are no longer active
@@ -99,5 +101,6 @@ This document distinguishes implemented slices from intended architecture. The
 Go host security boundary, seven-command M1 CLI, host release metadata,
 deterministic consumer bundle, and end-to-end evidence contracts are
 implemented and covered by local tests and the hosted consumer workflow.
-Public cross-framework benchmark fixtures, signed distribution, and provenance
-remain incomplete.
+Public cross-framework benchmark fixtures are complete. Public unsigned
+distribution and independent external-user evidence remain incomplete; signed
+distribution is deferred by ADR 0011.

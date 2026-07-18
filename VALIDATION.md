@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M3 complete; M4 alpha distribution evidence active
+- Status: M3 complete; M4 unsigned developer-preview distribution active
 
 ## Validation Source of Truth
 
@@ -85,6 +85,13 @@ requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance
 artifacts, and passes the artifact to a checkout-free consumer job. That job
 invokes only `velox.exe`; it does not prove signing, authenticated provenance,
 public-release download, or adoption by an external user.
+
+An explicit manual dispatch can publish those verified files only from an
+existing `vX.Y.Z-alpha.N` tag after the exact unsigned-preview confirmation is
+entered. The isolated publication job alone receives `contents: write`, refuses
+replacement, and creates a prerelease with SmartScreen and managed-device
+warnings. Workflow validation proves this contract; it does not publish a
+release.
 
 The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`

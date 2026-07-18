@@ -80,7 +80,7 @@ func TestPublicProjectOwnershipAndPolicyFilesAreReady(t *testing.T) {
 		"SECURITY.md":                     {"security/advisories/new", "Do not open a public issue"},
 		"PRIVACY.md":                      {"do not send telemetry", "SignPath"},
 		".github/CODEOWNERS":              {"* @0disoft", "/.signpath/ @0disoft", "/.github/workflows/ @0disoft"},
-		"docs/ops/signpath-onboarding.md": {"SignPath organization ID:", "Never return the API token value", "Private vulnerability reporting | Enabled", "Confirm that you own or can license"},
+		"docs/ops/signpath-onboarding.md": {"Status: Deferred until an ADR 0011 signing trigger", "SignPath organization ID:", "Never return the API token value", "Private vulnerability reporting | Enabled", "Confirm that you own or can license"},
 	}
 	for relative, required := range checks {
 		data := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))

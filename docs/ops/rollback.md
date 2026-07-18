@@ -12,7 +12,8 @@ rollback.
 ## Triggers
 
 - Published checksum or provenance mismatch.
-- Missing, invalid, revoked, or wrongly scoped Authenticode signature.
+- A release claims Authenticode but has a missing, invalid, revoked, or wrongly
+  scoped signature.
 - Signing record does not bind the published bytes to the verified unsigned
   inputs and approved provider request.
 - CLI or host fails the published hello smoke test.
@@ -29,7 +30,9 @@ rollback.
 4. Point documentation or distribution metadata to that release only through an
    explicit reviewed change.
 5. Re-run download, checksum, inspect, build, and startup verification.
-6. Re-run artifact-attestation and Authenticode verification.
+6. For a signed channel, re-run artifact-attestation and Authenticode
+   verification. Do not require those checks for an explicitly unsigned
+   developer preview.
 7. Revoke exposed provider tokens, suspend the signing policy, or contact the
    provider when credential or certificate integrity is involved.
 8. Publish a concise limitation or incident notice when users may be affected.
@@ -55,7 +58,8 @@ runbook.
 
 ## Current Gap
 
-ADR 0010 and `docs/ops/signing.md` define the promotion and signing trust
-boundaries. No signed artifact, provider onboarding, public release workflow,
-or rollback automation exists. Exact operator commands remain UNDECIDED until
-release tooling is implemented and tested.
+ADR 0011 and `docs/ops/release.md` define the unsigned developer-preview
+boundary. The repository implements a guarded publication job but has not
+exercised it against a public tag. ADR 0010 and `docs/ops/signing.md` define the
+dormant future signed-channel boundary; no signed artifact or provider
+onboarding exists.

@@ -1,12 +1,14 @@
 # SignPath Foundation Onboarding
 
-- Status: Application packet ready; maintainer submission required
+- Status: Deferred until an ADR 0011 signing trigger; do not submit for M4
 - Owner: Project maintainer
 - Repository: https://github.com/0disoft/velox
 
 ## Application Facts
 
-Use these values in the SignPath Foundation application.
+Use these values only if signing is reactivated after the unsigned developer
+preview. SignPath Foundation terms require the project to be released in the
+form it asks SignPath to sign, so this packet is intentionally dormant for M4.
 
 | Field | Value |
 | --- | --- |
@@ -60,11 +62,12 @@ configuration. Link the GitHub trusted build system and use
 The provider input is `velox-signing-input.zip`, which contains exactly the two
 PE files at the ZIP root.
 
-## Maintainer-Only Steps
+## Deferred Maintainer-Only Steps
 
-These steps require the repository owner's authenticated account and acceptance
-of provider terms. An automation agent must not perform them on the maintainer's
-behalf.
+Do not perform these steps for the unsigned M4 developer preview. After an ADR
+0011 trigger is recorded, these steps require the repository owner's
+authenticated account and acceptance of provider terms. An automation agent
+must not perform them on the maintainer's behalf.
 
 1. Confirm that you own or can license all project code under
    `MIT OR Apache-2.0`. This is a maintainer legal assertion, not an automated

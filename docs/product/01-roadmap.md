@@ -145,10 +145,10 @@ checkout-free consumer build. This is release evidence, not a published alpha.
 completed both jobs, and the downloaded artifacts passed their checksum and
 bundled consumer-result schema checks.
 
-ADR 0010 now fixes the M4 trust design: GitHub artifact attestations authenticate
-the final ZIP and SBOM, while SignPath Foundation is the conditional
-Authenticode provider for the CLI and unchanged host. This is a selected design,
-not provider onboarding or signed-release evidence.
+ADR 0011 now fixes the first distribution order: publish an explicitly unsigned
+developer preview, collect external acquisition evidence, and treat code signing
+as a later adoption-triggered trust improvement. ADR 0010 remains the design for
+a future signed channel, not an M4 prerequisite.
 
 The repository-owned `velox.signing-record/v1` contract, dry-run generator, and
 lineage verifier now bind every unsigned, provider-output, final bundle,
@@ -169,7 +169,7 @@ still needs accepted provider output and the approved publisher subject.
 ### Deliver
 
 - Checksums and software bill of materials.
-- Signed Velox CLI and unchanged generic host.
+- Explicitly unsigned Velox CLI and unchanged generic host in a developer-preview prerelease.
 - Immutable release manifest.
 - Installation, compatibility, security, and limitation documentation.
 - Clean-runner consumer workflow example.
@@ -184,23 +184,23 @@ still needs accepted provider output and the approved publisher subject.
 
 ### Remaining gates
 
-- Obtain SignPath Foundation project acceptance and approve the exact artifact
-  configuration, signing policy, publisher/profile identity, and protected
-  environment.
-- Submit the repository-generated signing input through the accepted provider
-  configuration and preserve the returned request identity.
-- Exercise the implemented Authenticode verifier against real provider output,
-  then implement release-mode signing-record creation from that evidence.
-- Implement final artifact attestations and the immutable publication gate.
-- Publish immutable compatibility and limitation notes beside a real alpha.
+- Select and push one immutable `vX.Y.Z-alpha.N` tag.
+- Run the manual unsigned-preview publication gate with its exact confirmation.
+- Verify the downloaded public artifact rather than a same-run workflow artifact.
+- Publish immutable compatibility, SmartScreen, managed-device, directory-
+  tampering, and branding limitations beside the preview.
 - Run the documented path from a repository and account not controlled by the
   implementation workflow.
-- Verify the downloaded public artifact rather than a same-run workflow
-  artifact.
+
+SignPath onboarding, Authenticode verification against real provider output,
+release-mode signing records, and authenticated artifact attestations are
+deferred until a real adoption trigger in ADR 0011 is observed. The existing
+preparation remains fail-closed and dormant.
 
 ## M5: Product Decision
 
-Status: Not started. M3 is complete; M4 remains open.
+Status: Not started. M3 is complete; M4 remains open until a public unsigned
+developer preview and independent external-user attempt exist.
 
 Choose one:
 

@@ -1,6 +1,6 @@
 # Release
 
-- Status: Signing design accepted; provider onboarding and public distribution unavailable
+- Status: Unsigned developer-preview publication implemented but not yet exercised
 - Owner: Project maintainer
 
 ## Current State
@@ -21,8 +21,8 @@ a provider or claiming Authenticode or artifact-attestation success.
 The public repository now declares `MIT OR Apache-2.0`, identifies the
 maintainer in CODEOWNERS, and includes security and privacy policies. The
 SignPath application packet and exact proposed provider configuration live in
-`docs/ops/signpath-onboarding.md` and `.signpath/`; provider acceptance and
-authenticated account setup remain external gates.
+`docs/ops/signpath-onboarding.md` and `.signpath/`, but ADR 0011 defers provider
+onboarding until a real adoption trigger exists.
 
 A separate consumer job performs no source checkout and invokes no Go, Node,
 Rust, C++, Bun, or package-manager command. It downloads the producer artifact,
@@ -49,9 +49,10 @@ exists.
 
 ## Channels
 
-Planned channels are alpha, beta, and stable. Exact version numbers and SemVer
-policy remain UNDECIDED before public alpha. Local artifacts currently identify
-the development release as `0.5.9-dev`.
+Planned channels are alpha, beta, and stable. The first public artifact is an
+unsigned developer preview using an immutable `vX.Y.Z-alpha.N` tag. Broader
+SemVer and support policy remain UNDECIDED before that preview. Local artifacts
+currently identify the development release as `0.5.10-dev`.
 
 Nightly distribution is not planned during the initial project stage.
 
@@ -65,7 +66,8 @@ Nightly distribution is not planned during the initial project stage.
 - Software bill of materials.
 - Third-party notices.
 - Compatibility and known-limitation notes.
-- Provenance before public alpha.
+- Unsigned provenance metadata before the developer preview.
+- Prominent unsigned, SmartScreen, and managed-device limitations.
 
 The current local bundle includes the CLI, unchanged host, strict host
 metadata, product and checkout-free-consumer JSON schemas, release manifest,
@@ -74,12 +76,12 @@ and fails when a required product schema is missing. Benchmark and other CI
 evidence schemas remain maintainer contracts and are not copied into the
 consumer archive.
 
-Checksums, SPDX, and provenance are workflow artifacts, not contents of the
+Checksums, SPDX, and provenance are release assets, not contents of the
 consumer ZIP. The provenance statement is deterministic metadata but is not a
 signed attestation. An attacker who can replace both release and evidence can
-still forge the complete unsigned set. ADR 0010 selects separate authenticated
-provenance and Authenticode controls, but their implementation, compatibility
-notes, and public release publication remain M4 gates.
+still forge the complete unsigned set. ADR 0011 accepts that boundary for a
+developer preview and requires it to be disclosed. ADR 0010 retains separate
+authenticated provenance and Authenticode controls for a later signed channel.
 
 ## Release Gates
 
@@ -91,6 +93,10 @@ notes, and public release publication remain M4 gates.
 - Critical risks are mitigated, accepted explicitly, or stop the release.
 - Directory asset tampering, branding, signing, and platform limitations are
   visible.
+- The preview is marked prerelease and prominently identifies both executables
+  as unsigned.
+- Publication requires a manual exact-phrase confirmation on an existing alpha
+  tag and refuses to replace an existing release.
 
 ## Compatibility Floor
 
@@ -109,11 +115,11 @@ and Microsoft's archived WebView2 SDK release notes that bind
 
 ## Signing Boundary
 
-ADR 0010 and `docs/ops/signing.md` own this boundary. SignPath Foundation is the
-conditional Authenticode provider for public alpha; GitHub artifact attestations
-authenticate the final release ZIP and SBOM. Microsoft Artifact Signing remains
-the migration candidate for a project-owned publisher identity or paid service
-operation.
+ADR 0011 owns the unsigned developer-preview boundary. No Authenticode provider
+or signing credential is required for that channel. ADR 0010 and
+`docs/ops/signing.md` own a future signed-channel boundary. SignPath Foundation
+remains a conditional provider candidate; Microsoft Artifact Signing remains a
+migration candidate where eligibility and publisher identity fit.
 
 The provider signs the reproducibly built `velox.exe` and `velox-host.exe`.
 The repository-owned `velox-signing-record prepare` command packages exactly
@@ -133,18 +139,22 @@ Signing credentials stay outside this repository. No private key or PFX enters
 GitHub secret storage. Provider submission credentials, approval, and release
 write permission belong to separate protected-environment gates.
 
-## Promotion
+## Developer-Preview Publication
 
-Promotion reuses an already verified immutable signed artifact. It does not
-rebuild or re-sign different bytes for stable.
+Ordinary pull-request, tag, and evidence runs retain workflow artifacts and
+have only `contents: read`. A manual dispatch can publish only when
+`publish_preview` is true, the exact confirmation phrase is supplied, and the
+selected ref is an existing `vX.Y.Z-alpha.N` tag. The isolated publication job
+alone receives `contents: write`.
 
-The current workflow does not promote or publish anything and has only
-`contents: read`. Tag and manual runs produce retained workflow artifacts for
-review. A future publishing workflow requires successful provider onboarding,
-a deterministic signing-input packager, dry-run lineage verifier,
-fail-closed Authenticode verifier,
-protected-environment approval, final artifact
-attestations, and a narrowly isolated `contents: write` publication job.
+That job downloads the producer evidence after the checkout-free consumer job
+passes, rejects missing or extra files, verifies every checksum, refuses an
+existing release, and creates an immutable GitHub prerelease with the unsigned
+warning. It does not sign, attest, rebuild, or replace artifacts.
+
+Promotion to a future signed, beta, or stable channel reuses an already
+verified immutable candidate. It does not relabel unsigned bytes as signed or
+rebuild different bytes under the same version.
 
 ## Stop Conditions
 
@@ -156,7 +166,7 @@ attestations, and a narrowly isolated `contents: write` publication job.
 
 ## Post-Release Verification
 
-When release automation exists, it must verify download, checksum, version
-inspection, hello build, and application startup from the published artifact.
-
-No command is documented here until that command is configured and exercised.
+After the first preview is published, an independent repository and account
+must verify download, checksum, version inspection, hello build, and application
+startup from the public asset. Same-workflow artifact consumption is necessary
+prepublication evidence but does not satisfy this external M4 gate.

@@ -1,12 +1,12 @@
 # Signing and Attestation
 
-- Status: Local signing input and Authenticode verification implemented; provider onboarding pending
+- Status: Dormant future-channel tooling; provider onboarding deferred by ADR 0011
 - Owner: Project maintainer
 - Decision: ADR 0010
 
 ## Purpose
 
-This document owns the M4 trust boundary between reproducible build evidence,
+This document owns the future signed-channel trust boundary between reproducible build evidence,
 Authenticode signing, final release assembly, authenticated provenance, and
 promotion. It does not authorize a release or define credentials.
 
@@ -26,9 +26,10 @@ source workflow. An artifact attestation does not add a Windows publisher.
 
 ## Provider Decision
 
-SignPath Foundation is the constrained first choice for public alpha because it
+SignPath Foundation is the constrained first provider candidate because it
 offers an open-source signing path without giving the project custody of a
-certificate private key. Adoption remains conditional on SignPath accepting
+certificate private key. Adoption remains conditional on an ADR 0011 trigger,
+an already released eligible project, and SignPath accepting
 the project and approving a policy that limits subjects to the two expected PE
 files from the protected release workflow.
 
@@ -37,7 +38,7 @@ project-owned legal publisher identity or predictable paid operation. A local
 PFX, self-signed certificate, and repository-held private key are not fallback
 paths.
 
-The application packet, requested provider slugs, repository-owned artifact
+The deferred application packet, requested provider slugs, repository-owned artifact
 configuration, source policy, and maintainer-only steps are in
 `docs/ops/signpath-onboarding.md` and `.signpath/`.
 
@@ -202,9 +203,11 @@ compromise, revocation, or provider-policy breach also triggers provider
 suspension, API-token revocation, affected-version identification, and a public
 security notice when consumers may be exposed.
 
-## Implementation Gate
+## Activation Gate
 
-Do not add the signing workflow until all of these external values exist:
+Do not submit the provider application or add a signing workflow merely to
+publish the first developer preview. Resume this path only after ADR 0011's
+adoption trigger is recorded and all of these external values exist:
 
 - accepted SignPath Foundation project;
 - approved artifact configuration and signing policy;
