@@ -141,9 +141,10 @@ The repository now owns an unsigned evidence pipeline. It produces two
 independent release builds, checks byte identity, emits checksums, a file-level
 SPDX SBOM, and an unsigned in-toto/SLSA provenance statement, then runs a
 checkout-free consumer build. This is release evidence, not a published alpha.
-[Hosted run 29631165931](https://github.com/0disoft/velox/actions/runs/29631165931)
-completed both jobs, and the downloaded artifacts passed their checksum and
-bundled consumer-result schema checks.
+[Hosted run 29672906581](https://github.com/0disoft/velox/actions/runs/29672906581)
+completed the producer and checkout-free consumer jobs for restored Velox
+commit `74847b1d4c6a9cb63786e216adf0234d8d01606b`. The non-publishing dispatch
+left the publisher job skipped and retained both evidence artifacts.
 
 ADR 0011 now fixes the first distribution order: publish an explicitly unsigned
 developer preview, collect external acquisition evidence, and treat code signing
@@ -184,8 +185,10 @@ still needs accepted provider output and the approved publisher subject.
 
 ### Remaining gates
 
-- Rebuild and record the Velox candidate after restoring ADR 0015's
-  maintainer-approved identity.
+The Velox candidate was rebuilt and recorded after restoring ADR 0015's
+maintainer-approved identity in hosted run 29672906581. The remaining gates
+start at the irreversible public tag and release boundary:
+
 - Push the selected immutable `v0.5.10-alpha.1` tag.
 - Run the manual unsigned-preview publication gate with its exact confirmation.
 - Run the no-checkout public-download verifier with the independently recorded

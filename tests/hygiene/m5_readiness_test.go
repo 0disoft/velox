@@ -149,7 +149,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"developer preview",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
-		"public evidence pending",
+		"Hosted candidate evidence current; public preview pending",
 		"ADR 0015 removes the replacement-name gate",
 	})
 	assertSourceMarkers(t, filepath.Join(root, ".github", "workflows", "alpha-evidence.yml"), []string{

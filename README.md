@@ -20,11 +20,12 @@ statement, and then exercises it from a checkout-free consumer job. A guarded
 manual job can publish those exact files as an explicitly unsigned developer
 preview; no preview has been published yet.
 
-[Hosted run 29631165931](https://github.com/0disoft/velox/actions/runs/29631165931)
-completed the reproducible producer and checkout-free consumer jobs. The
-downloaded evidence passed checksum and bundled consumer-schema verification;
-the provenance remains unsigned metadata rather than an authenticated
-attestation.
+[Hosted run 29672906581](https://github.com/0disoft/velox/actions/runs/29672906581)
+completed the reproducible producer and checkout-free consumer jobs for Velox
+commit `74847b1d4c6a9cb63786e216adf0234d8d01606b`. Publication was disabled and
+the publisher job was skipped. The evidence artifacts contain the candidate
+bundle and consumer result; the provenance remains unsigned metadata rather
+than an authenticated attestation.
 
 ## Headline Metrics
 
