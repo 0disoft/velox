@@ -10,7 +10,7 @@ func TestSummarizePreservesFailuresAndComputesOrdering(t *testing.T) {
 	profile := 30.0
 	runID, runAttempt := "123", "2"
 	raw := evidence{
-		SchemaVersion: "actutum.startup-lifecycle/v3",
+		SchemaVersion: "velox.startup-lifecycle/v3",
 		Scope:         "fresh-and-immediate-same-profile-startup",
 		EvidenceLevel: "controlled-local-observation",
 		Outcome:       "failure",
@@ -46,14 +46,14 @@ func TestSummarizePreservesFailuresAndComputesOrdering(t *testing.T) {
 }
 
 func TestSummarizeRejectsIncompleteSuccess(t *testing.T) {
-	_, err := summarize(evidence{SchemaVersion: "actutum.startup-lifecycle/v3", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "success"}}}, nil)
+	_, err := summarize(evidence{SchemaVersion: "velox.startup-lifecycle/v3", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "success"}}}, nil)
 	if err == nil {
 		t.Fatal("summarize accepted an incomplete success sample")
 	}
 }
 
 func TestSummarizeRejectsOutcomeMismatch(t *testing.T) {
-	_, err := summarize(evidence{SchemaVersion: "actutum.startup-lifecycle/v3", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "failure", Error: &runError{Phase: "first-launch", Code: "HOST_RUN_FAILED"}}}}, nil)
+	_, err := summarize(evidence{SchemaVersion: "velox.startup-lifecycle/v3", Scope: "fresh-and-immediate-same-profile-startup", Outcome: "success", Repetitions: 1, Samples: []sample{{Index: 0, Outcome: "failure", Error: &runError{Phase: "first-launch", Code: "HOST_RUN_FAILED"}}}}, nil)
 	if err == nil {
 		t.Fatal("summarize accepted an outcome that disagrees with its samples")
 	}
@@ -66,15 +66,15 @@ func TestSummarizePhasesFindsImmediateStartupDominantInterval(t *testing.T) {
 		for index, name := range startupPhaseNames {
 			phases[index] = phasePoint{Name: name, ElapsedMS: elapsed[index]}
 		}
-		return phaseTimeline{SchemaVersion: "actutum.host-startup-timeline/v1", Clock: "time-since-host-entry-monotonic", Phases: phases}
+		return phaseTimeline{SchemaVersion: "velox.host-startup-timeline/v1", Clock: "time-since-host-entry-monotonic", Phases: phases}
 	}
 	shutdownPhases := make([]phasePoint, len(shutdownPhaseNames))
 	for index, name := range shutdownPhaseNames {
 		shutdownPhases[index] = phasePoint{Name: name, ElapsedMS: float64(index)}
 	}
-	shutdown := phaseTimeline{SchemaVersion: "actutum.host-shutdown-timeline/v1", Clock: "time-since-shutdown-request-monotonic", Phases: shutdownPhases}
+	shutdown := phaseTimeline{SchemaVersion: "velox.host-shutdown-timeline/v1", Clock: "time-since-shutdown-request-monotonic", Phases: shutdownPhases}
 	raw := evidence{
-		SchemaVersion: "actutum.startup-lifecycle/v3", EvidenceLevel: "hosted-runner-evidence", Outcome: "success",
+		SchemaVersion: "velox.startup-lifecycle/v3", EvidenceLevel: "hosted-runner-evidence", Outcome: "success",
 		Samples: []sample{
 			{Index: 0, Outcome: "success", First: &launch{StartupTimeline: startup(50), ShutdownTimeline: shutdown}, Immediate: &launch{StartupTimeline: startup(5800), ShutdownTimeline: shutdown}},
 			{Index: 1, Outcome: "success", First: &launch{StartupTimeline: startup(60), ShutdownTimeline: shutdown}, Immediate: &launch{StartupTimeline: startup(5900), ShutdownTimeline: shutdown}},
@@ -100,13 +100,13 @@ func TestSummarizePhasesRejectsReorderedTimeline(t *testing.T) {
 		startupPhases[index] = phasePoint{Name: name, ElapsedMS: float64(index)}
 	}
 	startupPhases[6].ElapsedMS = -1
-	startup := phaseTimeline{SchemaVersion: "actutum.host-startup-timeline/v1", Clock: "time-since-host-entry-monotonic", Phases: startupPhases}
+	startup := phaseTimeline{SchemaVersion: "velox.host-startup-timeline/v1", Clock: "time-since-host-entry-monotonic", Phases: startupPhases}
 	shutdownPhases := make([]phasePoint, len(shutdownPhaseNames))
 	for index, name := range shutdownPhaseNames {
 		shutdownPhases[index] = phasePoint{Name: name, ElapsedMS: float64(index)}
 	}
-	shutdown := phaseTimeline{SchemaVersion: "actutum.host-shutdown-timeline/v1", Clock: "time-since-shutdown-request-monotonic", Phases: shutdownPhases}
-	_, err := summarizePhases(evidence{SchemaVersion: "actutum.startup-lifecycle/v3", Samples: []sample{{Outcome: "success", First: &launch{StartupTimeline: startup, ShutdownTimeline: shutdown}, Immediate: &launch{StartupTimeline: startup, ShutdownTimeline: shutdown}}}}, nil)
+	shutdown := phaseTimeline{SchemaVersion: "velox.host-shutdown-timeline/v1", Clock: "time-since-shutdown-request-monotonic", Phases: shutdownPhases}
+	_, err := summarizePhases(evidence{SchemaVersion: "velox.startup-lifecycle/v3", Samples: []sample{{Outcome: "success", First: &launch{StartupTimeline: startup, ShutdownTimeline: shutdown}, Immediate: &launch{StartupTimeline: startup, ShutdownTimeline: shutdown}}}}, nil)
 	if err == nil {
 		t.Fatal("summarizePhases accepted a reordered timeline")
 	}
@@ -117,7 +117,7 @@ func TestRunReadsCompleteLifecycleEvidence(t *testing.T) {
 	input := filepath.Join(directory, "input.json")
 	output := filepath.Join(directory, "output.json")
 	body := `{
-  "schemaVersion":"actutum.startup-lifecycle/v3",
+  "schemaVersion":"velox.startup-lifecycle/v3",
   "scope":"fresh-and-immediate-same-profile-startup",
   "evidenceLevel":"hosted-runner-evidence",
   "outcome":"success",
@@ -142,7 +142,7 @@ func TestRunReadsCompleteLifecycleEvidence(t *testing.T) {
 func TestRunRejectsTrailingJSON(t *testing.T) {
 	directory := t.TempDir()
 	input := filepath.Join(directory, "input.json")
-	if err := os.WriteFile(input, []byte(`{"schemaVersion":"actutum.startup-lifecycle/v3"}{}`), 0o644); err != nil {
+	if err := os.WriteFile(input, []byte(`{"schemaVersion":"velox.startup-lifecycle/v3"}{}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := run([]string{"--input", input, "--output", filepath.Join(directory, "output.json")}); err == nil {

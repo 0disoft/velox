@@ -11,12 +11,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/0disoft/actutum/internal/assettree"
-	"github.com/0disoft/actutum/internal/buildinfo"
-	"github.com/0disoft/actutum/internal/hostmeta"
-	"github.com/0disoft/actutum/internal/ipc"
-	"github.com/0disoft/actutum/internal/manifest"
-	"github.com/0disoft/actutum/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/assettree"
+	"github.com/0disoft/velox/internal/buildinfo"
+	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/velox/internal/ipc"
+	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
 const TargetWindowsX64 = "windows-x64"
@@ -132,7 +132,7 @@ func Create(options Options) (Plan, error) {
 		return Plan{}, fail(ErrorHost, fmt.Errorf("hash host template: %w", err))
 	}
 	if options.HostMetadataPath == "" {
-		options.HostMetadataPath = filepath.Join(filepath.Dir(hostPath), "actutum-host.json")
+		options.HostMetadataPath = filepath.Join(filepath.Dir(hostPath), "velox-host.json")
 	}
 	metadataPath, err := filepath.Abs(options.HostMetadataPath)
 	if err != nil {

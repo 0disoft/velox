@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M3 complete; M4 Actutum source rename active; public preview dormant pending repository rename
+- Status: M3 complete; M4 unsigned developer-preview distribution active
 
 ## Validation Source of Truth
 
@@ -27,10 +27,6 @@ Final responses must list executed validations, passed validations, skipped vali
 Task runner files are optional. This repository still uses runner `none`.
 The parent workspace command contract currently provides these bounded intents:
 
-The parent keeps the existing `velox_*` intent names as workspace-local
-compatibility aliases while their command bodies target Actutum paths and
-artifacts. They are not public CLI names.
-
 - `velox_format` maps to format.
 - `velox_lint` maps to lint.
 - `velox_test` maps to test.
@@ -42,9 +38,9 @@ artifacts. They are not public CLI names.
 - `velox_signing_record_smoke` runs the deterministic signing-input packager,
   repository-owned signing-record package, and maintainer CLI tests; emits a
   non-publishable dry-run record; validates it against
-  `actutum.signing-record/v1`; and proves `publishable: true` is rejected for
+  `velox.signing-record/v1`; and proves `publishable: true` is rejected for
   dry-run evidence. The Go test suite also exercises the fail-closed
-  Authenticode policy boundary and `actutum.authenticode-verification/v1`; a real
+  Authenticode policy boundary and `velox.authenticode-verification/v1`; a real
   signed-provider success remains a deferred future-channel gate rather than an
   M4 requirement.
 - `velox_signpath_onboarding_smoke` verifies the repository-owned SignPath
@@ -88,7 +84,7 @@ artifacts. They are not public CLI names.
 The hosted `Alpha release evidence` workflow builds the unsigned release twice,
 requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance
 artifacts, and passes the artifact to a checkout-free consumer job. That job
-invokes only `actutum.exe`; it does not prove signing, authenticated provenance,
+invokes only `velox.exe`; it does not prove signing, authenticated provenance,
 public-release download, or adoption by an external user.
 
 An explicit manual dispatch can publish those verified files only from an
@@ -98,10 +94,10 @@ replacement, and creates a prerelease with SmartScreen and managed-device
 warnings. Workflow validation proves this contract; it does not publish a
 release.
 
-ADR 0014 selects Actutum and replaces the colliding Velox command and
-executable identity. Publication remains dormant until the repository is
-actually `0disoft/actutum`; the publication job checks that exact identity.
-Passing release tests in the old repository does not authorize tag creation.
+ADR 0015 retains Velox as the maintainer-approved public identity and supersedes
+ADR 0013's replacement-name gate. The known `velox.exe` and search collisions
+remain documented risks, but the publication job may run for the exact
+`0disoft/velox` repository after every ordinary unsigned-preview gate passes.
 
 The manual `Public preview verification` workflow performs no source checkout
 and downloads the ZIP, checksum, SPDX, and provenance assets from the public
@@ -121,9 +117,9 @@ The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`
 manual dispatch, weekly schedule, or release-candidate tag runs ten lifecycle
 and ten consumer samples. It validates
-`actutum.startup-lifecycle/v3`, derives and validates
-`actutum.startup-lifecycle-summary/v1` plus
-`actutum.startup-lifecycle-phase-summary/v1`, and uploads all results with
+`velox.startup-lifecycle/v3`, derives and validates
+`velox.startup-lifecycle-summary/v1` plus
+`velox.startup-lifecycle-phase-summary/v1`, and uploads all results with
 `always()`. The phase summary computes interval p50 and p95 values and the
 dominant immediate-startup interval directly from raw v3 evidence.
 Lifecycle v3 preserves the host-local startup and shutdown phase timelines for
@@ -133,10 +129,10 @@ This longer evidence path is intentionally separate from the local one-sample
 
 An explicit manual `include_profile_comparison` input runs three alternating,
 serial same-profile versus fresh-profile pairs and validates
-`actutum.startup-profile-comparison/v1`. It is disabled for ordinary pull request,
+`velox.startup-profile-comparison/v1`. It is disabled for ordinary pull request,
 scheduled, and release-candidate evidence.
 
-Each weekly schedule also builds `actutum.startup-history/v1` from the current
+Each weekly schedule also builds `velox.startup-history/v1` from the current
 lifecycle summary and up to eleven prior successful scheduled artifacts. The
 history is grouped by runner image version and WebView2 version, retained for
 90 days, and remains diagnostic evidence rather than an automatic regression
@@ -148,7 +144,7 @@ release-candidate consumer evidence, or for an explicit manual run ID. Pull
 request and ordinary manual consumer evidence produce only a skipped monitor
 job. The monitor scans the bounded workflow-log archive for the known
 `actions/download-artifact` `DEP0005 Buffer()` warning. It validates and uploads
-`actutum.actions-warning-monitor/v1`. Presence is diagnostic rather than a failed
+`velox.actions-warning-monitor/v1`. Presence is diagnostic rather than a failed
 product check; malformed or inaccessible log evidence still fails the monitor.
 The platform-independent scanner uses the pinned `ubuntu-24.04` runner.
 

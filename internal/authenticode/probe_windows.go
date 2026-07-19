@@ -18,8 +18,8 @@ import (
 )
 
 const powershellProbe = `$ErrorActionPreference = 'Stop'
-$path = [Environment]::GetEnvironmentVariable('ACTUTUM_AUTHENTICODE_FILE', 'Process')
-if ([string]::IsNullOrWhiteSpace($path)) { throw 'ACTUTUM_AUTHENTICODE_FILE is required' }
+$path = [Environment]::GetEnvironmentVariable('VELOX_AUTHENTICODE_FILE', 'Process')
+if ([string]::IsNullOrWhiteSpace($path)) { throw 'VELOX_AUTHENTICODE_FILE is required' }
 $module = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\Modules\Microsoft.PowerShell.Security\Microsoft.PowerShell.Security.psd1'
 Import-Module -Name $module -Force -ErrorAction Stop
 $signature = Microsoft.PowerShell.Security\Get-AuthenticodeSignature -LiteralPath $path
@@ -124,7 +124,7 @@ func probeEnvironment(root, path string) []string {
 		"SystemRoot=" + root,
 		"WINDIR=" + root,
 		"PSModulePath=" + filepath.Join(root, "System32", "WindowsPowerShell", "v1.0", "Modules"),
-		"ACTUTUM_AUTHENTICODE_FILE=" + path,
+		"VELOX_AUTHENTICODE_FILE=" + path,
 	}
 	for _, name := range []string{"TEMP", "TMP"} {
 		if value := os.Getenv(name); value != "" {

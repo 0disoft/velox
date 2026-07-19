@@ -1,9 +1,12 @@
 # ADR 0014: Adopt Actutum as the public identity
 
-- Status: Accepted
+- Status: Superseded by ADR 0015
 - Date: 2026-07-18
 - Owner: Project maintainer
 - Supersedes: ADR 0013's open replacement-name gate
+
+> This replacement was applied without maintainer approval. ADR 0015 restores
+> Velox as the binding product and technical identity.
 
 ## Context
 

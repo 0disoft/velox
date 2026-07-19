@@ -5,19 +5,19 @@
 
 ## Product Shape
 
-Actutum has two local operational paths:
+Velox has two local operational paths:
 
 1. A developer or CI runner builds a portable application.
 2. An application user starts the generic host and WebView2 content.
 
-Actutum has no hosted service, database, control plane, account system, or
+Velox has no hosted service, database, control plane, account system, or
 background daemon.
 
 ## Critical Journeys
 
 ### Consumer build
 
-A pinned Actutum release and valid static project produce portable output without
+A pinned Velox release and valid static project produce portable output without
 a compiler, Node.js, network access, or consumer Actions cache upload.
 
 ### Application startup
@@ -40,7 +40,7 @@ counts, and digests without executing the artifact.
 
 ## Service-Level Terms
 
-Hosted-service SLO, RTO, and RPO do not apply because Actutum operates no service
+Hosted-service SLO, RTO, and RPO do not apply because Velox operates no service
 or authoritative remote data.
 
 Release recovery is artifact based: preserve immutable previous releases and
@@ -68,9 +68,9 @@ are implemented and tested.
 
 The local runtime, deterministic unsigned release builder, hosted alpha
 evidence workflow, guarded prerelease publisher, and no-checkout public-download
-verifier exist. ADR 0012 selects `0.6.0-alpha.1` and the external-user evidence
+verifier exist. ADR 0012 selects `0.5.10-alpha.1` and the external-user evidence
 contract. No public distribution, executed public-download result, qualifying
 external-user attempt, or release operational history exists. ADR 0010's signed
-channel remains deferred. ADR 0014 selects Actutum, but public executable
-publication remains blocked until the repository owns `0disoft/actutum` and
-the renamed release evidence is rebuilt there.
+channel remains deferred. ADR 0015 retains Velox and accepts the documented
+command and discovery collisions, so no repository rename remains in this
+operational gate.

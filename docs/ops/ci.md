@@ -14,10 +14,10 @@ release-candidate tags use the full tier.
 
 Manual dispatch also exposes a disabled-by-default profile comparison. When
 selected, the producer runs three paired same-UDF and fresh-UDF relaunch trials,
-validates `actutum.startup-profile-comparison/v1`, and retains the raw comparison
+validates `velox.startup-profile-comparison/v1`, and retains the raw comparison
 for 30 days. It is diagnostic evidence and does not expand the normal CI path.
 
-The weekly schedule builds `actutum.startup-history/v1` from its current
+The weekly schedule builds `velox.startup-history/v1` from its current
 lifecycle summary plus up to eleven prior successful scheduled artifacts. A
 manual `include_startup_history` dispatch can exercise the same path. Points
 are grouped by exact runner image version and WebView2 version so environment
@@ -37,7 +37,7 @@ manager descendant appears. The tracer prefers WMI or CIM process-start events
 and falls back to a non-administrator Win32 Toolhelp snapshot poller when event
 subscriptions are unavailable. Failure of every backend is `unverified`, not a
 pass, and makes hosted evidence fail. The trace closes immediately after the
-single measured `actutum build` process; later inspection commands are excluded.
+single measured `velox build` process; later inspection commands are excluded.
 
 The consumer clock starts after checkout and before artifact download. It ends
 after release extraction, dependency-free project initialization, build, and
@@ -51,7 +51,7 @@ is not included in the consumer path.
   exists.
 - Windows x64 host build.
 - Dependency-free hello build and startup smoke.
-- One bounded Actutum-only end-to-end contract sample.
+- One bounded Velox-only end-to-end contract sample.
 - Three serial fresh/immediate same-profile startup lifecycle samples.
 - Artifact and generated-output drift checks.
 
@@ -62,15 +62,15 @@ The full cross-framework benchmark matrix does not run on every pull request.
 - Reproducibility across clean workspaces.
 - Ten isolated consumer end-to-end samples.
 - The Windows producer job records ten fresh/immediate same-profile startup
-  lifecycle samples, validates `actutum.startup-lifecycle/v3`, derives a
-  `actutum.startup-lifecycle-summary/v1` correlation and ordering summary plus a
-  `actutum.startup-lifecycle-phase-summary/v1` interval and dominant-phase
+  lifecycle samples, validates `velox.startup-lifecycle/v3`, derives a
+  `velox.startup-lifecycle-summary/v1` correlation and ordering summary plus a
+  `velox.startup-lifecycle-phase-summary/v1` interval and dominant-phase
   summary, and
   preserves the lifecycle evidence for 90 days even when a sample fails. The
   weekly schedule also aggregates at most twelve history points. Release
   candidate tags use the same ten-sample lifecycle path without history
   aggregation. Cross-framework startup comparison lives in the separate
-  `actutum-bench` repository and remains unpublished until immutable release
+  `velox-bench` repository and remains unpublished until immutable release
   inputs are available.
 - Zero-cache and recommended-cache benchmark suites.
 - Wails, Neutralino, and Tauri comparison adapters.
@@ -120,7 +120,7 @@ without recompression because it is already compressed.
 
 Dependabot checks the `github-actions` ecosystem weekly and opens reviewable
 pull requests without auto-merge. The workflow also runs
-`cmd/actutum-action-pins`, which rejects mutable `actions/*` references, stale
+`cmd/velox-action-pins`, which rejects mutable `actions/*` references, stale
 stable-release comments, and SHAs that do not match the official release tag.
 Independent action repositories are checked concurrently while output and
 failure ordering remain deterministic.
@@ -136,7 +136,7 @@ completed run ID. Pull-request and ordinary manual evidence events create a
 skipped job without runner allocation. It reads the selected run's log archive
 with `actions: read`, scans only for the known `actions/download-artifact`
 `DEP0005 Buffer()` signature, validates
-`actutum.actions-warning-monitor/v1`, and retains the report for 30 days. The
+`velox.actions-warning-monitor/v1`, and retains the report for 30 days. The
 workflow never logs its token and does not use `download-artifact` to inspect
 itself.
 

@@ -1,8 +1,8 @@
 {
   "runtimeVersion": 1,
   "app": {
-    "id": "dev.actutum.hello",
-    "name": "Actutum Hello",
+    "id": "dev.velox.hello",
+    "name": "Velox Hello",
     "version": "0.1.0"
   },
   "assets": {

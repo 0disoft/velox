@@ -4,17 +4,17 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0disoft/actutum/internal/webview2"
+	"github.com/0disoft/velox/internal/webview2"
 )
 
 func TestDefaultDataPathIsStableAndAppScoped(t *testing.T) {
 	base := t.TempDir()
 	t.Setenv("LocalAppData", base)
-	path, err := defaultDataPath("dev.actutum.hello")
+	path, err := defaultDataPath("dev.velox.hello")
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(base, "Actutum", "profiles", "dev.actutum.hello")
+	want := filepath.Join(base, "Velox", "profiles", "dev.velox.hello")
 	if path != want || !filepath.IsAbs(path) {
 		t.Fatalf("defaultDataPath() = %q, want %q", path, want)
 	}

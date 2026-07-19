@@ -7,16 +7,16 @@
 ## Context
 
 The compile-free build copies a generic host without changing its bytes. A file
-named `actutum-host.exe` is not enough compatibility or integrity evidence: an
+named `velox-host.exe` is not enough compatibility or integrity evidence: an
 older, newer, wrong-target, or modified host could otherwise be packaged by a
 different CLI release.
 
 ## Decision
 
-Each Windows x64 release bundle places `actutum-host.json` beside `actutum.exe` and
-`actutum-host.exe`. The sidecar uses `actutum.host/v1` and binds:
+Each Windows x64 release bundle places `velox-host.json` beside `velox.exe` and
+`velox-host.exe`. The sidecar uses `velox.host/v1` and binds:
 
-- Actutum release version;
+- Velox release version;
 - target;
 - host contract version;
 - runtime configuration contract version;

@@ -56,7 +56,7 @@
 
 ## Operations and Recovery
 
-- Can the problem be diagnosed locally without a Actutum service?
+- Can the problem be diagnosed locally without a Velox service?
 - What is the rollback or fallback?
 - Does the change create a new release, signing, support, or incident surface?
 - Which configured validation proves readiness?

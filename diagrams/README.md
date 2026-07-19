@@ -10,7 +10,7 @@ authoritative when a diagram conflicts with a source document.
 
 ## Active Diagrams
 
-- system-context.mmd: actors, Actutum boundary, output, Windows runtime, and
+- system-context.mmd: actors, Velox boundary, output, Windows runtime, and
   application-owned network services.
 - container-view.mmd: CLI, release bundle, output, host, bridge, WebView2, and
   Windows boundaries.

@@ -14,7 +14,7 @@ startup difference was not large enough or stable enough to outweigh that
 operating cost, and the C++ reference also exposed an unresolved immediate
 same-profile relaunch delay.
 
-Actutum primarily wins by shipping an unchanged prebuilt host and avoiding
+Velox primarily wins by shipping an unchanged prebuilt host and avoiding
 consumer-side native compilation. The host implementation language is not the
 product moat.
 
@@ -64,7 +64,7 @@ the production security contract.
 6. Move or retire C++23/Pixi reference infrastructure after the Go lifecycle
    baseline is stable on pinned CI.
 
-The adapter slice is complete: `cmd/actutum-host` consumes `internal/webview2`,
+The adapter slice is complete: `cmd/velox-host` consumes `internal/webview2`,
 and the pinned local fork provides virtual HTTPS mapping, source-validated
 messages, denied frame and remote navigation, denied popups, denied downloads,
 default-denied permissions, explicit COM close/release, and benchmark-only

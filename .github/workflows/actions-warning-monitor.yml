@@ -48,7 +48,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-warning-monitor'
-          go run ./cmd/actutum-actions-warning-monitor `
+          go run ./cmd/velox-actions-warning-monitor `
             --repository '${{ github.repository }}' `
             --run-id $env:MONITORED_RUN_ID `
             --output '.ci/actions-warning-monitor.json'

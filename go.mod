@@ -1,4 +1,4 @@
-module github.com/0disoft/actutum
+module github.com/0disoft/velox
 
 go 1.26
 

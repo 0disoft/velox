@@ -15,13 +15,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0disoft/actutum/internal/buildinfo"
-	"github.com/0disoft/actutum/internal/releasebundle"
+	"github.com/0disoft/velox/internal/buildinfo"
+	"github.com/0disoft/velox/internal/releasebundle"
 )
 
 const (
-	SBOMFile       = "actutum-windows-x64.spdx.json"
-	ProvenanceFile = "actutum-windows-x64.intoto.jsonl"
+	SBOMFile       = "velox-windows-x64.spdx.json"
+	ProvenanceFile = "velox-windows-x64.intoto.jsonl"
 	ChecksumsFile  = "checksums.sha256"
 )
 
@@ -257,19 +257,19 @@ func inventory(root string) ([]fileEvidence, error) {
 func buildSBOM(options Options, archiveSHA string, files []fileEvidence) spdxDocument {
 	verification := sha1.New() // SPDX 2.3 defines packageVerificationCode as SHA-1 over file SHA-1 values.
 	spdxFiles := make([]spdxFile, 0, len(files))
-	relationships := []spdxRelationship{{SPDXElementID: "SPDXRef-DOCUMENT", RelationshipType: "DESCRIBES", RelatedSPDXElement: "SPDXRef-Package-Actutum"}}
+	relationships := []spdxRelationship{{SPDXElementID: "SPDXRef-DOCUMENT", RelationshipType: "DESCRIBES", RelatedSPDXElement: "SPDXRef-Package-Velox"}}
 	for index, file := range files {
 		_, _ = io.WriteString(verification, file.SHA1)
 		id := fmt.Sprintf("SPDXRef-File-%04d", index+1)
 		spdxFiles = append(spdxFiles, spdxFile{FileName: "./" + file.Path, SPDXID: id, Checksums: []spdxChecksum{{Algorithm: "SHA256", ChecksumValue: file.SHA256}}, LicenseConcluded: "NOASSERTION", CopyrightText: "NOASSERTION"})
-		relationships = append(relationships, spdxRelationship{SPDXElementID: "SPDXRef-Package-Actutum", RelationshipType: "CONTAINS", RelatedSPDXElement: id})
+		relationships = append(relationships, spdxRelationship{SPDXElementID: "SPDXRef-Package-Velox", RelationshipType: "CONTAINS", RelatedSPDXElement: id})
 	}
 	return spdxDocument{
 		SPDXVersion: "SPDX-2.3", DataLicense: "CC0-1.0", SPDXID: "SPDXRef-DOCUMENT",
-		Name:              "actutum-windows-x64-" + buildinfo.Version,
+		Name:              "velox-windows-x64-" + buildinfo.Version,
 		DocumentNamespace: strings.TrimSuffix(options.SourceRepository, "/") + "/sbom/" + options.SourceCommit + "/" + archiveSHA,
-		CreationInfo:      spdxCreationInfo{Created: options.CreatedAt.UTC().Format(time.RFC3339), Creators: []string{"Tool: actutum-release-evidence/" + buildinfo.Version}},
-		Packages:          []spdxPackage{{Name: "actutum-windows-x64", SPDXID: "SPDXRef-Package-Actutum", VersionInfo: buildinfo.Version, DownloadLocation: "NOASSERTION", FilesAnalyzed: true, LicenseConcluded: "NOASSERTION", LicenseDeclared: "NOASSERTION", CopyrightText: "NOASSERTION", PackageVerificationCode: spdxPackageVerification{Value: hex.EncodeToString(verification.Sum(nil))}}},
+		CreationInfo:      spdxCreationInfo{Created: options.CreatedAt.UTC().Format(time.RFC3339), Creators: []string{"Tool: velox-release-evidence/" + buildinfo.Version}},
+		Packages:          []spdxPackage{{Name: "velox-windows-x64", SPDXID: "SPDXRef-Package-Velox", VersionInfo: buildinfo.Version, DownloadLocation: "NOASSERTION", FilesAnalyzed: true, LicenseConcluded: "NOASSERTION", LicenseDeclared: "NOASSERTION", CopyrightText: "NOASSERTION", PackageVerificationCode: spdxPackageVerification{Value: hex.EncodeToString(verification.Sum(nil))}}},
 		Files:             spdxFiles, Relationships: relationships,
 	}
 }
@@ -281,7 +281,7 @@ func buildProvenance(options Options, archiveSHA string) statement {
 		PredicateType: "https://slsa.dev/provenance/v1",
 		Predicate: provenancePayload{
 			BuildDefinition: buildDefinition{
-				BuildType:            "https://github.com/0disoft/actutum/.github/workflows/alpha-evidence.yml@v1",
+				BuildType:            "https://github.com/0disoft/velox/.github/workflows/alpha-evidence.yml@v1",
 				ExternalParameters:   map[string]string{"target": releasebundle.TargetWindowsX64},
 				InternalParameters:   map[string]string{"releaseVersion": buildinfo.Version},
 				ResolvedDependencies: []resolvedDependency{{URI: strings.TrimSuffix(options.SourceRepository, "/") + "@" + options.SourceCommit, Digest: map[string]string{"gitCommit": options.SourceCommit}}},

@@ -75,7 +75,7 @@ func TestConsumerEvidenceWorkflowOwnsLifecycleSummaryPolicy(t *testing.T) {
 		"schema/startup-lifecycle-v3.schema.json",
 		"schema/startup-lifecycle-summary-v1.schema.json",
 		"schema/startup-lifecycle-phase-summary-v1.schema.json",
-		"go run ./cmd/actutum-startup-summary",
+		"go run ./cmd/velox-startup-summary",
 		"--phase-output $phaseSummaryPath",
 		"inputs.evidence_tier == 'full'",
 		"&& '10' || '3'",
@@ -87,7 +87,7 @@ func TestConsumerEvidenceWorkflowOwnsLifecycleSummaryPolicy(t *testing.T) {
 		"TestStartupProfileComparisonEvidence$",
 		"schema/startup-profile-comparison-v1.schema.json",
 		"include_startup_history:",
-		"go run ./cmd/actutum-startup-history",
+		"go run ./cmd/velox-startup-history",
 		"schema/startup-history-v1.schema.json",
 		"--limit 12",
 		"actions: read",
@@ -130,7 +130,7 @@ func TestActionsWarningMonitorIsBoundedAndDiagnostic(t *testing.T) {
 		"github.event.workflow_run.event == 'schedule'",
 		"github.event.workflow_run.event == 'push'",
 		"runs-on: ubuntu-24.04",
-		"go run ./cmd/actutum-actions-warning-monitor",
+		"go run ./cmd/velox-actions-warning-monitor",
 		"schema/actions-warning-monitor-v1.schema.json",
 		"known_warning_status=",
 		"retention-days: 30",
@@ -167,12 +167,12 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 			t.Errorf("checkout-free consumer job contains forbidden surface %q", forbidden)
 		}
 	}
-	for _, required := range []string{"actutum-release-evidence", "SPDX-2.3", "https://in-toto.io/Statement/v1", "Independent unsigned release builds are not byte-identical", "github-actions-artifact-no-checkout", "schema/consumer-clean-v1.schema.json", "retention-days: 7", "retention-days: 30"} {
+	for _, required := range []string{"velox-release-evidence", "SPDX-2.3", "https://in-toto.io/Statement/v1", "Independent unsigned release builds are not byte-identical", "github-actions-artifact-no-checkout", "schema/consumer-clean-v1.schema.json", "retention-days: 7", "retention-days: 30"} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("alpha evidence workflow is missing %q", required)
 		}
 	}
-	for _, required := range []string{"function Invoke-ActutumJson", "$firstBuild.result.archive", "$secondBuild.result.archive"} {
+	for _, required := range []string{"function Invoke-VeloxJson", "$firstBuild.result.archive", "$secondBuild.result.archive"} {
 		if !strings.Contains(consumer, required) {
 			t.Errorf("checkout-free consumer job does not use the CLI result contract %q", required)
 		}
@@ -183,11 +183,11 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 	for _, required := range []string{
 		"publish_preview:",
 		"publish unsigned developer preview",
-		"github.repository == '0disoft/actutum' && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
+		"github.repository == '0disoft/velox' && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
 		"github.ref_type",
 		"^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$",
 		"release_version=$($manifest.releaseVersion)",
-		"v$env:ACTUTUM_RELEASE_VERSION",
+		"v$env:VELOX_RELEASE_VERSION",
 		"The selected tag does not match the release manifest version.",
 		"name: Publish unsigned developer preview",
 		"contents: write",
@@ -205,7 +205,7 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 	if strings.Count(workflow, "contents: write") != 1 {
 		t.Fatal("only the isolated preview publication job may receive contents: write")
 	}
-	for _, forbidden := range []string{"SIGNPATH_", "actutum-signing-record authenticode", "attest-build-provenance"} {
+	for _, forbidden := range []string{"SIGNPATH_", "velox-signing-record authenticode", "attest-build-provenance"} {
 		if strings.Contains(workflow, forbidden) {
 			t.Errorf("unsigned preview workflow contains deferred signing surface %q", forbidden)
 		}

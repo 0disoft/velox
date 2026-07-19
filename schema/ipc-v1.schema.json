@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.actutum.invalid/ipc/v1.json",
-  "title": "Actutum IPC v1",
+  "$id": "https://schemas.velox.invalid/ipc/v1.json",
+  "title": "Velox IPC v1",
   "oneOf": [
     { "$ref": "#/$defs/request" },
     { "$ref": "#/$defs/response" }

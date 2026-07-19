@@ -6,7 +6,7 @@
 
 ## Configuration Sources
 
-Actutum has one project manifest, actutum.json by default.
+Velox has one project manifest, velox.json by default.
 
 Precedence is:
 
@@ -14,12 +14,12 @@ Precedence is:
 2. Project manifest values.
 3. Documented built-in defaults.
 
-Actutum does not merge parent-directory manifests, user-global configuration, or
+Velox does not merge parent-directory manifests, user-global configuration, or
 environment-derived application permissions.
 
 ## Manifest Shape
 
-The machine-readable contract is `schema/actutum-v1.schema.json`. Its top-level
+The machine-readable contract is `schema/velox-v1.schema.json`. Its top-level
 shape is:
 
     {

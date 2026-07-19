@@ -4,14 +4,14 @@ These files are dormant repository copies of a proposed future SignPath
 Foundation configuration. ADR 0011 defers provider onboarding until an actual
 developer-preview adoption trigger exists.
 
-- Project slug: `actutum`
+- Project slug: `velox`
 - Artifact configuration slug: `windows-x64`
 - Signing policy slug: `release-signing`
 - Artifact configuration: `artifact-configuration.xml`
-- GitHub source policy: `policies/actutum/release-signing.yml`
+- GitHub source policy: `policies/velox/release-signing.yml`
 
 The artifact configuration accepts one ZIP containing exactly
-`actutum-host.exe` and `actutum.exe` and applies Authenticode signing to both. The
+`velox-host.exe` and `velox.exe` and applies Authenticode signing to both. The
 source policy requires GitHub-hosted runners and rejects workflow reruns.
 
 The provider organization ID, accepted project identity, certificate publisher

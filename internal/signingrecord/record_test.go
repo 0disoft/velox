@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0disoft/actutum/internal/releasebundle"
+	"github.com/0disoft/velox/internal/releasebundle"
 )
 
 func TestBuildDryRunWritesDeterministicNonPublishableRecord(t *testing.T) {
@@ -89,7 +89,7 @@ func TestBuildDryRunRejectsUnexpectedProviderOutput(t *testing.T) {
 func TestBuildDryRunRejectsSplitProviderOutputDirectories(t *testing.T) {
 	fixture := dryRunFixture(t)
 	otherDirectory := filepath.Join(filepath.Dir(filepath.Dir(fixture.Files.SignedHost)), "other-signed")
-	otherHost := filepath.Join(otherDirectory, "actutum-host.exe")
+	otherHost := filepath.Join(otherDirectory, "velox-host.exe")
 	writeTestFile(t, otherHost, "signed host")
 	fixture.Files.SignedHost = otherHost
 	if _, err := BuildDryRun(fixture); err == nil || !strings.Contains(err.Error(), "must share one directory") {
@@ -122,8 +122,8 @@ func TestBuildDryRunRejectsBrokenArtifactLineage(t *testing.T) {
 			name: "signing input",
 			mutate: func(t *testing.T, options DryRunOptions) {
 				writeTestZIP(t, options.Files.SigningInput, []testZIPFile{
-					{Name: "actutum.exe", Path: options.Files.SignedCLI},
-					{Name: "actutum-host.exe", Path: options.Files.UnsignedHost},
+					{Name: "velox.exe", Path: options.Files.SignedCLI},
+					{Name: "velox-host.exe", Path: options.Files.UnsignedHost},
 				})
 			},
 			message: "verify signing input",
@@ -135,7 +135,7 @@ func TestBuildDryRunRejectsBrokenArtifactLineage(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				writeTestFile(t, options.Files.ReleaseManifest, strings.Replace(string(data), "0.6.0-alpha.1", "0.5.10-alpha.2", 1))
+				writeTestFile(t, options.Files.ReleaseManifest, strings.Replace(string(data), "0.5.10-alpha.1", "0.5.10-alpha.2", 1))
 			},
 			message: "verify final release manifest",
 		},
@@ -149,7 +149,7 @@ func TestBuildDryRunRejectsBrokenArtifactLineage(t *testing.T) {
 		{
 			name: "checksums",
 			mutate: func(t *testing.T, options DryRunOptions) {
-				writeTestFile(t, options.Files.Checksums, strings.Repeat("0", 64)+"  actutum-windows-x64.zip\n"+strings.Repeat("0", 64)+"  actutum-windows-x64.spdx.json\n")
+				writeTestFile(t, options.Files.Checksums, strings.Repeat("0", 64)+"  velox-windows-x64.zip\n"+strings.Repeat("0", 64)+"  velox-windows-x64.spdx.json\n")
 			},
 			message: "verify final checksums",
 		},
@@ -157,8 +157,8 @@ func TestBuildDryRunRejectsBrokenArtifactLineage(t *testing.T) {
 			name: "SBOM",
 			mutate: func(t *testing.T, options DryRunOptions) {
 				writeTestJSON(t, options.Files.SBOM, map[string]any{"spdxVersion": "SPDX-2.3", "documentNamespace": "https://example.invalid/wrong"})
-				archive := testArtifact(t, options.Files.ReleaseArchive, "actutum-windows-x64.zip")
-				sbom := testArtifact(t, options.Files.SBOM, "actutum-windows-x64.spdx.json")
+				archive := testArtifact(t, options.Files.ReleaseArchive, "velox-windows-x64.zip")
+				sbom := testArtifact(t, options.Files.SBOM, "velox-windows-x64.spdx.json")
 				writeTestFile(t, options.Files.Checksums, fmt.Sprintf("%s  %s\n%s  %s\n", archive.SHA256, archive.File, sbom.SHA256, sbom.File))
 			},
 			message: "verify final SBOM",
@@ -183,7 +183,7 @@ func TestValidateReleaseRequiresVerifiedCertificateAndAttestations(t *testing.T)
 	}
 	record.Mode = ModeRelease
 	record.Publishable = true
-	record.Certificate = Certificate{Status: StatusVerified, Subject: "CN=Actutum", Issuer: "CN=Issuer", Serial: "01", TimestampAuthority: "CN=Timestamp"}
+	record.Certificate = Certificate{Status: StatusVerified, Subject: "CN=Velox", Issuer: "CN=Issuer", Serial: "01", TimestampAuthority: "CN=Timestamp"}
 	for index := range record.Attestations {
 		record.Attestations[index].Status = StatusVerified
 	}
@@ -227,7 +227,7 @@ func TestValidateRejectsCredentialBearingRepositoryURL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	record.Source.Repository = "https://token@example.invalid/actutum"
+	record.Source.Repository = "https://token@example.invalid/velox"
 	if err := Validate(record); err == nil || !strings.Contains(err.Error(), "without credentials") {
 		t.Fatalf("Validate error = %v", err)
 	}
@@ -263,15 +263,15 @@ func TestSigningRecordSchemaIsDraft202012(t *testing.T) {
 	if err := json.Unmarshal(data, &schema); err != nil {
 		t.Fatal(err)
 	}
-	if schema["$schema"] != "https://json-schema.org/draft/2020-12/schema" || schema["$id"] != "https://schemas.actutum.invalid/signing-record/v1.json" {
+	if schema["$schema"] != "https://json-schema.org/draft/2020-12/schema" || schema["$id"] != "https://schemas.velox.invalid/signing-record/v1.json" {
 		t.Fatalf("unexpected signing record schema identity: %#v", schema)
 	}
 }
 
 func TestDryRunSchemaFixture(t *testing.T) {
-	output := os.Getenv("ACTUTUM_SIGNING_RECORD_RESULT")
+	output := os.Getenv("VELOX_SIGNING_RECORD_RESULT")
 	if output == "" {
-		t.Skip("ACTUTUM_SIGNING_RECORD_RESULT is not set")
+		t.Skip("VELOX_SIGNING_RECORD_RESULT is not set")
 	}
 	record, err := BuildDryRun(dryRunFixture(t))
 	if err != nil {
@@ -286,15 +286,15 @@ func dryRunFixture(t *testing.T) DryRunOptions {
 	t.Helper()
 	root := t.TempDir()
 	files := Files{
-		UnsignedCLI:     filepath.Join(root, "unsigned", "actutum.exe"),
-		UnsignedHost:    filepath.Join(root, "unsigned", "actutum-host.exe"),
-		SigningInput:    filepath.Join(root, "actutum-signing-input.zip"),
-		SignedCLI:       filepath.Join(root, "signed", "actutum.exe"),
-		SignedHost:      filepath.Join(root, "signed", "actutum-host.exe"),
-		ReleaseArchive:  filepath.Join(root, "release", "actutum-windows-x64.zip"),
-		ReleaseManifest: filepath.Join(root, "release", "actutum-windows-x64", "release-manifest.json"),
+		UnsignedCLI:     filepath.Join(root, "unsigned", "velox.exe"),
+		UnsignedHost:    filepath.Join(root, "unsigned", "velox-host.exe"),
+		SigningInput:    filepath.Join(root, "velox-signing-input.zip"),
+		SignedCLI:       filepath.Join(root, "signed", "velox.exe"),
+		SignedHost:      filepath.Join(root, "signed", "velox-host.exe"),
+		ReleaseArchive:  filepath.Join(root, "release", "velox-windows-x64.zip"),
+		ReleaseManifest: filepath.Join(root, "release", "velox-windows-x64", "release-manifest.json"),
 		Checksums:       filepath.Join(root, "evidence", "checksums.sha256"),
-		SBOM:            filepath.Join(root, "evidence", "actutum-windows-x64.spdx.json"),
+		SBOM:            filepath.Join(root, "evidence", "velox-windows-x64.spdx.json"),
 	}
 	contents := map[string]string{
 		files.UnsignedCLI:  "unsigned cli",
@@ -311,14 +311,14 @@ func dryRunFixture(t *testing.T) DryRunOptions {
 		}
 	}
 	writeTestZIP(t, files.SigningInput, []testZIPFile{
-		{Name: "actutum-host.exe", Path: files.UnsignedHost},
-		{Name: "actutum.exe", Path: files.UnsignedCLI},
+		{Name: "velox-host.exe", Path: files.UnsignedHost},
+		{Name: "velox.exe", Path: files.UnsignedCLI},
 	})
-	signedCLI := testArtifact(t, files.SignedCLI, "actutum.exe")
-	signedHost := testArtifact(t, files.SignedHost, "actutum-host.exe")
+	signedCLI := testArtifact(t, files.SignedCLI, "velox.exe")
+	signedHost := testArtifact(t, files.SignedHost, "velox-host.exe")
 	manifest := releasebundle.Manifest{
 		SchemaVersion:  releasebundle.SchemaVersion,
-		ReleaseVersion: "0.6.0-alpha.1",
+		ReleaseVersion: "0.5.10-alpha.1",
 		Target:         Target,
 		Artifacts: []releasebundle.Artifact{
 			{File: signedCLI.File, Bytes: signedCLI.Bytes, SHA256: signedCLI.SHA256},
@@ -327,21 +327,21 @@ func dryRunFixture(t *testing.T) DryRunOptions {
 	}
 	writeTestJSON(t, files.ReleaseManifest, manifest)
 	writeTestZIP(t, files.ReleaseArchive, []testZIPFile{
-		{Name: "actutum-windows-x64/actutum.exe", Path: files.SignedCLI},
-		{Name: "actutum-windows-x64/actutum-host.exe", Path: files.SignedHost},
-		{Name: "actutum-windows-x64/release-manifest.json", Path: files.ReleaseManifest},
+		{Name: "velox-windows-x64/velox.exe", Path: files.SignedCLI},
+		{Name: "velox-windows-x64/velox-host.exe", Path: files.SignedHost},
+		{Name: "velox-windows-x64/release-manifest.json", Path: files.ReleaseManifest},
 	})
-	archive := testArtifact(t, files.ReleaseArchive, "actutum-windows-x64.zip")
+	archive := testArtifact(t, files.ReleaseArchive, "velox-windows-x64.zip")
 	writeTestJSON(t, files.SBOM, map[string]any{
 		"spdxVersion":       "SPDX-2.3",
-		"documentNamespace": "https://github.com/0disoft/actutum/sbom/test/" + archive.SHA256,
+		"documentNamespace": "https://github.com/0disoft/velox/sbom/test/" + archive.SHA256,
 	})
-	sbom := testArtifact(t, files.SBOM, "actutum-windows-x64.spdx.json")
+	sbom := testArtifact(t, files.SBOM, "velox-windows-x64.spdx.json")
 	writeTestFile(t, files.Checksums, fmt.Sprintf("%s  %s\n%s  %s\n", archive.SHA256, archive.File, sbom.SHA256, sbom.File))
 	return DryRunOptions{
-		ReleaseVersion: "0.6.0-alpha.1",
+		ReleaseVersion: "0.5.10-alpha.1",
 		Source: Source{
-			Repository: "https://github.com/0disoft/actutum",
+			Repository: "https://github.com/0disoft/velox",
 			Commit:     strings.Repeat("a", 40),
 			Tag:        "v0.5.6-alpha.1",
 			Workflow:   ".github/workflows/release.yml@refs/tags/v0.5.6-alpha.1",
@@ -349,7 +349,7 @@ func dryRunFixture(t *testing.T) DryRunOptions {
 		},
 		Provider: Provider{
 			Name:                  ProviderSignPath,
-			Project:               "actutum-dry-run",
+			Project:               "velox-dry-run",
 			ArtifactConfiguration: "windows-x64-dry-run",
 			SigningPolicy:         "test-signing-policy",
 			RequestID:             "dry-run-12345",

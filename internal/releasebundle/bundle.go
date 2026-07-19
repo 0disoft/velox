@@ -11,16 +11,16 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/0disoft/actutum/internal/archive"
-	"github.com/0disoft/actutum/internal/buildinfo"
-	"github.com/0disoft/actutum/internal/hostmeta"
-	"github.com/0disoft/actutum/internal/ipc"
-	"github.com/0disoft/actutum/internal/manifest"
-	"github.com/0disoft/actutum/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/archive"
+	"github.com/0disoft/velox/internal/buildinfo"
+	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/velox/internal/ipc"
+	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
 const (
-	SchemaVersion    = "actutum.release/v1"
+	SchemaVersion    = "velox.release/v1"
 	TargetWindowsX64 = "windows-x64"
 )
 
@@ -32,7 +32,7 @@ var releaseSchemaFiles = []string{
 	"public-preview-verification-v1.schema.json",
 	"release-manifest-v1.schema.json",
 	"runtime-config-v1.schema.json",
-	"actutum-v1.schema.json",
+	"velox-v1.schema.json",
 }
 
 type Options struct {
@@ -82,7 +82,7 @@ func Build(options Options) (Result, error) {
 	if err := os.MkdirAll(outputRoot, 0o755); err != nil {
 		return Result{}, fmt.Errorf("create release output: %w", err)
 	}
-	name := "actutum-windows-x64"
+	name := "velox-windows-x64"
 	stageDirectory := filepath.Join(outputRoot, "."+name+".staging")
 	stageArchive := filepath.Join(outputRoot, "."+name+".zip.staging")
 	finalDirectory := filepath.Join(outputRoot, name)
@@ -101,11 +101,11 @@ func Build(options Options) (Result, error) {
 		}
 	}()
 
-	cliArtifact, err := copyArtifact(options.CLIPath, filepath.Join(stageDirectory, "actutum.exe"), "actutum.exe")
+	cliArtifact, err := copyArtifact(options.CLIPath, filepath.Join(stageDirectory, "velox.exe"), "velox.exe")
 	if err != nil {
 		return Result{}, fmt.Errorf("package CLI: %w", err)
 	}
-	hostArtifact, err := copyArtifact(options.HostPath, filepath.Join(stageDirectory, "actutum-host.exe"), "actutum-host.exe")
+	hostArtifact, err := copyArtifact(options.HostPath, filepath.Join(stageDirectory, "velox-host.exe"), "velox-host.exe")
 	if err != nil {
 		return Result{}, fmt.Errorf("package host: %w", err)
 	}
@@ -114,7 +114,7 @@ func Build(options Options) (Result, error) {
 		Contracts: hostmeta.Contracts{Host: hostmeta.ContractVersion, Runtime: runtimeconfig.Version, IPC: ipc.Version},
 		Host:      hostmeta.Artifact{File: hostArtifact.File, Bytes: hostArtifact.Bytes, SHA256: hostArtifact.SHA256},
 	}
-	if err := writeJSON(filepath.Join(stageDirectory, "actutum-host.json"), hostMetadata); err != nil {
+	if err := writeJSON(filepath.Join(stageDirectory, "velox-host.json"), hostMetadata); err != nil {
 		return Result{}, err
 	}
 
@@ -133,7 +133,7 @@ func Build(options Options) (Result, error) {
 		return Result{}, fmt.Errorf("package third-party notices: %w", err)
 	}
 	artifacts = append(artifacts, notices)
-	hostMetadataArtifact, err := inspectArtifact(filepath.Join(stageDirectory, "actutum-host.json"), "actutum-host.json")
+	hostMetadataArtifact, err := inspectArtifact(filepath.Join(stageDirectory, "velox-host.json"), "velox-host.json")
 	if err != nil {
 		return Result{}, err
 	}

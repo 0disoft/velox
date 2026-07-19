@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-const historySchemaVersion = "actutum.startup-history/v1"
+const historySchemaVersion = "velox.startup-history/v1"
 
 type metricStats struct {
 	P50Ms float64 `json:"p50Ms"`
@@ -122,13 +122,13 @@ type collector struct {
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "actutum-startup-history:", err)
+		fmt.Fprintln(os.Stderr, "velox-startup-history:", err)
 		os.Exit(1)
 	}
 }
 
 func run(args []string) error {
-	flags := flag.NewFlagSet("actutum-startup-history", flag.ContinueOnError)
+	flags := flag.NewFlagSet("velox-startup-history", flag.ContinueOnError)
 	repository := flags.String("repository", "", "GitHub owner/repository")
 	workflow := flags.String("workflow", "consumer-evidence.yml", "workflow file name")
 	currentPath := flags.String("current", "", "current lifecycle summary JSON")
@@ -301,7 +301,7 @@ func (c collector) getBytes(ctx context.Context, rawURL string) ([]byte, error) 
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("Authorization", "Bearer "+c.token)
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("User-Agent", "actutum-startup-history")
+	request.Header.Set("User-Agent", "velox-startup-history")
 	response, err := c.client.Do(request)
 	if err != nil {
 		return nil, err
@@ -337,7 +337,7 @@ func decodeSummary(body []byte) (lifecycleSummary, error) {
 	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		return result, errors.New("trailing JSON value")
 	}
-	if result.SchemaVersion != "actutum.startup-lifecycle-summary/v1" || result.Outcome != "success" {
+	if result.SchemaVersion != "velox.startup-lifecycle-summary/v1" || result.Outcome != "success" {
 		return result, errors.New("summary is not successful startup lifecycle v1 evidence")
 	}
 	return result, nil

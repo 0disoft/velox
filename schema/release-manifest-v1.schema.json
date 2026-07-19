@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.actutum.invalid/release-manifest/v1.json",
-  "title": "Actutum release manifest v1",
+  "$id": "https://schemas.velox.invalid/release-manifest/v1.json",
+  "title": "Velox release manifest v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "releaseVersion", "target", "contracts", "artifacts"],
   "properties": {
-    "schemaVersion": { "const": "actutum.release/v1" },
+    "schemaVersion": { "const": "velox.release/v1" },
     "releaseVersion": { "type": "string", "minLength": 1 },
     "target": { "const": "windows-x64" },
     "contracts": {

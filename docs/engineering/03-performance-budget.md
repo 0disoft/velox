@@ -5,7 +5,7 @@
 
 ## Headline Metrics
 
-Actutum makes comparative product claims about, in order:
+Velox makes comparative product claims about, in order:
 
 1. End-to-end cold build time.
 2. Consumer GitHub Actions cache upload.
@@ -68,19 +68,19 @@ These are go-or-kill targets, not published performance claims.
 
 ## Current Wails Gate Evidence
 
-The publishable `actutum-wails` zero-cache pair from
+The publishable `velox-wails` zero-cache pair from
 [velox-bench run 29569560999](https://github.com/0disoft/velox-bench/actions/runs/29569560999)
 is the current source for the Wails cold-build gate. The benchmark harness was
-at revision `0f83ff4156441044fa0c2290e8fe266d0d5fcb86`; it paired Actutum revision
+at revision `0f83ff4156441044fa0c2290e8fe266d0d5fcb86`; it paired Velox revision
 `ae7a819f0ef9b22cb4f959451d0189d699c6e546` with Wails revision
 `474b677c9b9191d703607bea7d76143b1b2eeb0c`.
 
 | Framework | Successful samples | End-to-end p50 | End-to-end p95 |
 | --- | ---: | ---: | ---: |
-| Actutum | 10 of 10 | 1,997 ms | 2,844 ms |
+| Velox | 10 of 10 | 1,997 ms | 2,844 ms |
 | Wails | 10 of 10 | 72,140 ms | 124,112 ms |
 
-The generated pair decision reports a Wails-to-Actutum p50 ratio of `36.124`,
+The generated pair decision reports a Wails-to-Velox p50 ratio of `36.124`,
 zero uploaded cache bytes, one pinned environment, balanced CPU allocation, and
 `publishable: true`. This passes the 3x Wails cold-build gate. It does not prove
 an all-framework performance lead. ADR 0008 separately resolves the narrow
@@ -95,7 +95,7 @@ represent the required COM lifecycle or WebView2 security controls.
 ## Benchmark Rules
 
 - Pin the runner image, framework versions, action revisions, fixture digest,
-  and Actutum artifact checksum.
+  and Velox artifact checksum.
 - Run each framework in an isolated job.
 - Use identical application assets except for the smallest required ready
   adapter.
@@ -119,21 +119,21 @@ network, font, or framework dependency.
 ### Asset pack
 
 A deterministic fixture containing exactly 1,000 `.bin` files and 10,485,760
-bytes beneath ten directories. `actutum.asset-pack-fixture/v1` pins
-`xorshift32-v1` with seed `1447383631`; the historical `velox-bench` run pins tree SHA-256
+bytes beneath ten directories. `velox.asset-pack-fixture/v1` pins
+`xorshift32-v1` with seed `1447383631`; `velox-bench` pins tree SHA-256
 `8b7fb697154d4fb91ae7a4f9c797109ff2b83f25cad8d0d947b9f523ef83005f`.
 
 [Hosted run 29627187122](https://github.com/0disoft/velox-bench/actions/runs/29627187122)
-completed one successful result-v2 sample for Actutum, Wails, Neutralinojs, and
+completed one successful result-v2 sample for Velox, Wails, Neutralinojs, and
 Tauri. It is integration evidence, not a publishable comparison. The first run
-also exposed that the harness counted Actutum's declared ZIP as an intermediate.
+also exposed that the harness counted Velox's declared ZIP as an intermediate.
 [Run 29627976497](https://github.com/0disoft/velox-bench/actions/runs/29627976497)
 reused that ZIP as the final archive and recorded zero surviving intermediate
 files and bytes. Both runs uploaded zero Actions cache bytes.
 
 ## CI Frequency
 
-- Pull requests run correctness checks and a small Actutum-only smoke sample.
+- Pull requests run correctness checks and a small Velox-only smoke sample.
 - Scheduled and release-candidate workflows run the full cross-framework
   matrix.
 - Full benchmark repetitions do not run on every commit because the benchmark
@@ -147,12 +147,12 @@ output root. Build-command duration excludes initialization, inspection, schema
 validation, and process-trace draining.
 
 The harness records controlled local observations under
-`actutum.consumer-benchmark/v1`, validates them against
+`velox.consumer-benchmark/v1`, validates them against
 `schema/consumer-benchmark-v1.schema.json`, and reports:
 
 - minimum, p50, p95, and maximum build-command duration;
 - portable output and archive bytes and digests;
-- Actutum-owned cache-directory growth;
+- Velox-owned cache-directory growth;
 - source-tree changes and surviving intermediate files;
 - descendants of the measured CLI process matching compiler or package-manager
   executable names.
@@ -161,7 +161,7 @@ Process tracing prefers Windows WMI or CIM process-start events. If the runner
 denies those subscriptions, a non-administrator Win32 Toolhelp snapshot poller
 samples process identity and parent relationships every two milliseconds. If
 all trace backends are unavailable, that gate is `unverified`, never `pass`.
-The trace covers exactly one measured `actutum build` process and closes before
+The trace covers exactly one measured `velox build` process and closes before
 artifact inspection or version queries. The three-sample smoke preserves any
 diagnostic result, while the ten-sample gate requires every gate to pass.
 
@@ -183,7 +183,7 @@ artifact acquisition. It includes artifact transfer, release verification and
 extraction, project initialization and validation, one build, and final ZIP
 inspection. Maintainer compilation runs in a separate producer job.
 
-Successful and failed observations use `actutum.consumer-e2e/v1`. A failure
+Successful and failed observations use `velox.consumer-e2e/v1`. A failure
 records its phase and returns non-zero without copying raw exception text or
 local paths into the result. Local invocations are labeled
 `local-contract-smoke`; only the isolated `windows-2025` consumer jobs are
@@ -271,18 +271,18 @@ and `quick` manual dispatches, and ten for `full` manual dispatches, the weekly
 schedule, and release-candidate tags. Every sample owns a fresh profile,
 performs one immediate same-profile
 relaunch, and records both launches plus their cross-process ordering under
-`actutum.startup-lifecycle/v3`. A failed launch, browser-exit wait, or
+`velox.startup-lifecycle/v3`. A failed launch, browser-exit wait, or
 profile-release wait remains in the JSON result with a stable phase and error
 code. The workflow validates the result against
 `schema/startup-lifecycle-v3.schema.json`, derives a deterministic
-`actutum.startup-lifecycle-summary/v1` with p50, p95, ordering counts, and the
+`velox.startup-lifecycle-summary/v1` with p50, p95, ordering counts, and the
 Pearson correlation between first-browser exit timing and immediate ready
 timing, and uploads both files even when the measurement test fails. Runner
 image, runner image version, Git commit, and WebView2 Runtime version are part
 of the evidence contract.
 
 The same raw v3 document also derives
-`actutum.startup-lifecycle-phase-summary/v1`. It reports interval-level p50 and
+`velox.startup-lifecycle-phase-summary/v1`. It reports interval-level p50 and
 p95 statistics for first and immediate startup and shutdown, and counts the
 dominant immediate-startup interval per successful sample. This is generated
 evidence; phase numbers are never copied into documentation by hand.
@@ -304,14 +304,14 @@ accepted ADR and cross-framework evidence that exceeds the documented noise
 gate.
 
 An explicit manual diagnostic may additionally produce
-`actutum.startup-profile-comparison/v1`. It compares immediate relaunch with the
+`velox.startup-profile-comparison/v1`. It compares immediate relaunch with the
 same UDF against a new UDF in three paired, serial samples. Trial order
 alternates by sample, and the two trials never run concurrently. This diagnostic
 separates WebView initialization cost from same-profile teardown contention; it
 does not run on pull requests, schedules, or release-candidate tags by default.
 
 The weekly schedule aggregates the current lifecycle summary and up to eleven
-prior successful scheduled summaries into `actutum.startup-history/v1`. History
+prior successful scheduled summaries into `velox.startup-history/v1`. History
 points retain p50 and p95 lifecycle timing, ordering count, correlation, runner
 image version, and WebView2 version. Series with different environment tuples
 must be interpreted separately. Missing historical artifacts are recorded as

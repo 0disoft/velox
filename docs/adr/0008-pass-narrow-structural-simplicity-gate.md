@@ -6,7 +6,7 @@
 
 ## Context
 
-The M3 gate asks whether Actutum is structurally simpler than the closest
+The M3 gate asks whether Velox is structurally simpler than the closest
 compile-free wrapper and meaningfully distinct from a PWA. Fewer features alone
 do not satisfy that gate.
 
@@ -15,7 +15,7 @@ serves local resources over HTTP and uses WebSocket messages for native APIs.
 Its framework surface includes filesystem, OS, extensions, updater, storage,
 server, and window namespaces. The pinned benchmark adapter responsibly
 allowlists only `window.setTitle`, but the distributed framework still owns the
-server, protocol, extension, and broader API implementation. Actutum instead maps
+server, protocol, extension, and broader API implementation. Velox instead maps
 an external directory to a virtual HTTPS origin, uses direct WebView2 messages,
 and exposes six closed application/window methods. Both approaches avoid
 bundling a browser engine.
@@ -48,18 +48,18 @@ boundary:
   updater, or broad native API;
 - one window and the closed IPC v1 method table.
 
-This is a topology decision, not a claim that Actutum is a better or more mature
+This is a topology decision, not a claim that Velox is a better or more mature
 framework than Neutralinojs.
 
 A PWA remains the default recommendation when HTTPS deployment,
 browser-managed installation and updates, and browser capability policy are
-acceptable. Actutum is justified only when a portable, offline-distributable,
+acceptable. Velox is justified only when a portable, offline-distributable,
 deterministic, locally inspectable artifact is materially more important than
 PWA reach or Neutralinojs capability breadth.
 
 ## Comparison Boundary
 
-| Concern | Actutum MVP | Neutralinojs comparison | PWA counterargument |
+| Concern | Velox MVP | Neutralinojs comparison | PWA counterargument |
 | --- | --- | --- | --- |
 | Consumer native compile | None | None for the prebuilt core path | None |
 | Local content transport | WebView2 folder mapping | Embedded HTTP server | HTTPS origin plus browser cache |
@@ -73,14 +73,14 @@ PWA reach or Neutralinojs capability breadth.
 - The structural gate is complete without claiming a universal product win.
 - Native API, local-server, extension, updater, and plugin requests remain
   outside core because adding them would erase the accepted distinction.
-- PWA-suitable products should not adopt Actutum merely to obtain a desktop
+- PWA-suitable products should not adopt Velox merely to obtain a desktop
   window.
 - External user attempts remain required to prove that the narrow portable
   artifact use case has enough value for M5.
 
 ## Revisit Triggers
 
-- Actutum adds a local listener, extension process, updater, sidecar, plugin
+- Velox adds a local listener, extension process, updater, sidecar, plugin
   system, or broad filesystem/OS namespace.
 - Consumer builds require a compiler, Node.js, generated binding, or framework
   cache.

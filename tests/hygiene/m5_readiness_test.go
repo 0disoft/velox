@@ -110,10 +110,6 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	root := repositoryRoot(t)
 	assertSourceMarkers(t, filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"), []string{
 		"penetration test, independent audit",
-		"Actutum identity refresh",
-		"`0.6.0-alpha.1` product source through commit",
-		"`actutum.runtime.json` remain mutable",
-		"normal `actutum run` does not pass it",
 		"SEC-001 | Medium | Resolved",
 		"SEC-002 | High | Accepted for preview",
 		"SEC-003 | High | Open until public verification",
@@ -132,7 +128,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"independent external-user attempt",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "02-spec.md"), []string{
-		"Public name: Actutum",
+		"Public name: Velox",
 		"Windows 10 version 1709 build 16299",
 		"Minimum WebView2 Runtime `92.0.902.49`",
 		"explicitly unsigned",
@@ -140,23 +136,24 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "05-naming-review.md"), []string{
 		"released Go internet-speed-test CLI",
 		"ships `velox.exe`",
-		"not approved as the public executable",
-		"Historical benchmark",
-		"artifacts and ADR explanations are not rewritten",
-		"Selected public name: Actutum",
+		"Selected public name: Velox",
+		"project maintainer never approved",
+		"changing the product away from Velox",
+		"accepts the developer-discovery, PATH, package, and support-search",
+		"Actutum is not an alias",
 	})
-	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0013-block-public-executable-under-colliding-working-name.md"), []string{
-		"publish the first downloadable executable under that identity",
-		"public tag and release is blocked",
-		"A replacement is explicitly selected by the maintainer",
-		"ADR 0014 selects Actutum",
+	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0015-retain-velox-public-identity.md"), []string{
+		"Retain **Velox**",
+		"Supersedes: ADR 0013 and ADR 0014",
+		"do not by themselves block the first",
+		"developer preview",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
-		"public executable blocked pending repository identity",
-		"github.repository` is exactly",
+		"public evidence pending",
+		"ADR 0015 removes the replacement-name gate",
 	})
 	assertSourceMarkers(t, filepath.Join(root, ".github", "workflows", "alpha-evidence.yml"), []string{
-		"if: github.repository == '0disoft/actutum' && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
+		"if: github.repository == '0disoft/velox' && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
 	})
 
 	for path, forbidden := range map[string][]string{
@@ -166,11 +163,15 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		filepath.Join(root, "docs", "product", "02-spec.md"): {
 			"- Minimum supported Windows release.",
 			"- Minimum supported WebView2 Runtime version.",
+			"Working name: Velox",
 			"- Public product name and package namespaces.",
-			"Working name: Actutum",
 		},
 		filepath.Join(root, "docs", "product", "01-roadmap.md"): {
 			"needs M4 distribution evidence, external user attempts, a bounded",
+			"public executable blocked pending rename",
+		},
+		filepath.Join(root, "docs", "ops", "release.md"): {
+			"create the candidate tag as a shortcut around the rename",
 		},
 	} {
 		data, err := os.ReadFile(path)

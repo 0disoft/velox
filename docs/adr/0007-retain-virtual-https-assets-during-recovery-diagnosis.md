@@ -6,14 +6,14 @@
 
 ## Context
 
-Actutum maps its external asset directory to an application-specific virtual
+Velox maps its external asset directory to an application-specific virtual
 HTTPS origin. The origin is part of the runtime security contract: navigation,
 top-level message authorization, frame denial, and secure-context behavior all
 depend on it.
 
 Immediate same-profile relaunch evidence has shown long startup tails. A
 normalized file URL control has not shown the same tail as consistently as
-Actutum and a virtual-host mapping control. That observation narrows the search,
+Velox and a virtual-host mapping control. That observation narrows the search,
 but it does not make file URLs security-equivalent and does not yet identify an
 internal WebView2 timer or lock. User-data-folder ownership, browser-process
 lifetime, controller creation, origin state, and machine-wide Runtime state can
@@ -27,12 +27,12 @@ runner and WebView2 environment remain required for a publishable boundary.
 
 ## Decision
 
-Actutum retains application-specific virtual HTTPS folder mapping as the only
+Velox retains application-specific virtual HTTPS folder mapping as the only
 production asset transport during M3.
 
 - File URL loading remains a benchmark control, not a runtime option or
   fallback.
-- Actutum does not add a fixed relaunch sleep, delete or rotate a user's UDF, or
+- Velox does not add a fixed relaunch sleep, delete or rotate a user's UDF, or
   change the application origin to hide an immediate-relaunch tail.
 - Settled warm-start evidence continues to wait for browser exit and profile
   release. Immediate same-profile relaunch remains a separate lifecycle
@@ -79,7 +79,7 @@ synthetic fresh-origin scenario exists only to classify the current tail.
 
 - Some same-profile immediate relaunches may retain a multi-second startup
   tail while diagnosis continues.
-- Actutum cannot claim that its startup path is uniformly faster than another
+- Velox cannot claim that its startup path is uniformly faster than another
   wrapper from local or incomplete recovery evidence.
 - The benchmark suite spends additional hosted runner time to isolate a
   lifecycle issue that may ultimately be owned by WebView2.

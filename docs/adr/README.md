@@ -26,9 +26,10 @@ choice inside that scope and cannot silently add a product capability.
 | 0009 | Accepted | Remove startup from the product headline and retain it as a release guardrail |
 | 0010 | Accepted for future signed channels; M4 gate superseded by 0011 | Separate GitHub build attestation from SignPath Authenticode signing and preserve both release lineages |
 | 0011 | Accepted | Publish an explicitly unsigned developer preview before provider onboarding or signing |
-| 0012 | Accepted for evidence rules; candidate superseded by 0014 | Bind preview tags to embedded versions and separate public-download evidence from an external-user attempt |
-| 0013 | Superseded by 0014 | Block a public executable under the colliding Actutum working name |
-| 0014 | Accepted | Adopt Actutum as the public product, command, module, schema, and release identity |
+| 0012 | Accepted | Bind the first preview tag to the embedded version and separate public-download evidence from an external-user attempt |
+| 0013 | Superseded by 0015 | Block a public executable under the colliding Velox working name |
+| 0014 | Superseded by 0015 | Adopt Actutum as the public product, command, module, schema, and release identity |
+| 0015 | Accepted | Retain Velox as the maintainer-approved product, command, module, schema, and release identity |
 
 ## Lifecycle
 

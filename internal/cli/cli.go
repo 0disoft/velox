@@ -11,19 +11,19 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/0disoft/actutum/internal/builder"
-	"github.com/0disoft/actutum/internal/buildinfo"
-	"github.com/0disoft/actutum/internal/buildplan"
-	"github.com/0disoft/actutum/internal/doctor"
-	"github.com/0disoft/actutum/internal/hostmeta"
-	"github.com/0disoft/actutum/internal/initializer"
-	"github.com/0disoft/actutum/internal/inspector"
-	"github.com/0disoft/actutum/internal/ipc"
-	"github.com/0disoft/actutum/internal/manifest"
-	"github.com/0disoft/actutum/internal/platformversion"
-	"github.com/0disoft/actutum/internal/runner"
-	"github.com/0disoft/actutum/internal/runtimeconfig"
-	"github.com/0disoft/actutum/internal/webview2"
+	"github.com/0disoft/velox/internal/builder"
+	"github.com/0disoft/velox/internal/buildinfo"
+	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/velox/internal/doctor"
+	"github.com/0disoft/velox/internal/hostmeta"
+	"github.com/0disoft/velox/internal/initializer"
+	"github.com/0disoft/velox/internal/inspector"
+	"github.com/0disoft/velox/internal/ipc"
+	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/platformversion"
+	"github.com/0disoft/velox/internal/runner"
+	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/webview2"
 )
 
 type Dependencies struct {
@@ -124,7 +124,7 @@ func Run(args []string, dependencies Dependencies) int {
 		printUsage(dependencies.Stdout)
 		return 0
 	default:
-		fmt.Fprintf(dependencies.Stderr, "actutum: unknown command %q\n", args[0])
+		fmt.Fprintf(dependencies.Stderr, "velox: unknown command %q\n", args[0])
 		printUsage(dependencies.Stderr)
 		return 2
 	}
@@ -176,7 +176,7 @@ func newFlagSet(command string, stderr io.Writer) (*flag.FlagSet, *commonOptions
 	options := &commonOptions{}
 	flags := flag.NewFlagSet(command, flag.ContinueOnError)
 	flags.SetOutput(stderr)
-	flags.StringVar(&options.config, "config", "actutum.json", "project manifest path")
+	flags.StringVar(&options.config, "config", "velox.json", "project manifest path")
 	flags.StringVar(&options.target, "target", buildplan.TargetWindowsX64, "build target")
 	flags.StringVar(&options.out, "out", "dist", "output root relative to the project")
 	flags.BoolVar(&options.json, "json", false, "emit one JSON document")
@@ -235,7 +235,7 @@ func runDoctor(args []string, dependencies Dependencies) int {
 			}
 		} else {
 			printDoctor(dependencies.Stdout, result)
-			fmt.Fprintf(dependencies.Stderr, "actutum: %s: %s\n", failure.Code, failure.Message)
+			fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", failure.Code, failure.Message)
 		}
 		return failure.ExitCode
 	}
@@ -384,7 +384,7 @@ func runVersion(args []string, dependencies Dependencies) int {
 	if *jsonOutput {
 		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "version", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !*quiet {
-		fmt.Fprintf(dependencies.Stdout, "Actutum %s\nManifest: v%d\nRuntime: v%d\nIPC: v%d\nTarget: %s\n", buildinfo.Version, manifest.Version, runtimeconfig.Version, ipc.Version, buildplan.TargetWindowsX64)
+		fmt.Fprintf(dependencies.Stdout, "Velox %s\nManifest: v%d\nRuntime: v%d\nIPC: v%d\nTarget: %s\n", buildinfo.Version, manifest.Version, runtimeconfig.Version, ipc.Version, buildplan.TargetWindowsX64)
 	}
 	return 0
 }
@@ -422,14 +422,14 @@ func createPlan(options commonOptions, hostPath string) (buildplan.Plan, error) 
 	if hostPath == "" {
 		executable, err := os.Executable()
 		if err != nil {
-			return buildplan.Plan{}, &buildplan.Error{Kind: buildplan.ErrorHost, Err: fmt.Errorf("locate Actutum executable: %w", err)}
+			return buildplan.Plan{}, &buildplan.Error{Kind: buildplan.ErrorHost, Err: fmt.Errorf("locate Velox executable: %w", err)}
 		}
-		hostPath = filepath.Join(filepath.Dir(executable), "actutum-host.exe")
+		hostPath = filepath.Join(filepath.Dir(executable), "velox-host.exe")
 	}
 	return buildplan.Create(buildplan.Options{
 		ManifestPath:     options.config,
 		HostPath:         hostPath,
-		HostMetadataPath: filepath.Join(filepath.Dir(hostPath), "actutum-host.json"),
+		HostMetadataPath: filepath.Join(filepath.Dir(hostPath), "velox-host.json"),
 		OutputRoot:       options.out,
 		Target:           options.target,
 	})
@@ -472,7 +472,7 @@ func emitFailure(dependencies Dependencies, command string, jsonOutput bool, exi
 			return 10
 		}
 	} else {
-		fmt.Fprintf(dependencies.Stderr, "actutum: %s: %s\n", code, safeMessage(detail))
+		fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", code, safeMessage(detail))
 	}
 	return exitCode
 }
@@ -555,5 +555,5 @@ func reorderPositionalArgs(args []string) []string {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: actutum <init|validate|doctor|run|build|inspect|version> [options]")
+	fmt.Fprintln(writer, "Usage: velox <init|validate|doctor|run|build|inspect|version> [options]")
 }

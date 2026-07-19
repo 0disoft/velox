@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0disoft/actutum/internal/doctor"
+	"github.com/0disoft/velox/internal/doctor"
 )
 
 func TestValidateJSONContract(t *testing.T) {
@@ -75,10 +75,10 @@ func TestBuildJSONContractAndOutputs(t *testing.T) {
 
 func TestFailureJSONDoesNotExposeAbsolutePath(t *testing.T) {
 	root := t.TempDir()
-	missing := filepath.Join(root, "private", "actutum.json")
+	missing := filepath.Join(root, "private", "velox.json")
 	var stdout, stderr bytes.Buffer
 	exitCode := Run([]string{"validate", "--config", missing, "--json"}, Dependencies{
-		Stdout: &stdout, Stderr: &stderr, HostPath: filepath.Join(root, "actutum-host.exe"),
+		Stdout: &stdout, Stderr: &stderr, HostPath: filepath.Join(root, "velox-host.exe"),
 	})
 	if exitCode != 2 || stderr.Len() != 0 {
 		t.Fatalf("exit=%d stderr=%q", exitCode, stderr.String())
@@ -171,7 +171,7 @@ func TestInitJSONContract(t *testing.T) {
 	if !envelope.OK || envelope.Command != "init" {
 		t.Fatalf("unexpected envelope: %+v", envelope)
 	}
-	if _, err := os.Stat(filepath.Join(target, "actutum.json")); err != nil {
+	if _, err := os.Stat(filepath.Join(target, "velox.json")); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -289,11 +289,11 @@ func TestInspectJSONContract(t *testing.T) {
 func cliFixture(t *testing.T) (string, string, string) {
 	t.Helper()
 	root := t.TempDir()
-	config := filepath.Join(root, "actutum.json")
-	host := filepath.Join(root, "release", "actutum-host.exe")
+	config := filepath.Join(root, "velox.json")
+	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "actutum-host.json"), fmt.Sprintf(`{"schemaVersion":"actutum.host/v1","releaseVersion":"0.6.0-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"actutum-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

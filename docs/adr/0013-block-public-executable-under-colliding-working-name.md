@@ -1,6 +1,6 @@
 # ADR 0013: Block the public executable under the colliding working name
 
-- Status: Superseded by ADR 0014
+- Status: Superseded by ADR 0015
 - Date: 2026-07-18
 - Owner: Project maintainer
 
@@ -71,4 +71,5 @@ search collisions remain observable user problems.
 - The release candidate is rebuilt and its new digest is recorded before tag
   creation.
 
-ADR 0014 selects Actutum and owns the replacement and compatibility decision.
+ADR 0015 records the maintainer's decision to retain Velox and accept the
+documented discovery and executable-name risks.

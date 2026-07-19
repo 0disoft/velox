@@ -17,10 +17,10 @@ func TestLoad(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(web, "index.html"), []byte("ok"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	configPath := filepath.Join(root, "actutum.runtime.json")
+	configPath := filepath.Join(root, "velox.runtime.json")
 	config := `{
   "runtimeVersion": 1,
-  "app": {"id": "dev.actutum.hello", "name": "Hello", "version": "1.0.0"},
+  "app": {"id": "dev.velox.hello", "name": "Hello", "version": "1.0.0"},
   "assets": {"root": "web", "entry": "index.html"},
   "window": {"width": 640, "height": 480},
   "security": {"permissions": []}
@@ -83,7 +83,7 @@ func TestLoadRejectsUnsafeOrUnknownInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "actutum.runtime.json")
+			path := filepath.Join(t.TempDir(), "velox.runtime.json")
 			if err := os.WriteFile(path, []byte(tt.config), 0o644); err != nil {
 				t.Fatal(err)
 			}
@@ -105,7 +105,7 @@ func TestLoadRejectsLinkedAssetBoundary(t *testing.T) {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}
 	config := `{"runtimeVersion":1,"app":{"id":"dev.test.linked","name":"x","version":"1"},"assets":{"root":"web","entry":"index.html"},"window":{"width":640,"height":480},"security":{"permissions":[]}}`
-	path := filepath.Join(root, "actutum.runtime.json")
+	path := filepath.Join(root, "velox.runtime.json")
 	if err := os.WriteFile(path, []byte(config), 0o644); err != nil {
 		t.Fatal(err)
 	}

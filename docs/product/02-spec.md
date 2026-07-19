@@ -2,11 +2,11 @@
 
 - Status: Draft
 - Owner: Project maintainer
-- Public name: Actutum
+- Public name: Velox
 
 ## Product Statement
 
-Actutum packages static HTML, CSS, and JavaScript as a Windows desktop
+Velox packages static HTML, CSS, and JavaScript as a Windows desktop
 application without compiling user-owned native code during the application
 build.
 
@@ -25,7 +25,7 @@ bindings, caches, platform SDKs, and intermediate output. On clean CI runners,
 that surface costs time and storage before the application's own assets are
 processed.
 
-Actutum removes application-specific native compilation from the normal consumer
+Velox removes application-specific native compilation from the normal consumer
 build path. It accepts a smaller feature set in exchange.
 
 ## Target Use Cases
@@ -70,7 +70,7 @@ deterministic consumer release bundle now carries strict host metadata and the
 CLI verifies its release, target, contract versions, size, and SHA-256 before a
 build. The alpha-evidence path now emits checksums, SPDX, and an unsigned
 provenance statement. The first public candidate is the explicitly unsigned
-`0.6.0-alpha.1` developer preview. Its tag, public publication, and independent
+`0.5.10-alpha.1` developer preview. Its tag, public publication, and independent
 consumer evidence remain pending. Signatures and authenticated provenance are
 future-channel work; sidecar metadata alone is not a trust anchor.
 
@@ -119,7 +119,7 @@ Web content is not trusted merely because it is local.
 - Production mode disables development tools unless explicitly enabled by a
   development-only run path.
 
-The M2 implementation exposes a frozen `window.actutum.invoke()` bridge. IPC v1
+The M2 implementation exposes a frozen `window.velox.invoke()` bridge. IPC v1
 uses a closed method table for application information and basic window
 lifecycle only, validates permissions before dispatch, and bounds payload size,
 JSON nesting, request identifiers, duplicate identifiers, and concurrent
@@ -133,14 +133,14 @@ who can modify the installed asset directory.
 
 - Consumer builds do not invoke a native compiler.
 - Consumer builds do not require Node.js or a frontend package manager.
-- Once a pinned Actutum release bundle is available, build is offline.
+- Once a pinned Velox release bundle is available, build is offline.
 - Source assets are never modified.
 - Output is assembled in a sibling staging directory and promoted only after
   validation succeeds.
 - Failure leaves the previous successful output intact and removes only the
   staging directory owned by the current run.
 - Paths outside the project and output roots are rejected.
-- Equivalent normalized inputs and the same Actutum release produce identical
+- Equivalent normalized inputs and the same Velox release produce identical
   unsigned archive bytes.
 
 ## Data Ownership
@@ -148,12 +148,12 @@ who can modify the installed asset directory.
 - Source assets and application configuration belong to the application
   author.
 - Build output belongs to the application author.
-- The Actutum CLI persists no user profile or telemetry.
+- The Velox CLI persists no user profile or telemetry.
 - The WebView2 user-data directory belongs to the packaged application.
 - The default WebView2 profile is stable and application-scoped at
-  `%LOCALAPPDATA%\Actutum\profiles\<app-id>` on Windows. Actutum does not delete it
+  `%LOCALAPPDATA%\Velox\profiles\<app-id>` on Windows. Velox does not delete it
   automatically. Benchmarks and controlled runs may override the location with
-  `ACTUTUM_DATA_DIR`.
+  `VELOX_DATA_DIR`.
 
 ## Success Criteria
 

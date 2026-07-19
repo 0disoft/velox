@@ -2,11 +2,11 @@
 
 - Status: Draft
 - Owner: Project maintainer
-- Working name: Actutum
+- Working name: Velox
 
 ## Product
 
-Actutum is a compile-free Windows desktop application packager for static
+Velox is a compile-free Windows desktop application packager for static
 HTML, CSS, and JavaScript.
 
 It combines a project manifest, static web assets, and a prebuilt generic
@@ -21,7 +21,7 @@ toolchains, package-manager dependencies, generated files, and CI caches.
 That cost is especially visible on clean GitHub Actions runners and for small
 applications whose own source is much simpler than the framework build surface.
 
-Actutum tests the hypothesis that a deliberately smaller product can provide a
+Velox tests the hypothesis that a deliberately smaller product can provide a
 useful desktop boundary while making the build path mostly validation, file
 copying, and deterministic packaging.
 
@@ -49,7 +49,7 @@ convenience are secondary.
 
 ## Product Boundary
 
-Actutum owns:
+Velox owns:
 
 - Project manifest validation.
 - Prebuilt host selection and compatibility checks.
@@ -58,7 +58,7 @@ Actutum owns:
 - A small, versioned JavaScript-to-host message contract.
 - Reproducible benchmark methodology and raw results.
 
-Actutum does not initially own:
+Velox does not initially own:
 
 - A native application backend.
 - A frontend bundler or package manager.
@@ -79,7 +79,7 @@ keeps PWA as the default when browser-managed deployment is acceptable. ADR
 ## Data and Privacy
 
 The CLI and host must not send telemetry, crash reports, or update checks by
-default. Actutum owns build inputs and outputs only while processing them.
+default. Velox owns build inputs and outputs only while processing them.
 Application network traffic and WebView2 profile data belong to the packaged
 application and must be documented separately by that application.
 

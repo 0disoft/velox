@@ -6,7 +6,7 @@
 
 ## Purpose
 
-The Actutum CLI is the primary public support surface for developers and CI. It
+The Velox CLI is the primary public support surface for developers and CI. It
 translates project configuration into validation, an immutable build plan, and
 portable output.
 
@@ -39,7 +39,7 @@ docs/cli/command-contract.md.
 
 ## Configuration
 
-The project manifest is actutum.json by default. Configuration precedence and
+The project manifest is velox.json by default. Configuration precedence and
 field ownership are defined in docs/cli/configuration.md.
 
 ## Output
@@ -57,7 +57,7 @@ installed runtime through platform APIs and fails before build readiness when
 either prerequisite is too old.
 
 Application authors do not install Go or another compiler to use a released
-Actutum build.
+Velox build.
 
 ## Deferred Surfaces
 

@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const PipeEnvironment = "ACTUTUM_BENCH_PIPE"
+const PipeEnvironment = "VELOX_BENCH_PIPE"
 
 func NotifyReady(phase string, browserProcessID uint32) error {
 	if phase != "dom-2raf" && phase != "security-ok" {

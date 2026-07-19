@@ -1,8 +1,8 @@
 {
   "runtimeVersion": 1,
   "app": {
-    "id": "dev.actutum.security-fixture",
-    "name": "Actutum Security Fixture",
+    "id": "dev.velox.security-fixture",
+    "name": "Velox Security Fixture",
     "version": "0.1.0"
   },
   "assets": {

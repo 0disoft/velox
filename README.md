@@ -1,11 +1,11 @@
-# Actutum
+# Velox
 
 - Status: M3 complete; M4 alpha distribution evidence active
 - Scope: general
 - Repository type: cli-tool
 
-Actutum is a working name for a compile-free Windows desktop application
-packager. It is designed to turn static HTML, CSS, and JavaScript into a
+Velox is a compile-free Windows desktop application packager. It is designed
+to turn static HTML, CSS, and JavaScript into a
 portable WebView2 application without compiling application-specific native
 code.
 
@@ -32,7 +32,7 @@ attestation.
 2. Consumer GitHub Actions cache upload.
 
 Process-to-ready startup is a release guardrail and lifecycle diagnostic, not a
-headline advantage. Actutum intentionally trades native feature breadth for a
+headline advantage. Velox intentionally trades native feature breadth for a
 smaller build and runtime surface.
 
 ## Proposed Shape
@@ -80,25 +80,26 @@ Explicitly deferred:
 - Privacy policy: PRIVACY.md
 - Unsigned preview decision: docs/adr/0011-publish-unsigned-developer-preview-before-signing.md
 - Preview identity decision: docs/adr/0012-bind-preview-version-and-public-download-evidence.md
+- Public-name decision: docs/adr/0015-retain-velox-public-identity.md
 - Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
 - External user attempt: docs/ops/external-user-attempt.md
 
 ## Current CLI Slice
 
-The CLI expects an unchanged prebuilt `actutum-host.exe` and strict
-`actutum-host.json` beside `actutum.exe` in a release bundle. It verifies release,
+The CLI expects an unchanged prebuilt `velox-host.exe` and strict
+`velox-host.json` beside `velox.exe` in a release bundle. It verifies release,
 target, host-contract, runtime-contract, IPC-contract, file-size, and SHA-256 agreement before
 building. Consumer builds never invoke Go, C++, Node.js, Pixi, or a package
 manager.
 
 ```powershell
-actutum init .\hello --json
-actutum validate --config .\actutum.json --json
-actutum doctor --config .\actutum.json --out .\dist --json
-actutum run --config .\actutum.json --out .\.actutum-run --json
-actutum build --config .\actutum.json --out .\dist --json
-actutum inspect .\dist\dev.actutum.hello.zip --json
-actutum version --json
+velox init .\hello --json
+velox validate --config .\velox.json --json
+velox doctor --config .\velox.json --out .\dist --json
+velox run --config .\velox.json --out .\.velox-run --json
+velox build --config .\velox.json --out .\dist --json
+velox inspect .\dist\dev.velox.hello.zip --json
+velox version --json
 ```
 
 `build` produces `dist/<app-id>/`, `dist/<app-id>.zip`, and a deterministic
@@ -106,7 +107,7 @@ actutum version --json
 are copied unchanged. Output assembly occurs in an owned sibling staging path;
 an occupied staging or recovery path fails closed instead of deleting it.
 
-See `examples/hello/actutum.json` and `schema/actutum-v1.schema.json` for the v1
+See `examples/hello/velox.json` and `schema/velox-v1.schema.json` for the v1
 authoring contract.
 
 ## Development State
@@ -121,7 +122,7 @@ developer-preview publication path. Deterministic signing-input, lineage, and
 fail-closed Authenticode verification tooling remain dormant for a future
 signed channel. Public distribution and a real external-user attempt remain
 open before M5; provider-approved signing and authenticated provenance are no
-longer M4 gates. The first candidate is `0.6.0-alpha.1`. A separate no-checkout
+longer M4 gates. The first candidate is `0.5.10-alpha.1`. A separate no-checkout
 workflow is ready to verify its eventual public GitHub Release URL, but it
 cannot count itself as an external-user attempt.
 
@@ -130,11 +131,11 @@ complete M5 inputs. They explicitly record the maintained WebView2 fork,
 weekly hosted-job ceiling, unsigned-channel trust limit, and accepted mutable-
 asset boundary. They are not person-hour estimates or an independent audit.
 
-Actutum is the selected public product and CLI identity. It replaces the Velox
-working name, which collides with Meta's established project and a released Go
-CLI that already ships `velox` and `velox.exe`. ADR 0014 owns the replacement.
-Public executable publication remains dormant until the GitHub repository owns
-`0disoft/actutum` and renamed release evidence passes from that repository.
+ADR 0015 retains Velox as the maintainer-approved product, command, module,
+schema, and release identity. The collision review still records Meta's
+established project and an existing Go CLI that ships the exact `velox` command
+and `velox.exe`; those are accepted discovery and command risks rather than a
+replacement-name publication gate.
 
 Consumer release packaging is not published yet. `init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,
@@ -158,6 +159,6 @@ portable ZIP inspection, and publishes raw and aggregated result contracts.
 
 ## License
 
-Actutum is licensed under `MIT OR Apache-2.0`, at your option. See `LICENSE-MIT`
+Velox is licensed under `MIT OR Apache-2.0`, at your option. See `LICENSE-MIT`
 and `LICENSE-APACHE`. Third-party attributions are listed in
 `THIRD_PARTY_NOTICES.md`.

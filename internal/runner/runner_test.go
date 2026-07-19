@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0disoft/actutum/internal/buildplan"
-	"github.com/0disoft/actutum/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
 func TestExecuteProvidesValidTemporaryConfigAndRemovesIt(t *testing.T) {
@@ -75,7 +75,7 @@ func TestExecuteCleansConfigWhenHostCannotStart(t *testing.T) {
 func runnerPlan(t *testing.T) buildplan.Plan {
 	t.Helper()
 	root := t.TempDir()
-	host := filepath.Join(root, "release", "actutum-host.exe")
+	host := filepath.Join(root, "release", "velox-host.exe")
 	if err := os.MkdirAll(filepath.Dir(host), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -83,8 +83,8 @@ func runnerPlan(t *testing.T) buildplan.Plan {
 		t.Fatal(err)
 	}
 	digest := sha256.Sum256([]byte("host"))
-	metadata := fmt.Sprintf(`{"schemaVersion":"actutum.host/v1","releaseVersion":"0.6.0-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"actutum-host.exe","bytes":4,"sha256":"%x"}}`, digest)
-	if err := os.WriteFile(filepath.Join(filepath.Dir(host), "actutum-host.json"), []byte(metadata), 0o644); err != nil {
+	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest)
+	if err := os.WriteFile(filepath.Join(filepath.Dir(host), "velox-host.json"), []byte(metadata), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.MkdirAll(filepath.Join(root, "site"), 0o755); err != nil {
@@ -93,7 +93,7 @@ func runnerPlan(t *testing.T) buildplan.Plan {
 	if err := os.WriteFile(filepath.Join(root, "site", "index.html"), []byte("ok"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	manifestPath := filepath.Join(root, "actutum.json")
+	manifestPath := filepath.Join(root, "velox.json")
 	if err := os.WriteFile(manifestPath, []byte(`{"schemaVersion":1,"app":{"id":"com.example.run","name":"Run","version":"1.0.0"},"assets":{"root":"site","entry":"index.html"}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}

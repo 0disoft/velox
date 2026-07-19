@@ -1,11 +1,10 @@
 # Public Name Selection Review
 
-- Status: Replacement selected and source rename verified locally; repository rename pending
-- Date: 2026-07-18
+- Status: Velox retained by maintainer decision
+- Date: 2026-07-19
 - Owner: Project maintainer
-- Selected public name: Actutum
-- Selected CLI spelling: `actutum`
-- Intended pronunciation: `ak-TOO-tum`
+- Selected public name: Velox
+- Selected CLI spelling: `velox`
 
 ## Scope
 
@@ -49,94 +48,37 @@ TypeScript framework and CLI family. Other Go modules and database products
 also use the name. None is individually decisive, but together they show that
 the bare namespace is crowded.
 
-## Original-name decision
+## Maintainer decision
 
-`Velox` is not approved as the public executable or final product identity.
-It remains only in historical evidence and the ADRs that explain why the name
-was replaced.
+The selected public name remains **Velox**. The public command is `velox`, the
+Windows CLI is `velox.exe`, and the generic host is `velox-host.exe`. The Go
+module and repository remain `github.com/0disoft/velox`. The first unpublished
+candidate remains `0.5.10-alpha.1`.
 
-## Selected replacement
+This decision accepts the developer-discovery, PATH, package, and support-search
+risks described above. It does not deny those collisions and is not a legal or
+trademark opinion. ADR 0015 is the binding decision.
 
-The selected replacement is **Actutum**. The Latin adverb *actutum* means
-"immediately", "instantly", or "without delay". It keeps the original speed
-idea while pointing at the product's actual promise: minimal setup and build
-work before a static desktop application can run.
+## Rejected replacement
 
-The public command is `actutum`, the Windows CLI is `actutum.exe`, and the
-generic host is `actutum-host.exe`. The next candidate is
-`0.6.0-alpha.1`; the unpublished `0.5.10-alpha.1` working-name candidate will
-not be tagged or released.
-
-This is a product and developer-namespace decision, not a legal opinion.
-
-## Replacement evidence
-
-The 2026-07-18 screen checked the selected ASCII spelling against these
-surfaces:
-
-1. GitHub repository-name and user-name search returned no exact `actutum`
-   match.
-2. npm, crates.io, PyPI, NuGet, and pkg.go.dev returned no exact package.
-3. General developer search found no active software product or CLI using the
-   exact name.
-4. General company search found an unrelated Czech company whose listed fields
-   are wholesale, retail, property, advertising, and administration rather
-   than software.
-
-The search does not reserve a namespace. The GitHub repository rename must
-claim `0disoft/actutum` before the first public release. Homebrew, Winget,
-Scoop, Chocolatey, domain, and formal trademark availability remain publication
-or distribution-channel checks because no package is being submitted to those
-channels now.
-
-The selected name must have a written meaning, intended pronunciation, and
-stable ASCII CLI spelling. Search uniqueness matters more than preserving the
-Latin speed metaphor.
+Actutum was screened as a possible replacement and briefly applied across the
+source and benchmark repositories, but the project maintainer never approved
+changing the product away from Velox. ADR 0014 and Git history retain that
+mistaken transition as historical evidence. Actutum is not an alias, package
+name, command, executable, schema namespace, or migration target.
 
 ## Compatibility decision
 
-No public release exists, so the working-name contracts are not a compatibility
-surface. The implementation rename must update in one atomic review:
-
-- repository title and public release artifact names;
-- `actutum.exe`, `actutum-host.exe`, and maintainer helper names;
-- Go module path to `github.com/0disoft/actutum` together with the GitHub
-  repository rename;
-- CLI command text, JSON envelopes, environment variable prefix, schemas and
-  schema IDs;
-- application profile directory, virtual-origin labels, examples, docs, issue
-  templates, workflows, benchmark adapters, and release evidence;
-- compatibility policy for the working-name alpha candidate.
-
-Protocol identifiers, schema IDs, environment variables, the JavaScript bridge,
-default manifest names, and runtime filenames all move to `actutum` because no
-published consumer depends on the working-name forms. Historical benchmark
-artifacts and ADR explanations are not rewritten as if they had been produced
-under the new name.
-
-## Local implementation evidence
-
-The renamed `0.6.0-alpha.1` source produced a deterministic local
-`actutum-windows-x64.zip` candidate on 2026-07-18:
-
-- archive bytes: `3224390`;
-- archive SHA-256:
-  `6df8d7ad2a81c9432dc53b2c16cd0c94a227ab718d8d3e8648c269c42fb315b7`;
-- SPDX SHA-256:
-  `134501655a699f217d8ac69717f48f6bc75320a644734b46b4292fa202336fb4`;
-- unsigned provenance was emitted for the same archive and source commit. Its
-  file hash is intentionally invocation-specific because the statement records
-  the evidence run's `invocationId`; it is not a reproducibility anchor.
-
-The compiler-free consumer smoke initialized `dev.actutum.*`, built twice,
-inspected the resulting ZIP, and the renamed host reached its ready callback.
-These are local verification results. They are not a GitHub Release, hosted
-same-commit evidence, an external-user attempt, a signature, or an
-authenticated attestation.
+No public release was created during the attempted rename. Maintained source,
+workflows, schemas, examples, benchmark adapters, and release evidence therefore
+return directly to their Velox identifiers without compatibility aliases.
+Published historical benchmark artifacts remain byte-for-byte unchanged.
 
 ## Publication gate
 
-Do not publish until the source rename is complete, the GitHub repository owns
-the selected slug, release evidence has been rebuilt from the renamed source,
-and current exact-name searches are repeated immediately before publication.
-Formal trademark review remains external if commercial use begins.
+The name decision no longer blocks the developer preview. Publication still
+requires the existing reproducible release bundle, immutable tag, checkout-free
+consumer evidence, public-download verification, warning disclosures, and an
+independent external-user attempt. Formal trademark and distribution-channel
+review remain external gates if commercial or package-manager distribution
+begins.

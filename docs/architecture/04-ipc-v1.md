@@ -9,17 +9,17 @@ The host injects one frozen application-facing object into the trusted top-level
 document:
 
 ```js
-const info = await window.actutum.invoke("app.getInfo");
+const info = await window.velox.invoke("app.getInfo");
 ```
 
-`window.actutum` and `window.actutum.invoke` are non-configurable, non-writable, and
-frozen. The transport binding named `__actutumInvoke` is internal and is not a
+`window.velox` and `window.velox.invoke` are non-configurable, non-writable, and
+frozen. The transport binding named `__veloxInvoke` is internal and is not a
 supported application API. Calling it directly does not bypass native origin,
 protocol, limit, method, or permission checks.
 
 ## Request and Response
 
-Requests use the `actutum.ipc/v1` logical contract represented by
+Requests use the `velox.ipc/v1` logical contract represented by
 `schema/ipc-v1.schema.json`:
 
 ```json

@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.actutum.invalid/host-metadata/v1.json",
-  "title": "Actutum host metadata v1",
+  "$id": "https://schemas.velox.invalid/host-metadata/v1.json",
+  "title": "Velox host metadata v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "releaseVersion", "target", "contracts", "host"],
   "properties": {
-    "schemaVersion": { "const": "actutum.host/v1" },
+    "schemaVersion": { "const": "velox.host/v1" },
     "releaseVersion": { "type": "string", "minLength": 1 },
     "target": { "const": "windows-x64" },
     "contracts": {
@@ -24,7 +24,7 @@
       "additionalProperties": false,
       "required": ["file", "bytes", "sha256"],
       "properties": {
-        "file": { "const": "actutum-host.exe" },
+        "file": { "const": "velox-host.exe" },
         "bytes": { "type": "integer", "minimum": 1 },
         "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
       }

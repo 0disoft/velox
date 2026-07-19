@@ -13,7 +13,7 @@ func TestCreateWritesDependencyFreeProject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.AppID != "dev.actutum.my-app" || result.AppName != "My App" {
+	if result.AppID != "dev.velox.my-app" || result.AppName != "My App" {
 		t.Fatalf("unexpected identity: %+v", result)
 	}
 	for _, relative := range result.Files {

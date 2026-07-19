@@ -10,7 +10,7 @@ import (
 func TestLoadAppliesDocumentedDefaults(t *testing.T) {
 	root := t.TempDir()
 	writeTestFile(t, filepath.Join(root, "web", "index.html"), "ok")
-	path := filepath.Join(root, "actutum.json")
+	path := filepath.Join(root, "velox.json")
 	writeTestFile(t, path, `{
   "schemaVersion": 1,
   "app": {"id": "com.example.hello", "name": "Hello", "version": "1.0.0"}
@@ -46,7 +46,7 @@ func TestLoadRejectsInvalidContracts(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "actutum.json")
+			path := filepath.Join(t.TempDir(), "velox.json")
 			writeTestFile(t, path, test.body)
 			_, err := Load(path)
 			if err == nil || !strings.Contains(err.Error(), test.message) {

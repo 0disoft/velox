@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.actutum.invalid/consumer-e2e-summary/v1.json",
-  "title": "Actutum consumer end-to-end summary v1",
+  "$id": "https://schemas.velox.invalid/consumer-e2e-summary/v1.json",
+  "title": "Velox consumer end-to-end summary v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "scope", "evidenceLevel", "expectedSamples", "observedSamples", "successCount", "failureCount", "missingCount", "processEvidencePassCount", "processEvidenceFailCount", "processEvidenceUnverifiedCount", "releaseArchiveSha256", "statistics", "samples"],
   "properties": {
-    "schemaVersion": { "const": "actutum.consumer-e2e-summary/v1" },
+    "schemaVersion": { "const": "velox.consumer-e2e-summary/v1" },
     "scope": { "const": "checkout-complete-to-portable-zip" },
     "evidenceLevel": { "enum": ["local-contract-summary", "hosted-runner-summary"] },
     "expectedSamples": { "type": "integer", "minimum": 1 },

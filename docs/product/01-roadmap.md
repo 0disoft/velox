@@ -53,7 +53,7 @@ Status: Complete.
 ### Exit criteria
 
 - A clean Windows x64 machine builds the example without a compiler or Node.js.
-- Build works offline after acquiring one pinned Actutum release bundle.
+- Build works offline after acquiring one pinned Velox release bundle.
 - Consumer Actions cache upload is zero bytes.
 - Repeated equivalent builds produce identical unsigned ZIP digests.
 - Failure preserves source and prior successful output.
@@ -95,10 +95,10 @@ Audit baseline: `velox-bench` revision
 
 | Deliverable | State | Current evidence or gap |
 | --- | --- | --- |
-| Separate public benchmark repository | Complete | `0disoft/velox-bench` owns the historical public contracts, fixtures, workflows, and raw-evidence schemas; its Actutum rename is a separate repository operation |
-| Pinned Actutum, Wails, Neutralino, and Tauri adapters | Complete | `bench.lock.json` pins immutable revisions and the contract check enforces all four adapters and byte-identical hello assets |
-| Hello and deterministic asset-pack fixtures | Complete | The dependency-free hello fixture remains canonical; the asset-pack manifest pins a dependency-free 1,000-file, exact-10-MiB generator contract and tree digest without committing generated payloads. [Run 29627187122](https://github.com/0disoft/velox-bench/actions/runs/29627187122) completed one non-publishable hosted sample for all four adapters; [run 29627976497](https://github.com/0disoft/velox-bench/actions/runs/29627976497) then verified historical Velox declared-ZIP accounting at zero surviving intermediate files and bytes |
-| Zero-cache and recommended-cache suites | Complete | The hosted zero-cache suite is published. [Recommended-cache run 29631255241](https://github.com/0disoft/velox-bench/actions/runs/29631255241) completed schema-valid historical Velox-Wails prime and warm evidence on separate runners, recorded exact GitHub cache archive bytes, retained `comparativeClaimAllowed: false`, and left no run-owned cache entry after cleanup |
+| Separate public benchmark repository | Complete | `0disoft/velox-bench` owns the public contracts, fixtures, workflows, and raw-evidence schemas |
+| Pinned Velox, Wails, Neutralino, and Tauri adapters | Complete | `bench.lock.json` pins immutable revisions and the contract check enforces all four adapters and byte-identical hello assets |
+| Hello and deterministic asset-pack fixtures | Complete | The dependency-free hello fixture remains canonical; the asset-pack manifest pins a dependency-free 1,000-file, exact-10-MiB generator contract and tree digest without committing generated payloads. [Run 29627187122](https://github.com/0disoft/velox-bench/actions/runs/29627187122) completed one non-publishable hosted sample for all four adapters; [run 29627976497](https://github.com/0disoft/velox-bench/actions/runs/29627976497) then verified Velox declared-ZIP accounting at zero surviving intermediate files and bytes |
+| Zero-cache and recommended-cache suites | Complete | The hosted zero-cache suite is published. [Recommended-cache run 29631255241](https://github.com/0disoft/velox-bench/actions/runs/29631255241) completed schema-valid Velox-Wails prime and warm evidence on separate runners, recorded exact GitHub cache archive bytes, retained `comparativeClaimAllowed: false`, and left no run-owned cache entry after cleanup |
 | Raw versioned JSON results and generated summary tables | Complete | The pinned pair evidence, normalized run metadata, publication contract, and README table are committed; contract checks regenerate the publication and table in memory to reject hand-edited values |
 | CI resource usage disclosure | Complete | The publication reports workflow wall time, aggregate observed job runtime, job outcomes, artifact count and bytes, and cache upload while explicitly separating those observations from billed Actions minutes |
 
@@ -109,7 +109,7 @@ published zero-cache pair result remains the performance source of truth.
 ### Deliver
 
 - Separate public benchmark repository.
-- Pinned Actutum, Wails, Neutralino, and Tauri adapters.
+- Pinned Velox, Wails, Neutralino, and Tauri adapters.
 - Hello and deterministic asset-pack fixtures.
 - Zero-cache and recommended-cache suites.
 - Raw versioned JSON results and generated summary tables.
@@ -126,9 +126,9 @@ published zero-cache pair result remains the performance source of truth.
 
 - [x] Consumer cache upload is exactly zero bytes for the publishable Wails
   pair.
-- [x] Actutum end-to-end cold build is at least 3x faster than the pinned Wails
+- [x] Velox end-to-end cold build is at least 3x faster than the pinned Wails
   fixture.
-- [x] Actutum remains structurally simpler than the closest compile-free
+- [x] Velox remains structurally simpler than the closest compile-free
   comparison within the portable static-app boundary defined by ADR 0008.
 - [x] Startup is removed as a headline advantage by ADR 0009 and retained as a
   release guardrail.
@@ -150,7 +150,7 @@ developer preview, collect external acquisition evidence, and treat code signing
 as a later adoption-triggered trust improvement. ADR 0010 remains the design for
 a future signed channel, not an M4 prerequisite.
 
-The repository-owned `actutum.signing-record/v1` contract, dry-run generator, and
+The repository-owned `velox.signing-record/v1` contract, dry-run generator, and
 lineage verifier now bind every unsigned, provider-output, final bundle,
 manifest, checksum, and SBOM digest. Dry-run evidence is mechanically
 non-publishable and does not claim signature or attestation verification.
@@ -169,7 +169,7 @@ still needs accepted provider output and the approved publisher subject.
 ### Deliver
 
 - Checksums and software bill of materials.
-- Explicitly unsigned Actutum CLI and unchanged generic host in a developer-preview prerelease.
+- Explicitly unsigned Velox CLI and unchanged generic host in a developer-preview prerelease.
 - Immutable release manifest.
 - Installation, compatibility, security, and limitation documentation.
 - Clean-runner consumer workflow example.
@@ -184,9 +184,9 @@ still needs accepted provider output and the approved publisher subject.
 
 ### Remaining gates
 
-- Claim the `0disoft/actutum` repository slug, repeat the exact-name collision
-  screen, and rebuild the renamed candidate from that repository.
-- Push the selected immutable `v0.6.0-alpha.1` tag.
+- Rebuild and record the Velox candidate after restoring ADR 0015's
+  maintainer-approved identity.
+- Push the selected immutable `v0.5.10-alpha.1` tag.
 - Run the manual unsigned-preview publication gate with its exact confirmation.
 - Run the no-checkout public-download verifier with the independently recorded
   release SHA-256.
@@ -197,9 +197,8 @@ still needs accepted provider output and the approved publisher subject.
 
 The tag/version binding, public-download result schema, workflow, and external-
 attempt issue contract are implemented but remain unexercised until the public
-release exists. ADR 0014 selects Actutum; publication remains gated on the
-actual `0disoft/actutum` repository identity so the module, links, workflow,
-and release all agree.
+release exists. ADR 0015 retains Velox despite the documented command and
+search collisions; those risks no longer create a replacement-name gate.
 
 The bounded M4 internal security review is complete in
 `docs/engineering/08-m4-security-review.md`. It traces build, browser/IPC, and

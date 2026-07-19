@@ -47,13 +47,13 @@ type verification struct {
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "actutum-action-pins:", err)
+		fmt.Fprintln(os.Stderr, "velox-action-pins:", err)
 		os.Exit(1)
 	}
 }
 
 func run(args []string) error {
-	flags := flag.NewFlagSet("actutum-action-pins", flag.ContinueOnError)
+	flags := flag.NewFlagSet("velox-action-pins", flag.ContinueOnError)
 	root := flags.String("root", ".github/workflows", "workflow directory")
 	apiBase := flags.String("api-base", defaultAPIBase, "GitHub API base URL")
 	if err := flags.Parse(args); err != nil {
@@ -197,7 +197,7 @@ func (client githubClient) get(ctx context.Context, path string, output any) err
 		return err
 	}
 	request.Header.Set("Accept", "application/vnd.github+json")
-	request.Header.Set("User-Agent", "actutum-action-pins")
+	request.Header.Set("User-Agent", "velox-action-pins")
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	if client.token != "" {
 		request.Header.Set("Authorization", "Bearer "+client.token)

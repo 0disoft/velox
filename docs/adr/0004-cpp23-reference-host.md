@@ -9,7 +9,7 @@
 The pure-Go M0 host proves that one Go toolchain can produce a CGo-free Windows
 executable, but its selected binding does not expose the virtual-origin and
 browser-policy controls required by the product security contract. Startup
-cost also needs a lower-level comparison before Actutum commits to a binding
+cost also needs a lower-level comparison before Velox commits to a binding
 fork, a direct pure-Go COM implementation, or a C++ host.
 
 ## Decision

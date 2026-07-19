@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0disoft/actutum/internal/authenticode"
-	"github.com/0disoft/actutum/internal/releasebundle"
-	"github.com/0disoft/actutum/internal/signingrecord"
+	"github.com/0disoft/velox/internal/authenticode"
+	"github.com/0disoft/velox/internal/releasebundle"
+	"github.com/0disoft/velox/internal/signingrecord"
 )
 
 func TestDryRunAndVerifyCommands(t *testing.T) {
@@ -33,7 +33,7 @@ func TestDryRunAndVerifyCommands(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &created); err != nil {
 		t.Fatal(err)
 	}
-	if created.SchemaVersion != "actutum.signing-record-result/v1" || created.Publishable {
+	if created.SchemaVersion != "velox.signing-record-result/v1" || created.Publishable {
 		t.Fatalf("dry-run output = %#v", created)
 	}
 	record, err := signingrecord.DecodeFile(recordPath)
@@ -58,8 +58,8 @@ func TestDryRunAndVerifyCommands(t *testing.T) {
 func TestPrepareCommandCreatesSigningInput(t *testing.T) {
 	root := t.TempDir()
 	unsigned := filepath.Join(root, "unsigned")
-	writeCommandFile(t, filepath.Join(unsigned, "actutum.exe"), "unsigned cli")
-	writeCommandFile(t, filepath.Join(unsigned, "actutum-host.exe"), "unsigned host")
+	writeCommandFile(t, filepath.Join(unsigned, "velox.exe"), "unsigned cli")
+	writeCommandFile(t, filepath.Join(unsigned, "velox-host.exe"), "unsigned host")
 	out := filepath.Join(root, "input", signingrecord.SigningInputName)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -76,7 +76,7 @@ func TestPrepareCommandCreatesSigningInput(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &created); err != nil {
 		t.Fatal(err)
 	}
-	if created.SchemaVersion != "actutum.signing-record-result/v1" || created.Command != "prepare" || created.Publishable || created.Result.Path != out || created.Result.Artifact.File != signingrecord.SigningInputName {
+	if created.SchemaVersion != "velox.signing-record-result/v1" || created.Command != "prepare" || created.Publishable || created.Result.Path != out || created.Result.Artifact.File != signingrecord.SigningInputName {
 		t.Fatalf("prepare output = %#v", created)
 	}
 	if _, err := os.Stat(out); err != nil {
@@ -94,7 +94,7 @@ func TestPrepareCommandCreatesSigningInput(t *testing.T) {
 func TestAuthenticodeCommandEmitsVerifiedEvidence(t *testing.T) {
 	previous := verifyAuthenticodeDirectory
 	verifyAuthenticodeDirectory = func(directory, expectedSubject string) (authenticode.Result, error) {
-		if directory != "signed" || expectedSubject != "CN=Actutum Publisher" {
+		if directory != "signed" || expectedSubject != "CN=Velox Publisher" {
 			t.Fatalf("arguments = %q, %q", directory, expectedSubject)
 		}
 		return authenticode.Result{SchemaVersion: authenticode.SchemaVersion, Target: authenticode.Target, ExpectedSubject: expectedSubject}, nil
@@ -102,8 +102,8 @@ func TestAuthenticodeCommandEmitsVerifiedEvidence(t *testing.T) {
 	t.Cleanup(func() { verifyAuthenticodeDirectory = previous })
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := run([]string{"authenticode", "--signed-dir", "signed", "--expected-subject", "CN=Actutum Publisher"}, &stdout, &stderr)
-	if code != 0 || !strings.Contains(stdout.String(), `"schemaVersion":"actutum.authenticode-verification/v1"`) {
+	code := run([]string{"authenticode", "--signed-dir", "signed", "--expected-subject", "CN=Velox Publisher"}, &stdout, &stderr)
+	if code != 0 || !strings.Contains(stdout.String(), `"schemaVersion":"velox.authenticode-verification/v1"`) {
 		t.Fatalf("code = %d, stdout = %s, stderr = %s", code, stdout.String(), stderr.String())
 	}
 }
@@ -116,7 +116,7 @@ func TestAuthenticodeCommandFailsClosed(t *testing.T) {
 	t.Cleanup(func() { verifyAuthenticodeDirectory = previous })
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	code := run([]string{"authenticode", "--signed-dir", "signed", "--expected-subject", "CN=Actutum Publisher"}, &stdout, &stderr)
+	code := run([]string{"authenticode", "--signed-dir", "signed", "--expected-subject", "CN=Velox Publisher"}, &stdout, &stderr)
 	if code != 6 || !strings.Contains(stderr.String(), "not trusted") || stdout.Len() != 0 {
 		t.Fatalf("code = %d, stdout = %s, stderr = %s", code, stdout.String(), stderr.String())
 	}
@@ -130,7 +130,7 @@ func TestVerifyCommandRejectsChangedEvidence(t *testing.T) {
 	if code := run(append([]string{"dry-run"}, fixture.args(recordPath)...), &stdout, &stderr); code != 0 {
 		t.Fatalf("dry-run code = %d, stderr = %s", code, stderr.String())
 	}
-	if err := os.WriteFile(filepath.Join(fixture.signed, "actutum.exe"), []byte("changed"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(fixture.signed, "velox.exe"), []byte("changed"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	stdout.Reset()
@@ -177,17 +177,17 @@ func commandFixture(t *testing.T) signingCommandFixture {
 	fixture := signingCommandFixture{
 		root:           root,
 		unsigned:       filepath.Join(root, "unsigned"),
-		signingInput:   filepath.Join(root, "actutum-signing-input.zip"),
+		signingInput:   filepath.Join(root, "velox-signing-input.zip"),
 		signed:         filepath.Join(root, "signed"),
-		release:        filepath.Join(root, "release", "actutum-windows-x64"),
-		releaseArchive: filepath.Join(root, "release", "actutum-windows-x64.zip"),
+		release:        filepath.Join(root, "release", "velox-windows-x64"),
+		releaseArchive: filepath.Join(root, "release", "velox-windows-x64.zip"),
 		evidence:       filepath.Join(root, "evidence"),
 	}
 	files := map[string]string{
-		filepath.Join(fixture.unsigned, "actutum.exe"):      "unsigned cli",
-		filepath.Join(fixture.unsigned, "actutum-host.exe"): "unsigned host",
-		filepath.Join(fixture.signed, "actutum.exe"):        "signed cli",
-		filepath.Join(fixture.signed, "actutum-host.exe"):   "signed host",
+		filepath.Join(fixture.unsigned, "velox.exe"):      "unsigned cli",
+		filepath.Join(fixture.unsigned, "velox-host.exe"): "unsigned host",
+		filepath.Join(fixture.signed, "velox.exe"):        "signed cli",
+		filepath.Join(fixture.signed, "velox-host.exe"):   "signed host",
 	}
 	for path, content := range files {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -197,17 +197,17 @@ func commandFixture(t *testing.T) signingCommandFixture {
 			t.Fatal(err)
 		}
 	}
-	unsignedCLI := filepath.Join(fixture.unsigned, "actutum.exe")
-	unsignedHost := filepath.Join(fixture.unsigned, "actutum-host.exe")
-	writeCommandZIP(t, fixture.signingInput, []commandZIPFile{{Name: "actutum-host.exe", Path: unsignedHost}, {Name: "actutum.exe", Path: unsignedCLI}})
-	signedCLIPath := filepath.Join(fixture.signed, "actutum.exe")
-	signedHostPath := filepath.Join(fixture.signed, "actutum-host.exe")
-	signedCLI := commandArtifact(t, signedCLIPath, "actutum.exe")
-	signedHost := commandArtifact(t, signedHostPath, "actutum-host.exe")
+	unsignedCLI := filepath.Join(fixture.unsigned, "velox.exe")
+	unsignedHost := filepath.Join(fixture.unsigned, "velox-host.exe")
+	writeCommandZIP(t, fixture.signingInput, []commandZIPFile{{Name: "velox-host.exe", Path: unsignedHost}, {Name: "velox.exe", Path: unsignedCLI}})
+	signedCLIPath := filepath.Join(fixture.signed, "velox.exe")
+	signedHostPath := filepath.Join(fixture.signed, "velox-host.exe")
+	signedCLI := commandArtifact(t, signedCLIPath, "velox.exe")
+	signedHost := commandArtifact(t, signedHostPath, "velox-host.exe")
 	manifestPath := filepath.Join(fixture.release, "release-manifest.json")
 	writeCommandJSON(t, manifestPath, releasebundle.Manifest{
 		SchemaVersion:  releasebundle.SchemaVersion,
-		ReleaseVersion: "0.6.0-alpha.1",
+		ReleaseVersion: "0.5.10-alpha.1",
 		Target:         signingrecord.Target,
 		Artifacts: []releasebundle.Artifact{
 			{File: signedCLI.File, Bytes: signedCLI.Bytes, SHA256: signedCLI.SHA256},
@@ -215,14 +215,14 @@ func commandFixture(t *testing.T) signingCommandFixture {
 		},
 	})
 	writeCommandZIP(t, fixture.releaseArchive, []commandZIPFile{
-		{Name: "actutum-windows-x64/actutum.exe", Path: signedCLIPath},
-		{Name: "actutum-windows-x64/actutum-host.exe", Path: signedHostPath},
-		{Name: "actutum-windows-x64/release-manifest.json", Path: manifestPath},
+		{Name: "velox-windows-x64/velox.exe", Path: signedCLIPath},
+		{Name: "velox-windows-x64/velox-host.exe", Path: signedHostPath},
+		{Name: "velox-windows-x64/release-manifest.json", Path: manifestPath},
 	})
-	archive := commandArtifact(t, fixture.releaseArchive, "actutum-windows-x64.zip")
-	sbomPath := filepath.Join(fixture.evidence, "actutum-windows-x64.spdx.json")
-	writeCommandJSON(t, sbomPath, map[string]any{"spdxVersion": "SPDX-2.3", "documentNamespace": "https://github.com/0disoft/actutum/sbom/test/" + archive.SHA256})
-	sbom := commandArtifact(t, sbomPath, "actutum-windows-x64.spdx.json")
+	archive := commandArtifact(t, fixture.releaseArchive, "velox-windows-x64.zip")
+	sbomPath := filepath.Join(fixture.evidence, "velox-windows-x64.spdx.json")
+	writeCommandJSON(t, sbomPath, map[string]any{"spdxVersion": "SPDX-2.3", "documentNamespace": "https://github.com/0disoft/velox/sbom/test/" + archive.SHA256})
+	sbom := commandArtifact(t, sbomPath, "velox-windows-x64.spdx.json")
 	writeCommandFile(t, filepath.Join(fixture.evidence, "checksums.sha256"), fmt.Sprintf("%s  %s\n%s  %s\n", archive.SHA256, archive.File, sbom.SHA256, sbom.File))
 	return fixture
 }
@@ -241,12 +241,12 @@ func (fixture signingCommandFixture) pathArgs() []string {
 func (fixture signingCommandFixture) args(recordPath string) []string {
 	return append([]string{
 		"--out", recordPath,
-		"--release-version", "0.6.0-alpha.1",
+		"--release-version", "0.5.10-alpha.1",
 		"--source-commit", strings.Repeat("a", 40),
 		"--source-tag", "v0.5.6-alpha.1",
 		"--source-workflow", ".github/workflows/release.yml@refs/tags/v0.5.6-alpha.1",
 		"--source-run-id", "12345",
-		"--provider-project", "actutum-dry-run",
+		"--provider-project", "velox-dry-run",
 		"--artifact-configuration", "windows-x64-dry-run",
 		"--signing-policy", "test-signing-policy",
 		"--request-id", "dry-run-12345",

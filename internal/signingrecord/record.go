@@ -17,11 +17,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/0disoft/actutum/internal/releasebundle"
+	"github.com/0disoft/velox/internal/releasebundle"
 )
 
 const (
-	SchemaVersion = "actutum.signing-record/v1"
+	SchemaVersion = "velox.signing-record/v1"
 	Target        = "windows-x64"
 
 	ModeDryRun  = "dry-run"
@@ -327,11 +327,11 @@ func Write(path string, record Record) (WriteResult, error) {
 }
 
 func inspectFiles(files Files) (NativeSet, NativeSet, Distribution, Artifact, error) {
-	unsignedCLI, err := inspectArtifact(files.UnsignedCLI, "actutum.exe")
+	unsignedCLI, err := inspectArtifact(files.UnsignedCLI, "velox.exe")
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect unsigned CLI: %w", err)
 	}
-	unsignedHost, err := inspectArtifact(files.UnsignedHost, "actutum-host.exe")
+	unsignedHost, err := inspectArtifact(files.UnsignedHost, "velox-host.exe")
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect unsigned host: %w", err)
 	}
@@ -342,15 +342,15 @@ func inspectFiles(files Files) (NativeSet, NativeSet, Distribution, Artifact, er
 	if err := verifyExactSignedDirectory(files.SignedCLI, files.SignedHost); err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect signed output directory: %w", err)
 	}
-	signedCLI, err := inspectArtifact(files.SignedCLI, "actutum.exe")
+	signedCLI, err := inspectArtifact(files.SignedCLI, "velox.exe")
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect signed CLI: %w", err)
 	}
-	signedHost, err := inspectArtifact(files.SignedHost, "actutum-host.exe")
+	signedHost, err := inspectArtifact(files.SignedHost, "velox-host.exe")
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect signed host: %w", err)
 	}
-	archive, err := inspectArtifact(files.ReleaseArchive, "actutum-windows-x64.zip")
+	archive, err := inspectArtifact(files.ReleaseArchive, "velox-windows-x64.zip")
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect release archive: %w", err)
 	}
@@ -362,7 +362,7 @@ func inspectFiles(files Files) (NativeSet, NativeSet, Distribution, Artifact, er
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect checksums: %w", err)
 	}
-	sbom, err := inspectArtifact(files.SBOM, "actutum-windows-x64.spdx.json")
+	sbom, err := inspectArtifact(files.SBOM, "velox-windows-x64.spdx.json")
 	if err != nil {
 		return NativeSet{}, NativeSet{}, Distribution{}, Artifact{}, fmt.Errorf("inspect SBOM: %w", err)
 	}
@@ -375,7 +375,7 @@ func verifyExactSignedDirectory(cliPath, hostPath string) error {
 	if cliDirectory != hostDirectory {
 		return errors.New("signed executables must share one directory")
 	}
-	if filepath.Base(cliPath) != "actutum.exe" || filepath.Base(hostPath) != "actutum-host.exe" {
+	if filepath.Base(cliPath) != "velox.exe" || filepath.Base(hostPath) != "velox-host.exe" {
 		return errors.New("signed executables must use the expected file names")
 	}
 	entries, err := os.ReadDir(cliDirectory)
@@ -385,7 +385,7 @@ func verifyExactSignedDirectory(cliPath, hostPath string) error {
 	if len(entries) != 2 {
 		return fmt.Errorf("signed output directory must contain exactly two entries, found %d", len(entries))
 	}
-	expected := map[string]bool{"actutum.exe": false, "actutum-host.exe": false}
+	expected := map[string]bool{"velox.exe": false, "velox-host.exe": false}
 	for _, entry := range entries {
 		if _, ok := expected[entry.Name()]; !ok {
 			return fmt.Errorf("signed output directory contains unexpected entry %s", entry.Name())
@@ -470,7 +470,7 @@ func verifySigningInput(path string, unsigned NativeSet) error {
 		unsigned.Artifacts[0].File: unsigned.Artifacts[0],
 		unsigned.Artifacts[1].File: unsigned.Artifacts[1],
 	}
-	for index, name := range []string{"actutum-host.exe", "actutum.exe"} {
+	for index, name := range []string{"velox-host.exe", "velox.exe"} {
 		entry := reader.File[index]
 		if entry.Name != name {
 			return fmt.Errorf("signing input entry %d must be %s", index, name)
@@ -504,8 +504,8 @@ func verifyReleaseManifest(recordPath, releaseVersion string, signed NativeSet) 
 		return nil, errors.New("release manifest identity differs from signing record")
 	}
 	wantedSigned := map[string]Artifact{
-		"actutum.exe":      signed.Artifacts[0],
-		"actutum-host.exe": signed.Artifacts[1],
+		"velox.exe":      signed.Artifacts[0],
+		"velox-host.exe": signed.Artifacts[1],
 	}
 	artifacts := make(map[string]Artifact, len(manifest.Artifacts))
 	for _, source := range manifest.Artifacts {
@@ -521,7 +521,7 @@ func verifyReleaseManifest(recordPath, releaseVersion string, signed NativeSet) 
 			return nil, fmt.Errorf("release manifest %s differs from signed artifact", artifact.File)
 		}
 	}
-	for _, name := range []string{"actutum.exe", "actutum-host.exe"} {
+	for _, name := range []string{"velox.exe", "velox-host.exe"} {
 		if _, exists := artifacts[name]; !exists {
 			return nil, fmt.Errorf("release manifest is missing %s", name)
 		}
@@ -535,7 +535,7 @@ func verifyReleaseArchive(archivePath string, artifacts map[string]Artifact, man
 		return err
 	}
 	defer reader.Close()
-	prefix := "actutum-windows-x64/"
+	prefix := "velox-windows-x64/"
 	if len(reader.File) != len(artifacts)+1 {
 		return fmt.Errorf("release archive contains %d files, want %d", len(reader.File), len(artifacts)+1)
 	}
@@ -711,10 +711,10 @@ func validateNativeSet(label string, set NativeSet) error {
 	if len(set.Artifacts) != 2 {
 		return fmt.Errorf("%s artifact set must contain exactly two files", label)
 	}
-	if err := validateArtifact(label+" CLI", set.Artifacts[0], "actutum.exe"); err != nil {
+	if err := validateArtifact(label+" CLI", set.Artifacts[0], "velox.exe"); err != nil {
 		return err
 	}
-	return validateArtifact(label+" host", set.Artifacts[1], "actutum-host.exe")
+	return validateArtifact(label+" host", set.Artifacts[1], "velox-host.exe")
 }
 
 func validateDistribution(distribution Distribution) error {
@@ -723,10 +723,10 @@ func validateDistribution(distribution Distribution) error {
 		value Artifact
 		name  string
 	}{
-		{"release archive", distribution.Archive, "actutum-windows-x64.zip"},
+		{"release archive", distribution.Archive, "velox-windows-x64.zip"},
 		{"release manifest", distribution.Manifest, "release-manifest.json"},
 		{"checksums", distribution.Checksums, "checksums.sha256"},
-		{"SBOM", distribution.SBOM, "actutum-windows-x64.spdx.json"},
+		{"SBOM", distribution.SBOM, "velox-windows-x64.spdx.json"},
 	}
 	for _, check := range checks {
 		if err := validateArtifact(check.label, check.value, check.name); err != nil {

@@ -15,8 +15,8 @@ import (
 	"sort"
 )
 
-const summarySchemaVersion = "actutum.startup-lifecycle-summary/v1"
-const phaseSummarySchemaVersion = "actutum.startup-lifecycle-phase-summary/v1"
+const summarySchemaVersion = "velox.startup-lifecycle-summary/v1"
+const phaseSummarySchemaVersion = "velox.startup-lifecycle-phase-summary/v1"
 
 var startupPhaseNames = []string{
 	"host-entry", "config-loaded", "runtime-open-started", "window-create-started",
@@ -166,13 +166,13 @@ type phaseAttribution struct {
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "actutum-startup-summary:", err)
+		fmt.Fprintln(os.Stderr, "velox-startup-summary:", err)
 		os.Exit(1)
 	}
 }
 
 func run(args []string) error {
-	flags := flag.NewFlagSet("actutum-startup-summary", flag.ContinueOnError)
+	flags := flag.NewFlagSet("velox-startup-summary", flag.ContinueOnError)
 	input := flags.String("input", "", "startup lifecycle evidence JSON")
 	output := flags.String("output", "", "summary JSON output")
 	phaseOutput := flags.String("phase-output", "", "optional phase summary JSON output")
@@ -213,7 +213,7 @@ func run(args []string) error {
 }
 
 func summarize(raw evidence, source []byte) (summary, error) {
-	if raw.SchemaVersion != "actutum.startup-lifecycle/v3" {
+	if raw.SchemaVersion != "velox.startup-lifecycle/v3" {
 		return summary{}, fmt.Errorf("unsupported source schema %q", raw.SchemaVersion)
 	}
 	if raw.Scope != "fresh-and-immediate-same-profile-startup" {
@@ -282,7 +282,7 @@ func summarize(raw evidence, source []byte) (summary, error) {
 }
 
 func summarizePhases(raw evidence, source []byte) (phaseSummary, error) {
-	if raw.SchemaVersion != "actutum.startup-lifecycle/v3" {
+	if raw.SchemaVersion != "velox.startup-lifecycle/v3" {
 		return phaseSummary{}, fmt.Errorf("unsupported source schema %q", raw.SchemaVersion)
 	}
 	digest := sha256.Sum256(source)
@@ -308,10 +308,10 @@ func summarizePhases(raw evidence, source []byte) (phaseSummary, error) {
 			schema   string
 			clock    string
 		}{
-			{"firstStartup", item.First.StartupTimeline, startupPhaseNames, "actutum.host-startup-timeline/v1", "time-since-host-entry-monotonic"},
-			{"immediateStartup", item.Immediate.StartupTimeline, startupPhaseNames, "actutum.host-startup-timeline/v1", "time-since-host-entry-monotonic"},
-			{"firstShutdown", item.First.ShutdownTimeline, shutdownPhaseNames, "actutum.host-shutdown-timeline/v1", "time-since-shutdown-request-monotonic"},
-			{"immediateShutdown", item.Immediate.ShutdownTimeline, shutdownPhaseNames, "actutum.host-shutdown-timeline/v1", "time-since-shutdown-request-monotonic"},
+			{"firstStartup", item.First.StartupTimeline, startupPhaseNames, "velox.host-startup-timeline/v1", "time-since-host-entry-monotonic"},
+			{"immediateStartup", item.Immediate.StartupTimeline, startupPhaseNames, "velox.host-startup-timeline/v1", "time-since-host-entry-monotonic"},
+			{"firstShutdown", item.First.ShutdownTimeline, shutdownPhaseNames, "velox.host-shutdown-timeline/v1", "time-since-shutdown-request-monotonic"},
+			{"immediateShutdown", item.Immediate.ShutdownTimeline, shutdownPhaseNames, "velox.host-shutdown-timeline/v1", "time-since-shutdown-request-monotonic"},
 		}
 		for _, group := range groups {
 			intervals, total, err := timelineIntervals(group.timeline, group.phases, group.schema, group.clock)

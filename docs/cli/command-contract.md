@@ -17,18 +17,18 @@
 
 `init`, `validate`, `doctor`, `run`, `build`, `inspect`, and `version` are
 implemented in the M1 vertical slice. The
-release bundle must place the unchanged prebuilt `actutum-host.exe` and its
-`actutum-host.json` beside the CLI. The CLI verifies release, target, contract,
+release bundle must place the unchanged prebuilt `velox-host.exe` and its
+`velox-host.json` beside the CLI. The CLI verifies release, target, contract,
 size, and digest agreement; there is intentionally no public flag that
 substitutes an arbitrary host.
 
 ## MVP Commands
 
-### actutum init [directory]
+### velox init [directory]
 
 Create a minimal manifest and dependency-free static web example.
 
-- Derive a conservative `dev.actutum.<directory>` application ID and display name
+- Derive a conservative `dev.velox.<directory>` application ID and display name
   from the target directory.
 - Preflight every planned path and refuse the operation if any generated file
   already exists.
@@ -36,13 +36,13 @@ Create a minimal manifest and dependency-free static web example.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
 
-### actutum validate
+### velox validate
 
 Validate manifest syntax and semantics, asset paths, entry point, permissions,
 security policy, target support, and host compatibility without creating
 output.
 
-### actutum doctor
+### velox doctor
 
 Report local prerequisites and compatibility, including Windows architecture
 and build, WebView2 Runtime availability and version, project configuration,
@@ -58,7 +58,7 @@ compatibility. Doctor is read-only.
 - Require Windows 10 version 1709 x64 or Windows Server 2016 x64, and Evergreen
   WebView2 Runtime `92.0.902.49` or newer.
 
-### actutum run
+### velox run
 
 Launch the prebuilt host against the source asset directory for a manual smoke
 run. It does not start a development server, watcher, bundler, or hot-reload
@@ -72,7 +72,7 @@ process.
 - Suppress child output in JSON mode so stdout remains one JSON document.
 - Do not copy source assets or create build output.
 
-### actutum build
+### velox build
 
 Validate the project and create a portable application directory,
 machine-readable build report, and deterministic ZIP through an atomic staging
@@ -82,7 +82,7 @@ The current output names use the complete `app.id`, preventing projects with
 the same leaf identifier from overwriting each other in a shared output root:
 
     dist/<app-id>/<app-id>.exe
-    dist/<app-id>/actutum.runtime.json
+    dist/<app-id>/velox.runtime.json
     dist/<app-id>/web/**
     dist/<app-id>/build-result.json
     dist/<app-id>.zip
@@ -94,9 +94,9 @@ counts; it omits
 wall-clock timings and absolute paths. Build duration belongs to benchmark
 evidence rather than reproducible artifact bytes.
 
-### actutum inspect PATH
+### velox inspect PATH
 
-Read an output directory or archive and report its Actutum release, contract
+Read an output directory or archive and report its Velox release, contract
 versions, target, permissions, application identity, file counts, byte counts,
 and digests without executing it.
 
@@ -104,7 +104,7 @@ Inspection recomputes the host and asset-tree SHA-256 values and validates the
 runtime configuration against the build result. ZIP inspection rejects unsafe,
 duplicate, case-colliding, multi-root, unexpected, or over-limit entries.
 
-### actutum version
+### velox version
 
 Report the CLI version, supported manifest versions, host compatibility range,
 IPC versions, and bundled targets.
@@ -113,7 +113,7 @@ IPC versions, and bundled targets.
 
 | Option | Contract |
 | --- | --- |
-| --config PATH | Project manifest; default is actutum.json |
+| --config PATH | Project manifest; default is velox.json |
 | --target TARGET | Explicit build target; MVP accepts windows-x64 |
 | --out PATH | Output root; default is dist |
 | --json | Emit one JSON document and no decorative human output |

@@ -36,7 +36,7 @@ p95 plus failures, and investigate a 10% or greater p95 regression. Immediate
 same-profile relaunch remains a lifecycle diagnostic, not a warm-start or
 marketing number.
 
-No README, product brief, or release note may describe Actutum as faster to start
+No README, product brief, or release note may describe Velox as faster to start
 than another wrapper without a new accepted ADR backed by repeated pinned
 cross-framework evidence whose advantage exceeds both 10% and observed noise.
 

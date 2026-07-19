@@ -1,18 +1,18 @@
 async function verifyIPC() {
-  if (!window.actutum || typeof window.actutum.invoke !== "function") {
+  if (!window.velox || typeof window.velox.invoke !== "function") {
     throw Object.assign(new Error("public bridge is unavailable"), { code: "BRIDGE_MISSING" });
   }
-  if (!Object.isFrozen(window.actutum) || !Object.isFrozen(window.actutum.invoke)) {
+  if (!Object.isFrozen(window.velox) || !Object.isFrozen(window.velox.invoke)) {
     throw Object.assign(new Error("public bridge is not frozen"), { code: "BRIDGE_MUTABLE" });
   }
 
-  const info = await window.actutum.invoke("app.getInfo");
-  if (info.id !== "dev.actutum.security-fixture" || info.platform !== "windows") {
+  const info = await window.velox.invoke("app.getInfo");
+  if (info.id !== "dev.velox.security-fixture" || info.platform !== "windows") {
     throw new Error("application identity mismatch");
   }
 
   try {
-    await window.actutum.invoke("window.getState");
+    await window.velox.invoke("window.getState");
     throw new Error("window.getState bypassed its permission");
   } catch (error) {
     if (error.code !== "PERMISSION_DENIED") {
@@ -21,7 +21,7 @@ async function verifyIPC() {
   }
 
   try {
-    await window.actutum.invoke("shell.execute");
+    await window.velox.invoke("shell.execute");
     throw new Error("unknown native method was accepted");
   } catch (error) {
     if (error.code !== "METHOD_NOT_FOUND") {
@@ -29,7 +29,7 @@ async function verifyIPC() {
     }
   }
 
-  await window.__actutumReady("ipc-ok");
+  await window.__veloxReady("ipc-ok");
 }
 
 async function exercisePolicies() {
@@ -40,11 +40,11 @@ async function exercisePolicies() {
     await verifyIPC();
   } catch (error) {
     const code = typeof error.code === "string" ? error.code : "UNKNOWN_FAILURE";
-    await window.__actutumReady(`ipc-${code}`);
+    await window.__veloxReady(`ipc-${code}`);
     return;
   }
 
-  window.open("popup.html", "actutum-security-popup");
+  window.open("popup.html", "velox-security-popup");
 
   const frame = document.createElement("iframe");
   frame.src = "frame.html";
@@ -52,7 +52,7 @@ async function exercisePolicies() {
 
   const download = document.createElement("a");
   download.href = "download.txt";
-  download.download = "actutum-security-download.txt";
+  download.download = "velox-security-download.txt";
   document.body.append(download);
   download.click();
 

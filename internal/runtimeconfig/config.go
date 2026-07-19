@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/0disoft/actutum/internal/appidentity"
-	"github.com/0disoft/actutum/internal/assettree"
-	"github.com/0disoft/actutum/internal/manifest"
+	"github.com/0disoft/velox/internal/appidentity"
+	"github.com/0disoft/velox/internal/assettree"
+	"github.com/0disoft/velox/internal/manifest"
 )
 
 const Version = 1

@@ -9,8 +9,8 @@ This repository contains the Windows-only Go CLI and production host, a strict
 external runtime configuration parser, a dependency-free hello fixture, and a
 named-pipe startup smoke harness.
 
-The parent workspace owns bounded mustflow intents named `actutum_format`,
-`actutum_lint`, `actutum_test`, `actutum_build`, and `actutum_startup_smoke`. The
+The parent workspace owns bounded mustflow intents named `velox_format`,
+`velox_lint`, `velox_test`, `velox_build`, and `velox_startup_smoke`. The
 repository still has no standalone task runner. Do not infer additional
 commands from `go.mod`.
 
@@ -25,8 +25,8 @@ commands from `go.mod`.
 ## Planned Repository Boundaries
 
     cmd/
-      actutum/
-      actutum-host/
+      velox/
+      velox-host/
     internal/
       manifest/
       buildplan/
@@ -102,7 +102,7 @@ The retired C++23/Pixi comparison is retained only as historical evidence in
 ADR 0004 and the performance budget.
 
 The repository-owned adapter boundary lives in `internal/webview2`.
-`cmd/actutum-host` does not import the fork directly. The adapter reports virtual
+`cmd/velox-host` does not import the fork directly. The adapter reports virtual
 HTTPS assets, trusted-origin messaging, navigation, frame, popup, download,
 permission, and clean host shutdown controls as implemented.
 
@@ -116,7 +116,7 @@ That browser-process lifecycle is measured separately: repeated local smoke
 shows same-profile immediate relaunch and final profile release taking about
 seven seconds.
 
-When `ACTUTUM_BENCH_PIPE` is set, the host also emits one versioned startup
+When `VELOX_BENCH_PIPE` is set, the host also emits one versioned startup
 timeline after the ready marker. It records host entry, configuration loading,
 WebView2 environment and controller creation, navigation dispatch, and the
 DOM-plus-two-animation-frame boundary with a process-local monotonic clock.

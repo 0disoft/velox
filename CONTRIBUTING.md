@@ -5,7 +5,7 @@
 
 ## Project Stage
 
-Actutum is in design and feasibility work. Contributions should strengthen the
+Velox is in design and feasibility work. Contributions should strengthen the
 M0 product hypothesis, architecture boundary, security contract, benchmark
 fairness, or smallest executable proof.
 

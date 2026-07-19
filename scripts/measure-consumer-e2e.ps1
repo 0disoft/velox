@@ -39,7 +39,7 @@ function Write-Result {
     $json
 }
 
-function Invoke-ActutumJson {
+function Invoke-VeloxJson {
     param(
         [string] $Executable,
         [string[]] $Arguments,
@@ -49,20 +49,20 @@ function Invoke-ActutumJson {
     $stdout = & $Executable @Arguments 2> $StderrPath
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
-        throw "Actutum exited with code ${exitCode}."
+        throw "Velox exited with code ${exitCode}."
     }
     $json = $stdout -join [Environment]::NewLine
     if ([string]::IsNullOrWhiteSpace($json)) {
-        throw 'Actutum returned no JSON output.'
+        throw 'Velox returned no JSON output.'
     }
     $value = $json | ConvertFrom-Json
     if (-not $value.ok) {
-        throw "Actutum returned a failure envelope for $($Arguments[0])."
+        throw "Velox returned a failure envelope for $($Arguments[0])."
     }
     return $value
 }
 
-function Invoke-ActutumTracedJson {
+function Invoke-VeloxTracedJson {
     param(
         [string] $Executable,
         [string[]] $Arguments,
@@ -83,7 +83,7 @@ function Invoke-ActutumTracedJson {
     $process.StartInfo = $startInfo
     try {
         if (-not $process.Start()) {
-            throw 'Actutum process did not start.'
+            throw 'Velox process did not start.'
         }
         $Trace.ManualRecords.Add([pscustomobject]@{
             pid = [int] $process.Id
@@ -97,14 +97,14 @@ function Invoke-ActutumTracedJson {
         $stderr = $stderrTask.GetAwaiter().GetResult()
         [System.IO.File]::WriteAllText($StderrPath, $stderr, [System.Text.UTF8Encoding]::new($false))
         if ($process.ExitCode -ne 0) {
-            throw "Actutum exited with code $($process.ExitCode)."
+            throw "Velox exited with code $($process.ExitCode)."
         }
         if ([string]::IsNullOrWhiteSpace($stdout)) {
-            throw 'Actutum returned no JSON output.'
+            throw 'Velox returned no JSON output.'
         }
         $value = $stdout | ConvertFrom-Json
         if (-not $value.ok) {
-            throw "Actutum returned a failure envelope for $($Arguments[0])."
+            throw "Velox returned a failure envelope for $($Arguments[0])."
         }
         return $value
     } finally {
@@ -148,7 +148,7 @@ $osFileCacheState = if ($AcquisitionMode -eq 'github-actions-artifact') {
 $phase = 'input-validation'
 $hostedGateFailed = $false
 $sessionRoot = Join-Path $WorkRoot ('run-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ') + '-' + [guid]::NewGuid().ToString('N'))
-$stderrPath = Join-Path $sessionRoot 'actutum.stderr.txt'
+$stderrPath = Join-Path $sessionRoot 'velox.stderr.txt'
 
 try {
     if ($startedAt -gt [DateTime]::UtcNow) {
@@ -176,13 +176,13 @@ try {
     $releaseRoot = Join-Path $sessionRoot 'release'
     New-Item -ItemType Directory -Path $releaseRoot | Out-Null
     Expand-ReleaseArchive -ArchivePath $ReleaseArchive -Destination $releaseRoot
-    $cliFiles = @(Get-ChildItem -LiteralPath $releaseRoot -Recurse -File -Filter 'actutum.exe')
+    $cliFiles = @(Get-ChildItem -LiteralPath $releaseRoot -Recurse -File -Filter 'velox.exe')
     if ($cliFiles.Count -ne 1) {
-        throw 'Release archive must contain exactly one actutum.exe.'
+        throw 'Release archive must contain exactly one velox.exe.'
     }
     $cli = $cliFiles[0].FullName
     $releaseDirectory = [System.IO.Path]::GetDirectoryName($cli)
-    foreach ($requiredReleaseFile in @('release-manifest.json', 'schema/actutum-v1.schema.json')) {
+    foreach ($requiredReleaseFile in @('release-manifest.json', 'schema/velox-v1.schema.json')) {
         if (-not (Test-Path -LiteralPath (Join-Path $releaseDirectory $requiredReleaseFile) -PathType Leaf)) {
             throw "Release archive is missing $requiredReleaseFile."
         }
@@ -190,39 +190,39 @@ try {
 
     $phase = 'project-initialization'
     $projectRoot = Join-Path $sessionRoot 'project'
-    $initialized = Invoke-ActutumJson -Executable $cli -Arguments @('init', $projectRoot, '--json') -StderrPath $stderrPath
-    $configPath = Join-Path $projectRoot 'actutum.json'
-    $validated = Invoke-ActutumJson -Executable $cli -Arguments @('validate', '--config', $configPath, '--json') -StderrPath $stderrPath
+    $initialized = Invoke-VeloxJson -Executable $cli -Arguments @('init', $projectRoot, '--json') -StderrPath $stderrPath
+    $configPath = Join-Path $projectRoot 'velox.json'
+    $validated = Invoke-VeloxJson -Executable $cli -Arguments @('validate', '--config', $configPath, '--json') -StderrPath $stderrPath
 
     $phase = 'consumer-build'
     $outputRoot = Join-Path $sessionRoot 'output'
-    $processTraceHandle = Start-ActutumProcessTrace
+    $processTraceHandle = Start-VeloxProcessTrace
     $buildTimer = [System.Diagnostics.Stopwatch]::StartNew()
     try {
-        $built = Invoke-ActutumTracedJson -Executable $cli -Arguments @('build', '--config', $configPath, '--out', $outputRoot, '--json') -StderrPath $stderrPath -Trace $processTraceHandle
+        $built = Invoke-VeloxTracedJson -Executable $cli -Arguments @('build', '--config', $configPath, '--out', $outputRoot, '--json') -StderrPath $stderrPath -Trace $processTraceHandle
     } catch {
-        [void] (Complete-ActutumProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli)))
+        [void] (Complete-VeloxProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli)))
         throw
     } finally {
         $buildTimer.Stop()
     }
-    $processTrace = Complete-ActutumProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli))
+    $processTrace = Complete-VeloxProcessTrace -Trace $processTraceHandle -ParentPid $PID -RootProcessName ([System.IO.Path]::GetFileName($cli))
 
     $phase = 'output-verification'
     $appId = [string] $initialized.result.appId
     $appKey = $appId
     $archivePath = Join-Path $outputRoot ($appKey + '.zip')
-    $inspected = Invoke-ActutumJson -Executable $cli -Arguments @('inspect', $archivePath, '--json') -StderrPath $stderrPath
+    $inspected = Invoke-VeloxJson -Executable $cli -Arguments @('inspect', $archivePath, '--json') -StderrPath $stderrPath
     $unexpected = @(Get-ChildItem -LiteralPath $outputRoot -Force | Where-Object {
         $_.Name -ne $appKey -and $_.Name -ne ($appKey + '.zip')
     })
     $finishedAt = [DateTime]::UtcNow
     $durationMs = [Math]::Round(($finishedAt - $startedAt).TotalMilliseconds, 3)
-    $releaseVersion = [string] (Invoke-ActutumJson -Executable $cli -Arguments @('version', '--json') -StderrPath $stderrPath).result.version
+    $releaseVersion = [string] (Invoke-VeloxJson -Executable $cli -Arguments @('version', '--json') -StderrPath $stderrPath).result.version
 
     $phase = 'result-validation'
     $result = [ordered]@{
-        schemaVersion = 'actutum.consumer-e2e/v1'
+        schemaVersion = 'velox.consumer-e2e/v1'
         scope = 'checkout-complete-to-portable-zip'
         evidenceLevel = if ($AcquisitionMode -eq 'github-actions-artifact') { 'hosted-runner-evidence' } else { 'local-contract-smoke' }
         sampleId = $SampleId
@@ -286,7 +286,7 @@ try {
 } catch {
     $finishedAt = [DateTime]::UtcNow
     $failure = [ordered]@{
-        schemaVersion = 'actutum.consumer-e2e/v1'
+        schemaVersion = 'velox.consumer-e2e/v1'
         scope = 'checkout-complete-to-portable-zip'
         evidenceLevel = if ($AcquisitionMode -eq 'github-actions-artifact') { 'hosted-runner-evidence' } else { 'local-contract-smoke' }
         sampleId = $SampleId

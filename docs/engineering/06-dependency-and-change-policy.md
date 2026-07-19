@@ -12,7 +12,7 @@ or maintainability advantage.
 
 ### Consumer build dependencies
 
-Must be contained in one pinned Actutum release bundle. A consumer build cannot
+Must be contained in one pinned Velox release bundle. A consumer build cannot
 install a compiler, package manager, SDK, or framework dependency.
 
 ### Maintainer build dependencies
@@ -64,7 +64,7 @@ Reject a dependency that:
 - Do not use latest in reproducible contracts.
 - Development builds use `X.Y.Z-dev`; public alpha artifacts use
   `X.Y.Z-alpha.N` and an exact `v<releaseVersion>` immutable tag.
-- The first selected public candidate is `0.6.0-alpha.1`; any changed bytes
+- The first selected public candidate is `0.5.10-alpha.1`; any changed bytes
   after publication require a higher alpha sequence.
 - Record host, manifest, IPC, and build-result compatibility independently.
 - Major dependency upgrades require compatibility and performance evidence.
@@ -102,7 +102,7 @@ The binding is acceptable for a startup feasibility spike but not yet for the
 product host. Its public API does not expose all virtual-origin and browser
 policy controls required by the security baseline, and its constructor enables
 clipboard-read permission. Removal cost is limited because all usage is
-confined to `cmd/actutum-host` during M0.
+confined to `cmd/velox-host` during M0.
 
 The retired C++23 reference environment used Pixi, Clang, CMake, lld, Ninja,
 the WebView2 SDK, Visual Studio headers, and the Windows SDK. Those dependencies

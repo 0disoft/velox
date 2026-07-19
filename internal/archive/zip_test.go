@@ -16,7 +16,7 @@ func TestCreateFilesIsDeterministicAndRootless(t *testing.T) {
 	one := filepath.Join(root, "one.zip")
 	two := filepath.Join(root, "two.zip")
 
-	inputs := []Input{{Source: second, Name: "actutum-host.exe"}, {Source: first, Name: "actutum.exe"}}
+	inputs := []Input{{Source: second, Name: "velox-host.exe"}, {Source: first, Name: "velox.exe"}}
 	firstResult, err := CreateFiles(one, inputs)
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +45,7 @@ func TestCreateFilesIsDeterministicAndRootless(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reader.Close()
-	if len(reader.File) != 2 || reader.File[0].Name != "actutum-host.exe" || reader.File[1].Name != "actutum.exe" {
+	if len(reader.File) != 2 || reader.File[0].Name != "velox-host.exe" || reader.File[1].Name != "velox.exe" {
 		t.Fatalf("archive entries = %#v", entryNames(reader.File))
 	}
 	for _, entry := range reader.File {

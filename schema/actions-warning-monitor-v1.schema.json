@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.example.invalid/actutum/actions-warning-monitor-v1.schema.json",
-  "title": "Actutum GitHub Actions warning monitor v1",
+  "$id": "https://schemas.example.invalid/velox/actions-warning-monitor-v1.schema.json",
+  "title": "Velox GitHub Actions warning monitor v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "checkedAtUtc", "repository", "runId", "status", "findings"],
   "properties": {
-    "schemaVersion": { "const": "actutum.actions-warning-monitor/v1" },
+    "schemaVersion": { "const": "velox.actions-warning-monitor/v1" },
     "checkedAtUtc": { "type": "string", "format": "date-time" },
     "repository": { "type": "string", "minLength": 3 },
     "runId": { "type": "integer", "minimum": 1 },

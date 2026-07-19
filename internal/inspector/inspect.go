@@ -14,9 +14,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/0disoft/actutum/internal/assettree"
-	"github.com/0disoft/actutum/internal/buildreport"
-	"github.com/0disoft/actutum/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/assettree"
+	"github.com/0disoft/velox/internal/buildreport"
+	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
 const (
@@ -85,7 +85,7 @@ func inspectDirectory(root string) (Result, error) {
 	files := make(map[string]assettree.File, len(all.Files))
 	for _, file := range all.Files {
 		files[file.RelativePath] = file
-		if file.RelativePath != report.Host.File && file.RelativePath != "actutum.runtime.json" && file.RelativePath != "build-result.json" && !strings.HasPrefix(file.RelativePath, "web/") {
+		if file.RelativePath != report.Host.File && file.RelativePath != "velox.runtime.json" && file.RelativePath != "build-result.json" && !strings.HasPrefix(file.RelativePath, "web/") {
 			return Result{}, fmt.Errorf("unexpected portable file %q", file.RelativePath)
 		}
 	}
@@ -100,7 +100,7 @@ func inspectDirectory(root string) (Result, error) {
 	if err := validateAssets(report, assets); err != nil {
 		return Result{}, err
 	}
-	runtime, err := runtimeconfig.Load(filepath.Join(root, "actutum.runtime.json"))
+	runtime, err := runtimeconfig.Load(filepath.Join(root, "velox.runtime.json"))
 	if err != nil {
 		return Result{}, err
 	}
@@ -181,7 +181,7 @@ func inspectZIP(archivePath string) (Result, error) {
 				return Result{}, fmt.Errorf("hash asset %s: %w", relative, err)
 			}
 			assetFiles = append(assetFiles, assettree.File{RelativePath: strings.TrimPrefix(relative, "web/"), Size: size, SHA256: digest})
-		} else if relative != report.Host.File && relative != "actutum.runtime.json" && relative != "build-result.json" {
+		} else if relative != report.Host.File && relative != "velox.runtime.json" && relative != "build-result.json" {
 			return Result{}, fmt.Errorf("unexpected portable file %q", relative)
 		}
 	}
@@ -200,9 +200,9 @@ func inspectZIP(archivePath string) (Result, error) {
 	if err := validateAssets(report, assets); err != nil {
 		return Result{}, err
 	}
-	runtimeEntry, exists := entries["actutum.runtime.json"]
+	runtimeEntry, exists := entries["velox.runtime.json"]
 	if !exists {
-		return Result{}, errors.New("ZIP is missing actutum.runtime.json")
+		return Result{}, errors.New("ZIP is missing velox.runtime.json")
 	}
 	runtimeData, err := readBounded(runtimeEntry, maxMetadataBytes)
 	if err != nil {

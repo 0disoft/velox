@@ -20,17 +20,17 @@ func TestCollectBuildsOrderedEnvironmentGroupedHistory(t *testing.T) {
 			t.Fatalf("missing bearer token")
 		}
 		switch request.URL.Path {
-		case "/repos/0disoft/actutum/actions/runs/200":
+		case "/repos/0disoft/velox/actions/runs/200":
 			writeFixtureJSON(t, response, workflowRun{ID: 200, RunAttempt: 2, HeadSHA: "current", CreatedAt: "2026-07-13T03:23:00Z"})
-		case "/repos/0disoft/actutum/actions/workflows/consumer-evidence.yml/runs":
+		case "/repos/0disoft/velox/actions/workflows/consumer-evidence.yml/runs":
 			writeFixtureJSON(t, response, workflowRunsResponse{WorkflowRuns: []workflowRun{
 				{ID: 200, RunAttempt: 2, HeadSHA: "current", CreatedAt: "2026-07-13T03:23:00Z"},
 				{ID: 150, RunAttempt: 1, HeadSHA: "missing", CreatedAt: "2026-07-06T03:23:00Z"},
 				{ID: 100, RunAttempt: 1, HeadSHA: "old", CreatedAt: "2026-06-29T03:23:00Z"},
 			}})
-		case "/repos/0disoft/actutum/actions/runs/150/artifacts":
+		case "/repos/0disoft/velox/actions/runs/150/artifacts":
 			writeFixtureJSON(t, response, artifactsResponse{})
-		case "/repos/0disoft/actutum/actions/runs/100/artifacts":
+		case "/repos/0disoft/velox/actions/runs/100/artifacts":
 			writeFixtureJSON(t, response, artifactsResponse{Artifacts: []artifact{{Name: "startup-lifecycle-100-1", ArchiveDownloadURL: serverURL(request) + "/artifact/100"}}})
 		case "/artifact/100":
 			response.Header().Set("Content-Type", "application/zip")
@@ -43,7 +43,7 @@ func TestCollectBuildsOrderedEnvironmentGroupedHistory(t *testing.T) {
 
 	current := summaryFixture("200", "runner-a", "1", "120.1", 600, 550, 50)
 	c := collector{client: server.Client(), baseURL: server.URL, token: "secret"}
-	result, err := c.collect(context.Background(), "0disoft/actutum", "consumer-evidence.yml", current, 12, time.Date(2026, 7, 13, 4, 0, 0, 0, time.UTC))
+	result, err := c.collect(context.Background(), "0disoft/velox", "consumer-evidence.yml", current, 12, time.Date(2026, 7, 13, 4, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestCollectBuildsOrderedEnvironmentGroupedHistory(t *testing.T) {
 func TestCollectRejectsCurrentSummaryWithoutRunID(t *testing.T) {
 	current := summaryFixture("", "runner-a", "1", "120.1", 600, 550, 50)
 	c := collector{client: http.DefaultClient, baseURL: "https://example.invalid", token: "secret"}
-	if _, err := c.collect(context.Background(), "0disoft/actutum", "consumer-evidence.yml", current, 12, time.Now()); err == nil {
+	if _, err := c.collect(context.Background(), "0disoft/velox", "consumer-evidence.yml", current, 12, time.Now()); err == nil {
 		t.Fatal("expected missing run ID to fail")
 	}
 }
@@ -88,7 +88,7 @@ func TestReadBoundedRejectsTruncatedEvidence(t *testing.T) {
 
 func summaryFixture(runID, image, imageVersion, webView string, ready, browserExit, afterExit float64) lifecycleSummary {
 	return lifecycleSummary{
-		SchemaVersion: "actutum.startup-lifecycle-summary/v1", Outcome: "success",
+		SchemaVersion: "velox.startup-lifecycle-summary/v1", Outcome: "success",
 		Environment: environment{RunnerImage: &image, RunnerImageVersion: &imageVersion, WebView2Version: webView, GitHubRunID: &runID},
 		Metrics: map[string]metricStats{
 			"immediateReadyMs":                      {P50Ms: ready, P95Ms: ready + 10},

@@ -17,7 +17,7 @@
 
 ## Build Invariants
 
-1. A pinned Actutum release contains every Actutum-owned build dependency.
+1. A pinned Velox release contains every Velox-owned build dependency.
 2. Builds perform no network access after that release is available locally.
 3. Consumer GitHub Actions workflows upload zero bytes to actions/cache.
 4. Builds do not create generated source or bindings.

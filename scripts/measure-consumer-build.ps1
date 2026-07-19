@@ -20,7 +20,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-function Invoke-ActutumJson {
+function Invoke-VeloxJson {
     param([string[]] $Arguments)
 
     $stderrPath = Join-Path $sessionRoot ('stderr-' + [guid]::NewGuid().ToString('N') + '.txt')
@@ -33,15 +33,15 @@ function Invoke-ActutumJson {
     }
     Remove-Item -LiteralPath $stderrPath -Force -ErrorAction SilentlyContinue
     if ($exitCode -ne 0) {
-        throw "Actutum exited with code ${exitCode}: $stderrText"
+        throw "Velox exited with code ${exitCode}: $stderrText"
     }
     $json = ($stdoutLines -join [Environment]::NewLine)
     if ([string]::IsNullOrWhiteSpace($json)) {
-        throw 'Actutum returned no JSON output.'
+        throw 'Velox returned no JSON output.'
     }
     $value = $json | ConvertFrom-Json
     if (-not $value.ok) {
-        throw "Actutum returned a failure envelope for $($Arguments[0])."
+        throw "Velox returned a failure envelope for $($Arguments[0])."
     }
     return $value
 }
@@ -150,7 +150,7 @@ $WorkRoot = [System.IO.Path]::GetFullPath($WorkRoot)
 $ResultPath = [System.IO.Path]::GetFullPath($ResultPath)
 $SchemaPath = [System.IO.Path]::GetFullPath($SchemaPath)
 if (-not (Test-Path -LiteralPath $Cli -PathType Leaf)) {
-    throw "Actutum CLI is missing: $Cli"
+    throw "Velox CLI is missing: $Cli"
 }
 if (-not (Test-Path -LiteralPath $SchemaPath -PathType Leaf)) {
     throw "Benchmark schema is missing: $SchemaPath"
@@ -161,16 +161,16 @@ $projectRoot = Join-Path $sessionRoot 'project'
 $outputsRoot = Join-Path $sessionRoot 'outputs'
 New-Item -ItemType Directory -Path $sessionRoot, $outputsRoot -Force | Out-Null
 
-$initialized = Invoke-ActutumJson -Arguments @('init', $projectRoot, '--json')
-$configPath = Join-Path $projectRoot 'actutum.json'
+$initialized = Invoke-VeloxJson -Arguments @('init', $projectRoot, '--json')
+$configPath = Join-Path $projectRoot 'velox.json'
 $appId = [string] $initialized.result.appId
 $appKey = $appId
-$validation = Invoke-ActutumJson -Arguments @('validate', '--config', $configPath, '--json')
+$validation = Invoke-VeloxJson -Arguments @('validate', '--config', $configPath, '--json')
 $projectBefore = Get-FileSnapshot -Root $projectRoot
 
 $cachePaths = @(
     (Join-Path $projectRoot '.cache'),
-    (Join-Path $projectRoot '.actutum'),
+    (Join-Path $projectRoot '.velox'),
     (Join-Path $projectRoot 'node_modules'),
     (Join-Path $projectRoot 'target')
 )
@@ -183,7 +183,7 @@ $samples = [System.Collections.Generic.List[object]]::new()
 for ($index = 0; $index -lt $Repetitions; $index++) {
     $outputRoot = Join-Path $outputsRoot $index.ToString('D2')
     $stderrPath = Join-Path $sessionRoot ('build-' + $index.ToString('D2') + '.stderr.txt')
-    $sourceIdentifier = 'actutum-consumer-bench-' + [guid]::NewGuid().ToString('N')
+    $sourceIdentifier = 'velox-consumer-bench-' + [guid]::NewGuid().ToString('N')
     $traceAvailable = $true
     try {
         Register-WmiEvent -Class Win32_ProcessStartTrace -SourceIdentifier $sourceIdentifier -ErrorAction Stop | Out-Null
@@ -222,7 +222,7 @@ for ($index = 0; $index -lt $Repetitions; $index++) {
     }
     $archivePath = Join-Path $outputRoot ($appKey + '.zip')
     $directoryPath = Join-Path $outputRoot $appKey
-    $inspection = Invoke-ActutumJson -Arguments @('inspect', $archivePath, '--json')
+    $inspection = Invoke-VeloxJson -Arguments @('inspect', $archivePath, '--json')
     $topLevel = @(Get-ChildItem -LiteralPath $outputRoot -Force)
     $unexpected = @($topLevel | Where-Object {
         $_.FullName -ne $directoryPath -and $_.FullName -ne $archivePath
@@ -257,10 +257,10 @@ $cacheDelta = [Math]::Max([int64] 0, $cacheAfter - $cacheBefore)
 $processStatus = if (-not $allTraceComplete) { 'unverified' } elseif ($forbiddenProcesses.Count -gt 0) { 'fail' } else { 'pass' }
 $p95 = Get-Percentile -Values $durations -Percentile 0.95
 $result = [ordered]@{
-    schemaVersion = 'actutum.consumer-benchmark/v1'
+    schemaVersion = 'velox.consumer-benchmark/v1'
     scope = 'local-clean-output-build-command'
     evidenceLevel = 'controlled-local-observation'
-    releaseVersion = [string] (Invoke-ActutumJson -Arguments @('version', '--json')).result.version
+    releaseVersion = [string] (Invoke-VeloxJson -Arguments @('version', '--json')).result.version
     repetitions = $Repetitions
     measurement = [ordered]@{
         tool = 'scripts/measure-consumer-build.ps1'
@@ -268,8 +268,8 @@ $result = [ordered]@{
         metric = 'build-command-duration'
         unit = 'milliseconds'
         clock = 'System.Diagnostics.Stopwatch'
-        startsAt = 'immediately-before-actutum-process-launch'
-        endsAt = 'actutum-process-exit'
+        startsAt = 'immediately-before-velox-process-launch'
+        endsAt = 'velox-process-exit'
         warmupSamples = 0
         concurrency = 1
         projectState = 'same-initialized-project'
@@ -298,9 +298,9 @@ $result = [ordered]@{
     }
     cache = [ordered]@{
         workflowDeclaredActionsCacheUploadBytes = 0
-        actutumOwnedBytesBefore = $cacheBefore
-        actutumOwnedBytesAfter = $cacheAfter
-        actutumOwnedDeltaBytes = $cacheDelta
+        veloxOwnedBytesBefore = $cacheBefore
+        veloxOwnedBytesAfter = $cacheAfter
+        veloxOwnedDeltaBytes = $cacheDelta
         paths = @($cachePaths | ForEach-Object { [System.IO.Path]::GetRelativePath($projectRoot, $_).Replace('\', '/') })
     }
     workspace = [ordered]@{
@@ -309,7 +309,7 @@ $result = [ordered]@{
     }
     gates = [ordered]@{
         p95AtOrBelowTwoSeconds = if ($p95 -le 2000) { 'pass' } else { 'fail' }
-        zeroActutumCacheGrowth = if ($cacheDelta -eq 0) { 'pass' } else { 'fail' }
+        zeroVeloxCacheGrowth = if ($cacheDelta -eq 0) { 'pass' } else { 'fail' }
         zeroSurvivingIntermediates = if ($intermediateCount -eq 0 -and $projectChanges.Count -eq 0) { 'pass' } else { 'fail' }
         noCompilerOrPackageManagerChildren = $processStatus
     }

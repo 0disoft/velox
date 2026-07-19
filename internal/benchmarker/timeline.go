@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	TimelinePrefix        = "actutum-bench-timeline "
-	TimelineSchemaVersion = "actutum.host-startup-timeline/v1"
+	TimelinePrefix        = "velox-bench-timeline "
+	TimelineSchemaVersion = "velox.host-startup-timeline/v1"
 )
 
 type TimelinePhase struct {

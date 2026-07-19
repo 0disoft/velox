@@ -12,8 +12,8 @@ import (
 func TestPrepareSigningInputCreatesDeterministicExactFileSet(t *testing.T) {
 	root := t.TempDir()
 	unsigned := filepath.Join(root, "unsigned")
-	writeTestFile(t, filepath.Join(unsigned, "actutum.exe"), "unsigned cli")
-	writeTestFile(t, filepath.Join(unsigned, "actutum-host.exe"), "unsigned host")
+	writeTestFile(t, filepath.Join(unsigned, "velox.exe"), "unsigned cli")
+	writeTestFile(t, filepath.Join(unsigned, "velox-host.exe"), "unsigned host")
 	writeTestFile(t, filepath.Join(unsigned, "ignored.txt"), "must not be packaged")
 	one := filepath.Join(root, "one", SigningInputName)
 	two := filepath.Join(root, "two", SigningInputName)
@@ -46,7 +46,7 @@ func TestPrepareSigningInputCreatesDeterministicExactFileSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reader.Close()
-	if len(reader.File) != 2 || reader.File[0].Name != "actutum-host.exe" || reader.File[1].Name != "actutum.exe" {
+	if len(reader.File) != 2 || reader.File[0].Name != "velox-host.exe" || reader.File[1].Name != "velox.exe" {
 		t.Fatalf("signing input entries = %#v", signingInputEntryNames(reader.File))
 	}
 	for _, entry := range reader.File {
@@ -59,7 +59,7 @@ func TestPrepareSigningInputCreatesDeterministicExactFileSet(t *testing.T) {
 func TestPrepareSigningInputRejectsInvalidInputsWithoutOutput(t *testing.T) {
 	root := t.TempDir()
 	unsigned := filepath.Join(root, "unsigned")
-	writeTestFile(t, filepath.Join(unsigned, "actutum.exe"), "unsigned cli")
+	writeTestFile(t, filepath.Join(unsigned, "velox.exe"), "unsigned cli")
 	out := filepath.Join(root, SigningInputName)
 	if _, err := PrepareSigningInput(unsigned, out); err == nil {
 		t.Fatal("PrepareSigningInput accepted a missing host")
@@ -75,8 +75,8 @@ func TestPrepareSigningInputRejectsInvalidInputsWithoutOutput(t *testing.T) {
 func TestPrepareSigningInputRefusesExistingOutput(t *testing.T) {
 	root := t.TempDir()
 	unsigned := filepath.Join(root, "unsigned")
-	writeTestFile(t, filepath.Join(unsigned, "actutum.exe"), "unsigned cli")
-	writeTestFile(t, filepath.Join(unsigned, "actutum-host.exe"), "unsigned host")
+	writeTestFile(t, filepath.Join(unsigned, "velox.exe"), "unsigned cli")
+	writeTestFile(t, filepath.Join(unsigned, "velox-host.exe"), "unsigned host")
 	out := filepath.Join(root, SigningInputName)
 	writeTestFile(t, out, "keep")
 	if _, err := PrepareSigningInput(unsigned, out); err == nil {
@@ -94,15 +94,15 @@ func TestPrepareSigningInputRefusesExistingOutput(t *testing.T) {
 func TestPrepareSigningInputRejectsLinkedExecutable(t *testing.T) {
 	root := t.TempDir()
 	unsigned := filepath.Join(root, "unsigned")
-	realCLI := filepath.Join(root, "real-actutum.exe")
+	realCLI := filepath.Join(root, "real-velox.exe")
 	writeTestFile(t, realCLI, "unsigned cli")
 	if err := os.MkdirAll(unsigned, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink(realCLI, filepath.Join(unsigned, "actutum.exe")); err != nil {
+	if err := os.Symlink(realCLI, filepath.Join(unsigned, "velox.exe")); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}
-	writeTestFile(t, filepath.Join(unsigned, "actutum-host.exe"), "unsigned host")
+	writeTestFile(t, filepath.Join(unsigned, "velox-host.exe"), "unsigned host")
 	out := filepath.Join(root, SigningInputName)
 	if _, err := PrepareSigningInput(unsigned, out); err == nil {
 		t.Fatal("PrepareSigningInput accepted a linked executable")

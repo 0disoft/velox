@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-const testSubject = "CN=Actutum Test Publisher, O=0disoft, C=KR"
+const testSubject = "CN=Velox Test Publisher, O=0disoft, C=KR"
 
 func TestVerifyDirectoryAcceptsOneSharedTrustedSigner(t *testing.T) {
 	directory := signedFixture(t)
@@ -23,7 +23,7 @@ func TestVerifyDirectoryAcceptsOneSharedTrustedSigner(t *testing.T) {
 	if result.SchemaVersion != SchemaVersion || result.Target != Target || result.ExpectedSubject != testSubject || len(result.Artifacts) != 2 {
 		t.Fatalf("result = %#v", result)
 	}
-	if result.Artifacts[0].File != "actutum-host.exe" || result.Artifacts[1].File != "actutum.exe" {
+	if result.Artifacts[0].File != "velox-host.exe" || result.Artifacts[1].File != "velox.exe" {
 		t.Fatalf("artifact order = %#v", result.Artifacts)
 	}
 	for _, artifact := range result.Artifacts {
@@ -44,7 +44,7 @@ func TestVerifyDirectoryRejectsPolicyAndEvidenceFailures(t *testing.T) {
 		{"weak digest", func(result *probeResult, _ string) { result.DigestOID = "1.3.14.3.2.26" }, "not SHA-256"},
 		{"missing timestamp", func(result *probeResult, _ string) { result.TimestampSubject = "" }, "timestamp authority"},
 		{"different signer", func(result *probeResult, path string) {
-			if path == "actutum.exe" {
+			if path == "velox.exe" {
 				result.Serial = "22"
 			}
 		}, "share one signer"},
@@ -73,10 +73,10 @@ func TestVerifyDirectoryRejectsUnexpectedAndLinkedInputs(t *testing.T) {
 	linked := t.TempDir()
 	target := filepath.Join(t.TempDir(), "target.exe")
 	writeFile(t, target, "signed")
-	if err := os.Symlink(target, filepath.Join(linked, "actutum.exe")); err != nil {
+	if err := os.Symlink(target, filepath.Join(linked, "velox.exe")); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}
-	writeFile(t, filepath.Join(linked, "actutum-host.exe"), "signed")
+	writeFile(t, filepath.Join(linked, "velox-host.exe"), "signed")
 	if _, err := verifyDirectory(linked, testSubject, nil); err == nil || !strings.Contains(err.Error(), "regular file") {
 		t.Fatalf("linked file error = %v", err)
 	}
@@ -100,7 +100,7 @@ func TestVerificationSchemaIsDraft202012(t *testing.T) {
 	if err := json.Unmarshal(data, &schema); err != nil {
 		t.Fatal(err)
 	}
-	if schema["$schema"] != "https://json-schema.org/draft/2020-12/schema" || schema["$id"] != "https://schemas.actutum.invalid/authenticode-verification/v1.json" {
+	if schema["$schema"] != "https://json-schema.org/draft/2020-12/schema" || schema["$id"] != "https://schemas.velox.invalid/authenticode-verification/v1.json" {
 		t.Fatalf("schema identity = %#v", schema)
 	}
 	encoded, err := json.Marshal(Result{
@@ -108,14 +108,14 @@ func TestVerificationSchemaIsDraft202012(t *testing.T) {
 		Target:          Target,
 		ExpectedSubject: testSubject,
 		Artifacts: []Artifact{
-			mustArtifact(t, "actutum-host.exe"),
-			mustArtifact(t, "actutum.exe"),
+			mustArtifact(t, "velox-host.exe"),
+			mustArtifact(t, "velox.exe"),
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, required := range []string{SchemaVersion, "actutum-host.exe", "actutum.exe", DigestOID, "timestampAuthority"} {
+	for _, required := range []string{SchemaVersion, "velox-host.exe", "velox.exe", DigestOID, "timestampAuthority"} {
 		if !strings.Contains(string(encoded), required) {
 			t.Fatalf("encoded result lacks %q: %s", required, encoded)
 		}
@@ -124,9 +124,9 @@ func TestVerificationSchemaIsDraft202012(t *testing.T) {
 
 func validProbe(string) probeResult {
 	return probeResult{
-		Status: "Valid", Subject: testSubject, Issuer: "CN=Actutum Test CA",
+		Status: "Valid", Subject: testSubject, Issuer: "CN=Velox Test CA",
 		Serial: "10", Thumbprint: strings.Repeat("a", 40), DigestOID: DigestOID,
-		TimestampSubject: "CN=Actutum Test Timestamp", TimestampSerial: "20",
+		TimestampSubject: "CN=Velox Test Timestamp", TimestampSerial: "20",
 		TimestampThumbprint: strings.Repeat("b", 40),
 	}
 }
@@ -143,8 +143,8 @@ func mustArtifact(t *testing.T, file string) Artifact {
 func signedFixture(t *testing.T) string {
 	t.Helper()
 	directory := t.TempDir()
-	writeFile(t, filepath.Join(directory, "actutum.exe"), "signed cli")
-	writeFile(t, filepath.Join(directory, "actutum-host.exe"), "signed host")
+	writeFile(t, filepath.Join(directory, "velox.exe"), "signed cli")
+	writeFile(t, filepath.Join(directory, "velox-host.exe"), "signed host")
 	return directory
 }
 

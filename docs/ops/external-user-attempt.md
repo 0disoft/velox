@@ -15,7 +15,7 @@ proves GitHub Release acquisition and execution, but it always records
 
 A qualifying attempt:
 
-- starts from the public `v0.6.0-alpha.1` GitHub Release;
+- starts from the public `v0.5.10-alpha.1` GitHub Release;
 - records the exact ZIP SHA-256 before execution;
 - follows the public installation and hello-project path without unpublished
   maintainer instructions;
@@ -55,7 +55,7 @@ assets.
 
 Before counting an attempt toward M4, verify:
 
-1. The tag and digest identify an immutable public Actutum release.
+1. The tag and digest identify an immutable public Velox release.
 2. The reporter is independent from the release workflow.
 3. The report covers acquisition through either startup success or a localized
    failure.

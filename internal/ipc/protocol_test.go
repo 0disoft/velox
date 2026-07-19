@@ -29,7 +29,7 @@ func (f *fakeWindow) Close() error    { return f.operationErr }
 
 func TestDispatcherReturnsApplicationInfo(t *testing.T) {
 	dispatcher := NewDispatcher(Identity{
-		ID: "dev.actutum.test", Name: "Test", Version: "1.2.3", Platform: "windows",
+		ID: "dev.velox.test", Name: "Test", Version: "1.2.3", Platform: "windows",
 	}, []string{PermissionAppInfo}, &fakeWindow{})
 
 	response := dispatcher.Dispatch(request(1, "app.getInfo", `{}`))
@@ -37,7 +37,7 @@ func TestDispatcherReturnsApplicationInfo(t *testing.T) {
 		t.Fatalf("Dispatch() = %+v, want success", response)
 	}
 	info, ok := response.Result.(Identity)
-	if !ok || info.ID != "dev.actutum.test" || info.Platform != "windows" {
+	if !ok || info.ID != "dev.velox.test" || info.Platform != "windows" {
 		t.Fatalf("result = %#v, want application identity", response.Result)
 	}
 }
@@ -152,7 +152,7 @@ func TestDispatcherRejectsNewRequestsDuringShutdown(t *testing.T) {
 func TestBridgeIsFrozenAndUsesBoundedProtocol(t *testing.T) {
 	source := BridgeSource()
 	for _, required := range []string{
-		`Object.defineProperty(window, "actutum"`,
+		`Object.defineProperty(window, "velox"`,
 		`Object.freeze({ invoke: Object.freeze(invoke) })`,
 		`pending.size >= 64`,
 		`{ v: 1, id, method, params }`,
