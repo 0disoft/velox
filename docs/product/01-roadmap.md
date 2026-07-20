@@ -238,11 +238,12 @@ counterarguments.
 
 The Wails cold-build result, two accepted M3 product decisions, bounded
 maintenance-cost record, and internal security review supply M5 inputs, not the
-product decision. Before M5 can start, the repository still needs a public
-identity decision, the public M4 distribution evidence, and an independent
-external-user attempt. ADR 0008 records the explicit PWA and Neutralino
-counterarguments; user attempts must now test whether its narrow portable-
-artifact boundary has real value.
+product decision. Before M5 can start, the repository still needs the public M4
+distribution evidence and an independent external-user attempt.
+The public identity decision is complete under ADR 0015 and is not a remaining
+gate. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
+attempts must now test whether its narrow portable-artifact boundary has real
+value.
 
 ## Deferred Until After M5
 

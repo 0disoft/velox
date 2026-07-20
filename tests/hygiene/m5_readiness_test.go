@@ -124,8 +124,15 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "01-roadmap.md"), []string{
 		"maintenance-cost record, and internal security review supply M5 inputs",
-		"identity decision, the public M4 distribution evidence",
+		"still needs the public M4",
+		"public identity decision is complete under ADR 0015",
 		"independent external-user attempt",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "ci.md"), []string{
+		"maintainer-owned direct pushes to `main`",
+		"does not make them merge gates",
+		"Before beta or external contributors receive write access",
+		"must not claim branch protection before",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "02-spec.md"), []string{
 		"Public name: Velox",
@@ -169,6 +176,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		filepath.Join(root, "docs", "product", "01-roadmap.md"): {
 			"needs M4 distribution evidence, external user attempts, a bounded",
 			"public executable blocked pending rename",
+			"identity decision, the public M4 distribution evidence",
 		},
 		filepath.Join(root, "docs", "ops", "release.md"): {
 			"create the candidate tag as a shortcut around the rename",

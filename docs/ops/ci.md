@@ -154,8 +154,14 @@ the report changes to `absent` without a repository change.
   performance budget.
 - A missing configured check is a release blocker, not an implicit pass.
 
-## Branch Protection
+## Branch Policy
 
-Required check names and branch rules remain UNDECIDED until actual workflow
-jobs exist. Documentation must not claim branch protection before repository
-settings are verified.
+The Alpha repository uses maintainer-owned direct pushes to `main`. It does not
+declare a pull-request-only workflow, required status checks, or branch
+protection as a product contract. Existing workflow jobs provide validation and
+evidence; their presence alone does not make them merge gates.
+
+Before beta or external contributors receive write access, the maintainer must
+choose required checks and branch rules and then verify the corresponding
+repository settings. Documentation must not claim branch protection before
+that verification exists.
