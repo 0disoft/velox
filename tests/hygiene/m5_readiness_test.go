@@ -191,7 +191,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"public-download",
 		"29715002921",
 		"29736140250",
-		"no independent-user adoption evidence",
+		"independent-user adoption evidence is recorded",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "00-operational-contract.md"), []string{
 		"M4 unsigned distribution operational; M5 active with zero independent-user attempts",
