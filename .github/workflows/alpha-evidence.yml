@@ -295,6 +295,12 @@ jobs:
 
           The checksum file, SPDX SBOM, and provenance statement describe the files in this release. They do not provide a Windows publisher identity, and the provenance statement is not an authenticated attestation.
 
+          Compatibility is limited to Windows x64: Windows 10 version 1709 build 16299 or newer clients, Windows Server 2016 build 14393 or newer servers, and Evergreen WebView2 Runtime 92.0.902.49 or newer.
+
+          Packaged applications keep HTML, CSS, JavaScript, and velox.runtime.json beside the unchanged generic host. Anyone who can modify the application directory can change application behavior. This preview does not provide sealed assets or local tamper resistance.
+
+          The unchanged generic host does not provide application-specific executable icons or metadata, an installer, or an updater. The velox command and velox.exe name also collide with unrelated released software; invoke the downloaded executable by an explicit path while evaluating it.
+
           The independently recorded release ZIP SHA-256 is $env:VELOX_RELEASE_SHA256.
           "@ | Set-Content -LiteralPath '.ci/release-notes.md' -Encoding utf8
           $assets = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File | Sort-Object Name | ForEach-Object FullName)

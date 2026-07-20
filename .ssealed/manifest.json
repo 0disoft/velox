@@ -1,7 +1,7 @@
 {
   "tool": "ssealed",
   "version": "0.6.11",
-  "generatedAt": "2026-07-19T04:14:26.064Z",
+  "generatedAt": "2026-07-20T01:31:26.507Z",
   "scope": "general",
   "profile": "cli-tool",
   "addons": [],
@@ -714,13 +714,13 @@
     },
     {
       "path": "docs/ops/release.md",
-      "checksum": "sha256:c90d4e082561bf2d7da1f4cd6f7a53f63907161050d743c2daebe0083e66a9ed",
+      "checksum": "sha256:a1e83312419828569a4ba14e3ac8913132535b25ce5191020fdd464bd51a1485",
       "kind": "document",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:063cea6525f143e9b61e13a30402dd7bea37975bebab63c93fc627a0d447112e",
-      "acceptedChecksum": "sha256:c90d4e082561bf2d7da1f4cd6f7a53f63907161050d743c2daebe0083e66a9ed",
+      "acceptedChecksum": "sha256:a1e83312419828569a4ba14e3ac8913132535b25ce5191020fdd464bd51a1485",
       "generatedChecksum": "sha256:063cea6525f143e9b61e13a30402dd7bea37975bebab63c93fc627a0d447112e"
     },
     {

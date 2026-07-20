@@ -163,7 +163,10 @@ That job downloads the producer evidence after the checkout-free consumer job
 passes, rejects missing or extra files, verifies every checksum, refuses an
 existing release, and creates an immutable GitHub prerelease with the unsigned
 warning. It also rejects a tag that is not exactly `v<releaseVersion>`. It does
-not sign, attest, rebuild, or replace artifacts.
+not sign, attest, rebuild, or replace artifacts. The immutable release notes
+also state the Windows and WebView2 compatibility floor, directory-asset
+tampering boundary, unchanged-host branding limitations, missing installer and
+updater, and the accepted `velox` command and executable-name collision.
 
 Promotion to a future signed, beta, or stable channel reuses an already
 verified immutable candidate. It does not relabel unsigned bytes as signed or

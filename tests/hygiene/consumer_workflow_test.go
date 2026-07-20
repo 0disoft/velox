@@ -197,6 +197,11 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 		"The release already exists and will not be replaced.",
 		"$PSNativeCommandUseErrorActionPreference = $false",
 		"Windows SmartScreen may show an unknown-publisher warning",
+		"Windows 10 version 1709 build 16299 or newer clients",
+		"Evergreen WebView2 Runtime 92.0.902.49 or newer",
+		"This preview does not provide sealed assets or local tamper resistance",
+		"does not provide application-specific executable icons or metadata, an installer, or an updater",
+		"velox command and velox.exe name also collide with unrelated released software",
 	} {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("alpha evidence workflow is missing guarded preview publication contract %q", required)
