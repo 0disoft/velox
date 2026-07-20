@@ -131,6 +131,9 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "ci.md"), []string{
 		"maintainer-owned direct pushes to `main`",
 		"does not make them merge gates",
+		"On 2026-07-20, the GitHub repository settings showed zero classic branch",
+		"protection rules and zero rulesets",
+		"not an automated drift check",
 		"Before beta or external contributors receive write access",
 		"must not claim branch protection before",
 	})

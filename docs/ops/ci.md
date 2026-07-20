@@ -161,6 +161,10 @@ declare a pull-request-only workflow, required status checks, or branch
 protection as a product contract. Existing workflow jobs provide validation and
 evidence; their presence alone does not make them merge gates.
 
+On 2026-07-20, the GitHub repository settings showed zero classic branch
+protection rules and zero rulesets. This is a point-in-time settings
+observation, not an automated drift check.
+
 Before beta or external contributors receive write access, the maintainer must
 choose required checks and branch rules and then verify the corresponding
 repository settings. Documentation must not claim branch protection before
