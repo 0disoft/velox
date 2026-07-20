@@ -1,6 +1,6 @@
 # Release
 
-- Status: Unsigned public preview published; independent external-user attempt pending
+- Status: M4 unsigned distribution complete; M5 adoption evidence remains empty
 - Owner: Project maintainer
 
 ## Current State
@@ -48,6 +48,15 @@ downloaded the release without source checkout, matched ZIP SHA-256
 verified the sidecars, built twice, inspected, and reached startup-ready. This
 is same-repository public-download evidence, not an independent external-user
 attempt or authenticated attestation.
+
+The separate public
+[`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
+repository consumes only the pinned public release. Hosted
+[run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250)
+passed the full public CLI path with no consumer toolchain command and zero
+Actions cache upload bytes. ADR 0016 accepts this maintainer-controlled clean-
+room result as the final technical M4 gate while preserving
+`maintainerControlled: true` and `externalUserAttempt: false`.
 
 ## Proposed Release Unit
 
@@ -187,16 +196,18 @@ rebuild different bytes under the same version.
 
 ## Post-Release Verification
 
-After the first preview is published, an independent repository and account
-must verify download, checksum, version inspection, hello build, and application
-startup from the public asset. Same-workflow artifact consumption is necessary
-prepublication evidence but does not satisfy this external M4 gate.
+After the first preview is published, a separate maintainer-controlled
+repository must verify download, checksum, version inspection, hello build, and
+application startup from the public asset. Same-workflow artifact consumption
+is necessary prepublication evidence but does not satisfy this clean-room M4
+gate. Run `29736140250` completed that post-release gate.
 
 The repository-owned `Public preview verification` workflow covers the public
 URL, independently supplied digest, checksum, SPDX, provenance, tag/version,
 build, inspection, and startup boundaries without source checkout. Its result
-is explicitly same-repository evidence and cannot substitute for the qualifying
-attempt defined in `docs/ops/external-user-attempt.md`.
+is explicitly same-repository evidence. Neither it nor the clean-room consumer
+repository substitutes for qualifying adoption evidence defined in
+`docs/ops/external-user-attempt.md`.
 
 For the first preview, the workflow initially exhausted its eight-minute job
 limit because the ordinary generated starter did not emit the benchmark-only

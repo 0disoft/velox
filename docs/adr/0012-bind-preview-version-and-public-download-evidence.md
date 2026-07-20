@@ -1,6 +1,6 @@
 # ADR 0012: Bind preview version and public-download evidence
 
-- Status: Accepted
+- Status: Accepted; external-user M4 gate superseded by ADR 0016
 - Date: 2026-07-18
 - Owner: Project maintainer
 

@@ -78,6 +78,11 @@ Foundation application and protected-environment handoff steps remain in
 - docs/ops/external-user-attempt.md
 - docs/ops/rollback.md
 
+ADR 0016 closes the technical M4 distribution milestone with the public,
+maintainer-controlled `0disoft/velox-consumer-smoke` repository. That evidence
+remains explicitly non-external; independent adoption is an M5 input rather
+than a technical release gate.
+
 Service-oriented backup, environment, secret, incident, and observability
 templates are intentionally retired until a real support surface requires them.
 

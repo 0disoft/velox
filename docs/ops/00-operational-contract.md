@@ -1,6 +1,6 @@
 # Operational Contract
 
-- Status: Unsigned public preview operational; independent external-user attempt pending
+- Status: M4 unsigned distribution operational; M5 active with zero independent-user attempts
 - Primary owner: Project maintainer
 
 ## Product Shape
@@ -72,7 +72,10 @@ verifier exist. Publication run `29714173324` created immutable public preview
 `v0.5.10-alpha.1`, and public-download verification run `29715002921` verified
 its release assets, built a consumer project twice, inspected the result, and
 reached startup-ready. That verifier is controlled by this repository, so the
-only remaining M4 operational gate is a qualifying independent external-user
-attempt. ADR 0010's signed channel remains deferred. ADR 0015 retains Velox and
-accepts the documented command and discovery collisions, so no repository
-rename remains in this operational gate.
+separate `0disoft/velox-consumer-smoke` repository was added as a stronger
+clean-room boundary. Its hosted run `29736140250` consumed only the pinned
+public release, invoked no consumer toolchain or Actions cache, and passed the
+documented path. ADR 0016 closes M4 on that technical evidence while recording
+`maintainerControlled: true`, `externalUserAttempt: false`, and zero qualifying
+independent-user attempts. ADR 0010's signed channel remains deferred. ADR 0015
+retains Velox and accepts the documented command and discovery collisions.

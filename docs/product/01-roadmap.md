@@ -135,7 +135,7 @@ published zero-cache pair result remains the performance source of truth.
 
 ## M4: Alpha Distribution
 
-Status: Active.
+Status: Complete.
 
 The repository owns an unsigned evidence pipeline. It produces two
 independent release builds, checks byte identity, emits checksums, a file-level
@@ -145,6 +145,14 @@ checkout-free consumer build. Tag evidence run `29714104653` and publication run
 commit `9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Public verifier run
 `29715002921` independently supplied the release digest, downloaded the public
 assets without checkout, and passed build, inspection, and startup-ready gates.
+
+The separate public `0disoft/velox-consumer-smoke` repository then consumed the
+pinned public release from a hosted clean runner without Velox source checkout,
+a consumer compiler, Node.js, package-manager commands, or Actions cache.
+[Run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250)
+passed every sidecar, CLI, deterministic-build, inspection, and startup check.
+Its evidence is deliberately fixed to `maintainerControlled: true` and
+`externalUserAttempt: false`.
 
 ADR 0011 now fixes the first distribution order: publish an explicitly unsigned
 developer preview, collect external acquisition evidence, and treat code signing
@@ -183,12 +191,13 @@ still needs accepted provider output and the approved publisher subject.
   diagnostics.
 - Directory asset tampering and branding limitations are prominent.
 
-### Remaining gates
+### Completion evidence
 
 The immutable tag, manual publication, public warnings, and no-checkout public
-verification are complete for `v0.5.10-alpha.1`. The only remaining M4 gate is
-to run the documented path from a repository and account not controlled by the
-implementation workflow.
+verification are complete for `v0.5.10-alpha.1`. ADR 0016 replaces the former
+independent-user M4 gate with a separate maintainer-controlled clean-room
+consumer gate. That gate passed, so M4 is complete. This does not create an
+independent user or prove adoption.
 
 The tag/version binding, public-download result schema, workflow, and external-
 attempt issue contract are implemented; the same-repository verifier is now
@@ -214,8 +223,8 @@ preparation remains fail-closed and dormant.
 
 ## M5: Product Decision
 
-Status: Not started. M3 is complete; M4 remains open only until an independent
-external-user attempt exists for the published unsigned preview.
+Status: Active. M4 is complete under ADR 0016. No qualifying independent-user
+attempt is currently recorded.
 
 Choose one:
 
@@ -229,9 +238,12 @@ security review findings, and the strength of the PWA and Neutralino
 counterarguments.
 
 The Wails cold-build result, two accepted M3 product decisions, bounded
-maintenance-cost record, and internal security review supply M5 inputs, not the
-product decision. Before M5 can start, the repository still needs an
-independent external-user attempt; public M4 distribution evidence now exists.
+maintenance-cost record, internal security review, and public M4 distribution
+evidence supply M5 inputs, not the product decision. M5 starts with zero
+independent-user attempts; that absence is negative market evidence, not a
+missing technical proof. A positive beta or broader-support decision must
+either obtain qualifying adoption evidence or explicitly accept the risk in a
+later ADR.
 The public identity decision is complete under ADR 0015 and is not a remaining
 gate. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
 attempts must now test whether its narrow portable-artifact boundary has real

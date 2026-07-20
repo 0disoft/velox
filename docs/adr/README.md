@@ -25,11 +25,12 @@ choice inside that scope and cannot silently add a product capability.
 | 0008 | Accepted | Pass structural simplicity only for the portable static-app topology and keep the PWA counterargument explicit |
 | 0009 | Accepted | Remove startup from the product headline and retain it as a release guardrail |
 | 0010 | Accepted for future signed channels; M4 gate superseded by 0011 | Separate GitHub build attestation from SignPath Authenticode signing and preserve both release lineages |
-| 0011 | Accepted | Publish an explicitly unsigned developer preview before provider onboarding or signing |
-| 0012 | Accepted | Bind the first preview tag to the embedded version and separate public-download evidence from an external-user attempt |
+| 0011 | Accepted; M4 completion criterion superseded by 0016 | Publish an explicitly unsigned developer preview before provider onboarding or signing |
+| 0012 | Accepted; external-user M4 gate superseded by 0016 | Bind the first preview tag to the embedded version and separate public-download evidence from an external-user attempt |
 | 0013 | Superseded by 0015 | Block a public executable under the colliding Velox working name |
 | 0014 | Superseded by 0015 | Adopt Actutum as the public product, command, module, schema, and release identity |
 | 0015 | Accepted | Retain Velox as the maintainer-approved product, command, module, schema, and release identity |
+| 0016 | Accepted | Complete M4 with maintainer-controlled clean-room distribution evidence and keep independent adoption as an M5 input |
 
 ## Lifecycle
 

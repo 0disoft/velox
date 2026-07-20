@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M3 complete; M4 unsigned public preview published and independently digest-bound inside the repository
+- Status: M4 complete; M5 active with clean-room evidence and zero independent-user attempts
 
 ## Validation Source of Truth
 
@@ -104,7 +104,7 @@ and downloads the ZIP, checksum, SPDX, and provenance assets from the public
 GitHub Release URL. It requires an independently supplied ZIP SHA-256, binds the
 tag to the release manifest and CLI version, builds twice, inspects, and reaches
 the startup-ready marker. Its schema fixes `externalUserAttempt` to `false`, so
-this same-repository check cannot satisfy the independent-user M4 gate.
+this same-repository check cannot prove independent adoption.
 
 The first public preview is
 [`v0.5.10-alpha.1`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.1)
@@ -115,6 +115,18 @@ run `29715002921` passed. The verifier downloaded SHA-256
 validated the sidecar evidence, built twice, inspected the output, and reached
 startup-ready without source checkout. This is current release evidence, not an
 external-user attempt or authenticated publisher identity.
+
+The separate public
+[`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
+repository consumes the pinned release without checking out Velox source.
+Hosted [run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250)
+at consumer commit `ed003602d65cbaef12bf95ee78b2cf16466bdfcd`
+validated every release sidecar, all seven public CLI paths, deterministic
+build output, inspection, and startup. The evidence records no consumer
+toolchain command and zero Actions cache upload bytes. ADR 0016 accepts this as
+the technical M4 distribution gate while requiring
+`maintainerControlled: true` and `externalUserAttempt: false`; it is not
+independent adoption evidence.
 
 The bounded M5 readiness records are `docs/product/maintenance-cost-v1.json`,
 `docs/product/04-maintenance-cost-record.md`, and

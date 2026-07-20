@@ -120,11 +120,46 @@ func TestExternalAttemptIssueContractRequiresIdentityAndSafeEvidence(t *testing.
 	for _, required := range []string{
 		"externalUserAttempt: false",
 		"An attempt can fail and still qualify",
-		"account, or repository that is not controlled",
+		"person, account, or repository",
+		"not controlled by the implementation workflow",
+		"ADR 0016 moves this evidence",
+		"must not manufacture independence",
 		"Do not paste local absolute paths",
 	} {
 		if !strings.Contains(doc, required) {
 			t.Errorf("external-attempt contract lacks %q", required)
+		}
+	}
+}
+
+func TestM4CleanRoomEvidenceDoesNotClaimIndependentAdoption(t *testing.T) {
+	checks := map[string][]string{
+		"README.md": {
+			"Status: M4 complete; M5 product decision active with no independent adoption recorded",
+			"0disoft/velox-consumer-smoke",
+			"29736140250",
+			"maintainerControlled: true",
+			"externalUserAttempt: false",
+		},
+		"VALIDATION.md": {
+			"M4 complete",
+			"ed003602d65cbaef12bf95ee78b2cf16466bdfcd",
+			"zero Actions cache upload bytes",
+			"independent adoption evidence",
+		},
+		"docs/adr/0016-separate-technical-distribution-from-independent-adoption.md": {
+			"M4 is therefore complete",
+			"sha256:0b2438041e312a49c934d0dd89676c0bf85d4404b13caef4956a7ee51295e0c4",
+			"count is zero",
+			"claim independent validation",
+		},
+	}
+	for relative, required := range checks {
+		data := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
+		for _, value := range required {
+			if !strings.Contains(data, value) {
+				t.Errorf("%s lacks clean-room evidence boundary %q", relative, value)
+			}
 		}
 	}
 }

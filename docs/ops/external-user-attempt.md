@@ -1,15 +1,22 @@
 # External User Attempt
 
-- Status: Contract ready; no qualifying attempt recorded
+- Status: M5 adoption contract ready; no qualifying attempt recorded
 - Owner: Project maintainer
-- Decision: ADR 0012
+- Decision: ADR 0012 and ADR 0016
 
 ## Purpose
 
-M4 needs evidence from a person, account, or repository that is not controlled
-by the implementation workflow. The repository-owned public-download workflow
-proves GitHub Release acquisition and execution, but it always records
-`externalUserAttempt: false` and cannot satisfy this gate by itself.
+Independent adoption needs evidence from a person, account, or repository that
+is not controlled by the implementation workflow. The repository-owned public-
+download workflow and the separate maintainer-controlled consumer repository
+prove GitHub Release acquisition and execution, but both record
+`externalUserAttempt: false` and cannot prove adoption.
+
+ADR 0016 moves this evidence from the technical M4 completion gate into M5.
+The current count is zero. The project must not manufacture independence by
+creating another maintainer account or repository. The absence of an external
+attempt is itself material product evidence for the M5 stop, continue, or
+reposition decision.
 
 ## Qualifying Attempt
 
@@ -53,7 +60,7 @@ assets.
 
 ## Maintainer Review
 
-Before counting an attempt toward M4, verify:
+Before counting an attempt as M5 adoption evidence, verify:
 
 1. The tag and digest identify an immutable public Velox release.
 2. The reporter is independent from the release workflow.

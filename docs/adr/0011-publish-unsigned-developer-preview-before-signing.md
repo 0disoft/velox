@@ -1,6 +1,6 @@
 # ADR 0011: Publish an unsigned developer preview before signing
 
-- Status: Accepted
+- Status: Accepted; M4 completion criterion superseded by ADR 0016
 - Date: 2026-07-18
 - Owner: Project maintainer
 

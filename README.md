@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M3 complete; M4 unsigned public preview published, external-user gate open
+- Status: M4 complete; M5 product decision active with no independent adoption recorded
 - Scope: general
 - Repository type: cli-tool
 
@@ -88,6 +88,7 @@ Explicitly deferred:
 - Unsigned preview decision: docs/adr/0011-publish-unsigned-developer-preview-before-signing.md
 - Preview identity decision: docs/adr/0012-bind-preview-version-and-public-download-evidence.md
 - Public-name decision: docs/adr/0015-retain-velox-public-identity.md
+- Distribution/adoption boundary: docs/adr/0016-separate-technical-distribution-from-independent-adoption.md
 - Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
 - External user attempt: docs/ops/external-user-attempt.md
 
@@ -125,13 +126,23 @@ publishable Wails cold-build gate and its narrowly defined structural-
 simplicity gate. Startup has been removed from the headline and retained as a
 release guardrail. M3's public benchmark deliverables and hosted evidence are
 complete. M4 has local and hosted unsigned alpha evidence, a published public
-developer preview, and same-repository public-download verification.
+developer preview, same-repository public-download verification, and a
+separate public clean-room consumer repository.
 Deterministic signing-input, lineage, and
 fail-closed Authenticode verification tooling remain dormant for a future
-signed channel. A real external-user attempt remains open before M5;
-provider-approved signing and authenticated provenance are not M4 gates. The
-published preview is `0.5.10-alpha.1`. Its no-checkout verification cannot count
-itself as an external-user attempt.
+signed channel. ADR 0016 closes M4 on technical distribution evidence and
+starts M5 with zero independent-user attempts recorded; provider-approved
+signing and authenticated provenance are not M4 gates. The published preview
+is `0.5.10-alpha.1`. Neither same-repository verification nor the
+maintainer-controlled consumer repository counts as independent adoption.
+
+The public
+[`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
+repository consumed only the pinned public release in hosted
+[run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250).
+It invoked no consumer compiler, Node.js, package manager, or Actions cache and
+passed release, deterministic-build, inspection, and startup checks. Its schema
+fixes `maintainerControlled: true` and `externalUserAttempt: false`.
 
 The bounded maintenance-cost snapshot and internal M4 security review are now
 complete M5 inputs. They explicitly record the maintained WebView2 fork,

@@ -23,8 +23,9 @@ penetration test, independent audit, malware analysis, Authenticode review, or
 claim that directory assets resist a local attacker. It satisfies the M5 input
 requirement for a bounded security review; it does not itself satisfy release
 acquisition or independent-use evidence. The repository-owned public-download
-gate was later completed by run `29715002921`; the independent external-user
-gate remains open.
+gate was later completed by run `29715002921`. ADR 0016 subsequently closed the
+technical M4 distribution milestone using maintainer-controlled clean-room run
+`29736140250`; no independent-user adoption evidence is recorded.
 
 ## Reviewed Flows
 

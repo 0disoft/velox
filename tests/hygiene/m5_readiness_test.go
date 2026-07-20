@@ -130,10 +130,11 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"public-download verifier exercised the supported path",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "01-roadmap.md"), []string{
-		"maintenance-cost record, and internal security review supply M5 inputs",
-		"public M4 distribution evidence now exists",
+		"maintenance-cost record, internal security review, and public M4 distribution",
+		"M5 starts with zero",
 		"public identity decision is complete under ADR 0015",
-		"independent external-user attempt",
+		"No qualifying independent-user",
+		"29736140250",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "ci.md"), []string{
 		"maintainer-owned direct pushes to `main`",
@@ -181,19 +182,23 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"developer preview",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
-		"Unsigned public preview published; independent external-user attempt pending",
+		"M4 unsigned distribution complete; M5 adoption evidence remains empty",
 		"ADR 0015 removes the replacement-name gate",
+		"maintainerControlled: true",
+		"29736140250",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"), []string{
 		"public-download",
 		"29715002921",
-		"independent external-user",
+		"29736140250",
+		"no independent-user adoption evidence",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "00-operational-contract.md"), []string{
-		"Unsigned public preview operational; independent external-user attempt pending",
+		"M4 unsigned distribution operational; M5 active with zero independent-user attempts",
 		"29714173324",
 		"29715002921",
-		"only remaining M4 operational gate",
+		"29736140250",
+		"externalUserAttempt: false",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "rollback.md"), []string{
 		"Active for unsigned developer-preview releases",
@@ -219,12 +224,16 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 			"needs M4 distribution evidence, external user attempts, a bounded",
 			"public executable blocked pending rename",
 			"identity decision, the public M4 distribution evidence",
+			"The only remaining M4 gate",
+			"M4 remains open only until",
 		},
 		filepath.Join(root, "docs", "ops", "release.md"): {
 			"create the candidate tag as a shortcut around the rename",
+			"independent external-user attempt pending",
 		},
 		filepath.Join(root, "docs", "ops", "00-operational-contract.md"): {
 			"No public distribution",
+			"only remaining M4 operational gate",
 		},
 		filepath.Join(root, "docs", "ops", "rollback.md"): {
 			"exercised it against a public tag",
@@ -248,6 +257,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		},
 		filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"): {
 			"does not close the separate M4",
+			"independent external-user gate remains open",
 		},
 		filepath.Join(root, "docs", "product", "04-maintenance-cost-record.md"): {
 			"first public preview requires",

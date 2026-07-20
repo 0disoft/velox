@@ -20,7 +20,7 @@ func TestUnsignedDeveloperPreviewPolicyKeepsSigningDeferred(t *testing.T) {
 			"deferred until a real adoption trigger",
 		},
 		"docs/ops/release.md": {
-			"Unsigned public preview published; independent external-user attempt pending",
+			"M4 unsigned distribution complete; M5 adoption evidence remains empty",
 			"ADR 0015 removes the replacement-name gate",
 			"The isolated publication job",
 			"alone receives `contents: write`",

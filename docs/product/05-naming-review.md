@@ -80,8 +80,9 @@ public identity.
 
 The name decision no longer blocks the developer preview, and public unsigned
 preview `v0.5.10-alpha.1` has been published with reproducible producer,
-checkout-free consumer, and same-repository public-download evidence. A
-qualifying independent external-user attempt remains the M4 completion gate; it
-is not a publication prerequisite. Formal trademark and distribution-channel
+checkout-free consumer, same-repository public-download, and separate
+maintainer-controlled clean-room evidence. ADR 0016 closes M4 without calling
+that evidence independent adoption. Independent adoption remains an M5 input,
+not a publication prerequisite. Formal trademark and distribution-channel
 review remain external gates if commercial or package-manager distribution
 begins.
