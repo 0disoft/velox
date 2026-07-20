@@ -116,7 +116,11 @@ That browser-process lifecycle is measured separately: repeated local smoke
 shows same-profile immediate relaunch and final profile release taking about
 seven seconds.
 
-When `VELOX_BENCH_PIPE` is set, the host also emits one versioned startup
+Benchmark-only host controls are ignored unless `VELOX_BENCH_MODE=1` is set.
+This explicit mode prevents accidental benchmark configuration from affecting
+ordinary application launches; it is not a security boundary against a parent
+process that already controls the complete child environment and command line.
+When both the mode and `VELOX_BENCH_PIPE` are set, the host emits one versioned startup
 timeline after the ready marker. It records host entry, configuration loading,
 WebView2 environment and controller creation, navigation dispatch, and the
 DOM-plus-two-animation-frame boundary with a process-local monotonic clock.

@@ -177,6 +177,7 @@ func securityHost(t *testing.T, repoRoot string) hostAdapter {
 		environment: func(profile string) []string {
 			return []string{
 				"VELOX_DATA_DIR=" + profile,
+				"VELOX_BENCH_MODE=1",
 				"VELOX_BENCH_POLICY_AUDIT=1",
 			}
 		},
@@ -207,6 +208,7 @@ func testUnavailableRuntime(t *testing.T, host hostAdapter, missingRuntime strin
 	cmd := exec.Command(host.executable, host.arguments(profile)...)
 	cmd.Env = append(os.Environ(),
 		append(host.environment(profile),
+			"VELOX_BENCH_MODE=1",
 			"VELOX_BENCH_WEBVIEW2_BROWSER_DIR="+missingRuntime,
 		)...,
 	)
@@ -254,6 +256,7 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	cmd := exec.Command(host.executable, host.arguments(profile)...)
 	cmd.Env = append(os.Environ(),
 		append(host.environment(profile),
+			"VELOX_BENCH_MODE=1",
 			"VELOX_BENCH_PIPE="+pipeName,
 			"VELOX_BENCH_EXIT_AFTER_READY=1",
 		)...,

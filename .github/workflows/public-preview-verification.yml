@@ -186,6 +186,7 @@ jobs:
           $firstArchive = Join-Path $project $first.result.archive
           Invoke-VeloxJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
 
+          $env:VELOX_BENCH_MODE = '1'
           $env:VELOX_BENCH_EXIT_AFTER_READY = '1'
           $env:VELOX_DATA_DIR = Join-Path $env:RUNNER_TEMP 'velox-public-preview-profile'
           $run = Invoke-VeloxJson -Arguments @('run', '--config', $config, '--out', (Join-Path $env:RUNNER_TEMP 'velox-public-preview-run'), '--json') -TimeoutSeconds 120

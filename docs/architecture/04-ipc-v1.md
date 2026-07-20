@@ -52,6 +52,12 @@ The JavaScript bridge and native dispatcher both enforce the concurrent-request
 limit. Native enforcement remains authoritative when application code calls the
 internal transport binding directly.
 
+The Windows transport invokes each native binding synchronously on WebView2's
+UI/COM event thread. Multiple unresolved JavaScript promises therefore do not
+run Win32 window operations in parallel. The dispatcher still protects its
+shutdown and in-flight bookkeeping so direct tests and any future transport
+adapter must preserve the same ownership invariant.
+
 ## Methods
 
 | Method | Permission | Parameters | Result |

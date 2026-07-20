@@ -7,6 +7,27 @@ import (
 	"github.com/0disoft/velox/internal/webview2"
 )
 
+func TestBenchmarkOptionsRequireExplicitMode(t *testing.T) {
+	values := map[string]string{
+		"VELOX_BENCH_PIPE":                 `\\.\pipe\velox-test`,
+		"VELOX_BENCH_POLICY_AUDIT":         "1",
+		"VELOX_BENCH_EXIT_AFTER_READY":     "1",
+		"VELOX_BENCH_WEBVIEW2_BROWSER_DIR": `C:\runtime`,
+	}
+	getenv := func(key string) string { return values[key] }
+
+	disabled := benchmarkOptionsFromEnvironment(getenv)
+	if disabled.enabled || disabled.pipeConfigured || disabled.policyAudit || disabled.exitAfterReady || disabled.browserExecutableFolder != "" {
+		t.Fatalf("benchmark options leaked without explicit mode: %+v", disabled)
+	}
+
+	values["VELOX_BENCH_MODE"] = "1"
+	enabled := benchmarkOptionsFromEnvironment(getenv)
+	if !enabled.enabled || !enabled.pipeConfigured || !enabled.policyAudit || !enabled.exitAfterReady || enabled.browserExecutableFolder != `C:\runtime` {
+		t.Fatalf("benchmark options not loaded in explicit mode: %+v", enabled)
+	}
+}
+
 func TestDefaultDataPathIsStableAndAppScoped(t *testing.T) {
 	base := t.TempDir()
 	t.Setenv("LocalAppData", base)

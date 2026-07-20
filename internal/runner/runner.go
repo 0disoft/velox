@@ -26,7 +26,7 @@ func (err *HostExitError) Error() string {
 	return fmt.Sprintf("host exited with code %d", err.Code)
 }
 
-func Execute(plan buildplan.Plan, launcher Launcher, stdout, stderr io.Writer) (Result, error) {
+func Execute(plan buildplan.Plan, launcher Launcher, stdout, stderr io.Writer) (result Result, resultErr error) {
 	if launcher == nil {
 		launcher = Launch
 	}
@@ -42,23 +42,21 @@ func Execute(plan buildplan.Plan, launcher Launcher, stdout, stderr io.Writer) (
 		}
 		return nil
 	}
+	defer func() {
+		resultErr = errors.Join(resultErr, removeConfig())
+	}()
 
 	encoder := json.NewEncoder(configFile)
 	encoder.SetEscapeHTML(false)
 	writeErr := encoder.Encode(runtimeconfig.FromManifest(snapshot.Manifest, snapshot.Manifest.Assets.Root))
 	closeErr := configFile.Close()
 	if writeErr != nil || closeErr != nil {
-		_ = removeConfig()
 		return Result{}, fmt.Errorf("write temporary runtime config: %w", errors.Join(writeErr, closeErr))
 	}
 
 	exitCode, launchErr := launcher(snapshot.HostPath, configPath, stdout, stderr)
-	cleanupErr := removeConfig()
 	if launchErr != nil {
-		return Result{ExitCode: exitCode}, errors.Join(launchErr, cleanupErr)
-	}
-	if cleanupErr != nil {
-		return Result{ExitCode: exitCode}, cleanupErr
+		return Result{ExitCode: exitCode}, launchErr
 	}
 	if exitCode != 0 {
 		return Result{ExitCode: exitCode}, &HostExitError{Code: exitCode}

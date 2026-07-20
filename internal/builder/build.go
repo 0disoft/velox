@@ -97,6 +97,20 @@ func Build(plan buildplan.Plan) (Result, error) {
 }
 
 func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error {
+	return promoteWithOperations(plan, stageDirectory, stageArchive, promotionOperations{
+		rename:    os.Rename,
+		remove:    os.Remove,
+		removeAll: os.RemoveAll,
+	})
+}
+
+type promotionOperations struct {
+	rename    func(string, string) error
+	remove    func(string) error
+	removeAll func(string) error
+}
+
+func promoteWithOperations(plan buildplan.Snapshot, stageDirectory, stageArchive string, operations promotionOperations) error {
 	backupDirectory := plan.AppDirectory + ".previous"
 	backupArchive := plan.ArchivePath + ".previous"
 	if exists(backupDirectory) || exists(backupArchive) {
@@ -111,45 +125,61 @@ func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error
 	directoryBackedUp := false
 	archiveBackedUp := false
 	if exists(plan.AppDirectory) {
-		if err := os.Rename(plan.AppDirectory, backupDirectory); err != nil {
+		if err := operations.rename(plan.AppDirectory, backupDirectory); err != nil {
 			return fmt.Errorf("backup previous app directory: %w", err)
 		}
 		directoryBackedUp = true
 	}
 	if exists(plan.ArchivePath) {
-		if err := os.Rename(plan.ArchivePath, backupArchive); err != nil {
+		if err := operations.rename(plan.ArchivePath, backupArchive); err != nil {
+			backupErr := fmt.Errorf("backup previous archive: %w", err)
 			if directoryBackedUp {
-				_ = os.Rename(backupDirectory, plan.AppDirectory)
+				if restoreErr := operations.rename(backupDirectory, plan.AppDirectory); restoreErr != nil {
+					return errors.Join(backupErr, fmt.Errorf("restore previous app directory after archive backup failure: %w", restoreErr))
+				}
 			}
-			return fmt.Errorf("backup previous archive: %w", err)
+			return backupErr
 		}
 		archiveBackedUp = true
 	}
-	rollback := func() {
-		_ = os.RemoveAll(plan.AppDirectory)
-		_ = os.Remove(plan.ArchivePath)
+	rollback := func() error {
+		var rollbackErr error
+		if err := operations.removeAll(plan.AppDirectory); err != nil {
+			rollbackErr = errors.Join(rollbackErr, fmt.Errorf("remove partially promoted app directory: %w", err))
+		}
+		if err := operations.remove(plan.ArchivePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			rollbackErr = errors.Join(rollbackErr, fmt.Errorf("remove partially promoted archive: %w", err))
+		}
 		if directoryBackedUp {
-			_ = os.Rename(backupDirectory, plan.AppDirectory)
+			if err := operations.rename(backupDirectory, plan.AppDirectory); err != nil {
+				rollbackErr = errors.Join(rollbackErr, fmt.Errorf("restore previous app directory: %w", err))
+			}
 		}
 		if archiveBackedUp {
-			_ = os.Rename(backupArchive, plan.ArchivePath)
+			if err := operations.rename(backupArchive, plan.ArchivePath); err != nil {
+				rollbackErr = errors.Join(rollbackErr, fmt.Errorf("restore previous archive: %w", err))
+			}
+		}
+		return rollbackErr
+	}
+	if err := operations.rename(stageDirectory, plan.AppDirectory); err != nil {
+		return errors.Join(fmt.Errorf("promote app directory: %w", err), rollback())
+	}
+	if err := operations.rename(stageArchive, plan.ArchivePath); err != nil {
+		return errors.Join(fmt.Errorf("promote archive: %w", err), rollback())
+	}
+	var cleanupErr error
+	if directoryBackedUp {
+		if err := operations.removeAll(backupDirectory); err != nil {
+			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("remove previous app directory after promotion: %w", err))
 		}
 	}
-	if err := os.Rename(stageDirectory, plan.AppDirectory); err != nil {
-		rollback()
-		return fmt.Errorf("promote app directory: %w", err)
-	}
-	if err := os.Rename(stageArchive, plan.ArchivePath); err != nil {
-		rollback()
-		return fmt.Errorf("promote archive: %w", err)
-	}
-	if directoryBackedUp {
-		_ = os.RemoveAll(backupDirectory)
-	}
 	if archiveBackedUp {
-		_ = os.Remove(backupArchive)
+		if err := operations.remove(backupArchive); err != nil && !errors.Is(err, os.ErrNotExist) {
+			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("remove previous archive after promotion: %w", err))
+		}
 	}
-	return nil
+	return cleanupErr
 }
 
 func validateExistingOutput(path string, wantDirectory bool) error {

@@ -46,6 +46,7 @@ func TestPublicPreviewWorkflowUsesOnlyPublishedAssetsAndVelox(t *testing.T) {
 		"Invoke-VeloxJson -Arguments @('build'",
 		"Invoke-VeloxJson -Arguments @('inspect'",
 		"Invoke-VeloxJson -Arguments @('run'",
+		"VELOX_BENCH_MODE",
 		"VELOX_BENCH_EXIT_AFTER_READY",
 		"window.__veloxReady(\"dom-2raf\")",
 		"$process.WaitForExit($TimeoutSeconds * 1000)",

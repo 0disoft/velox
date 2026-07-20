@@ -73,6 +73,8 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("map virtual asset host: %w", err)
 	}
+	// The WebView2 message callback invokes this binding synchronously on the
+	// UI/COM thread. Keep native window dispatch here and do not move it to a goroutine.
 	if err := view.Bind("__veloxInvoke", func(request json.RawMessage) ipc.Response {
 		return runtime.dispatcher.Dispatch(request)
 	}); err != nil {

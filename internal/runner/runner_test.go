@@ -72,6 +72,25 @@ func TestExecuteCleansConfigWhenHostCannotStart(t *testing.T) {
 	}
 }
 
+func TestExecuteCleansConfigWhenLauncherPanics(t *testing.T) {
+	plan := runnerPlan(t)
+	var observedPath string
+	func() {
+		defer func() {
+			if recovered := recover(); recovered != "launcher panic" {
+				t.Fatalf("panic = %v, want launcher panic", recovered)
+			}
+		}()
+		_, _ = Execute(plan, func(hostPath, configPath string, stdout, stderr io.Writer) (int, error) {
+			observedPath = configPath
+			panic("launcher panic")
+		}, io.Discard, io.Discard)
+	}()
+	if _, err := os.Stat(observedPath); !os.IsNotExist(err) {
+		t.Fatalf("temporary config remained after launcher panic: %v", err)
+	}
+}
+
 func runnerPlan(t *testing.T) buildplan.Plan {
 	t.Helper()
 	root := t.TempDir()
@@ -83,7 +102,7 @@ func runnerPlan(t *testing.T) buildplan.Plan {
 		t.Fatal(err)
 	}
 	digest := sha256.Sum256([]byte("host"))
-	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest)
+	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.2","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest)
 	if err := os.WriteFile(filepath.Join(filepath.Dir(host), "velox-host.json"), []byte(metadata), 0o644); err != nil {
 		t.Fatal(err)
 	}

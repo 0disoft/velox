@@ -18,8 +18,9 @@ func main() {
 }
 
 func run(args []string) int {
-	timeline := benchmarker.NewTimelineRecorder(os.Getenv(benchmarker.PipeEnvironment) != "")
-	shutdownTimeline := benchmarker.NewShutdownTimelineRecorder(os.Getenv(benchmarker.PipeEnvironment) != "")
+	benchmark := benchmarkOptionsFromEnvironment(os.Getenv)
+	timeline := benchmarker.NewTimelineRecorder(benchmark.pipeConfigured)
+	shutdownTimeline := benchmarker.NewShutdownTimelineRecorder(benchmark.pipeConfigured)
 	flags := flag.NewFlagSet("velox-host", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	configPath := flags.String("config", "velox.runtime.json", "path to the external runtime configuration")
@@ -45,7 +46,7 @@ func run(args []string) int {
 	}
 
 	var runtime *webview2.Runtime
-	audit := newPolicyAudit(os.Getenv("VELOX_BENCH_POLICY_AUDIT") == "1")
+	audit := newPolicyAudit(benchmark.policyAudit)
 	timeline.Mark("runtime-open-started")
 	runtime, err = webview2.Open(webview2.Config{
 		Title:                   cfg.App.Name,
@@ -55,7 +56,7 @@ func run(args []string) int {
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
 		DataPath:                dataPath,
-		BrowserExecutableFolder: os.Getenv("VELOX_BENCH_WEBVIEW2_BROWSER_DIR"),
+		BrowserExecutableFolder: benchmark.browserExecutableFolder,
 		AssetRoot:               cfg.AssetRoot,
 		EntryPath:               cfg.EntryPath,
 		Debug:                   *debug,
@@ -65,6 +66,9 @@ func run(args []string) int {
 	}, func(phase string) error {
 		if audit.enabled {
 			audit.markIPCReady(phase)
+			return nil
+		}
+		if !benchmark.enabled {
 			return nil
 		}
 		browserProcessID, err := runtime.BrowserProcessID()
@@ -78,7 +82,7 @@ func run(args []string) int {
 		if err := timeline.Emit(os.Stderr); err != nil {
 			return err
 		}
-		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {
+		if benchmark.exitAfterReady {
 			runtime.Close()
 		}
 		return nil
@@ -100,7 +104,7 @@ func run(args []string) int {
 		if err := benchmarker.NotifyReady("security-ok", browserProcessID); err != nil {
 			fmt.Fprintf(os.Stderr, "velox-host: policy audit marker: %v\n", err)
 		}
-		if os.Getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1" {
+		if benchmark.exitAfterReady {
 			runtime.Close()
 		}
 	}
@@ -112,6 +116,27 @@ func run(args []string) int {
 		return 6
 	}
 	return 0
+}
+
+type benchmarkOptions struct {
+	enabled                 bool
+	pipeConfigured          bool
+	policyAudit             bool
+	exitAfterReady          bool
+	browserExecutableFolder string
+}
+
+func benchmarkOptionsFromEnvironment(getenv func(string) string) benchmarkOptions {
+	if getenv("VELOX_BENCH_MODE") != "1" {
+		return benchmarkOptions{}
+	}
+	return benchmarkOptions{
+		enabled:                 true,
+		pipeConfigured:          getenv(benchmarker.PipeEnvironment) != "",
+		policyAudit:             getenv("VELOX_BENCH_POLICY_AUDIT") == "1",
+		exitAfterReady:          getenv("VELOX_BENCH_EXIT_AFTER_READY") == "1",
+		browserExecutableFolder: getenv("VELOX_BENCH_WEBVIEW2_BROWSER_DIR"),
+	}
 }
 
 func defaultDataPath(appID string) (string, error) {

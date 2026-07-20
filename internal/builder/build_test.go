@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -155,6 +156,109 @@ func TestBuildRejectsInvalidExistingArchiveBeforePromotion(t *testing.T) {
 	}
 }
 
+func TestPromoteReportsPrimaryAndRollbackFailures(t *testing.T) {
+	root := t.TempDir()
+	plan := buildplan.Snapshot{
+		AppDirectory: filepath.Join(root, "app"),
+		ArchivePath:  filepath.Join(root, "app.zip"),
+	}
+	if err := os.Mkdir(plan.AppDirectory, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFixture(t, plan.ArchivePath, []byte("previous"))
+
+	promoteErr := errors.New("promote failed")
+	removeErr := errors.New("remove failed")
+	restoreErr := errors.New("restore failed")
+	stageDirectory := filepath.Join(root, "stage-app")
+	stageArchive := filepath.Join(root, "stage-app.zip")
+	err := promoteWithOperations(plan, stageDirectory, stageArchive, promotionOperations{
+		rename: func(source, destination string) error {
+			switch source {
+			case stageDirectory:
+				return promoteErr
+			case plan.AppDirectory + ".previous":
+				return restoreErr
+			default:
+				return nil
+			}
+		},
+		removeAll: func(path string) error {
+			if path == plan.AppDirectory {
+				return removeErr
+			}
+			return nil
+		},
+		remove: func(string) error { return nil },
+	})
+	for _, expected := range []error{promoteErr, removeErr, restoreErr} {
+		if !errors.Is(err, expected) {
+			t.Fatalf("promote error %v does not retain %v", err, expected)
+		}
+	}
+}
+
+func TestPromoteReportsArchiveBackupAndDirectoryRestoreFailures(t *testing.T) {
+	root := t.TempDir()
+	plan := buildplan.Snapshot{
+		AppDirectory: filepath.Join(root, "app"),
+		ArchivePath:  filepath.Join(root, "app.zip"),
+	}
+	if err := os.Mkdir(plan.AppDirectory, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFixture(t, plan.ArchivePath, []byte("previous"))
+
+	backupErr := errors.New("archive backup failed")
+	restoreErr := errors.New("directory restore failed")
+	err := promoteWithOperations(plan, filepath.Join(root, "stage-app"), filepath.Join(root, "stage-app.zip"), promotionOperations{
+		rename: func(source, destination string) error {
+			switch source {
+			case plan.ArchivePath:
+				return backupErr
+			case plan.AppDirectory + ".previous":
+				return restoreErr
+			default:
+				return nil
+			}
+		},
+		removeAll: func(string) error { return nil },
+		remove:    func(string) error { return nil },
+	})
+	for _, expected := range []error{backupErr, restoreErr} {
+		if !errors.Is(err, expected) {
+			t.Fatalf("backup error %v does not retain %v", err, expected)
+		}
+	}
+}
+
+func TestPromoteReportsPreviousOutputCleanupFailure(t *testing.T) {
+	root := t.TempDir()
+	plan := buildplan.Snapshot{
+		AppDirectory: filepath.Join(root, "app"),
+		ArchivePath:  filepath.Join(root, "app.zip"),
+	}
+	if err := os.Mkdir(plan.AppDirectory, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFixture(t, plan.ArchivePath, []byte("previous"))
+
+	cleanupErr := errors.New("cleanup failed")
+	err := promoteWithOperations(plan, filepath.Join(root, "stage-app"), filepath.Join(root, "stage-app.zip"), promotionOperations{
+		rename: func(string, string) error { return nil },
+		removeAll: func(path string) error {
+			if path == plan.AppDirectory+".previous" {
+				return cleanupErr
+			}
+			return nil
+		},
+		remove: func(string) error { return nil },
+	})
+	if !errors.Is(err, cleanupErr) {
+		t.Fatalf("promote cleanup error = %v, want %v", err, cleanupErr)
+	}
+}
+
 func fixture(t *testing.T) (string, string, string) {
 	t.Helper()
 	root := t.TempDir()
@@ -177,7 +281,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.1","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.2","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {
