@@ -1,6 +1,6 @@
 # Performance Budget
 
-- Status: Draft
+- Status: M3 cold-build gate passed; startup guardrail active
 - Owner: Project maintainer
 
 ## Headline Metrics
@@ -166,9 +166,10 @@ artifact inspection or version queries. The three-sample smoke preserves any
 diagnostic result, while the ten-sample gate requires every gate to pass.
 
 `workflowDeclaredActionsCacheUploadBytes` is a workflow-contract field, not a
-local measurement. A future hosted workflow must contain no cache action and
-must preserve the workflow source with the raw result before this field
-supports a public cache claim.
+local measurement. The hosted consumer workflow contains no cache action, and
+repository hygiene tests preserve that contract. The field supports only the
+declared cache-upload boundary; it is not a working-set, transfer-byte, or
+Actions billing measurement.
 
 The result contract records the monotonic clock, exact timing boundaries,
 excluded work, zero warmups, serial concurrency, fixture digest, output state,

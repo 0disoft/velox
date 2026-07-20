@@ -122,6 +122,12 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"63 job-minutes",
 		"Invented person-hours are not",
 		"M5 must not read fast consumer builds",
+		"first public preview required",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "03-risk-register.md"), []string{
+		"| R-008 | Full benchmark CI consumes excessive Actions resources | Medium | Medium | Mitigated |",
+		"| R-010 | External WebView2 policy or runtime availability blocks users | Medium | High | Mitigated |",
+		"public-download verifier exercised the supported path",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "01-roadmap.md"), []string{
 		"maintenance-cost record, and internal security review supply M5 inputs",
@@ -137,6 +143,19 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"not an automated drift check",
 		"Before beta or external contributors receive write access",
 		"must not claim branch protection before",
+		"Cross-framework immediate-relaunch cause classification",
+		"public-alpha availability does not change that evidence",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "engineering", "03-performance-budget.md"), []string{
+		"M3 cold-build gate passed; startup guardrail active",
+		"hosted consumer workflow contains no cache action",
+		"not a working-set, transfer-byte, or",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "engineering", "06-dependency-and-change-policy.md"), []string{
+		"replaces that module",
+		"third_party/go-webview2",
+		"`cmd/velox-host` composes that",
+		"not a disposable feasibility spike",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "02-spec.md"), []string{
 		"Public name: Velox",
@@ -164,6 +183,11 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
 		"Unsigned public preview published; independent external-user attempt pending",
 		"ADR 0015 removes the replacement-name gate",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"), []string{
+		"public-download",
+		"29715002921",
+		"independent external-user",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "00-operational-contract.md"), []string{
 		"Unsigned public preview operational; independent external-user attempt pending",
@@ -207,6 +231,26 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		},
 		filepath.Join(root, "docs", "product", "05-naming-review.md"): {
 			"The first unpublished",
+		},
+		filepath.Join(root, "docs", "product", "03-risk-register.md"): {
+			"| R-008 | Full benchmark CI consumes excessive Actions resources | Medium | Medium | Open |",
+			"| R-010 | External WebView2 policy or runtime availability blocks users | Medium | High | Open |",
+		},
+		filepath.Join(root, "docs", "engineering", "03-performance-budget.md"): {
+			"A future hosted workflow must",
+		},
+		filepath.Join(root, "docs", "ops", "ci.md"): {
+			"remains unpublished until immutable release",
+		},
+		filepath.Join(root, "docs", "engineering", "06-dependency-and-change-policy.md"): {
+			"not yet for the product host",
+			"confined to `cmd/velox-host` during M0",
+		},
+		filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"): {
+			"does not close the separate M4",
+		},
+		filepath.Join(root, "docs", "product", "04-maintenance-cost-record.md"): {
+			"first public preview requires",
 		},
 	} {
 		data, err := os.ReadFile(path)

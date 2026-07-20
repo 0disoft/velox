@@ -1,6 +1,6 @@
 # Dependency and Change Policy
 
-- Status: Draft
+- Status: Active
 - Owner: Project maintainer
 
 ## Goal
@@ -93,16 +93,21 @@ Reject a dependency that:
 
 ## Current State
 
-M0 pins `github.com/jchv/go-webview2` to commit `56598839c808` through pseudo
-version `v0.0.0-20260205173254-56598839c808`. It is MIT licensed, pure Go, and
-loads its embedded WebView2 loader through `go-winloader`. Wails also uses this
-binding on Windows, so the dependency itself is not a performance moat.
+The product pins `github.com/jchv/go-webview2` to commit `56598839c808` through
+pseudo version `v0.0.0-20260205173254-56598839c808` and replaces that module
+with the reviewed narrow fork in `third_party/go-webview2`. The upstream code is
+MIT licensed and pure Go, and loads its embedded WebView2 loader through
+`go-winloader`. Wails also uses the upstream binding on Windows, so the
+dependency itself is not a performance moat.
 
-The binding is acceptable for a startup feasibility spike but not yet for the
-product host. Its public API does not expose all virtual-origin and browser
-policy controls required by the security baseline, and its constructor enables
-clipboard-read permission. Removal cost is limited because all usage is
-confined to `cmd/velox-host` during M0.
+The fork exposes the virtual-origin and browser-policy controls required by the
+product host, denies browser permissions by default, and adds bounded message,
+navigation, popup, download, lifecycle, and COM cleanup behavior. Production
+usage is isolated behind `internal/webview2`; `cmd/velox-host` composes that
+adapter instead of owning the binding contract directly. The fork is now a
+maintained security and lifecycle surface, not a disposable feasibility spike.
+`third_party/go-webview2/VELOX_FORK.md` owns its patch inventory and forbids
+mechanical upstream merges.
 
 The retired C++23 reference environment used Pixi, Clang, CMake, lld, Ninja,
 the WebView2 SDK, Visual Studio headers, and the Windows SDK. Those dependencies

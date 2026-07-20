@@ -66,7 +66,7 @@ to upload zero Actions cache bytes.
 
 ## Manual Preview Work
 
-The first public preview requires three maintainer transitions:
+The first public preview required three maintainer transitions:
 
 1. Push the immutable alpha tag.
 2. Dispatch the unsigned-preview publication gate with its exact confirmation.

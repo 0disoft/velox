@@ -69,9 +69,11 @@ The full cross-framework benchmark matrix does not run on every pull request.
   preserves the lifecycle evidence for 90 days even when a sample fails. The
   weekly schedule also aggregates at most twelve history points. Release
   candidate tags use the same ten-sample lifecycle path without history
-  aggregation. Cross-framework startup comparison lives in the separate
-  `velox-bench` repository and remains unpublished until immutable release
-  inputs are available.
+  aggregation. Cross-framework immediate-relaunch cause classification lives in
+  the separate `velox-bench` repository. It is not a product startup ranking:
+  its adapters share a bounded ready marker but not equivalent internal phase
+  instrumentation, and public-alpha availability does not change that evidence
+  boundary.
 - Zero-cache and recommended-cache benchmark suites.
 - Wails, Neutralino, and Tauri comparison adapters.
 - Software bill of materials and release checksum checks.

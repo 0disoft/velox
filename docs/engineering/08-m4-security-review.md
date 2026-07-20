@@ -21,8 +21,10 @@ test or independent audit.
 This is a repository-internal source and contract review. It is not a
 penetration test, independent audit, malware analysis, Authenticode review, or
 claim that directory assets resist a local attacker. It satisfies the M5 input
-requirement for a bounded security review; it does not close the separate M4
-public-download or external-user gates.
+requirement for a bounded security review; it does not itself satisfy release
+acquisition or independent-use evidence. The repository-owned public-download
+gate was later completed by run `29715002921`; the independent external-user
+gate remains open.
 
 ## Reviewed Flows
 
