@@ -148,10 +148,12 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"released Go internet-speed-test CLI",
 		"ships `velox.exe`",
 		"Selected public name: Velox",
+		"unsigned developer preview is `0.5.10-alpha.1`",
 		"project maintainer never approved",
 		"changing the product away from Velox",
 		"accepts the developer-discovery, PATH, package, and support-search",
 		"Actutum is not an alias",
+		"not a publication prerequisite",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0015-retain-velox-public-identity.md"), []string{
 		"Retain **Velox**",
@@ -162,6 +164,18 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
 		"Unsigned public preview published; independent external-user attempt pending",
 		"ADR 0015 removes the replacement-name gate",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "00-operational-contract.md"), []string{
+		"Unsigned public preview operational; independent external-user attempt pending",
+		"29714173324",
+		"29715002921",
+		"only remaining M4 operational gate",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "rollback.md"), []string{
+		"Active for unsigned developer-preview releases",
+		"v0.5.10-alpha.1",
+		"No rollback incident",
+		"rollback controls remain dormant",
 	})
 	assertSourceMarkers(t, filepath.Join(root, ".github", "workflows", "alpha-evidence.yml"), []string{
 		"if: github.repository == '0disoft/velox' && github.event_name == 'workflow_dispatch' && inputs.publish_preview",
@@ -184,6 +198,15 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		},
 		filepath.Join(root, "docs", "ops", "release.md"): {
 			"create the candidate tag as a shortcut around the rename",
+		},
+		filepath.Join(root, "docs", "ops", "00-operational-contract.md"): {
+			"No public distribution",
+		},
+		filepath.Join(root, "docs", "ops", "rollback.md"): {
+			"exercised it against a public tag",
+		},
+		filepath.Join(root, "docs", "product", "05-naming-review.md"): {
+			"The first unpublished",
 		},
 	} {
 		data, err := os.ReadFile(path)

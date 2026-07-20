@@ -1,6 +1,6 @@
 # Operational Contract
 
-- Status: Pre-implementation
+- Status: Unsigned public preview operational; independent external-user attempt pending
 - Primary owner: Project maintainer
 
 ## Product Shape
@@ -68,9 +68,11 @@ are implemented and tested.
 
 The local runtime, deterministic unsigned release builder, hosted alpha
 evidence workflow, guarded prerelease publisher, and no-checkout public-download
-verifier exist. ADR 0012 selects `0.5.10-alpha.1` and the external-user evidence
-contract. No public distribution, executed public-download result, qualifying
-external-user attempt, or release operational history exists. ADR 0010's signed
-channel remains deferred. ADR 0015 retains Velox and accepts the documented
-command and discovery collisions, so no repository rename remains in this
-operational gate.
+verifier exist. Publication run `29714173324` created immutable public preview
+`v0.5.10-alpha.1`, and public-download verification run `29715002921` verified
+its release assets, built a consumer project twice, inspected the result, and
+reached startup-ready. That verifier is controlled by this repository, so the
+only remaining M4 operational gate is a qualifying independent external-user
+attempt. ADR 0010's signed channel remains deferred. ADR 0015 retains Velox and
+accepts the documented command and discovery collisions, so no repository
+rename remains in this operational gate.

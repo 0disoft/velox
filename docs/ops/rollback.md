@@ -1,6 +1,6 @@
 # Rollback
 
-- Status: Pre-implementation
+- Status: Active for unsigned developer-preview releases
 - Owner: Project maintainer
 
 ## Scope
@@ -59,7 +59,10 @@ runbook.
 ## Current Gap
 
 ADR 0011 and `docs/ops/release.md` define the unsigned developer-preview
-boundary. The repository implements a guarded publication job but has not
-exercised it against a public tag. ADR 0010 and `docs/ops/signing.md` define the
-dormant future signed-channel boundary; no signed artifact or provider
+boundary. The guarded publication job created immutable public preview
+`v0.5.10-alpha.1`, and the repository-owned public verifier exercised its
+download, checksum, build, inspection, and startup path. No rollback incident
+has required selecting an earlier release or publishing a forward fix. ADR 0010
+and `docs/ops/signing.md` define the future signed channel; signed-channel
+rollback controls remain dormant because no signed artifact or provider
 onboarding exists.

@@ -52,8 +52,8 @@ the bare namespace is crowded.
 
 The selected public name remains **Velox**. The public command is `velox`, the
 Windows CLI is `velox.exe`, and the generic host is `velox-host.exe`. The Go
-module and repository remain `github.com/0disoft/velox`. The first unpublished
-candidate remains `0.5.10-alpha.1`.
+module and repository remain `github.com/0disoft/velox`. The first public
+unsigned developer preview is `0.5.10-alpha.1`.
 
 This decision accepts the developer-discovery, PATH, package, and support-search
 risks described above. It does not deny those collisions and is not a legal or
@@ -72,13 +72,16 @@ name, command, executable, schema namespace, or migration target.
 No public release was created during the attempted rename. Maintained source,
 workflows, schemas, examples, benchmark adapters, and release evidence therefore
 return directly to their Velox identifiers without compatibility aliases.
-Published historical benchmark artifacts remain byte-for-byte unchanged.
+Published historical benchmark artifacts remain byte-for-byte unchanged. The
+later Velox release was published only after ADR 0015 restored and fixed the
+public identity.
 
 ## Publication gate
 
-The name decision no longer blocks the developer preview. Publication still
-requires the existing reproducible release bundle, immutable tag, checkout-free
-consumer evidence, public-download verification, warning disclosures, and an
-independent external-user attempt. Formal trademark and distribution-channel
+The name decision no longer blocks the developer preview, and public unsigned
+preview `v0.5.10-alpha.1` has been published with reproducible producer,
+checkout-free consumer, and same-repository public-download evidence. A
+qualifying independent external-user attempt remains the M4 completion gate; it
+is not a publication prerequisite. Formal trademark and distribution-channel
 review remain external gates if commercial or package-manager distribution
 begins.
