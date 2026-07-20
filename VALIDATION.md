@@ -116,9 +116,9 @@ validated the sidecar evidence, built twice, inspected the output, and reached
 startup-ready without source checkout. This is current release evidence, not an
 external-user attempt or authenticated publisher identity.
 
-The separate public
+The now-archived separate public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
-repository consumes the pinned release without checking out Velox source.
+repository consumed the pinned release without checking out Velox source.
 Hosted [run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250)
 at consumer commit `ed003602d65cbaef12bf95ee78b2cf16466bdfcd`
 validated every release sidecar, all seven public CLI paths, deterministic
@@ -126,7 +126,8 @@ build output, inspection, and startup. The evidence records no consumer
 toolchain command and zero Actions cache upload bytes. ADR 0016 accepts this as
 the technical M4 distribution gate while requiring
 `maintainerControlled: true` and `externalUserAttempt: false`; it is not
-independent adoption evidence.
+independent adoption evidence. The repository is retained read-only as the
+one-shot receipt; future release verification stays in this repository.
 
 The bounded M5 readiness records are `docs/product/maintenance-cost-v1.json`,
 `docs/product/04-maintenance-cost-record.md`, and

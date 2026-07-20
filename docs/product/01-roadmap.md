@@ -146,13 +146,14 @@ commit `9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Public verifier run
 `29715002921` independently supplied the release digest, downloaded the public
 assets without checkout, and passed build, inspection, and startup-ready gates.
 
-The separate public `0disoft/velox-consumer-smoke` repository then consumed the
+The now-archived public `0disoft/velox-consumer-smoke` repository consumed the
 pinned public release from a hosted clean runner without Velox source checkout,
 a consumer compiler, Node.js, package-manager commands, or Actions cache.
 [Run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250)
 passed every sidecar, CLI, deterministic-build, inspection, and startup check.
 Its evidence is deliberately fixed to `maintainerControlled: true` and
-`externalUserAttempt: false`.
+`externalUserAttempt: false`. It is retained read-only as a one-shot receipt;
+future release verification remains in Velox.
 
 ADR 0011 now fixes the first distribution order: publish an explicitly unsigned
 developer preview, collect external acquisition evidence, and treat code signing

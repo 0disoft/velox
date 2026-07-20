@@ -49,14 +49,16 @@ verified the sidecars, built twice, inspected, and reached startup-ready. This
 is same-repository public-download evidence, not an independent external-user
 attempt or authenticated attestation.
 
-The separate public
+The now-archived public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
-repository consumes only the pinned public release. Hosted
+repository consumed only the pinned public release. Hosted
 [run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250)
 passed the full public CLI path with no consumer toolchain command and zero
 Actions cache upload bytes. ADR 0016 accepts this maintainer-controlled clean-
 room result as the final technical M4 gate while preserving
 `maintainerControlled: true` and `externalUserAttempt: false`.
+It remains read-only as a one-shot receipt. Future release verification uses
+the repository-owned public-preview workflow instead of advancing that pin.
 
 ## Proposed Release Unit
 
@@ -196,11 +198,10 @@ rebuild different bytes under the same version.
 
 ## Post-Release Verification
 
-After the first preview is published, a separate maintainer-controlled
-repository must verify download, checksum, version inspection, hello build, and
-application startup from the public asset. Same-workflow artifact consumption
-is necessary prepublication evidence but does not satisfy this clean-room M4
-gate. Run `29736140250` completed that post-release gate.
+For the first preview, a separate maintainer-controlled repository verified
+download, checksum, version inspection, hello build, and application startup
+from the public asset. Run `29736140250` completed that one-shot post-release
+gate. The repository is now archived; this is not a recurring release design.
 
 The repository-owned `Public preview verification` workflow covers the public
 URL, independently supplied digest, checksum, SPDX, provenance, tag/version,

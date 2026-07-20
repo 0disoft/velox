@@ -72,10 +72,13 @@ verifier exist. Publication run `29714173324` created immutable public preview
 `v0.5.10-alpha.1`, and public-download verification run `29715002921` verified
 its release assets, built a consumer project twice, inspected the result, and
 reached startup-ready. That verifier is controlled by this repository, so the
-separate `0disoft/velox-consumer-smoke` repository was added as a stronger
-clean-room boundary. Its hosted run `29736140250` consumed only the pinned
-public release, invoked no consumer toolchain or Actions cache, and passed the
-documented path. ADR 0016 closes M4 on that technical evidence while recording
-`maintainerControlled: true`, `externalUserAttempt: false`, and zero qualifying
-independent-user attempts. ADR 0010's signed channel remains deferred. ADR 0015
+now-archived `0disoft/velox-consumer-smoke` repository supplied a stronger
+one-shot clean-room boundary. Its hosted run `29736140250` consumed only the
+pinned public release, invoked no consumer toolchain or Actions cache, and
+passed the documented path. ADR 0016 closes M4 on that technical evidence
+while recording `maintainerControlled: true`, `externalUserAttempt: false`, and
+zero qualifying independent-user attempts. ADR 0010's signed channel remains
+deferred. ADR 0015
 retains Velox and accepts the documented command and discovery collisions.
+Future public-release verification stays in Velox rather than reviving the
+archived consumer repository.

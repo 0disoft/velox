@@ -49,6 +49,11 @@ zero Actions cache upload bytes, release source commit
 `9f10c545b6bde23d2c3dad5bbb12bffdac513712`, and release ZIP SHA-256
 `5df53090e1e67ce54c8639f061ffc7b03b7c3aa38f95a725c29342cfaff73b68`.
 
+After recording that one-shot evidence, the consumer repository was archived.
+It remains public and read-only so the workflow source, commit, and run link are
+preserved. Future release verification belongs to the main Velox repository;
+the archived lock and result must not be advanced to another release.
+
 M4 is therefore complete.
 
 Independent-user attempts remain a separate M5 adoption input. The current

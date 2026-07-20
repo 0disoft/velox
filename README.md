@@ -136,13 +136,15 @@ signing and authenticated provenance are not M4 gates. The published preview
 is `0.5.10-alpha.1`. Neither same-repository verification nor the
 maintainer-controlled consumer repository counts as independent adoption.
 
-The public
+The now-archived public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
-repository consumed only the pinned public release in hosted
+repository consumed only the pinned public release once in hosted
 [run 29736140250](https://github.com/0disoft/velox-consumer-smoke/actions/runs/29736140250).
 It invoked no consumer compiler, Node.js, package manager, or Actions cache and
 passed release, deterministic-build, inspection, and startup checks. Its schema
 fixes `maintainerControlled: true` and `externalUserAttempt: false`.
+The repository is retained read-only as historical evidence; ongoing public-
+release verification remains in Velox itself.
 
 The bounded maintenance-cost snapshot and internal M4 security review are now
 complete M5 inputs. They explicitly record the maintained WebView2 fork,

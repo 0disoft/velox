@@ -72,8 +72,9 @@ build. The alpha-evidence path now emits checksums, SPDX, and an unsigned
 provenance statement. The first public artifact is the explicitly unsigned
 `0.5.10-alpha.1` developer preview. Its immutable tag, public publication, and
 same-repository no-checkout verification are complete. A separate public,
-maintainer-controlled clean-room consumer run also completed the documented
-public-release path without Velox source or a consumer toolchain. ADR 0016
+now-archived maintainer-controlled clean-room consumer run also completed the
+documented public-release path without Velox source or a consumer toolchain.
+ADR 0016
 therefore closes the technical M4 distribution milestone while recording zero
 independent-user attempts. Signatures and authenticated provenance are future-
 channel work; sidecar metadata alone is not a trust anchor.

@@ -140,18 +140,25 @@ func TestM4CleanRoomEvidenceDoesNotClaimIndependentAdoption(t *testing.T) {
 			"29736140250",
 			"maintainerControlled: true",
 			"externalUserAttempt: false",
+			"now-archived public",
+			"ongoing public-",
+			"release verification remains in Velox itself",
 		},
 		"VALIDATION.md": {
 			"M4 complete",
 			"ed003602d65cbaef12bf95ee78b2cf16466bdfcd",
 			"zero Actions cache upload bytes",
 			"independent adoption evidence",
+			"retained read-only as the",
+			"one-shot receipt",
 		},
 		"docs/adr/0016-separate-technical-distribution-from-independent-adoption.md": {
 			"M4 is therefore complete",
 			"sha256:0b2438041e312a49c934d0dd89676c0bf85d4404b13caef4956a7ee51295e0c4",
 			"count is zero",
 			"claim independent validation",
+			"consumer repository was archived",
+			"Future release verification belongs to the main Velox repository",
 		},
 	}
 	for relative, required := range checks {
