@@ -33,6 +33,7 @@ jobs:
           VELOX_EXPECTED_RELEASE_SHA256: ${{ inputs.expected_release_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
           $started = [DateTime]::UtcNow
           $tag = $env:VELOX_RELEASE_TAG
           $expectedSha = $env:VELOX_EXPECTED_RELEASE_SHA256.ToLowerInvariant()
@@ -56,7 +57,8 @@ jobs:
             'velox-windows-x64.zip'
           )
           foreach ($name in $names) {
-            Invoke-WebRequest -Uri "$downloadBase/$name" -OutFile (Join-Path $acquired $name)
+            Write-Host "phase=download asset=$name"
+            Invoke-WebRequest -Uri "$downloadBase/$name" -OutFile (Join-Path $acquired $name) -TimeoutSec 60 -MaximumRetryCount 2 -RetryIntervalSec 2
           }
 
           $archive = Join-Path $acquired 'velox-windows-x64.zip'
@@ -104,16 +106,47 @@ jobs:
           }
           $cli = Get-Item -LiteralPath (Join-Path $releaseRoot 'velox.exe')
           function Invoke-VeloxJson {
-            param([string[]] $Arguments)
-            $raw = & $cli.FullName @Arguments
-            $exitCode = $LASTEXITCODE
-            if ($exitCode -ne 0) {
-              throw "velox.exe failed with exit code $exitCode while running $($Arguments[0])."
+            param(
+              [string[]] $Arguments,
+              [int] $TimeoutSeconds = 120
+            )
+            $command = $Arguments[0]
+            Write-Host "phase=velox-start command=$command"
+            $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+            $startInfo.FileName = $cli.FullName
+            $startInfo.UseShellExecute = $false
+            $startInfo.CreateNoWindow = $true
+            $startInfo.RedirectStandardOutput = $true
+            $startInfo.RedirectStandardError = $true
+            foreach ($argument in $Arguments) {
+              $startInfo.ArgumentList.Add($argument)
+            }
+            $process = [System.Diagnostics.Process]::new()
+            $process.StartInfo = $startInfo
+            try {
+              if (-not $process.Start()) {
+                throw "velox.exe did not start while running $command."
+              }
+              $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+              $stderrTask = $process.StandardError.ReadToEndAsync()
+              if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+                $process.Kill($true)
+                $process.WaitForExit()
+                throw "velox.exe exceeded ${TimeoutSeconds}s while running $command."
+              }
+              $raw = $stdoutTask.GetAwaiter().GetResult()
+              $stderr = $stderrTask.GetAwaiter().GetResult()
+              if ($process.ExitCode -ne 0) {
+                throw "velox.exe failed with exit code $($process.ExitCode) while running $command. stderr=$stderr"
+              }
+            } finally {
+              $process.Dispose()
             }
             $document = $raw | ConvertFrom-Json
             if (-not $document.ok) {
-              throw "velox.exe returned a failed JSON envelope while running $($Arguments[0])."
+              throw "velox.exe returned a failed JSON envelope while running $command."
             }
+            Write-Host "phase=velox-complete command=$command"
             return $document
           }
 
@@ -123,6 +156,22 @@ jobs:
           }
           Invoke-VeloxJson -Arguments @('init', '.ci/project', '--json') | Out-Null
           $project = (Resolve-Path -LiteralPath '.ci/project').Path
+          $starterScript = Join-Path $project 'web/app.js'
+          if (-not (Test-Path -LiteralPath $starterScript -PathType Leaf)) {
+            throw 'The generated starter does not contain web/app.js.'
+          }
+          @'
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (typeof window.__veloxReady === "function") {
+                window.__veloxReady("dom-2raf");
+              } else if (window.chrome?.webview?.postMessage) {
+                window.chrome.webview.postMessage("ready dom-2raf");
+              }
+            });
+          });
+          '@ | Add-Content -LiteralPath $starterScript -Encoding utf8
           $config = Join-Path $project 'velox.json'
           Invoke-VeloxJson -Arguments @('validate', '--config', $config, '--json') | Out-Null
           $doctor = Invoke-VeloxJson -Arguments @('doctor', '--config', $config, '--out', 'dist-first', '--json')
@@ -139,7 +188,7 @@ jobs:
 
           $env:VELOX_BENCH_EXIT_AFTER_READY = '1'
           $env:VELOX_DATA_DIR = Join-Path $env:RUNNER_TEMP 'velox-public-preview-profile'
-          $run = Invoke-VeloxJson -Arguments @('run', '--config', $config, '--out', (Join-Path $env:RUNNER_TEMP 'velox-public-preview-run'), '--json')
+          $run = Invoke-VeloxJson -Arguments @('run', '--config', $config, '--out', (Join-Path $env:RUNNER_TEMP 'velox-public-preview-run'), '--json') -TimeoutSeconds 120
           if ($run.result.exitCode -ne 0) {
             throw 'The public preview did not complete its startup-ready smoke.'
           }
