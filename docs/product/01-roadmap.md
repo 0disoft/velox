@@ -137,14 +137,14 @@ published zero-cache pair result remains the performance source of truth.
 
 Status: Active.
 
-The repository now owns an unsigned evidence pipeline. It produces two
+The repository owns an unsigned evidence pipeline. It produces two
 independent release builds, checks byte identity, emits checksums, a file-level
 SPDX SBOM, and an unsigned in-toto/SLSA provenance statement, then runs a
-checkout-free consumer build. This is release evidence, not a published alpha.
-[Hosted run 29672906581](https://github.com/0disoft/velox/actions/runs/29672906581)
-completed the producer and checkout-free consumer jobs for restored Velox
-commit `74847b1d4c6a9cb63786e216adf0234d8d01606b`. The non-publishing dispatch
-left the publisher job skipped and retained both evidence artifacts.
+checkout-free consumer build. Tag evidence run `29714104653` and publication run
+`29714173324` produced the public unsigned `v0.5.10-alpha.1` prerelease from
+commit `9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Public verifier run
+`29715002921` independently supplied the release digest, downloaded the public
+assets without checkout, and passed build, inspection, and startup-ready gates.
 
 ADR 0011 now fixes the first distribution order: publish an explicitly unsigned
 developer preview, collect external acquisition evidence, and treat code signing
@@ -185,22 +185,14 @@ still needs accepted provider output and the approved publisher subject.
 
 ### Remaining gates
 
-The Velox candidate was rebuilt and recorded after restoring ADR 0015's
-maintainer-approved identity in hosted run 29672906581. The remaining gates
-start at the irreversible public tag and release boundary:
-
-- Push the selected immutable `v0.5.10-alpha.1` tag.
-- Run the manual unsigned-preview publication gate with its exact confirmation.
-- Run the no-checkout public-download verifier with the independently recorded
-  release SHA-256.
-- Publish immutable compatibility, SmartScreen, managed-device, directory-
-  tampering, and branding limitations beside the preview.
-- Run the documented path from a repository and account not controlled by the
-  implementation workflow.
+The immutable tag, manual publication, public warnings, and no-checkout public
+verification are complete for `v0.5.10-alpha.1`. The only remaining M4 gate is
+to run the documented path from a repository and account not controlled by the
+implementation workflow.
 
 The tag/version binding, public-download result schema, workflow, and external-
-attempt issue contract are implemented but remain unexercised until the public
-release exists. ADR 0015 retains Velox despite the documented command and
+attempt issue contract are implemented; the same-repository verifier is now
+exercised. ADR 0015 retains Velox despite the documented command and
 search collisions; those risks no longer create a replacement-name gate.
 
 The bounded M4 internal security review is complete in
@@ -222,8 +214,8 @@ preparation remains fail-closed and dormant.
 
 ## M5: Product Decision
 
-Status: Not started. M3 is complete; M4 remains open until a public unsigned
-developer preview and independent external-user attempt exist.
+Status: Not started. M3 is complete; M4 remains open only until an independent
+external-user attempt exists for the published unsigned preview.
 
 Choose one:
 
@@ -238,8 +230,8 @@ counterarguments.
 
 The Wails cold-build result, two accepted M3 product decisions, bounded
 maintenance-cost record, and internal security review supply M5 inputs, not the
-product decision. Before M5 can start, the repository still needs the public M4
-distribution evidence and an independent external-user attempt.
+product decision. Before M5 can start, the repository still needs an
+independent external-user attempt; public M4 distribution evidence now exists.
 The public identity decision is complete under ADR 0015 and is not a remaining
 gate. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
 attempts must now test whether its narrow portable-artifact boundary has real

@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M3 complete; M4 unsigned developer-preview distribution active
+- Status: M3 complete; M4 unsigned public preview published and independently digest-bound inside the repository
 
 ## Validation Source of Truth
 
@@ -105,6 +105,16 @@ GitHub Release URL. It requires an independently supplied ZIP SHA-256, binds the
 tag to the release manifest and CLI version, builds twice, inspects, and reaches
 the startup-ready marker. Its schema fixes `externalUserAttempt` to `false`, so
 this same-repository check cannot satisfy the independent-user M4 gate.
+
+The first public preview is
+[`v0.5.10-alpha.1`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.1)
+from commit `9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Tag evidence run
+`29714104653`, publication run `29714173324`, and public-download verification
+run `29715002921` passed. The verifier downloaded SHA-256
+`5df53090e1e67ce54c8639f061ffc7b03b7c3aa38f95a725c29342cfaff73b68`,
+validated the sidecar evidence, built twice, inspected the output, and reached
+startup-ready without source checkout. This is current release evidence, not an
+external-user attempt or authenticated publisher identity.
 
 The bounded M5 readiness records are `docs/product/maintenance-cost-v1.json`,
 `docs/product/04-maintenance-cost-record.md`, and

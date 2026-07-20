@@ -69,9 +69,10 @@ The M1 implementation produces these outputs for `windows-x64`. An unsigned,
 deterministic consumer release bundle now carries strict host metadata and the
 CLI verifies its release, target, contract versions, size, and SHA-256 before a
 build. The alpha-evidence path now emits checksums, SPDX, and an unsigned
-provenance statement. The first public candidate is the explicitly unsigned
-`0.5.10-alpha.1` developer preview. Its tag, public publication, and independent
-consumer evidence remain pending. Signatures and authenticated provenance are
+provenance statement. The first public artifact is the explicitly unsigned
+`0.5.10-alpha.1` developer preview. Its immutable tag, public publication, and
+same-repository no-checkout verification are complete; an independent external-
+user attempt remains pending. Signatures and authenticated provenance are
 future-channel work; sidecar metadata alone is not a trust anchor.
 
 ### Runtime

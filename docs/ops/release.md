@@ -1,12 +1,12 @@
 # Release
 
-- Status: Hosted candidate evidence current; public preview pending
+- Status: Unsigned public preview published; independent external-user attempt pending
 - Owner: Project maintainer
 
 ## Current State
 
-Velox has no published release, package registry entry, implemented signing
-workflow, or stable version policy. Maintainer tooling builds the Go CLI and
+Velox has one published unsigned developer preview and no package registry
+entry, implemented signing workflow, or stable version policy. Maintainer tooling builds the Go CLI and
 host, assembles the deterministic unsigned Windows x64 bundle, verifies
 artifact entries against the release manifest, and emits checksums, a
 file-level SPDX 2.3 SBOM, and one unsigned in-toto/SLSA provenance statement.
@@ -36,13 +36,18 @@ twice, checks deterministic ZIP hashes, and inspects the result. Hosted runner
 images can still contain preinstalled toolchains; the claim is that the
 consumer job does not invoke them.
 
-[Alpha evidence run 29672906581](https://github.com/0disoft/velox/actions/runs/29672906581)
-completed the reproducible producer and checkout-free consumer jobs at restored
-Velox commit `74847b1d4c6a9cb63786e216adf0234d8d01606b`. The exact public API inventory
-contains the `velox-alpha-evidence-*` bundle and `velox-clean-consumer-*` result;
-the publication job was skipped because `publish_preview` was false. This
-remains same-workflow evidence, not an independent public-download
-verification.
+[Alpha evidence run 29714104653](https://github.com/0disoft/velox/actions/runs/29714104653)
+completed the reproducible producer and checkout-free consumer jobs for tag
+`v0.5.10-alpha.1` at commit
+`9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Manual publication
+[run 29714173324](https://github.com/0disoft/velox/actions/runs/29714173324)
+created the immutable prerelease. Public-download verification
+[run 29715002921](https://github.com/0disoft/velox/actions/runs/29715002921)
+downloaded the release without source checkout, matched ZIP SHA-256
+`5df53090e1e67ce54c8639f061ffc7b03b7c3aa38f95a725c29342cfaff73b68`,
+verified the sidecars, built twice, inspected, and reached startup-ready. This
+is same-repository public-download evidence, not an independent external-user
+attempt or authenticated attestation.
 
 ## Proposed Release Unit
 
@@ -54,9 +59,8 @@ exists.
 
 ## Channels
 
-Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` is the internal
-unsigned developer-preview candidate and its eventual immutable tag is
-`v0.5.10-alpha.1`. Public artifacts and executables use the Velox identity
+Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` is the published
+unsigned developer preview at immutable tag `v0.5.10-alpha.1`. Public artifacts and executables use the Velox identity
 fixed by ADR 0015. Broader beta, stable, and support policy remain UNDECIDED
 before M5.
 
@@ -193,3 +197,10 @@ URL, independently supplied digest, checksum, SPDX, provenance, tag/version,
 build, inspection, and startup boundaries without source checkout. Its result
 is explicitly same-repository evidence and cannot substitute for the qualifying
 attempt defined in `docs/ops/external-user-attempt.md`.
+
+For the first preview, the workflow initially exhausted its eight-minute job
+limit because the ordinary generated starter did not emit the benchmark-only
+ready marker. Commit `17a91f5c90dcbd58cf8aa20836994097e9c3262b`
+made the verifier inject that marker only into its temporary fixture and bound
+each downloaded CLI invocation to 120 seconds. The successful rerun is the
+current post-release verification record.

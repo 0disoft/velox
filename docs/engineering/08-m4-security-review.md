@@ -70,7 +70,7 @@ public-download or external-user gates.
 | --- | --- | --- | --- |
 | SEC-001 | Medium | Resolved | Runtime configuration rejected absolute paths but did not explicitly reject a Windows drive-relative volume such as `C:outside`. `internal/runtimeconfig.containedPath` now rejects every non-empty `filepath.VolumeName`, matching the authoring-manifest boundary, with a Windows regression test. |
 | SEC-002 | High | Accepted for preview | External assets and `velox.runtime.json` remain mutable by a local writer. The preview prominently disclaims tamper resistance; sealing remains a separately benchmarked post-M5 decision. |
-| SEC-003 | High | Open until public verification | An unsigned ZIP and checksum downloaded from the same compromised release channel do not authenticate each other. The manual public verifier requires a separately recorded SHA-256, but that control remains unexercised until the release exists. |
+| SEC-003 | High | Monitoring after public verification | Public verifier run 29715002921 downloaded `v0.5.10-alpha.1` without checkout and matched separately recorded ZIP SHA-256 `5df53090e1e67ce54c8639f061ffc7b03b7c3aa38f95a725c29342cfaff73b68`. The unsigned release channel still does not authenticate publisher identity or protect against replacement of both assets and an out-of-band digest. |
 | SEC-004 | Medium | Monitoring | The pure-Go WebView2 adapter owns COM and `unsafe.Pointer` lifetime risk. The binding is pinned and vendored, the production surface is bounded, and Windows lifecycle/security tests exercise it; no independent memory-safety review exists. |
 | SEC-005 | Low | Accepted | The host binary exposes an explicit `--debug` launch flag. Web content cannot enable it, normal `velox run` does not pass it, and local process invocation is already inside the accepted local-writer boundary. |
 | SEC-006 | Informational | Deferred | Authenticode identity and authenticated build attestation are absent by design for the unsigned preview. They are future-channel trust improvements, not claims made by M4. |
@@ -100,9 +100,9 @@ contains application-owned browser data and remains outside release artifacts.
 ## Release Disposition
 
 No unowned internal security finding blocks the explicitly unsigned developer
-preview. SEC-002 is an advertised product limitation, SEC-003 remains a public
-release verification gate, and SEC-004 remains a maintenance and external-
-dependency risk for M5.
+preview. SEC-002 is an advertised product limitation, SEC-003 passed its first
+public-download control but remains an unsigned-channel monitoring risk, and
+SEC-004 remains a maintenance and external-dependency risk for M5.
 
 The release must still stop if current security tests fail, tag and artifact
 bytes disagree, publication warnings disappear, a tracked secret is found, or

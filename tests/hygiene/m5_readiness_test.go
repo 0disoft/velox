@@ -112,7 +112,8 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"penetration test, independent audit",
 		"SEC-001 | Medium | Resolved",
 		"SEC-002 | High | Accepted for preview",
-		"SEC-003 | High | Open until public verification",
+		"SEC-003 | High | Monitoring after public verification",
+		"29715002921",
 		"SEC-004 | Medium | Monitoring",
 		"No unowned internal security finding blocks",
 	})
@@ -124,7 +125,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "01-roadmap.md"), []string{
 		"maintenance-cost record, and internal security review supply M5 inputs",
-		"still needs the public M4",
+		"public M4 distribution evidence now exists",
 		"public identity decision is complete under ADR 0015",
 		"independent external-user attempt",
 	})
@@ -159,7 +160,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"developer preview",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "release.md"), []string{
-		"Hosted candidate evidence current; public preview pending",
+		"Unsigned public preview published; independent external-user attempt pending",
 		"ADR 0015 removes the replacement-name gate",
 	})
 	assertSourceMarkers(t, filepath.Join(root, ".github", "workflows", "alpha-evidence.yml"), []string{

@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M3 complete; M4 alpha distribution evidence active
+- Status: M3 complete; M4 unsigned public preview published, external-user gate open
 - Scope: general
 - Repository type: cli-tool
 
@@ -17,15 +17,21 @@ Windows x64 release bundle, startup fixtures, zero-cache consumer evidence,
 and an alpha evidence workflow. The workflow builds the release twice, emits
 checksums, a file-level SPDX SBOM, an unsigned in-toto/SLSA provenance
 statement, and then exercises it from a checkout-free consumer job. A guarded
-manual job can publish those exact files as an explicitly unsigned developer
-preview; no preview has been published yet.
+manual job publishes those exact files as an explicitly unsigned developer
+preview.
 
-[Hosted run 29672906581](https://github.com/0disoft/velox/actions/runs/29672906581)
-completed the reproducible producer and checkout-free consumer jobs for Velox
-commit `74847b1d4c6a9cb63786e216adf0234d8d01606b`. Publication was disabled and
-the publisher job was skipped. The evidence artifacts contain the candidate
-bundle and consumer result; the provenance remains unsigned metadata rather
-than an authenticated attestation.
+[Velox v0.5.10-alpha.1](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.1)
+is the first public unsigned developer preview. Tag evidence
+[run 29714104653](https://github.com/0disoft/velox/actions/runs/29714104653)
+and publication [run 29714173324](https://github.com/0disoft/velox/actions/runs/29714173324)
+produced the immutable release from commit
+`9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Public-download verification
+[run 29715002921](https://github.com/0disoft/velox/actions/runs/29715002921)
+then exercised the release without source checkout at verifier commit
+`17a91f5c90dcbd58cf8aa20836994097e9c3262b`. The ZIP SHA-256 is
+`5df53090e1e67ce54c8639f061ffc7b03b7c3aa38f95a725c29342cfaff73b68`.
+The executables remain unsigned and the provenance remains unauthenticated
+metadata.
 
 ## Headline Metrics
 
@@ -118,14 +124,14 @@ slice, and M2 closed the minimum runtime security contract. M3 has passed its
 publishable Wails cold-build gate and its narrowly defined structural-
 simplicity gate. Startup has been removed from the headline and retained as a
 release guardrail. M3's public benchmark deliverables and hosted evidence are
-complete. M4 has local and hosted unsigned alpha evidence plus a guarded
-developer-preview publication path. Deterministic signing-input, lineage, and
+complete. M4 has local and hosted unsigned alpha evidence, a published public
+developer preview, and same-repository public-download verification.
+Deterministic signing-input, lineage, and
 fail-closed Authenticode verification tooling remain dormant for a future
-signed channel. Public distribution and a real external-user attempt remain
-open before M5; provider-approved signing and authenticated provenance are no
-longer M4 gates. The first candidate is `0.5.10-alpha.1`. A separate no-checkout
-workflow is ready to verify its eventual public GitHub Release URL, but it
-cannot count itself as an external-user attempt.
+signed channel. A real external-user attempt remains open before M5;
+provider-approved signing and authenticated provenance are not M4 gates. The
+published preview is `0.5.10-alpha.1`. Its no-checkout verification cannot count
+itself as an external-user attempt.
 
 The bounded maintenance-cost snapshot and internal M4 security review are now
 complete M5 inputs. They explicitly record the maintained WebView2 fork,
@@ -138,7 +144,8 @@ established project and an existing Go CLI that ships the exact `velox` command
 and `velox.exe`; those are accepted discovery and command risks rather than a
 replacement-name publication gate.
 
-Consumer release packaging is not published yet. `init` creates a
+Consumer release packaging is published as an unsigned developer preview.
+`init` creates a
 dependency-free starter, `doctor` checks the current Windows, WebView2, project,
 and bundled-host compatibility, `run` launches source assets through the
 prebuilt host without a development server, and `inspect` validates both
