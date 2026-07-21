@@ -21,9 +21,14 @@ func run(args []string) int {
 	benchmark := benchmarkOptionsFromEnvironment(os.Getenv)
 	timeline := benchmarker.NewTimelineRecorder(benchmark.pipeConfigured)
 	shutdownTimeline := benchmarker.NewShutdownTimelineRecorder(benchmark.pipeConfigured)
+	configDefault, err := defaultConfigPath(os.Executable)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+		return 6
+	}
 	flags := flag.NewFlagSet("velox-host", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
-	configPath := flags.String("config", "velox.runtime.json", "path to the external runtime configuration")
+	configPath := flags.String("config", configDefault, "path to the external runtime configuration")
 	debug := flags.Bool("debug", false, "enable WebView2 development tools")
 	if err := flags.Parse(args); err != nil {
 		return 2
@@ -116,6 +121,17 @@ func run(args []string) int {
 		return 6
 	}
 	return 0
+}
+
+func defaultConfigPath(executable func() (string, error)) (string, error) {
+	executablePath, err := executable()
+	if err != nil {
+		return "", fmt.Errorf("resolve executable path: %w", err)
+	}
+	if !filepath.IsAbs(executablePath) {
+		return "", errors.New("executable path is not absolute")
+	}
+	return filepath.Join(filepath.Dir(executablePath), "velox.runtime.json"), nil
 }
 
 type benchmarkOptions struct {

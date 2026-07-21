@@ -1,11 +1,33 @@
 package main
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 
 	"github.com/0disoft/velox/internal/webview2"
 )
+
+func TestDefaultConfigPathIsExecutableScoped(t *testing.T) {
+	executablePath := filepath.Join(t.TempDir(), "portable", "deskboard.exe")
+	path, err := defaultConfigPath(func() (string, error) { return executablePath, nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(filepath.Dir(executablePath), "velox.runtime.json")
+	if path != want {
+		t.Fatalf("defaultConfigPath() = %q, want %q", path, want)
+	}
+}
+
+func TestDefaultConfigPathRejectsUnavailableOrRelativeExecutable(t *testing.T) {
+	if _, err := defaultConfigPath(func() (string, error) { return "", errors.New("unavailable") }); err == nil {
+		t.Fatal("defaultConfigPath accepted an unavailable executable path")
+	}
+	if _, err := defaultConfigPath(func() (string, error) { return "deskboard.exe", nil }); err == nil {
+		t.Fatal("defaultConfigPath accepted a relative executable path")
+	}
+}
 
 func TestBenchmarkOptionsRequireExplicitMode(t *testing.T) {
 	values := map[string]string{

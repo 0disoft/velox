@@ -58,6 +58,8 @@ window.
 
 - Build and inspect the dependency-free hello fixture.
 - Launch and receive a ready marker.
+- Launch a packaged application directly from a non-application working
+  directory and resolve runtime configuration beside the executable.
 - Exercise basic window lifecycle methods.
 - Reject remote navigation and frame IPC.
 - Fail cleanly when WebView2 is unavailable or unsupported.

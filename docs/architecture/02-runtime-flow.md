@@ -29,7 +29,9 @@
 ## Host Startup Flow
 
 1. The operating system starts the generic host.
-2. The host resolves and validates adjacent runtime configuration.
+2. The host resolves and validates `velox.runtime.json` beside its own
+   executable, independent of the process working directory. An explicit
+   `--config` path remains available to the source-run path.
 3. The host initializes its Windows UI thread and COM apartment.
 4. The host creates the native window without declaring the application ready.
 5. The host creates the WebView2 environment and controller.
