@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+    <title>Velox File Notes</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="model.js" defer></script>
+    <script src="storage.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="titlebar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">V</span>
+        <div>
+          <strong>File Notes</strong>
+          <span>Local Markdown editor</span>
+        </div>
+      </div>
+      <div class="document-identity">
+        <strong id="document-name">Untitled.md</strong>
+        <span id="save-state">Saved locally</span>
+      </div>
+    </header>
+
+    <nav class="toolbar" aria-label="Document actions">
+      <div class="primary-actions">
+        <button id="new-document" type="button">New</button>
+        <button id="open-document" type="button">Open</button>
+        <button id="save-document" type="button">Save</button>
+        <button id="save-as-document" type="button">Save as</button>
+      </div>
+      <div class="document-stats" aria-label="Document statistics">
+        <span id="line-count">1 line</span>
+        <span id="character-count">0 characters</span>
+      </div>
+    </nav>
+
+    <main class="editor-shell">
+      <label class="visually-hidden" for="editor">Markdown document</label>
+      <textarea id="editor" spellcheck="true" autocomplete="off" aria-describedby="editor-help" placeholder="# Start writing"></textarea>
+      <p id="editor-help">UTF-8 Markdown or text · 2 MiB maximum</p>
+    </main>
+
+    <footer class="statusbar">
+      <p id="status" role="status" aria-live="polite">Ready.</p>
+      <span id="draft-state">Draft recovery on</span>
+    </footer>
+
+    <dialog id="discard-dialog" aria-labelledby="discard-title" aria-describedby="discard-copy">
+      <form method="dialog">
+        <h2 id="discard-title">Discard unsaved changes?</h2>
+        <p id="discard-copy">The current draft has changes that are not in the selected file.</p>
+        <div class="dialog-actions">
+          <button value="cancel" type="submit">Keep editing</button>
+          <button class="danger-button" value="discard" type="submit">Discard changes</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

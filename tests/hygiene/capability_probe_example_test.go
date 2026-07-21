@@ -38,6 +38,7 @@ func TestCapabilityProbeStaysBrowserOwnedAndDependencyFree(t *testing.T) {
 		"connect-src 'none'",
 		"aria-live=\"polite\"",
 		"role=\"button\"",
+		"model.js",
 		"app.js",
 	} {
 		if !strings.Contains(index, marker) {
@@ -61,6 +62,12 @@ func TestCapabilityProbeStaysBrowserOwnedAndDependencyFree(t *testing.T) {
 	for _, forbidden := range []string{"shell.exec", "process.exec", "filesystem.read", "http://", "https://"} {
 		if strings.Contains(script, forbidden) {
 			t.Fatalf("capability probe script contains forbidden native or network surface %q", forbidden)
+		}
+	}
+	model := readCapabilityProbeText(t, filepath.Join(root, "examples", "capability-probe", "web", "model.js"))
+	for _, marker := range []string{"velox.capability-probe-result/v1", "preserveOperationResults", "Object.freeze"} {
+		if !strings.Contains(model, marker) {
+			t.Fatalf("capability probe model missing %q", marker)
 		}
 	}
 }

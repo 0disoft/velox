@@ -91,8 +91,19 @@ The parent workspace command contract currently provides these bounded intents:
   `dist/examples/deskboard` for manual use.
 - `velox_capability_probe_smoke` validates, diagnoses, reproducibly builds,
   inspects, directly starts, and source-starts the browser capability probe.
+- `velox_capability_probe_model_test` verifies operation-result replacement,
+  rerun preservation, evidence-state summaries, and versioned report snapshots.
 - `velox_capability_probe_build` leaves a portable probe directory and ZIP
   under `dist/examples/capability-probe` for manual user-gesture checks.
+- `velox_example_tooling_test` verifies that the maintainer example builder can
+  replace only the allowlisted `dist/examples` outputs and rejects
+  arbitrary output names.
+- `velox_file_notes_model_test` verifies draft restoration, dirty-state
+  derivation, selected-file baselines, saved baselines, and Unicode statistics.
+- `velox_file_notes_smoke` validates, diagnoses, reproducibly builds, inspects,
+  directly starts, and source-starts the browser-owned file editor.
+- `velox_file_notes_build` leaves a portable File Notes directory and ZIP under
+  `dist/examples/file-notes` for manual picker and persistence checks.
 
 The hosted `Alpha release evidence` workflow builds the unsigned release twice,
 requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance

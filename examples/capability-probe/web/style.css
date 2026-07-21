@@ -148,6 +148,7 @@ button:disabled { cursor: default; opacity: 0.5; }
 .state-passed,
 .state-available { background: #dceee4; color: #1f6549; }
 .state-unavailable { background: #e4e9ed; color: #4e5e69; }
+.state-canceled { background: #e8e4f0; color: #5d4c78; }
 .state-blocked { background: #f4e8cc; color: #76520f; }
 .state-failed { background: #f6dcd9; color: #8c332b; }
 

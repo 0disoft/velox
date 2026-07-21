@@ -131,6 +131,10 @@ clipboard, drag-and-drop, and permission surfaces are exposed by the current
 WebView2 environment. It keeps every operation user-initiated and does not add
 or imply a Velox native capability.
 
+`examples/file-notes` uses those browser-owned surfaces in a file-backed
+Markdown editor with explicit open and save gestures, IndexedDB draft recovery,
+unsaved-change protection, and no Velox native permission.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging

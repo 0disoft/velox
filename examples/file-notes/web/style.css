@@ -1,0 +1,190 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0;
+  color: #1b211f;
+  background: #f2f4f1;
+  --line: #d5dad5;
+  --muted: #69726e;
+  --surface: #ffffff;
+  --rail: #17211d;
+  --green: #2a7857;
+  --red: #a44138;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: #f2f4f1;
+}
+
+button,
+textarea { font: inherit; letter-spacing: 0; }
+
+button:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(33, 105, 159, 0.42);
+  outline-offset: 2px;
+}
+
+.titlebar {
+  min-height: 76px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--rail);
+  color: #f4f8f5;
+}
+
+.brand { display: flex; align-items: center; gap: 11px; }
+.brand > div,
+.document-identity { min-width: 0; display: grid; gap: 2px; }
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #5e8e76;
+  border-radius: 6px;
+  color: #a9d9be;
+  font-weight: 760;
+}
+
+.brand span,
+.document-identity span { color: #aebbb5; font-size: 0.75rem; }
+.document-identity { max-width: 55%; text-align: right; }
+.document-identity strong { overflow-wrap: anywhere; }
+
+.toolbar {
+  min-height: 58px;
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.primary-actions,
+.document-stats { display: flex; align-items: center; gap: 8px; }
+
+button {
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid #b4bdb7;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #25302c;
+  cursor: pointer;
+  font-weight: 670;
+}
+
+button:hover { border-color: var(--green); color: var(--green); }
+
+.document-stats { color: var(--muted); font-size: 0.76rem; }
+.document-stats span + span { padding-left: 8px; border-left: 1px solid var(--line); }
+
+.editor-shell {
+  min-width: 0;
+  min-height: 0;
+  padding: 24px clamp(20px, 5vw, 68px) 12px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 24px clamp(18px, 4vw, 42px);
+  resize: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: #1d2522;
+  font: 1rem/1.7 "Cascadia Mono", Consolas, monospace;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+textarea::placeholder { color: #9ba39f; }
+
+#editor-help {
+  margin: 8px 2px 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.statusbar {
+  min-height: 42px;
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  background: #e7eae6;
+  color: #59625e;
+  font-size: 0.74rem;
+}
+
+.statusbar p { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.statusbar span { flex: 0 0 auto; }
+
+dialog {
+  width: min(430px, calc(100% - 32px));
+  padding: 0;
+  border: 1px solid #c7cdc8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1b211f;
+  box-shadow: 0 20px 60px rgba(18, 25, 22, 0.28);
+}
+
+dialog::backdrop { background: rgba(19, 27, 23, 0.52); }
+dialog form { padding: 24px; }
+dialog h2 { margin: 0; font-size: 1.15rem; }
+dialog p { margin: 9px 0 0; color: var(--muted); line-height: 1.5; }
+.dialog-actions { margin-top: 24px; display: flex; justify-content: flex-end; gap: 9px; }
+.danger-button { border-color: var(--red); background: var(--red); color: #ffffff; }
+.danger-button:hover { border-color: #89372f; background: #89372f; color: #ffffff; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 650px) {
+  body { overflow: auto; }
+  .titlebar,
+  .toolbar,
+  .statusbar { align-items: flex-start; flex-direction: column; }
+  .document-identity { max-width: none; text-align: left; }
+  .toolbar { padding: 12px 18px; }
+  .primary-actions { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); }
+  .document-stats { width: 100%; }
+  .editor-shell { min-height: 520px; padding: 18px; }
+  .statusbar { gap: 5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}

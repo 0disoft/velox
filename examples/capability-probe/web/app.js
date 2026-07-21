@@ -2,6 +2,8 @@
   "use strict";
 
   const maximumTextBytes = 1024 * 1024;
+  const operationIDs = ["open-picker", "save-picker", "clipboard", "drag-drop"];
+  const model = window.CapabilityProbeModel;
   const elements = {
     list: document.querySelector("#capability-list"),
     count: document.querySelector("#result-count"),
@@ -17,6 +19,7 @@
   };
 
   let results = [];
+  let runtimeInfo = null;
 
   function result(id, name, state, detail) {
     return { id, name, state, detail };
@@ -69,6 +72,7 @@
     if (!window.velox?.invoke) return result("app-info", "Velox app identity", "unavailable", "The native bridge is absent.");
     try {
       const info = await window.velox.invoke("app.getInfo", {});
+      runtimeInfo = info;
       elements.runtimeName.textContent = info.name;
       elements.runtimeVersion.textContent = `${info.version} · ${info.platform}`;
       return result("app-info", "Velox app identity", "passed", `${info.id} on ${info.platform}`);
@@ -88,10 +92,9 @@
       result("drag-drop", "File drag and drop", availability("DataTransfer" in window && "FileReader" in window), "Drop operation remains manual."),
       result("notifications", "Notifications", availability("Notification" in window), "Notification permission: " + ("Notification" in window ? Notification.permission : "not exposed")),
     ];
-    results = [...staticResults, await testLocalStorage(), await testIndexedDB(), await testAppInfo()];
+    const detected = [...staticResults, await testLocalStorage(), await testIndexedDB(), await testAppInfo()];
+    results = model.preserveOperationResults(results, detected, operationIDs);
     renderResults();
-    const passed = results.filter((item) => item.state === "passed" || item.state === "available").length;
-    elements.summary.textContent = `${passed} of ${results.length} capabilities are available or passed.`;
     elements.rerun.disabled = false;
   }
 
@@ -111,7 +114,9 @@
       row.append(copy, state);
       return row;
     }));
-    elements.count.textContent = `${results.length} checked`;
+    const summary = model.summarize(results);
+    elements.count.textContent = `${summary.total} checked`;
+    elements.summary.textContent = `${summary.passed} passed · ${summary.available} available · ${summary.failed} failed or blocked`;
     elements.open.disabled = typeof window.showOpenFilePicker !== "function";
     elements.save.disabled = typeof window.showSaveFilePicker !== "function";
     elements.copy.disabled = !navigator.clipboard?.writeText;
@@ -123,32 +128,64 @@
     return `${file.name} · ${file.size} bytes\n${text.slice(0, 500)}`;
   }
 
+  function updateResult(id, state, detail) {
+    const prior = results.find((item) => item.id === id);
+    if (!prior) return;
+    results = model.replaceResult(results, { ...prior, state, detail });
+    renderResults();
+  }
+
+  function errorMessage(error) {
+    return error?.message || error?.name || "Unknown failure";
+  }
+
+  function reportFor(reportResults = results) {
+    return model.buildReport(reportResults, runtimeInfo, {
+      origin: location.origin,
+      secureContext: isSecureContext,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+    }, new Date().toISOString());
+  }
+
   elements.rerun.addEventListener("click", runChecks);
   elements.copy.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText("Velox capability probe");
+      updateResult("clipboard", "passed", "Known sample text was written.");
       elements.output.textContent = "Sample text copied.";
     } catch (error) {
-      elements.output.textContent = `Clipboard write failed: ${error.message}`;
+      updateResult("clipboard", "blocked", errorMessage(error));
+      elements.output.textContent = `Clipboard write failed: ${errorMessage(error)}`;
     }
   });
   elements.open.addEventListener("click", async () => {
     try {
       const [handle] = await window.showOpenFilePicker({ multiple: false, types: [{ description: "Text", accept: { "text/plain": [".txt", ".md", ".json"] } }] });
-      elements.output.textContent = await readTextFile(await handle.getFile());
+      const file = await handle.getFile();
+      elements.output.textContent = await readTextFile(file);
+      updateResult("open-picker", "passed", `${file.name} · ${file.size} bytes read.`);
     } catch (error) {
-      elements.output.textContent = error.name === "AbortError" ? "Open canceled." : `Open failed: ${error.message}`;
+      const canceled = error.name === "AbortError";
+      updateResult("open-picker", canceled ? "canceled" : "blocked", canceled ? "User canceled the picker." : errorMessage(error));
+      elements.output.textContent = canceled ? "Open canceled." : `Open failed: ${errorMessage(error)}`;
     }
   });
   elements.save.addEventListener("click", async () => {
     try {
       const handle = await window.showSaveFilePicker({ suggestedName: "velox-capabilities.json", types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
       const writable = await handle.createWritable();
-      await writable.write(`${JSON.stringify({ capturedAt: new Date().toISOString(), results }, null, 2)}\n`);
+      const passedResult = { ...results.find((item) => item.id === "save-picker"), state: "passed", detail: "Capability report was written and closed." };
+      const reportResults = model.replaceResult(results, passedResult);
+      await writable.write(`${JSON.stringify(reportFor(reportResults), null, 2)}\n`);
       await writable.close();
+      results = reportResults;
+      renderResults();
       elements.output.textContent = "Capability report saved.";
     } catch (error) {
-      elements.output.textContent = error.name === "AbortError" ? "Save canceled." : `Save failed: ${error.message}`;
+      const canceled = error.name === "AbortError";
+      updateResult("save-picker", canceled ? "canceled" : "blocked", canceled ? "User canceled the picker." : errorMessage(error));
+      elements.output.textContent = canceled ? "Save canceled." : `Save failed: ${errorMessage(error)}`;
     }
   });
   elements.drop.addEventListener("dragover", (event) => {
@@ -163,8 +200,10 @@
     if (!file) return;
     try {
       elements.output.textContent = await readTextFile(file);
+      updateResult("drag-drop", "passed", `${file.name} · ${file.size} bytes read.`);
     } catch (error) {
-      elements.output.textContent = `Drop failed: ${error.message}`;
+      updateResult("drag-drop", "failed", errorMessage(error));
+      elements.output.textContent = `Drop failed: ${errorMessage(error)}`;
     }
   });
   elements.drop.addEventListener("keydown", (event) => {
