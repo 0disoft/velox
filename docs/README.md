@@ -83,6 +83,10 @@ maintainer-controlled `0disoft/velox-consumer-smoke` repository. Its one-shot
 evidence remains explicitly non-external; independent adoption is an M5 input
 rather than a technical release gate.
 
+ADR 0017 closes the M5 product choice by continuing narrow alpha development
+inside the static and browser-owned capability boundary. Beta remains gated on
+an independent-user attempt or a later explicit zero-adoption risk acceptance.
+
 Service-oriented backup, environment, secret, incident, and observability
 templates are intentionally retired until a real support surface requires them.
 

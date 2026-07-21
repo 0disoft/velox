@@ -135,7 +135,7 @@ func TestExternalAttemptIssueContractRequiresIdentityAndSafeEvidence(t *testing.
 func TestM4CleanRoomEvidenceDoesNotClaimIndependentAdoption(t *testing.T) {
 	checks := map[string][]string{
 		"README.md": {
-			"Status: M4 complete; M5 product decision active with no independent adoption recorded",
+			"Status: M4 complete; M5 decision accepted for narrow alpha continuation; beta remains gated with no independent adoption recorded",
 			"0disoft/velox-consumer-smoke",
 			"29736140250",
 			"maintainerControlled: true",

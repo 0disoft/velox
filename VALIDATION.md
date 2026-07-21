@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M4 complete; M5 active with clean-room evidence and zero independent-user attempts
+- Status: M4 complete; M5 decision accepted for narrow alpha continuation; beta remains gated with zero independent-user attempts
 
 ## Validation Source of Truth
 
@@ -117,6 +117,13 @@ entered. The isolated publication job alone receives `contents: write`, refuses
 replacement, and creates a prerelease with SmartScreen and managed-device
 warnings. Workflow validation proves this contract; it does not publish a
 release.
+
+Manual hosted [run 29806946109](https://github.com/0disoft/velox/actions/runs/29806946109)
+passed for exact commit `d8495b8aa2a399505b583a8ed881b5bc7fa9f304` after the
+browser-owned file workflow examples were added. The reproducible release and
+checkout-free consumer jobs succeeded; publication was disabled and skipped.
+ADR 0017 treats this as technical alpha evidence, not independent adoption or
+permission to add an application-specific Go backend or broad native API.
 
 ADR 0015 retains Velox as the maintainer-approved public identity and supersedes
 ADR 0013's replacement-name gate. The known `velox.exe` and search collisions

@@ -79,6 +79,11 @@ therefore closes the technical M4 distribution milestone while recording zero
 independent-user attempts. Signatures and authenticated provenance are future-
 channel work; sidecar metadata alone is not a trust anchor.
 
+ADR 0017 continues alpha development as a narrow static desktop packager. It
+does not approve beta, an application-specific Go backend, or a broader native
+capability surface. Beta requires a qualifying independent-user attempt or a
+later explicit acceptance of the zero-adoption risk.
+
 ### Runtime
 
 - Windows x64.

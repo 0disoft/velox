@@ -224,8 +224,9 @@ preparation remains fail-closed and dormant.
 
 ## M5: Product Decision
 
-Status: Active. M4 is complete under ADR 0016. No qualifying independent-user
-attempt is currently recorded.
+Status: Decision complete under ADR 0017. Continue as a narrow static desktop
+packager in alpha. No qualifying independent-user attempt is currently
+recorded, so beta and stable admission remain gated.
 
 Choose one:
 
@@ -240,8 +241,9 @@ counterarguments.
 
 The Wails cold-build result, two accepted M3 product decisions, bounded
 maintenance-cost record, internal security review, and public M4 distribution
-evidence supply M5 inputs, not the product decision. M5 starts with zero
-independent-user attempts; that absence is negative market evidence, not a
+evidence supplied the M5 inputs. ADR 0017 accepts continued alpha work only
+inside the existing static and browser-owned boundary. M5 closed with zero
+independent-user attempts; that absence remains negative market evidence, not a
 missing technical proof. A positive beta or broader-support decision must
 either obtain qualifying adoption evidence or explicitly accept the risk in a
 later ADR.
@@ -250,7 +252,7 @@ gate. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
 attempts must now test whether its narrow portable-artifact boundary has real
 value.
 
-## Deferred Until After M5
+## Not Authorized by M5
 
 - Installers and automatic updates.
 - Per-application executable resource patching.

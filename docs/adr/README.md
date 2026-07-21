@@ -31,6 +31,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0014 | Superseded by 0015 | Adopt Actutum as the public product, command, module, schema, and release identity |
 | 0015 | Accepted | Retain Velox as the maintainer-approved product, command, module, schema, and release identity |
 | 0016 | Accepted | Complete M4 with maintainer-controlled clean-room distribution evidence and keep independent adoption as an M5 input |
+| 0017 | Accepted | Continue as a narrow static desktop packager while beta remains gated on independent use or explicit zero-adoption risk acceptance |
 
 ## Lifecycle
 

@@ -1,6 +1,6 @@
 # Operational Contract
 
-- Status: M4 unsigned distribution operational; M5 active with zero independent-user attempts
+- Status: Narrow alpha continuation accepted; beta gated with zero independent-user attempts
 - Primary owner: Project maintainer
 
 ## Product Shape
@@ -82,3 +82,9 @@ deferred. ADR 0015
 retains Velox and accepts the documented command and discovery collisions.
 Future public-release verification stays in Velox rather than reviving the
 archived consumer repository.
+
+ADR 0017 continues only the narrow static alpha. Hosted run `29806946109`
+passed release reproducibility and checkout-free consumption for commit
+`d8495b8aa2a399505b583a8ed881b5bc7fa9f304` with publication skipped. It does
+not authorize a Go application backend, broad native APIs, beta, or stable
+distribution.

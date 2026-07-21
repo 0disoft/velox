@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M4 complete; M5 product decision active with no independent adoption recorded
+- Status: M4 complete; M5 decision accepted for narrow alpha continuation; beta remains gated with no independent adoption recorded
 - Scope: general
 - Repository type: cli-tool
 
@@ -89,6 +89,7 @@ Explicitly deferred:
 - Preview identity decision: docs/adr/0012-bind-preview-version-and-public-download-evidence.md
 - Public-name decision: docs/adr/0015-retain-velox-public-identity.md
 - Distribution/adoption boundary: docs/adr/0016-separate-technical-distribution-from-independent-adoption.md
+- M5 product decision: docs/adr/0017-continue-as-a-narrow-static-packager.md
 - Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
 - External user attempt: docs/ops/external-user-attempt.md
 
