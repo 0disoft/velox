@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+    <title>Velox Deskboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="model.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Workspace summary">
+        <header class="brand">
+          <span class="brand-mark" aria-hidden="true">V</span>
+          <div>
+            <p class="brand-name">Deskboard</p>
+            <p class="brand-meta">Velox local workspace</p>
+          </div>
+        </header>
+
+        <section class="progress-section" aria-labelledby="progress-title">
+          <div class="section-heading">
+            <h2 id="progress-title">Today</h2>
+            <strong id="progress-percent">0%</strong>
+          </div>
+          <progress id="progress" max="100" value="0">0%</progress>
+          <p id="progress-copy">No tasks yet</p>
+        </section>
+
+        <dl class="stats" aria-label="Task counts">
+          <div>
+            <dt>Open</dt>
+            <dd id="open-count">0</dd>
+          </div>
+          <div>
+            <dt>Done</dt>
+            <dd id="done-count">0</dd>
+          </div>
+          <div>
+            <dt>Total</dt>
+            <dd id="total-count">0</dd>
+          </div>
+        </dl>
+
+        <button class="quiet-button app-details-button" id="app-details-button" type="button">
+          App details
+        </button>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="overline">Local-first task board</p>
+            <h1>Keep the next move visible.</h1>
+          </div>
+          <time id="current-date"></time>
+        </header>
+
+        <form class="task-form" id="task-form" novalidate>
+          <div class="task-input-wrap">
+            <label for="task-title">New task</label>
+            <input id="task-title" name="title" maxlength="120" autocomplete="off" placeholder="What needs attention?" required>
+          </div>
+          <div class="priority-wrap">
+            <label for="task-priority">Priority</label>
+            <select id="task-priority" name="priority">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <button class="primary-button" type="submit">Add task</button>
+        </form>
+
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+
+        <section class="task-section" aria-labelledby="task-list-title">
+          <div class="task-toolbar">
+            <div>
+              <h2 id="task-list-title">Tasks</h2>
+              <p id="result-count">0 items</p>
+            </div>
+            <label class="search-field" for="task-search">
+              <span class="visually-hidden">Search tasks</span>
+              <input id="task-search" type="search" placeholder="Search tasks" autocomplete="off">
+            </label>
+          </div>
+
+          <div class="filter-row">
+            <div class="segmented-control" role="group" aria-label="Task status">
+              <button type="button" data-filter="all" aria-pressed="true">All</button>
+              <button type="button" data-filter="open" aria-pressed="false">Open</button>
+              <button type="button" data-filter="done" aria-pressed="false">Done</button>
+            </div>
+            <label class="priority-filter" for="priority-filter">
+              <span>Priority</span>
+              <select id="priority-filter">
+                <option value="all">All</option>
+                <option value="high">High</option>
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+            <button class="text-button" id="clear-completed" type="button">Clear completed</button>
+          </div>
+
+          <ul class="task-list" id="task-list"></ul>
+          <div class="empty-state" id="empty-state" hidden>
+            <p id="empty-title">Nothing here yet.</p>
+            <span id="empty-copy">Add a task to start the board.</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="app-dialog" aria-labelledby="dialog-title">
+      <form method="dialog" class="dialog-content">
+        <div class="dialog-header">
+          <div>
+            <p class="overline">Runtime</p>
+            <h2 id="dialog-title">App details</h2>
+          </div>
+          <button class="icon-button" type="submit" aria-label="Close app details">×</button>
+        </div>
+        <dl class="app-info">
+          <div><dt>Name</dt><dd id="app-name">Velox Deskboard</dd></div>
+          <div><dt>Version</dt><dd id="app-version">0.1.0</dd></div>
+          <div><dt>Platform</dt><dd id="app-platform">Browser preview</dd></div>
+          <div><dt>Window</dt><dd id="window-state">Unavailable</dd></div>
+        </dl>
+        <div class="dialog-actions" id="window-actions" hidden>
+          <button class="quiet-button" type="button" data-window-action="window.minimize">Minimize</button>
+          <button class="quiet-button" type="button" data-window-action="window.maximize">Maximize</button>
+          <button class="quiet-button" type="button" data-window-action="window.restore">Restore</button>
+        </div>
+      </form>
+    </dialog>
+
+    <p class="status-message" id="status-message" role="status" aria-live="polite"></p>
+  </body>
+</html>

@@ -118,6 +118,19 @@ an occupied staging or recovery path fails closed instead of deleting it.
 See `examples/hello/velox.json` and `schema/velox-v1.schema.json` for the v1
 authoring contract.
 
+## Functional Test App
+
+`examples/deskboard` is a complete local-first task board built from static
+HTML, CSS, and JavaScript. It persists versioned task data in the application
+WebView2 profile, exercises the supported app and window IPC methods, and ships
+without a frontend dependency or bundler. Its model tests and packaging/startup
+smoke prove a more realistic application path than the minimal hello fixture.
+
+`examples/capability-probe` reports which browser-owned storage, file-picker,
+clipboard, drag-and-drop, and permission surfaces are exposed by the current
+WebView2 environment. It keeps every operation user-initiated and does not add
+or imply a Velox native capability.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging

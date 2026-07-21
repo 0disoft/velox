@@ -80,6 +80,19 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_workflow_validate` parses the repository-owned GitHub Actions workflow
   with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
+- `velox_deskboard_model_test` exercises the functional example's persisted
+  task-state normalization, mutations, filters, and derived progress without a
+  browser or frontend dependency.
+- `velox_deskboard_smoke` validates, diagnoses, builds twice, compares archive
+  hashes, inspects, starts the packaged application directly from a non-app
+  working directory, and starts `examples/deskboard` through the assembled
+  Velox release. The harness is Bun/TypeScript and adds no PowerShell surface.
+- `velox_deskboard_build` leaves a portable Deskboard directory and ZIP under
+  `dist/examples/deskboard` for manual use.
+- `velox_capability_probe_smoke` validates, diagnoses, reproducibly builds,
+  inspects, directly starts, and source-starts the browser capability probe.
+- `velox_capability_probe_build` leaves a portable probe directory and ZIP
+  under `dist/examples/capability-probe` for manual user-gesture checks.
 
 The hosted `Alpha release evidence` workflow builds the unsigned release twice,
 requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance

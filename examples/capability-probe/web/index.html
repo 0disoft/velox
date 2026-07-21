@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+    <title>Velox Capability Probe</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Runtime diagnostics</p>
+        <h1>Capability Probe</h1>
+      </div>
+      <div class="runtime" aria-label="Runtime identity">
+        <span id="runtime-name">Velox</span>
+        <strong id="runtime-version">Checking</strong>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-labelledby="summary-title">
+        <div>
+          <h2 id="summary-title">Current environment</h2>
+          <p id="summary-copy">Running non-interactive checks.</p>
+        </div>
+        <button id="rerun" type="button">Run checks</button>
+      </section>
+
+      <section class="results" aria-labelledby="results-title">
+        <div class="section-heading">
+          <h2 id="results-title">Browser-owned capabilities</h2>
+          <span id="result-count" aria-live="polite">0 checked</span>
+        </div>
+        <ul id="capability-list" aria-label="Capability results"></ul>
+      </section>
+
+      <section class="interactions" aria-labelledby="interactions-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="interactions-title">User-gesture checks</h2>
+            <p>These actions stay local to this application.</p>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="copy-sample" type="button">Copy sample text</button>
+          <button id="open-file" type="button">Open text file</button>
+          <button id="save-report" type="button">Save report</button>
+        </div>
+        <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-describedby="drop-help">
+          <strong>Drop a text file</strong>
+          <span id="drop-help">The probe reads at most 1 MiB and keeps nothing after the window closes.</span>
+        </div>
+        <output id="interaction-output" aria-live="polite">No user-gesture check has run.</output>
+      </section>
+    </main>
+  </body>
+</html>

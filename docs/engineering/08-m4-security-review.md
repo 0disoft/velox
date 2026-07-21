@@ -110,8 +110,9 @@ SEC-004 remains a maintenance and external-dependency risk for M5.
 
 The release must still stop if current security tests fail, tag and artifact
 bytes disagree, publication warnings disappear, a tracked secret is found, or
-the public verifier cannot reproduce the candidate. An independent external
-user attempt is still required before M4 completes.
+the public verifier cannot reproduce the candidate. M4 is complete under ADR
+0016; an independent external-user attempt remains an M5 adoption input and is
+not implied by maintainer-controlled verification.
 
 ## Re-review Triggers
 

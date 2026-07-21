@@ -1,0 +1,20 @@
+{
+  "$schema": "../../schema/velox-v1.schema.json",
+  "schemaVersion": 1,
+  "app": {
+    "id": "dev.velox.capabilityprobe",
+    "name": "Velox Capability Probe",
+    "version": "0.1.0"
+  },
+  "assets": {
+    "root": "web",
+    "entry": "index.html"
+  },
+  "window": {
+    "width": 1120,
+    "height": 760
+  },
+  "security": {
+    "permissions": ["app.info"]
+  }
+}
