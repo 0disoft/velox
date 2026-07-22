@@ -148,8 +148,18 @@ from commit `9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Tag evidence run
 run `29715002921` passed. The verifier downloaded SHA-256
 `5df53090e1e67ce54c8639f061ffc7b03b7c3aa38f95a725c29342cfaff73b68`,
 validated the sidecar evidence, built twice, inspected the output, and reached
-startup-ready without source checkout. This is current release evidence, not an
-external-user attempt or authenticated publisher identity.
+startup-ready without source checkout. This remains historical release
+evidence, not an external-user attempt or authenticated publisher identity.
+
+The current public preview is
+[`v0.5.10-alpha.2`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.2)
+from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`. Tag evidence run
+`29894943737`, publication run `29895087658`, and public-download verification
+run `29895490556` passed. The public verifier observed ZIP SHA-256
+`abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7`,
+validated checksums, SPDX, provenance, deterministic builds, doctor readiness,
+inspection, and startup readiness without checkout. Its evidence level remains
+`same-repository-public-download` with `externalUserAttempt: false`.
 
 The now-archived separate public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)

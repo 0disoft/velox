@@ -103,6 +103,45 @@ func TestPublicPreviewResultSchemaKeepsSameRepositoryEvidenceNonExternal(t *test
 	}
 }
 
+func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
+	checks := map[string][]string{
+		"README.md": {
+			"v0.5.10-alpha.2",
+			"29895087658",
+			"29895490556",
+			"abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7",
+		},
+		"VALIDATION.md": {
+			"The current public preview is",
+			"same-repository-public-download",
+			"externalUserAttempt: false",
+		},
+		"docs/ops/release.md": {
+			"two published unsigned developer previews",
+			"v0.5.10-alpha.2",
+			"29894943737",
+		},
+		"docs/product/03-risk-register.md": {
+			"Public verifier run 29895490556",
+			"current preview `v0.5.10-alpha.2`",
+		},
+	}
+	for relative, required := range checks {
+		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
+		for _, marker := range required {
+			if !strings.Contains(doc, marker) {
+				t.Errorf("%s lacks current alpha evidence %q", relative, marker)
+			}
+		}
+
+	}
+
+	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.3"`) {
+		t.Fatal("development version did not advance after alpha.2 publication")
+	}
+}
+
 func TestExternalAttemptIssueContractRequiresIdentityAndSafeEvidence(t *testing.T) {
 	issue := readNormalized(t, repositoryPath(".github", "ISSUE_TEMPLATE", "external-user-attempt.yml"))
 	doc := readNormalized(t, repositoryPath("docs", "ops", "external-user-attempt.md"))

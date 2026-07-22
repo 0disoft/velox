@@ -23,7 +23,7 @@ market evidence for stop, continue, signing, support, or reposition decisions.
 
 A qualifying attempt:
 
-- starts from the public `v0.5.10-alpha.1` GitHub Release;
+- starts from the current public `v0.5.10-alpha.2` GitHub Release;
 - records the exact ZIP SHA-256 before execution;
 - follows the public installation and hello-project path without unpublished
   maintainer instructions;

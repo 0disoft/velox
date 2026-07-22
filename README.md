@@ -33,6 +33,16 @@ then exercised the release without source checkout at verifier commit
 The executables remain unsigned and the provenance remains unauthenticated
 metadata.
 
+[Velox v0.5.10-alpha.2](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.2)
+is the current unsigned developer preview from commit
+`9bbb6bfcc1393058cb80d72c79df601caa970f2f`. Tag evidence
+[run 29894943737](https://github.com/0disoft/velox/actions/runs/29894943737),
+publication [run 29895087658](https://github.com/0disoft/velox/actions/runs/29895087658),
+and public-download verification
+[run 29895490556](https://github.com/0disoft/velox/actions/runs/29895490556)
+passed. The public ZIP SHA-256 is
+`abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7`.
+
 Start with the [Velox Release Quickstart](docs/QUICKSTART.md) to verify and use
 an immutable public release without a source checkout or consumer toolchain.
 
@@ -158,7 +168,8 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 0017 continues the narrow alpha, and ADR 0018 replaces the calendar-dependent
 human beta gate with versioned clean-room LLM agent evaluation. Passing that
 gate will not claim human adoption. Provider-approved signing and authenticated
-provenance are not M4 gates. The published preview is `0.5.10-alpha.1`.
+provenance are not M4 gates. The current published preview is
+`0.5.10-alpha.2`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

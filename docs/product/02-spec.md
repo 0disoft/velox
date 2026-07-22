@@ -87,6 +87,12 @@ capability surface. ADR 0018 makes clean-room LLM agent evaluation the beta
 technical gate while fixing every trial's human-adoption claim to false.
 Passing agent trials do not prove market demand.
 
+The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
+developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.
+Publication run `29895087658` and public-download verification run `29895490556`
+passed with ZIP SHA-256
+`abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7`.
+
 ### Runtime
 
 - Windows x64.

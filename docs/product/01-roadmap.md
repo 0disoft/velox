@@ -146,6 +146,14 @@ commit `9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Public verifier run
 `29715002921` independently supplied the release digest, downloaded the public
 assets without checkout, and passed build, inspection, and startup-ready gates.
 
+Current preview `v0.5.10-alpha.2` was published from exact commit
+`9bbb6bfcc1393058cb80d72c79df601caa970f2f` after tag evidence run
+`29894943737` and publication run `29895087658` passed. Public verifier run
+`29895490556` matched ZIP SHA-256
+`abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7`
+and passed the no-checkout consumer gates. This is technical distribution
+evidence and not a human attempt.
+
 The now-archived public `0disoft/velox-consumer-smoke` repository consumed the
 pinned public release from a hosted clean runner without Velox source checkout,
 a consumer compiler, Node.js, package-manager commands, or Actions cache.
@@ -195,7 +203,8 @@ still needs accepted provider output and the approved publisher subject.
 ### Completion evidence
 
 The immutable tag, manual publication, public warnings, and no-checkout public
-verification are complete for `v0.5.10-alpha.1`. ADR 0016 replaces the former
+verification are complete for the first preview `v0.5.10-alpha.1` and current
+preview `v0.5.10-alpha.2`. ADR 0016 replaces the former
 independent-user M4 gate with a separate maintainer-controlled clean-room
 consumer gate. That gate passed, so M4 is complete. This does not create an
 independent user or prove adoption.

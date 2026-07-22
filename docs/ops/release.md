@@ -5,7 +5,7 @@
 
 ## Current State
 
-Velox has one published unsigned developer preview and no package registry
+Velox has two published unsigned developer previews and no package registry
 entry, implemented signing workflow, or stable version policy. Maintainer tooling builds the Go CLI and
 host, assembles the deterministic unsigned Windows x64 bundle, verifies
 artifact entries against the release manifest, and emits checksums, a
@@ -49,6 +49,17 @@ verified the sidecars, built twice, inspected, and reached startup-ready. This
 is same-repository public-download evidence, not an independent external-user
 attempt or authenticated attestation.
 
+[Tag evidence run 29894943737](https://github.com/0disoft/velox/actions/runs/29894943737)
+and [publication run 29895087658](https://github.com/0disoft/velox/actions/runs/29895087658)
+produced current preview `v0.5.10-alpha.2` from commit
+`9bbb6bfcc1393058cb80d72c79df601caa970f2f`. Public-download verification
+[run 29895490556](https://github.com/0disoft/velox/actions/runs/29895490556)
+matched ZIP SHA-256
+`abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7`
+and passed checksum, SPDX, provenance, deterministic-build, doctor, inspection,
+and startup gates without checkout. It remains same-repository evidence with
+`externalUserAttempt: false`.
+
 The now-archived public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
 repository consumed only the pinned public release. Hosted
@@ -70,9 +81,10 @@ exists.
 
 ## Channels
 
-Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` is the published
-unsigned developer preview at immutable tag `v0.5.10-alpha.1`. Public artifacts and executables use the Velox identity
-fixed by ADR 0015. ADR 0018 defines the clean-room LLM agent evidence required
+Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
+published preview and `0.5.10-alpha.2` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.2`. Public artifacts and executables use the
+Velox identity fixed by ADR 0015. ADR 0018 defines the clean-room LLM agent evidence required
 before beta technical readiness. Actual beta or stable promotion, support
 policy, signing, and publication remain separate maintainer decisions after
 the qualifying trial set exists.

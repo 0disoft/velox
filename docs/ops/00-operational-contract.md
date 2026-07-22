@@ -83,6 +83,13 @@ retains Velox and accepts the documented command and discovery collisions.
 Future public-release verification stays in Velox rather than reviving the
 archived consumer repository.
 
+Current preview `v0.5.10-alpha.2` was published by run `29895087658` from exact
+commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`. Public-download verification
+run `29895490556` matched ZIP SHA-256
+`abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7`
+and passed every same-repository public-download gate. It does not change the
+zero-human-adoption boundary.
+
 ADR 0017 continues only the narrow static alpha. Hosted run `29806946109`
 passed release reproducibility and checkout-free consumption for commit
 `d8495b8aa2a399505b583a8ed881b5bc7fa9f304` with publication skipped. It does
