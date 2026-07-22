@@ -137,6 +137,10 @@ After the advisory flow has been exercised, repository variable
 `CLARISSIMI_GATE_MODE=required` can make the existing decision job fail closed
 without renaming the check.
 
+Repository-level smoke uses a documentation-only source pull request and
+closes the generated Clarissimi draft without promotion, so test-only
+assessment data never enters the contributor ledger.
+
 Dependabot checks the `github-actions` ecosystem weekly and opens reviewable
 pull requests without auto-merge. The workflow also runs
 `cmd/velox-action-pins`, which rejects mutable `actions/*` references, stale
