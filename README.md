@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M4 complete; M5 decision accepted for narrow alpha continuation; beta remains gated with no independent adoption recorded
+- Status: M4 complete; M5 narrow alpha active; beta gated by clean-room LLM agent evaluation with no human adoption claim
 - Scope: general
 - Repository type: cli-tool
 
@@ -32,6 +32,9 @@ then exercised the release without source checkout at verifier commit
 `5df53090e1e67ce54c8639f061ffc7b03b7c3aa38f95a725c29342cfaff73b68`.
 The executables remain unsigned and the provenance remains unauthenticated
 metadata.
+
+Start with the [Velox Release Quickstart](docs/QUICKSTART.md) to verify and use
+an immutable public release without a source checkout or consumer toolchain.
 
 ## Headline Metrics
 
@@ -90,8 +93,11 @@ Explicitly deferred:
 - Public-name decision: docs/adr/0015-retain-velox-public-identity.md
 - Distribution/adoption boundary: docs/adr/0016-separate-technical-distribution-from-independent-adoption.md
 - M5 product decision: docs/adr/0017-continue-as-a-narrow-static-packager.md
+- Agent-evaluation decision: docs/adr/0018-use-clean-room-llm-agent-evaluation.md
 - Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
 - External user attempt: docs/ops/external-user-attempt.md
+- Clean-room LLM agent evaluation: docs/ops/llm-agent-evaluation.md
+- Public release Quickstart: docs/QUICKSTART.md
 
 ## Current CLI Slice
 
@@ -148,11 +154,13 @@ developer preview, same-repository public-download verification, and a
 separate public clean-room consumer repository.
 Deterministic signing-input, lineage, and
 fail-closed Authenticode verification tooling remain dormant for a future
-signed channel. ADR 0016 closes M4 on technical distribution evidence and
-starts M5 with zero independent-user attempts recorded; provider-approved
-signing and authenticated provenance are not M4 gates. The published preview
-is `0.5.10-alpha.1`. Neither same-repository verification nor the
-maintainer-controlled consumer repository counts as independent adoption.
+signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
+0017 continues the narrow alpha, and ADR 0018 replaces the calendar-dependent
+human beta gate with versioned clean-room LLM agent evaluation. Passing that
+gate will not claim human adoption. Provider-approved signing and authenticated
+provenance are not M4 gates. The published preview is `0.5.10-alpha.1`.
+Neither same-repository verification nor the maintainer-controlled consumer
+repository counts as independent adoption.
 
 The now-archived public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)

@@ -72,8 +72,10 @@ exists.
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` is the published
 unsigned developer preview at immutable tag `v0.5.10-alpha.1`. Public artifacts and executables use the Velox identity
-fixed by ADR 0015. Broader beta, stable, and support policy remain UNDECIDED
-before M5.
+fixed by ADR 0015. ADR 0018 defines the clean-room LLM agent evidence required
+before beta technical readiness. Actual beta or stable promotion, support
+policy, signing, and publication remain separate maintainer decisions after
+the qualifying trial set exists.
 
 Nightly distribution is not planned during the initial project stage.
 

@@ -1,6 +1,6 @@
 # Operational Contract
 
-- Status: Narrow alpha continuation accepted; beta gated with zero independent-user attempts
+- Status: Narrow alpha active; beta gated by clean-room LLM agent evaluation
 - Primary owner: Project maintainer
 
 ## Product Shape
@@ -88,3 +88,9 @@ passed release reproducibility and checkout-free consumption for commit
 `d8495b8aa2a399505b583a8ed881b5bc7fa9f304` with publication skipped. It does
 not authorize a Go application backend, broad native APIs, beta, or stable
 distribution.
+
+ADR 0018 removes an unknown human volunteer from the technical beta schedule.
+Beta now requires three consecutive clean-room LLM agent trials across at least
+two model identifiers. Every result remains maintainer-orchestrated and fixes
+the human-adoption claim to false. Voluntary human attempts remain market
+evidence, not a technical release gate.

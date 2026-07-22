@@ -224,9 +224,9 @@ preparation remains fail-closed and dormant.
 
 ## M5: Product Decision
 
-Status: Decision complete under ADR 0017. Continue as a narrow static desktop
-packager in alpha. No qualifying independent-user attempt is currently
-recorded, so beta and stable admission remain gated.
+Status: Decision complete under ADR 0017 and evidence gate revised by ADR 0018.
+Continue as a narrow static desktop packager in alpha. Beta now requires
+clean-room LLM agent evaluation; no human adoption claim is recorded.
 
 Choose one:
 
@@ -242,15 +242,20 @@ counterarguments.
 The Wails cold-build result, two accepted M3 product decisions, bounded
 maintenance-cost record, internal security review, and public M4 distribution
 evidence supplied the M5 inputs. ADR 0017 accepts continued alpha work only
-inside the existing static and browser-owned boundary. M5 closed with zero
-independent-user attempts; that absence remains negative market evidence, not a
-missing technical proof. A positive beta or broader-support decision must
-either obtain qualifying adoption evidence or explicitly accept the risk in a
-later ADR.
+inside the existing static and browser-owned boundary. ADR 0018 replaces the
+calendar-dependent human gate with three consecutive clean-room LLM agent
+trials across at least two model identifiers. The human-attempt count remains
+zero and remains negative market evidence; an agent pass must not be described
+as human demand, adoption, or documentation usability.
 The public identity decision is complete under ADR 0015 and is not a remaining
 gate. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
 attempts must now test whether its narrow portable-artifact boundary has real
 value.
+
+No qualifying LLM trial series is recorded yet. The public task, trial result
+schema, pass, fail, and held semantics, contamination controls, and privacy
+boundary are versioned under `evals/llm-agent/v1`, `schema`, and
+`docs/ops/llm-agent-evaluation.md`.
 
 ## Not Authorized by M5
 

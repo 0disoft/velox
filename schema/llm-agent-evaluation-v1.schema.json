@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.0disoft.dev/velox/llm-agent-evaluation-v1.schema.json",
+  "title": "Velox clean-room LLM agent evaluation trial v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "trialId",
+    "seriesId",
+    "sequence",
+    "promptVersion",
+    "promptSha256",
+    "evaluator",
+    "control",
+    "release",
+    "application",
+    "environment",
+    "startedAtUtc",
+    "finishedAtUtc",
+    "outcome",
+    "gates",
+    "trajectory",
+    "artifacts",
+    "diagnostics",
+    "failure",
+    "evidenceLevel",
+    "humanAdoptionClaim"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "velox.llm-agent-evaluation/v1" },
+    "trialId": { "type": "string", "pattern": "^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+    "seriesId": { "type": "string", "pattern": "^series-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+    "sequence": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "promptVersion": { "const": "velox.llm-agent-task/v1" },
+    "promptSha256": { "$ref": "#/$defs/sha256" },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "sessionIdSha256", "freshSession", "memoryCarryover"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "sessionIdSha256": { "$ref": "#/$defs/sha256" },
+        "freshSession": { "const": true },
+        "memoryCarryover": { "const": false }
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maintainerOrchestrated",
+        "externalHuman",
+        "veloxSourceCheckout",
+        "unpublishedContext",
+        "interactiveMaintainerHints"
+      ],
+      "properties": {
+        "maintainerOrchestrated": { "const": true },
+        "externalHuman": { "const": false },
+        "veloxSourceCheckout": { "const": false },
+        "unpublishedContext": { "const": false },
+        "interactiveMaintainerHints": { "const": 0 }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "tag", "url", "expectedSha256", "observedSha256"],
+      "properties": {
+        "repository": { "const": "0disoft/velox" },
+        "tag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+-(alpha|beta)\\.[1-9][0-9]*$" },
+        "url": { "type": "string", "format": "uri" },
+        "expectedSha256": { "$ref": "#/$defs/sha256" },
+        "observedSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": { "const": "dev.velox.agent.focusledger" },
+        "name": { "const": "Focus Ledger" },
+        "version": { "const": "0.1.0" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["windowsVersion", "webView2Version", "architecture", "workspaceIsolation"],
+      "properties": {
+        "windowsVersion": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "webView2Version": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "architecture": { "const": "AMD64" },
+        "workspaceIsolation": { "enum": ["fresh-local-directory", "fresh-vm", "fresh-hosted-runner"] }
+      }
+    },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "finishedAtUtc": { "type": "string", "format": "date-time" },
+    "outcome": { "enum": ["passed", "failed", "held"] },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "releaseChecksumVerified",
+        "publicDocsOnly",
+        "noSourceCheckout",
+        "noConsumerCompiler",
+        "noNodeRuntime",
+        "noPackageManager",
+        "projectInitialized",
+        "doctorReady",
+        "deterministicBuild",
+        "inspectionPassed",
+        "startupReady",
+        "appBehaviorVerified",
+        "noForbiddenNativeCapability"
+      ],
+      "properties": {
+        "releaseChecksumVerified": { "type": "boolean" },
+        "publicDocsOnly": { "type": "boolean" },
+        "noSourceCheckout": { "type": "boolean" },
+        "noConsumerCompiler": { "type": "boolean" },
+        "noNodeRuntime": { "type": "boolean" },
+        "noPackageManager": { "type": "boolean" },
+        "projectInitialized": { "type": "boolean" },
+        "doctorReady": { "type": "boolean" },
+        "deterministicBuild": { "type": "boolean" },
+        "inspectionPassed": { "type": "boolean" },
+        "startupReady": { "type": "boolean" },
+        "appBehaviorVerified": { "type": "boolean" },
+        "noForbiddenNativeCapability": { "type": "boolean" }
+      }
+    },
+    "trajectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["toolCalls", "retries", "commandClasses", "forbiddenActions"],
+      "properties": {
+        "toolCalls": { "type": "integer", "minimum": 0, "maximum": 500 },
+        "retries": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "commandClasses": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "release-download",
+              "checksum-verification",
+              "version",
+              "init",
+              "validate",
+              "doctor",
+              "asset-edit",
+              "build",
+              "archive-hash",
+              "inspect",
+              "run",
+              "behavior-check"
+            ]
+          }
+        },
+        "forbiddenActions": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "firstBuildArchive": { "$ref": "#/$defs/relativePath" },
+        "firstBuildSha256": { "$ref": "#/$defs/sha256" },
+        "secondBuildArchive": { "$ref": "#/$defs/relativePath" },
+        "secondBuildSha256": { "$ref": "#/$defs/sha256" },
+        "buildResult": { "$ref": "#/$defs/relativePath" },
+        "buildResultSha256": { "$ref": "#/$defs/sha256" },
+        "safeReport": { "$ref": "#/$defs/relativePath" },
+        "safeReportSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$" }
+    },
+    "failure": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["phase", "code"],
+          "properties": {
+            "phase": {
+              "enum": ["acquisition", "verification", "discovery", "initialization", "doctor", "authoring", "build", "inspection", "startup", "behavior", "evaluation"]
+            },
+            "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$" }
+          }
+        }
+      ]
+    },
+    "evidenceLevel": { "const": "maintainer-orchestrated-clean-room-llm-agent" },
+    "humanAdoptionClaim": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "outcome": { "const": "passed" } }, "required": ["outcome"] },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "releaseChecksumVerified": { "const": true },
+              "publicDocsOnly": { "const": true },
+              "noSourceCheckout": { "const": true },
+              "noConsumerCompiler": { "const": true },
+              "noNodeRuntime": { "const": true },
+              "noPackageManager": { "const": true },
+              "projectInitialized": { "const": true },
+              "doctorReady": { "const": true },
+              "deterministicBuild": { "const": true },
+              "inspectionPassed": { "const": true },
+              "startupReady": { "const": true },
+              "appBehaviorVerified": { "const": true },
+              "noForbiddenNativeCapability": { "const": true }
+            }
+          },
+          "artifacts": {
+            "required": [
+              "firstBuildArchive",
+              "firstBuildSha256",
+              "secondBuildArchive",
+              "secondBuildSha256",
+              "buildResult",
+              "buildResultSha256",
+              "safeReport",
+              "safeReportSha256"
+            ]
+          },
+          "failure": { "type": "null" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "pattern": "^[A-Za-z0-9._/-]+$",
+      "not": { "pattern": "(^|/)\\.\\.(/|$)" }
+    }
+  }
+}

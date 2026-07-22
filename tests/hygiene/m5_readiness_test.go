@@ -128,14 +128,16 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"| R-008 | Full benchmark CI consumes excessive Actions resources | Medium | Medium | Mitigated |",
 		"| R-010 | External WebView2 policy or runtime availability blocks users | Medium | High | Mitigated |",
 		"public-download verifier exercised the supported path",
-		"ADR 0017 continues only narrow alpha work",
+		"ADR 0018 permits agent-evaluated beta readiness",
+		"| R-019 | LLM evaluation overfits the maintainer prompt or one model family | High | High | Monitoring |",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "01-roadmap.md"), []string{
 		"maintenance-cost record, internal security review, and public M4 distribution",
-		"M5 closed with zero",
-		"Decision complete under ADR 0017",
+		"evidence gate revised by ADR 0018",
+		"three consecutive clean-room LLM agent",
+		"No qualifying LLM trial series",
 		"public identity decision is complete under ADR 0015",
-		"No qualifying independent-user",
+		"no human adoption claim",
 		"29736140250",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "ci.md"), []string{
@@ -196,12 +198,13 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"independent-user adoption evidence is recorded",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "00-operational-contract.md"), []string{
-		"Narrow alpha continuation accepted; beta gated with zero independent-user attempts",
+		"Narrow alpha active; beta gated by clean-room LLM agent evaluation",
 		"29714173324",
 		"29715002921",
 		"29736140250",
 		"externalUserAttempt: false",
 		"29806946109",
+		"three consecutive clean-room LLM agent trials",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0017-continue-as-a-narrow-static-packager.md"), []string{
 		"Status: Accepted",
@@ -211,6 +214,13 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"Beta or stable admission requires either",
 		"29806946109",
 		"disabled and skipped",
+	})
+	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0018-use-clean-room-llm-agent-evaluation.md"), []string{
+		"Status: Accepted",
+		"Supersedes in part",
+		"Replace the uncontrollable human-attempt requirement",
+		"three consecutive passing trials",
+		"humanAdoptionClaim` to `false",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "rollback.md"), []string{
 		"Active for unsigned developer-preview releases",

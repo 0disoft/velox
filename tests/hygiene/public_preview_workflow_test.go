@@ -122,7 +122,7 @@ func TestExternalAttemptIssueContractRequiresIdentityAndSafeEvidence(t *testing.
 		"An attempt can fail and still qualify",
 		"person, account, or repository",
 		"not controlled by the implementation workflow",
-		"ADR 0016 moves this evidence",
+		"ADR 0018 also removes",
 		"must not manufacture independence",
 		"Do not paste local absolute paths",
 	} {
@@ -135,7 +135,7 @@ func TestExternalAttemptIssueContractRequiresIdentityAndSafeEvidence(t *testing.
 func TestM4CleanRoomEvidenceDoesNotClaimIndependentAdoption(t *testing.T) {
 	checks := map[string][]string{
 		"README.md": {
-			"Status: M4 complete; M5 decision accepted for narrow alpha continuation; beta remains gated with no independent adoption recorded",
+			"Status: M4 complete; M5 narrow alpha active; beta gated by clean-room LLM agent evaluation with no human adoption claim",
 			"0disoft/velox-consumer-smoke",
 			"29736140250",
 			"maintainerControlled: true",

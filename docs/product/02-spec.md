@@ -32,6 +32,8 @@ build path. It accepts a smaller feature set in exchange.
 
 - Offline documentation and media viewers.
 - IndexedDB-backed local-first tools.
+- Agent-authored small applications whose behavior remains inspectable as
+  static assets.
 - Static dashboards and internal utilities.
 - Portable prototypes and kiosk-style single-window applications.
 - Applications whose native needs are limited to lifecycle and basic window
@@ -80,9 +82,10 @@ independent-user attempts. Signatures and authenticated provenance are future-
 channel work; sidecar metadata alone is not a trust anchor.
 
 ADR 0017 continues alpha development as a narrow static desktop packager. It
-does not approve beta, an application-specific Go backend, or a broader native
-capability surface. Beta requires a qualifying independent-user attempt or a
-later explicit acceptance of the zero-adoption risk.
+does not approve an application-specific Go backend or a broader native
+capability surface. ADR 0018 makes clean-room LLM agent evaluation the beta
+technical gate while fixing every trial's human-adoption claim to false.
+Passing agent trials do not prove market demand.
 
 ### Runtime
 

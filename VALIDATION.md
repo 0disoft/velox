@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M4 complete; M5 decision accepted for narrow alpha continuation; beta remains gated with zero independent-user attempts
+- Status: M4 complete; M5 narrow alpha active; beta gated by clean-room LLM agent evaluation with no human adoption claim
 
 ## Validation Source of Truth
 
@@ -104,6 +104,10 @@ The parent workspace command contract currently provides these bounded intents:
   directly starts, and source-starts the browser-owned file editor.
 - `velox_file_notes_build` leaves a portable File Notes directory and ZIP under
   `dist/examples/file-notes` for manual picker and persistence checks.
+- `velox_llm_agent_evaluation_test` exercises clean-room trial shape checks,
+  prompt and artifact digest verification, path-containment rejection,
+  pass-gate consistency, failed-sequence preservation, and model-diversity
+  series gating.
 
 The hosted `Alpha release evidence` workflow builds the unsigned release twice,
 requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance
@@ -166,6 +170,15 @@ The bounded M5 readiness records are `docs/product/maintenance-cost-v1.json`,
 version, observation boundary, non-claim language, roadmap synchronization,
 and the unsigned-preview security baseline. The security review remains
 internal and does not replace external-user evidence.
+
+ADR 0018 replaces the uncontrollable human-attempt beta gate with three
+consecutive clean-room LLM agent trials across at least two model identifiers.
+The versioned task is `evals/llm-agent/v1/task.md`; each trial must conform to
+`schema/llm-agent-evaluation-v1.schema.json`, preserve failed and held outcomes,
+and keep `humanAdoptionClaim: false`. No qualifying trial set is recorded yet.
+`docs/QUICKSTART.md` is the public source-free discovery path for those trials;
+hygiene tests reject moving release URLs, source checkout, consumer toolchain
+installation, and local maintainer-copy fallbacks in that path.
 
 The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`

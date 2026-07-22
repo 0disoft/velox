@@ -27,3 +27,17 @@ If ADR 0011 later reactivates SignPath, it will process only the two release
 executables and signing metadata after provider onboarding is approved. These
 maintainer services do not receive end-user application data from the Velox
 runtime.
+
+## Clean-Room Agent Evaluation
+
+ADR 0018 permits maintainer-orchestrated LLM agent trials for beta technical
+readiness. Public evidence may retain provider and model identifiers, a SHA-256
+hash of the session identifier, release and artifact hashes, redacted Windows
+and WebView2 versions, command classes, counts, stable diagnostics, and relative
+artifact paths.
+
+Evaluation evidence must not retain provider credentials, raw session tokens,
+full transcripts, chain of thought, local absolute paths, usernames,
+environment variables, proprietary application data, screenshots containing
+personal information, or raw crash dumps. Trial applications use synthetic
+task data only. Passing an agent evaluation is not a human adoption claim.

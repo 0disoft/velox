@@ -63,7 +63,8 @@ Summary pages must not silently broaden these sources.
 
 The current repository has no service deployment, database, user secrets, or
 production telemetry. Active operational documents cover CI readiness,
-artifact release, and rollback of immutable releases only.
+artifact release, public release consumption, and rollback of immutable
+releases only. `docs/QUICKSTART.md` is the source-free consumer entrypoint.
 
 Public project policies are in `LICENSE`, `SECURITY.md`, and `PRIVACY.md`.
 The unsigned developer-preview decision is in ADR 0011. Deferred SignPath
@@ -76,16 +77,19 @@ Foundation application and protected-environment handoff steps remain in
 - docs/ops/signing.md
 - docs/ops/signpath-onboarding.md
 - docs/ops/external-user-attempt.md
+- docs/ops/llm-agent-evaluation.md
 - docs/ops/rollback.md
+- docs/QUICKSTART.md
 
 ADR 0016 closes the technical M4 distribution milestone with the now-archived,
 maintainer-controlled `0disoft/velox-consumer-smoke` repository. Its one-shot
-evidence remains explicitly non-external; independent adoption is an M5 input
-rather than a technical release gate.
+evidence remains explicitly non-external; independent adoption remains market
+evidence rather than a technical release gate.
 
 ADR 0017 closes the M5 product choice by continuing narrow alpha development
-inside the static and browser-owned capability boundary. Beta remains gated on
-an independent-user attempt or a later explicit zero-adoption risk acceptance.
+inside the static and browser-owned capability boundary. ADR 0018 replaces the
+uncontrollable human beta gate with replayable clean-room LLM agent evaluation
+while preserving the absence of human adoption as a market risk.
 
 Service-oriented backup, environment, secret, incident, and observability
 templates are intentionally retired until a real support surface requires them.

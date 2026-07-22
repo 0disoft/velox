@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-07-21
 - Owner: Project maintainer
+- Superseded in part by: ADR 0018 replaces the beta and stable admission evidence clause
 
 ## Context
 

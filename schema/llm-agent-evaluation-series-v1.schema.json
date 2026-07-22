@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.0disoft.dev/velox/llm-agent-evaluation-series-v1.schema.json",
+  "title": "Velox clean-room LLM agent evaluation series v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "seriesId",
+    "releaseTag",
+    "releaseSha256",
+    "promptVersion",
+    "promptSha256",
+    "trialIds",
+    "modelIdentifiers",
+    "passedTrials",
+    "failedTrials",
+    "heldTrials",
+    "outcome",
+    "betaTechnicalGate",
+    "diagnostics",
+    "humanAdoptionClaim"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "velox.llm-agent-evaluation-series/v1" },
+    "seriesId": { "type": "string", "pattern": "^series-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+    "releaseTag": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+-(alpha|beta)\\.[1-9][0-9]*$" },
+    "releaseSha256": { "$ref": "#/$defs/sha256" },
+    "promptVersion": { "const": "velox.llm-agent-task/v1" },
+    "promptSha256": { "$ref": "#/$defs/sha256" },
+    "trialIds": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" }
+    },
+    "modelIdentifiers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 3, "maxLength": 301 }
+    },
+    "passedTrials": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "failedTrials": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "heldTrials": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "outcome": { "enum": ["passed", "failed", "held"] },
+    "betaTechnicalGate": { "type": "boolean" },
+    "diagnostics": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$" }
+    },
+    "humanAdoptionClaim": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "outcome": { "const": "passed" } }, "required": ["outcome"] },
+      "then": {
+        "properties": {
+          "passedTrials": { "const": 3 },
+          "failedTrials": { "const": 0 },
+          "heldTrials": { "const": 0 },
+          "modelIdentifiers": { "minItems": 2 },
+          "betaTechnicalGate": { "const": true }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

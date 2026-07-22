@@ -1,8 +1,8 @@
 # External User Attempt
 
-- Status: M5 adoption contract ready; no qualifying attempt recorded
+- Status: Optional market-evidence contract ready; no qualifying attempt recorded
 - Owner: Project maintainer
-- Decision: ADR 0012 and ADR 0016
+- Decision: ADR 0012, ADR 0016, and ADR 0018
 
 ## Purpose
 
@@ -12,11 +12,12 @@ download workflow and the separate maintainer-controlled consumer repository
 prove GitHub Release acquisition and execution, but both record
 `externalUserAttempt: false` and cannot prove adoption.
 
-ADR 0016 moves this evidence from the technical M4 completion gate into M5.
-The current count is zero. The project must not manufacture independence by
-creating another maintainer account or repository. The absence of an external
-attempt is itself material product evidence for the M5 stop, continue, or
-reposition decision.
+ADR 0016 moved this evidence out of the technical M4 gate. ADR 0018 also removes
+an unknown human volunteer from beta technical readiness and replaces that gate
+with clean-room LLM agent evaluation. The current human-attempt count remains
+zero. The project must not manufacture independence by creating another
+maintainer account, repository, or agent label. Human absence remains material
+market evidence for stop, continue, signing, support, or reposition decisions.
 
 ## Qualifying Attempt
 
