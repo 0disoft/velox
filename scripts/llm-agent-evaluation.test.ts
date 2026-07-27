@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { describe, expect, test } from "bun:test";
-import { loadAndVerifyTrial, summarizeSeries, type TrialRecord } from "./llm-agent-evaluation.ts";
+import { loadAndVerifyTrial, summarizeSeries, type TrialAttestation, type TrialRecord } from "./llm-agent-evaluation.ts";
 
 const fixedDigest = "a".repeat(64);
 const prompt = "public evaluation task\n";
@@ -15,7 +15,7 @@ describe("LLM agent evaluation", () => {
     for (const [index, model] of ["model-a", "model-a", "model-b"].entries()) {
       const trialRoot = resolve(root, `trial-${index + 1}`);
       const record = await createTrial(trialRoot, index + 1, model);
-      trials.push(await loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md")));
+      trials.push(await verifyTrial(root, trialRoot));
       expect(trials[index].trialId).toBe(record.trialId);
     }
     expect(summarizeSeries(trials)).toMatchObject({
@@ -34,7 +34,7 @@ describe("LLM agent evaluation", () => {
     const trialRoot = resolve(root, "trial-1");
     await createTrial(trialRoot, 1, "model-a");
     await writeFile(resolve(trialRoot, "artifacts/first.zip"), "tampered", "utf8");
-    await expect(loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md"))).rejects.toThrow("ARTIFACT_DIGEST_MISMATCH_FIRSTBUILDARCHIVE");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ARTIFACT_DIGEST_MISMATCH_FIRSTBUILDARCHIVE");
   });
 
   test("rejects path traversal before reading an artifact", async () => {
@@ -43,7 +43,7 @@ describe("LLM agent evaluation", () => {
     const record = await createTrial(trialRoot, 1, "model-a");
     record.artifacts.safeReport = "../report.md";
     await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md"))).rejects.toThrow("ARTIFACT_PATH_INVALID_SAFEREPORT");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ARTIFACT_PATH_INVALID_SAFEREPORT");
   });
 
   test("rejects reuse of one artifact path for both builds", async () => {
@@ -52,7 +52,7 @@ describe("LLM agent evaluation", () => {
     const record = await createTrial(trialRoot, 1, "model-a");
     record.artifacts.secondBuildArchive = record.artifacts.firstBuildArchive;
     await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md"))).rejects.toThrow("ARTIFACT_PATH_DUPLICATE");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ARTIFACT_PATH_DUPLICATE");
   });
 
   test("rejects a self-consistent digest for the wrong build-result identity", async () => {
@@ -63,16 +63,75 @@ describe("LLM agent evaluation", () => {
     await writeFile(resolve(trialRoot, "artifacts/build-result.json"), wrong);
     record.artifacts.buildResultSha256 = sha(wrong);
     await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md"))).rejects.toThrow("BUILD_RESULT_SCHEMA_INVALID");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("BUILD_RESULT_SCHEMA_INVALID");
   });
 
   test("rejects a passed claim with a failed hard gate", async () => {
     const root = await createSeries();
     const trialRoot = resolve(root, "trial-1");
     const record = await createTrial(trialRoot, 1, "model-a");
-    record.gates.publicDocsOnly = false;
+    record.gates.startupReady = false;
     await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md"))).rejects.toThrow("PASSED_TRIAL_HAS_FAILED_GATE");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("PASSED_TRIAL_HAS_FAILED_GATE");
+  });
+
+  test("rejects an agent-generated session digest that differs from the orchestrator attestation", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    const record = await createTrial(trialRoot, 1, "model-a");
+    record.evaluator.sessionIdSha256 = sha(Buffer.from("invented-session"));
+    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SESSION_DIGEST_MISMATCH");
+  });
+
+  test("rejects a passed claim that hides an attested Node.js invocation", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    await createTrial(trialRoot, 1, "model-a");
+    const attestation = await readAttestation(trialRoot);
+    attestation.trajectory.forbiddenActions = ["NODE_RUNTIME_INVOKED"];
+    await writeAttestation(trialRoot, attestation);
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_FORBIDDEN_ACTIONS_MISMATCH");
+  });
+
+  test("rejects an under-reported tool-call count", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    await createTrial(trialRoot, 1, "model-a");
+    const attestation = await readAttestation(trialRoot);
+    attestation.trajectory.toolCalls += 1;
+    await writeAttestation(trialRoot, attestation);
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_TOOL_CALL_COUNT_MISMATCH");
+  });
+
+  test("rejects a reported time range that does not cover the orchestrator session", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    const record = await createTrial(trialRoot, 1, "model-a");
+    record.startedAtUtc = record.finishedAtUtc;
+    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_TIME_RANGE_NOT_COVERED");
+  });
+
+  test("rejects an attested tool-call budget overrun", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    const record = await createTrial(trialRoot, 1, "model-a");
+    const attestation = await readAttestation(trialRoot);
+    record.trajectory.toolCalls = 71;
+    attestation.trajectory.toolCalls = 71;
+    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    await writeAttestation(trialRoot, attestation);
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTED_TOOL_CALL_BUDGET_EXCEEDED");
+  });
+
+  test("rejects an attestation stored inside the agent-controlled trial root", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    await createTrial(trialRoot, 1, "model-a");
+    const localAttestation = resolve(trialRoot, "attestation.json");
+    await writeFile(localAttestation, `${JSON.stringify(await readAttestation(trialRoot), null, 2)}\n`, "utf8");
+    await expect(loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md"), localAttestation)).rejects.toThrow("ATTESTATION_INSIDE_TRIAL_ROOT");
   });
 
   test("holds an otherwise passing single-model series", async () => {
@@ -81,7 +140,7 @@ describe("LLM agent evaluation", () => {
     for (let index = 1; index <= 3; index += 1) {
       const trialRoot = resolve(root, `trial-${index}`);
       await createTrial(trialRoot, index, "model-a");
-      trials.push(await loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md")));
+      trials.push(await verifyTrial(root, trialRoot));
     }
     expect(summarizeSeries(trials)).toMatchObject({
       outcome: "held",
@@ -102,7 +161,7 @@ describe("LLM agent evaluation", () => {
         record.failure = { phase: "startup", code: "STARTUP_NOT_READY" };
         await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
       }
-      trials.push(await loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md")));
+      trials.push(await verifyTrial(root, trialRoot));
     }
     expect(summarizeSeries(trials)).toMatchObject({
       passedTrials: 2,
@@ -125,6 +184,7 @@ describe("LLM agent evaluation", () => {
       "series",
       root,
       resolve(root, "task.md"),
+      resolve(root, "attestations"),
       summaryPath,
     ], { stdout: "pipe", stderr: "pipe" });
     const [exitCode, stdout, stderr] = await Promise.all([
@@ -249,7 +309,45 @@ async function createTrial(root: string, sequence: number, model: string): Promi
     humanAdoptionClaim: false,
   };
   await writeFile(resolve(root, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+  const attestation: TrialAttestation = {
+    schemaVersion: "velox.llm-agent-evaluation-attestation/v1",
+    trialId: record.trialId,
+    seriesId: record.seriesId,
+    sequence: record.sequence,
+    evaluator: { ...record.evaluator },
+    startedAtUtc: record.startedAtUtc,
+    finishedAtUtc: record.finishedAtUtc,
+    trajectory: {
+      toolCalls: record.trajectory.toolCalls,
+      retries: record.trajectory.retries,
+      toolCallBudget: 70,
+      forbiddenActions: [],
+    },
+    evidence: {
+      kind: "orchestrator-session-log",
+      sha256: sha(Buffer.from(`session-log-${sequence}`)),
+    },
+  };
+  await writeAttestation(root, attestation);
   return record;
+}
+
+async function verifyTrial(seriesRoot: string, trialRoot: string) {
+  return loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(seriesRoot, "task.md"), attestationPath(trialRoot));
+}
+
+function attestationPath(trialRoot: string) {
+  return resolve(trialRoot, "..", "attestations", `${basename(trialRoot)}.json`);
+}
+
+async function readAttestation(trialRoot: string): Promise<TrialAttestation> {
+  return JSON.parse(await Bun.file(attestationPath(trialRoot)).text()) as TrialAttestation;
+}
+
+async function writeAttestation(trialRoot: string, attestation: TrialAttestation) {
+  const path = attestationPath(trialRoot);
+  await mkdir(resolve(path, ".."), { recursive: true });
+  await writeFile(path, `${JSON.stringify(attestation, null, 2)}\n`, "utf8");
 }
 
 function sha(value: Uint8Array) {

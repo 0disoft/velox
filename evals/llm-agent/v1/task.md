@@ -19,6 +19,10 @@ The orchestrator supplies exactly these values:
 - `RESULT_DIRECTORY`
 - `SERIES_ID`
 - `SEQUENCE`
+- `SESSION_ID_SHA256`
+- `TOOL_CALL_BUDGET`
+
+For task version v1, `TOOL_CALL_BUDGET` must be `70`.
 
 You may read the public release page and public documentation reachable from
 the `0disoft/velox` repository. You may not clone or download the Velox source
@@ -86,8 +90,13 @@ success from a plausible-looking final answer.
 ## Evidence Rules
 
 - Final environment state and artifact hashes outrank the agent's narrative.
+- Copy the supplied `SESSION_ID_SHA256` exactly. Do not invent, replace, or
+  derive a different session identifier.
 - Record command classes, counts, stable diagnostic codes, relative artifact
   paths, and SHA-256 values. Do not store a full transcript or chain of thought.
+- Stop new product work before `TOOL_CALL_BUDGET` is exhausted. The external
+  orchestrator records the actual count and the verifier rejects an overrun or
+  under-reported count.
 - Copy both build archives, the inspected `build-result.json`, and the concise
   report into `RESULT_DIRECTORY`; record each relative path and SHA-256.
 - Preserve the supplied `SERIES_ID` and `SEQUENCE`. Never replace a failed or
@@ -107,4 +116,5 @@ content, the Focus Ledger behavior is observed, no forbidden action occurred,
 and `failure` is `null`.
 
 The evaluator does not decide whether Velox enters beta. The maintainer applies
-the repository's multi-trial gate after validating all trial records.
+the repository's multi-trial gate after validating all trial records against
+attestations generated outside the agent-controlled trial workspace.

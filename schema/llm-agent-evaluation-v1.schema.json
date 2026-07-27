@@ -161,7 +161,20 @@
             ]
           }
         },
-        "forbiddenActions": { "type": "array", "maxItems": 0 }
+        "forbiddenActions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "NODE_RUNTIME_INVOKED",
+              "CONSUMER_COMPILER_INVOKED",
+              "PACKAGE_MANAGER_INVOKED",
+              "SOURCE_CHECKOUT_OBSERVED",
+              "UNPUBLISHED_CONTEXT_OBSERVED",
+              "MAINTAINER_HINT_OBSERVED"
+            ]
+          }
+        }
       }
     },
     "artifacts": {
@@ -235,6 +248,11 @@
               "safeReport",
               "safeReportSha256"
             ]
+          },
+          "trajectory": {
+            "properties": {
+              "forbiddenActions": { "maxItems": 0 }
+            }
           },
           "failure": { "type": "null" }
         }

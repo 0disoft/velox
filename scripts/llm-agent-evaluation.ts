@@ -25,6 +25,18 @@ const commandClasses = new Set([
   "behavior-check",
 ]);
 
+const forbiddenActionNames = [
+  "NODE_RUNTIME_INVOKED",
+  "CONSUMER_COMPILER_INVOKED",
+  "PACKAGE_MANAGER_INVOKED",
+  "SOURCE_CHECKOUT_OBSERVED",
+  "UNPUBLISHED_CONTEXT_OBSERVED",
+  "MAINTAINER_HINT_OBSERVED",
+] as const;
+const forbiddenActions = new Set<string>(forbiddenActionNames);
+type ForbiddenAction = (typeof forbiddenActionNames)[number];
+const toolCallBudget = 70;
+
 const gateNames = [
   "releaseChecksumVerified",
   "publicDocsOnly",
@@ -97,13 +109,39 @@ export interface TrialRecord {
     toolCalls: number;
     retries: number;
     commandClasses: string[];
-    forbiddenActions: [];
+    forbiddenActions: ForbiddenAction[];
   };
   artifacts: Partial<Record<(typeof artifactPairs)[number][0] | (typeof artifactPairs)[number][1], string>>;
   diagnostics: string[];
   failure: null | { phase: string; code: string };
   evidenceLevel: "maintainer-orchestrated-clean-room-llm-agent";
   humanAdoptionClaim: false;
+}
+
+export interface TrialAttestation {
+  schemaVersion: "velox.llm-agent-evaluation-attestation/v1";
+  trialId: string;
+  seriesId: string;
+  sequence: number;
+  evaluator: {
+    provider: string;
+    model: string;
+    sessionIdSha256: string;
+    freshSession: true;
+    memoryCarryover: false;
+  };
+  startedAtUtc: string;
+  finishedAtUtc: string;
+  trajectory: {
+    toolCalls: number;
+    retries: number;
+    toolCallBudget: number;
+    forbiddenActions: ForbiddenAction[];
+  };
+  evidence: {
+    kind: "orchestrator-session-log";
+    sha256: string;
+  };
 }
 
 export interface SeriesSummary {
@@ -124,11 +162,15 @@ export interface SeriesSummary {
   humanAdoptionClaim: false;
 }
 
-export async function loadAndVerifyTrial(resultPath: string, trialRoot: string, promptPath: string): Promise<TrialRecord> {
+export async function loadAndVerifyTrial(resultPath: string, trialRoot: string, promptPath: string, attestationPath: string): Promise<TrialRecord> {
   const root = await realpath(trialRoot);
   const result = await readOwnedFile(root, resultPath, 1024 * 1024);
   const raw = parseJSON(result.bytes, "trial result");
   const trial = validateTrialShape(raw);
+
+  const attestationFile = await readExternalAttestation(root, attestationPath, 64 * 1024);
+  const attestation = validateAttestationShape(parseJSON(attestationFile.bytes, "trial attestation"));
+  verifyAttestation(trial, attestation);
 
   const promptDigest = await digestFile(promptPath, 1024 * 1024);
   if (trial.promptSha256 !== promptDigest) fail("PROMPT_DIGEST_MISMATCH");
@@ -155,10 +197,61 @@ export async function loadAndVerifyTrial(resultPath: string, trialRoot: string, 
     if (!gateNames.every((name) => trial.gates[name] === true)) fail("PASSED_TRIAL_HAS_FAILED_GATE");
     if (trial.failure !== null) fail("PASSED_TRIAL_HAS_FAILURE");
     if (trial.artifacts.firstBuildSha256 !== trial.artifacts.secondBuildSha256) fail("BUILD_DIGESTS_DIFFER");
+    if (trial.trajectory.forbiddenActions.length !== 0) fail("PASSED_TRIAL_HAS_FORBIDDEN_ACTION");
   } else if (trial.failure === null) {
     fail("NON_PASSING_TRIAL_LACKS_FAILURE");
   }
   return trial;
+}
+
+function validateAttestationShape(raw: unknown): TrialAttestation {
+  const record = object(raw, "attestation");
+  exactKeys(record, [
+    "schemaVersion", "trialId", "seriesId", "sequence", "evaluator", "startedAtUtc", "finishedAtUtc", "trajectory", "evidence",
+  ], "attestation");
+  equal(record.schemaVersion, "velox.llm-agent-evaluation-attestation/v1", "ATTESTATION_SCHEMA_VERSION_INVALID");
+  stringMatch(record.trialId, trialIDPattern, "ATTESTATION_TRIAL_ID_INVALID");
+  stringMatch(record.seriesId, seriesIDPattern, "ATTESTATION_SERIES_ID_INVALID");
+  integerRange(record.sequence, 1, 3, "ATTESTATION_SEQUENCE_INVALID");
+  validateEvaluator(object(record.evaluator, "attestation_evaluator"));
+  dateTime(record.startedAtUtc, "ATTESTATION_START_TIME_INVALID");
+  dateTime(record.finishedAtUtc, "ATTESTATION_FINISH_TIME_INVALID");
+  const trajectory = object(record.trajectory, "attestation_trajectory");
+  exactKeys(trajectory, ["toolCalls", "retries", "toolCallBudget", "forbiddenActions"], "attestation_trajectory");
+  integerRange(trajectory.toolCalls, 0, 500, "ATTESTATION_TOOL_CALL_COUNT_INVALID");
+  integerRange(trajectory.retries, 0, 20, "ATTESTATION_RETRY_COUNT_INVALID");
+  equal(trajectory.toolCallBudget, toolCallBudget, "ATTESTATION_TOOL_CALL_BUDGET_INVALID");
+  validateForbiddenActions(trajectory.forbiddenActions, "ATTESTATION_FORBIDDEN_ACTIONS_INVALID");
+  const evidence = object(record.evidence, "attestation_evidence");
+  exactKeys(evidence, ["kind", "sha256"], "attestation_evidence");
+  equal(evidence.kind, "orchestrator-session-log", "ATTESTATION_EVIDENCE_KIND_INVALID");
+  stringMatch(evidence.sha256, sha256Pattern, "ATTESTATION_EVIDENCE_DIGEST_INVALID");
+  return record as unknown as TrialAttestation;
+}
+
+function verifyAttestation(trial: TrialRecord, attestation: TrialAttestation) {
+  equal(trial.trialId, attestation.trialId, "ATTESTATION_TRIAL_ID_MISMATCH");
+  equal(trial.seriesId, attestation.seriesId, "ATTESTATION_SERIES_ID_MISMATCH");
+  equal(trial.sequence, attestation.sequence, "ATTESTATION_SEQUENCE_MISMATCH");
+  equal(trial.evaluator.provider, attestation.evaluator.provider, "ATTESTATION_PROVIDER_MISMATCH");
+  equal(trial.evaluator.model, attestation.evaluator.model, "ATTESTATION_MODEL_MISMATCH");
+  equal(trial.evaluator.sessionIdSha256, attestation.evaluator.sessionIdSha256, "ATTESTATION_SESSION_DIGEST_MISMATCH");
+  if (Date.parse(trial.startedAtUtc) > Date.parse(attestation.startedAtUtc) || Date.parse(trial.finishedAtUtc) < Date.parse(attestation.finishedAtUtc)) {
+    fail("ATTESTATION_TIME_RANGE_NOT_COVERED");
+  }
+  equal(trial.trajectory.toolCalls, attestation.trajectory.toolCalls, "ATTESTATION_TOOL_CALL_COUNT_MISMATCH");
+  equal(trial.trajectory.retries, attestation.trajectory.retries, "ATTESTATION_RETRY_COUNT_MISMATCH");
+  if (attestation.trajectory.toolCalls > attestation.trajectory.toolCallBudget) fail("ATTESTED_TOOL_CALL_BUDGET_EXCEEDED");
+  if (!sameStrings(trial.trajectory.forbiddenActions, attestation.trajectory.forbiddenActions)) {
+    fail("ATTESTATION_FORBIDDEN_ACTIONS_MISMATCH");
+  }
+  const observed = new Set(attestation.trajectory.forbiddenActions);
+  verifyGate(trial.gates.noNodeRuntime, !observed.has("NODE_RUNTIME_INVOKED"), "ATTESTATION_NODE_GATE_MISMATCH");
+  verifyGate(trial.gates.noConsumerCompiler, !observed.has("CONSUMER_COMPILER_INVOKED"), "ATTESTATION_COMPILER_GATE_MISMATCH");
+  verifyGate(trial.gates.noPackageManager, !observed.has("PACKAGE_MANAGER_INVOKED"), "ATTESTATION_PACKAGE_MANAGER_GATE_MISMATCH");
+  verifyGate(trial.gates.noSourceCheckout, !observed.has("SOURCE_CHECKOUT_OBSERVED"), "ATTESTATION_SOURCE_GATE_MISMATCH");
+  verifyGate(trial.gates.publicDocsOnly, !observed.has("UNPUBLISHED_CONTEXT_OBSERVED"), "ATTESTATION_CONTEXT_GATE_MISMATCH");
+  if (observed.has("MAINTAINER_HINT_OBSERVED")) fail("ATTESTED_MAINTAINER_HINT_OBSERVED");
 }
 
 export function summarizeSeries(trials: TrialRecord[]): SeriesSummary {
@@ -307,7 +400,13 @@ function validateTrajectory(value: Record<string, unknown>) {
   integerRange(value.retries, 0, 20, "RETRY_COUNT_INVALID");
   const classes = stringArray(value.commandClasses, "COMMAND_CLASSES_INVALID");
   if (new Set(classes).size !== classes.length || classes.some((name) => !commandClasses.has(name))) fail("COMMAND_CLASSES_INVALID");
-  if (!Array.isArray(value.forbiddenActions) || value.forbiddenActions.length !== 0) fail("FORBIDDEN_ACTION_RECORDED");
+  validateForbiddenActions(value.forbiddenActions, "FORBIDDEN_ACTIONS_INVALID");
+}
+
+function validateForbiddenActions(value: unknown, code: string): ForbiddenAction[] {
+  const actions = stringArray(value, code);
+  if (new Set(actions).size !== actions.length || actions.some((action) => !forbiddenActions.has(action))) fail(code);
+  return actions as ForbiddenAction[];
 }
 
 function validateArtifacts(value: Record<string, unknown>) {
@@ -339,6 +438,18 @@ async function readOwnedFile(root: string, relativeOrAbsolute: string, maximumBy
   if (info.size > maximumBytes) fail("ARTIFACT_SIZE_LIMIT_EXCEEDED");
   const canonical = await realpath(candidate);
   if (!inside(root, canonical)) fail("ARTIFACT_REALPATH_OUTSIDE_TRIAL_ROOT");
+  return { path: canonical, bytes: await readFile(canonical) };
+}
+
+async function readExternalAttestation(trialRoot: string, path: string, maximumBytes: number) {
+  if (!isAbsolute(path)) fail("ATTESTATION_PATH_NOT_ABSOLUTE");
+  const candidate = resolve(path);
+  if (inside(trialRoot, candidate)) fail("ATTESTATION_INSIDE_TRIAL_ROOT");
+  const info = await lstat(candidate).catch(() => fail("ATTESTATION_MISSING"));
+  if (info.isSymbolicLink() || !info.isFile()) fail("ATTESTATION_NOT_REGULAR_FILE");
+  if (info.size > maximumBytes) fail("ATTESTATION_SIZE_LIMIT_EXCEEDED");
+  const canonical = await realpath(candidate);
+  if (inside(trialRoot, canonical)) fail("ATTESTATION_REALPATH_INSIDE_TRIAL_ROOT");
   return { path: canonical, bytes: await readFile(canonical) };
 }
 
@@ -383,6 +494,16 @@ function exactKeys(value: Record<string, unknown>, expected: readonly string[], 
 
 function equal(actual: unknown, expected: unknown, code: string) {
   if (actual !== expected) fail(code);
+}
+
+function verifyGate(actual: boolean, expected: boolean, code: string) {
+  if (actual !== expected) fail(code);
+}
+
+function sameStrings(left: readonly string[], right: readonly string[]) {
+  const sortedLeft = [...left].sort();
+  const sortedRight = [...right].sort();
+  return sortedLeft.length === sortedRight.length && sortedLeft.every((value, index) => value === sortedRight[index]);
 }
 
 function boundedString(value: unknown, minimum: number, maximum: number, code: string) {

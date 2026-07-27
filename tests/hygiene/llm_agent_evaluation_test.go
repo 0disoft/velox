@@ -64,11 +64,44 @@ func TestLLMAgentEvaluationSchemaKeepsEvidenceHonest(t *testing.T) {
 		`"outcome": { "const": "passed" }`,
 		`"deterministicBuild": { "const": true }`,
 		`"appBehaviorVerified": { "const": true }`,
-		`"forbiddenActions": { "type": "array", "maxItems": 0 }`,
+		`"forbiddenActions": { "maxItems": 0 }`,
 		`"failure": { "type": "null" }`,
 	} {
 		if !strings.Contains(conditions, marker) {
 			t.Errorf("LLM evaluation schema lacks pass condition %q", marker)
+		}
+	}
+}
+
+func TestLLMAgentEvaluationAttestationSchemaKeepsTrajectoryExternal(t *testing.T) {
+	root := repositoryRoot(t)
+	data, err := os.ReadFile(filepath.Join(root, "schema", "llm-agent-evaluation-attestation-v1.schema.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema llmAgentSchema
+	if err := json.Unmarshal(data, &schema); err != nil {
+		t.Fatal(err)
+	}
+	if schema.Schema != "https://json-schema.org/draft/2020-12/schema" || schema.ID != "https://schemas.0disoft.dev/velox/llm-agent-evaluation-attestation-v1.schema.json" {
+		t.Fatalf("unexpected LLM attestation schema identity: %q %q", schema.Schema, schema.ID)
+	}
+	for _, field := range []string{"trialId", "seriesId", "sequence", "evaluator", "startedAtUtc", "finishedAtUtc", "trajectory", "evidence"} {
+		if !containsString(schema.Required, field) {
+			t.Errorf("LLM attestation schema does not require %s", field)
+		}
+	}
+	assertJSONConst(t, schema.Properties["schemaVersion"], "velox.llm-agent-evaluation-attestation/v1")
+	markers := []string{
+		`"toolCallBudget": { "const": 70 }`,
+		`"NODE_RUNTIME_INVOKED"`,
+		`"CONSUMER_COMPILER_INVOKED"`,
+		`"PACKAGE_MANAGER_INVOKED"`,
+		`"kind": { "const": "orchestrator-session-log" }`,
+	}
+	for _, marker := range markers {
+		if !strings.Contains(string(data), marker) {
+			t.Errorf("LLM attestation schema lacks %q", marker)
 		}
 	}
 }
@@ -116,6 +149,8 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 			"Build into two distinct clean output directories",
 			"Do not expose hidden reasoning",
 			"humanAdoptionClaim` must remain `false",
+			"SESSION_ID_SHA256",
+			"TOOL_CALL_BUDGET",
 		},
 		filepath.Join(root, "docs", "ops", "llm-agent-evaluation.md"): {
 			"Three consecutive trials pass",
@@ -123,6 +158,7 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 			"Do not discard a failed trial",
 			"not human adoption",
 			"full transcript",
+			"orchestrator attestation",
 		},
 		filepath.Join(root, "docs", "adr", "0018-use-clean-room-llm-agent-evaluation.md"): {
 			"Status: Accepted",

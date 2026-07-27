@@ -185,7 +185,10 @@ ADR 0018 replaces the uncontrollable human-attempt beta gate with three
 consecutive clean-room LLM agent trials across at least two model identifiers.
 The versioned task is `evals/llm-agent/v1/task.md`; each trial must conform to
 `schema/llm-agent-evaluation-v1.schema.json`, preserve failed and held outcomes,
-and keep `humanAdoptionClaim: false`. No qualifying trial set is recorded yet.
+keep `humanAdoptionClaim: false`, and match an external
+`schema/llm-agent-evaluation-attestation-v1.schema.json` record for actual
+session identity, timestamps, tool counts, budget, and forbidden actions. No
+qualifying trial set is recorded yet.
 `docs/QUICKSTART.md` is the public source-free discovery path for those trials;
 hygiene tests reject moving release URLs, source checkout, consumer toolchain
 installation, and local maintainer-copy fallbacks in that path.

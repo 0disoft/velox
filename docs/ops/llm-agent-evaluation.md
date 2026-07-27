@@ -23,11 +23,14 @@ One trial uses:
 - one fresh Windows workspace, VM, or hosted runner;
 - one immutable public Velox release URL and independently recorded ZIP
   SHA-256;
+- one orchestrator-computed session-ID SHA-256 and tool-call budget;
 - the public `docs/QUICKSTART.md` discovery entrypoint;
 - the public task at `evals/llm-agent/v1/task.md`;
 - no Velox source checkout, unpublished context, local release output, or
   interactive maintainer hint;
 - one schema-valid `velox.llm-agent-evaluation/v1` result.
+- one `velox.llm-agent-evaluation-attestation/v1` file generated from the
+  orchestrator session log outside the agent-controlled trial workspace.
 
 Every trial receives one immutable series ID and a unique sequence from 1
 through 3. Failed and held sequences remain part of the series and cannot be
@@ -48,15 +51,28 @@ authority.
 - `held`: the environment or evidence was insufficient to decide. A held trial
   is preserved but does not count as pass or fail.
 
-An LLM's final prose, self-review, confidence, or claim of completion is never
-an oracle. Deterministic hashes, CLI results, final files, process outcome, and
-observable application state own the verdict.
+An LLM's final prose, self-review, confidence, result booleans, or claim of
+completion is never an oracle. Deterministic hashes, CLI results, final files,
+process outcome, observable application state, and the external orchestrator
+attestation own the verdict.
 
 The repository-owned verifier in `scripts/verify-llm-agent-evaluation.ts`
 recomputes prompt and artifact hashes, rejects unsafe paths and symbolic links,
+requires an attestation outside the trial root, compares provider, model,
+session digest, timestamps, tool counts, retries, budget, and forbidden actions,
 checks pass-gate consistency, and derives the three-trial series verdict. A
-target-specific Mustflow intent must bind real result paths before the verifier
-is run against trial evidence.
+target-specific Mustflow intent must bind real result and attestation paths
+before the verifier is run against trial evidence.
+
+The v1 tool-call budget is exactly 70. The verifier is invoked as:
+
+```text
+bun scripts/verify-llm-agent-evaluation.ts trial <trial-dir> <public-task> <attestation>
+bun scripts/verify-llm-agent-evaluation.ts series <series-dir> <public-task> <attestation-dir> <series-dir>/summary.json
+```
+
+For series verification, each external attestation filename must match its
+trial-directory basename with `.json` appended.
 
 ## Beta Gate
 
@@ -71,7 +87,9 @@ The beta technical gate passes only when all of the following are true:
 4. Every trial verifies checksum, public-doc discovery, no consumer toolchain,
    deterministic build, inspection, startup, and Focus Ledger behavior.
 5. No trial records a forbidden action, hidden native capability, sensitive
-   evidence, or unclassified failure.
+  evidence, or unclassified failure.
+6. The orchestrator attestation matches the trial identity and trajectory, and
+  the actual tool-call count does not exceed the supplied budget.
 
 Do not discard a failed trial and keep sampling until three convenient passes
 appear. A product, prompt, release, schema, or documentation change starts a
@@ -87,7 +105,7 @@ gate under ADR 0018.
 
 ## Evidence Packet
 
-Store only:
+The agent-controlled trial packet stores only:
 
 - the public task version and SHA-256;
 - the immutable series ID and sequence;
@@ -99,6 +117,13 @@ Store only:
   artifact paths, and artifact hashes;
 - a concise report without chain of thought, full transcript, private path, or
   secret value.
+
+The orchestrator stores a separate compact attestation containing the same
+trial identity, actual provider and model, actual session-ID hash, actual start
+and finish timestamps, actual tool-call and retry counts, the supplied budget,
+stable forbidden-action codes, and a SHA-256 of the external session log. The
+attestation must not be written inside the trial root or exposed to the agent as
+an editable result artifact.
 
 Raw prompts containing provider credentials, complete tool payloads, full
 transcripts, screenshots with personal data, and local absolute paths are not
@@ -113,6 +138,8 @@ evaluation artifacts.
   environment evidence proves the product path was not reached.
 - A compiler, Node.js, package manager, source checkout, or hidden maintainer
   hint fails the trial even if the final application works.
+- An attestation mismatch, missing attestation, tool-budget overrun, or
+  attestation stored inside the trial root invalidates the trial packet.
 - An unsafe or unverifiable trajectory cannot be repaired by an LLM judge's
   favorable explanation.
 

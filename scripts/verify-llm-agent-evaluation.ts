@@ -2,19 +2,20 @@ import { lstat, mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { loadAndVerifyTrial, summarizeSeries } from "./llm-agent-evaluation.ts";
 
-const [command, target, prompt, output] = process.argv.slice(2);
+const [command, target, prompt, attestation, output] = process.argv.slice(2);
 
-if (command === "trial" && target && prompt && !output && process.argv.length === 5) {
+if (command === "trial" && target && prompt && attestation && !output && process.argv.length === 6) {
   const root = resolve(target);
-  const result = await loadAndVerifyTrial(resolve(root, "result.json"), root, resolve(prompt));
+  const result = await loadAndVerifyTrial(resolve(root, "result.json"), root, resolve(prompt), resolve(attestation));
   console.log(JSON.stringify({ ok: true, trialId: result.trialId, outcome: result.outcome }));
-} else if (command === "series" && target && prompt && output && process.argv.length === 6) {
+} else if (command === "series" && target && prompt && attestation && output && process.argv.length === 7) {
   const seriesRoot = resolve(target);
+  const attestationRoot = resolve(attestation);
   const entries = await readdir(seriesRoot, { withFileTypes: true });
   const trialDirectories = entries.filter((entry) => entry.isDirectory() && entry.name.startsWith("trial-")).map((entry) => resolve(seriesRoot, entry.name)).sort();
   const trials = [];
   for (const trialRoot of trialDirectories) {
-    trials.push(await loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(prompt)));
+    trials.push(await loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(prompt), resolve(attestationRoot, `${basename(trialRoot)}.json`)));
   }
   const summary = summarizeSeries(trials);
   const destination = resolve(output);
@@ -36,5 +37,5 @@ if (command === "trial" && target && prompt && !output && process.argv.length ==
   }
   console.log(JSON.stringify(summary));
 } else {
-  throw new Error("usage: bun scripts/verify-llm-agent-evaluation.ts trial <trial-dir> <prompt> | series <series-dir> <prompt> <series-dir/summary.json>");
+  throw new Error("usage: bun scripts/verify-llm-agent-evaluation.ts trial <trial-dir> <prompt> <attestation> | series <series-dir> <prompt> <attestation-dir> <series-dir/summary.json>");
 }

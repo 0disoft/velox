@@ -41,3 +41,8 @@ full transcripts, chain of thought, local absolute paths, usernames,
 environment variables, proprietary application data, screenshots containing
 personal information, or raw crash dumps. Trial applications use synthetic
 task data only. Passing an agent evaluation is not a human adoption claim.
+
+The orchestrator may retain a compact attestation outside the agent-controlled
+trial workspace. It contains only the hashed session identifier, redacted
+timing and count metadata, stable forbidden-action codes, and a SHA-256 binding
+to the external session log; the raw log is not copied into the public packet.

@@ -43,6 +43,8 @@ A qualifying trial must:
 - write a schema-valid result that remains
   `maintainer-orchestrated-clean-room-llm-agent` and fixes
   `humanAdoptionClaim` to `false`.
+- match a separate orchestrator attestation for the actual session identity,
+  timestamps, tool counts, budget, and forbidden-action observations.
 
 Beta requires three consecutive passing trials against the same release and
 task version, representing at least two distinct model identifiers. Stable
@@ -103,6 +105,8 @@ still trigger signing, support, repositioning, or project-stop decisions.
   Velox.
 - Provider access, model cost, Windows isolation, and GUI observation remain
   operational inputs outside the product artifact.
+- Provider tool wrappers can invoke hidden linters or compilers, so the trial's
+  own trajectory fields are insufficient without external attestation.
 
 ## Validation
 
@@ -111,6 +115,9 @@ still trigger signing, support, repositioning, or project-stop decisions.
   trajectory summary, and false human-adoption claim.
 - `schema/llm-agent-evaluation-series-v1.schema.json` fixes three-trial identity,
   model diversity, outcome counts, beta verdict, and false human-adoption claim.
+- `schema/llm-agent-evaluation-attestation-v1.schema.json` fixes the
+  orchestrator-owned session, timing, tool-budget, forbidden-action, and log
+  digest contract outside the agent-controlled trial root.
 - `evals/llm-agent/v1/task.md` is the public task and contains no provider
   credential, private path, Velox source instruction, or hidden maintainer step.
 - `docs/QUICKSTART.md` fixes the immutable-release, checksum, extraction, public
@@ -155,5 +162,6 @@ the old LLM results as human demand.
 - `docs/product/03-risk-register.md`
 - `evals/llm-agent/v1/task.md`
 - `schema/llm-agent-evaluation-v1.schema.json`
+- `schema/llm-agent-evaluation-attestation-v1.schema.json`
 - `schema/llm-agent-evaluation-series-v1.schema.json`
 - hygiene tests

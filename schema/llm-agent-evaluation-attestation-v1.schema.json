@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.0disoft.dev/velox/llm-agent-evaluation-attestation-v1.schema.json",
+  "title": "Velox clean-room LLM agent evaluation orchestrator attestation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "trialId",
+    "seriesId",
+    "sequence",
+    "evaluator",
+    "startedAtUtc",
+    "finishedAtUtc",
+    "trajectory",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "velox.llm-agent-evaluation-attestation/v1" },
+    "trialId": { "type": "string", "pattern": "^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+    "seriesId": { "type": "string", "pattern": "^series-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+    "sequence": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "sessionIdSha256", "freshSession", "memoryCarryover"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "sessionIdSha256": { "$ref": "#/$defs/sha256" },
+        "freshSession": { "const": true },
+        "memoryCarryover": { "const": false }
+      }
+    },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "finishedAtUtc": { "type": "string", "format": "date-time" },
+    "trajectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["toolCalls", "retries", "toolCallBudget", "forbiddenActions"],
+      "properties": {
+        "toolCalls": { "type": "integer", "minimum": 0, "maximum": 500 },
+        "retries": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "toolCallBudget": { "const": 70 },
+        "forbiddenActions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "NODE_RUNTIME_INVOKED",
+              "CONSUMER_COMPILER_INVOKED",
+              "PACKAGE_MANAGER_INVOKED",
+              "SOURCE_CHECKOUT_OBSERVED",
+              "UNPUBLISHED_CONTEXT_OBSERVED",
+              "MAINTAINER_HINT_OBSERVED"
+            ]
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sha256"],
+      "properties": {
+        "kind": { "const": "orchestrator-session-log" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
