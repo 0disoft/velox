@@ -151,6 +151,9 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 			"humanAdoptionClaim` must remain `false",
 			"SESSION_ID_SHA256",
 			"TOOL_CALL_BUDGET",
+			"TRIAL_ID",
+			"PROMPT_SHA256",
+			"Tool-wrapper side effects count as invocations",
 		},
 		filepath.Join(root, "docs", "ops", "llm-agent-evaluation.md"): {
 			"Three consecutive trials pass",
@@ -159,6 +162,11 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 			"not human adoption",
 			"full transcript",
 			"orchestrator attestation",
+			"Hermes Attestation Generation",
+			"read-only mode",
+			"not operating-system process telemetry",
+			"Series Orchestration",
+			"never replaces a",
 		},
 		filepath.Join(root, "docs", "adr", "0018-use-clean-room-llm-agent-evaluation.md"): {
 			"Status: Accepted",
@@ -172,6 +180,25 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 			"SHA-256",
 			"must not retain provider credentials",
 			"not a human adoption claim",
+			"canonical projection",
+		},
+		filepath.Join(root, "scripts", "hermes-evaluation-attestation.ts"): {
+			"readonly: true",
+			"HERMES_TOOL_CALL_COUNT_MISMATCH",
+			"ATTESTATION_OUTPUT_INSIDE_TRIAL_ROOT",
+			"NODE_RUNTIME_INVOKED",
+			"MAINTAINER_HINT_OBSERVED",
+		},
+		filepath.Join(root, "scripts", "llm-agent-orchestrator.ts"): {
+			"velox.llm-agent-orchestrator/v1",
+			"EVALUATION_ROOT_INSIDE_VELOX_REPOSITORY",
+			"SESSION_BINDING_DIGEST_MISMATCH",
+			"SERIES_SUMMARY_ALREADY_EXISTS",
+			"live-smoke",
+			"live-diagnose",
+			"SESSION_BINDING_MANIFEST_MISMATCH",
+			"PUBLIC_TASK_URL_NOT_IMMUTABLE",
+			"RELEASE_URL_TAG_MISMATCH",
 		},
 	}
 	for path, markers := range checks {

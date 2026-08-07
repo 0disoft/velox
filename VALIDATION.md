@@ -106,8 +106,21 @@ The parent workspace command contract currently provides these bounded intents:
   `dist/examples/file-notes` for manual picker and persistence checks.
 - `velox_llm_agent_evaluation_test` exercises clean-room trial shape checks,
   prompt and artifact digest verification, path-containment rejection,
-  pass-gate consistency, failed-sequence preservation, and model-diversity
-  series gating.
+  pass-gate consistency, failed-sequence preservation, model-diversity series
+  gating, and the read-only Hermes attestation adapter's session counter,
+  retry, forbidden-toolchain, maintainer-hint, workspace-escape, and exclusive
+  output checks. It also exercises three-trial preparation, hash-only session
+  binding, attestation, immutable summary creation, model diversity, and the
+  prohibition on agent workspaces inside the Velox repository.
+- `velox_hermes_attestation_live_smoke` reads one explicitly selected, finished
+  local Hermes session through the read-only adapter and writes only a compact
+  diagnostic attestation under ignored `.cache/hermes-attestation-smoke`. It is
+  adapter evidence, not a qualifying beta trial or a replacement for the new
+  three-session series.
+- `velox_hermes_completion_live_diagnose` reads only completion metadata for an
+  explicitly selected local Hermes session. It distinguishes stored `ended_at`
+  values from a final active assistant `finish_reason=stop` without printing
+  message content, tool arguments, or the raw session ID.
 
 The hosted `Alpha release evidence` workflow builds the unsigned release twice,
 requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance

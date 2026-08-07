@@ -13,10 +13,14 @@ failures, and remaining uncertainty only.
 
 The orchestrator supplies exactly these values:
 
+- `TASK_URL`
+- `PROMPT_VERSION`
+- `PROMPT_SHA256`
 - `RELEASE_TAG`
 - `RELEASE_URL`
 - `RELEASE_SHA256`
 - `RESULT_DIRECTORY`
+- `TRIAL_ID`
 - `SERIES_ID`
 - `SEQUENCE`
 - `SESSION_ID_SHA256`
@@ -52,6 +56,12 @@ The application must let a user:
 Use static HTML, CSS, and JavaScript. Do not install or invoke Go, Rust, C,
 C++, Zig, Node.js, Bun, npm, pnpm, Yarn, another package manager, a frontend
 bundler, or an application-specific native backend.
+
+Tool-wrapper side effects count as invocations. Do not use an editor or patch
+tool that automatically runs `node --check`, `npx tsc`, `go vet`, `rustfmt`, or
+another forbidden language check after writing a file. Use a file-writing path
+whose implementation does not launch a forbidden runtime, package manager, or
+compiler.
 
 ## Required Evaluation Path
 
@@ -92,6 +102,9 @@ success from a plausible-looking final answer.
 - Final environment state and artifact hashes outrank the agent's narrative.
 - Copy the supplied `SESSION_ID_SHA256` exactly. Do not invent, replace, or
   derive a different session identifier.
+- Copy the supplied `TRIAL_ID`, `PROMPT_VERSION`, and `PROMPT_SHA256` exactly.
+  Verify the bytes downloaded from `TASK_URL` match `PROMPT_SHA256` before
+  following the task.
 - Record command classes, counts, stable diagnostic codes, relative artifact
   paths, and SHA-256 values. Do not store a full transcript or chain of thought.
 - Stop new product work before `TOOL_CALL_BUDGET` is exhausted. The external

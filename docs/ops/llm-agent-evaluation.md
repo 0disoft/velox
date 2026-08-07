@@ -74,6 +74,104 @@ bun scripts/verify-llm-agent-evaluation.ts series <series-dir> <public-task> <at
 For series verification, each external attestation filename must match its
 trial-directory basename with `.json` appended.
 
+## Hermes Attestation Generation
+
+The maintainer generates a Hermes attestation only after the fresh evaluation
+session is closed. The generator reads Hermes `state.db` in read-only mode and
+writes exactly one new attestation outside the agent-controlled trial root:
+
+```text
+bun scripts/hermes-evaluation-attestation.ts \
+  --state-db <absolute-hermes-state.db> \
+  --session-id <actual-hermes-session-id> \
+  --trial-root <absolute-trial-directory> \
+  --output <absolute-attestation-directory>/<trial-directory-name>.json \
+  --trial-id <orchestrator-trial-id> \
+  --series-id <orchestrator-series-id> \
+  --sequence <1|2|3>
+```
+
+The output directory must already exist. The command refuses a relative path,
+an unfinished or non-root session, an output inside the trial root, a filename
+that does not match the trial directory, a Hermes schema it cannot classify,
+a mismatch between persisted tool calls and the Hermes session counter, and an
+existing output file.
+
+Hermes currently has two observed completion representations. A session is
+finished when every selected session row has `ended_at`, or when the final
+active message is an assistant message with `finish_reason=stop`. A final user
+message, pending tool call, missing finish reason, or any other ambiguous state
+remains unfinished. Maintainers can inspect only these non-content completion
+fields with the configured `velox_hermes_completion_live_diagnose` intent; the
+diagnostic never prints prompts, message content, tool arguments, or a raw
+session ID.
+
+The generator derives provider, model, session-ID hash, timestamps, actual tool
+count, retries after failed calls, and forbidden-action codes from the stored
+session chain. It classifies explicit shell commands, source checkout, later
+maintainer messages, workspace escapes, and known Hermes editor side effects.
+In particular, Hermes file tools that write `.js`, `.ts`, `.go`, or `.rs` can
+implicitly invoke a runtime, package manager, or compiler and therefore count
+as forbidden even when the model did not type that subprocess command.
+
+The generator hashes a canonical projection of the selected session and
+message rows in memory. It does not write raw prompts, tool arguments, tool
+results, reasoning, the raw session ID, or the database into the attestation.
+The generator is maintainer orchestration and uses Bun outside the consumer
+trial; Bun must never be exposed to or invoked by the evaluated agent.
+
+This adapter is not operating-system process telemetry. It can classify the
+Hermes tool calls and known implicit editor behavior stored in the session
+ledger, but a future Hermes helper that launches an unrecorded subprocess needs
+a classifier update before its trials can be treated as qualifying evidence.
+Likewise, a root Hermes session proves that no parent transcript was resumed;
+the orchestrator still owns the separate requirement to launch the evaluator
+without provider-side or profile-side memory carryover.
+
+## Series Orchestration
+
+`scripts/llm-agent-orchestrator.ts` keeps agent-owned trial files separate from
+maintainer-owned prompts, bindings, and attestations. The supported sequence is:
+
+```text
+bun scripts/llm-agent-orchestrator.ts prepare \
+  --evaluation-root <absolute-external-evaluation-root> \
+  --task-path <absolute-public-task-file> \
+  --task-url <immutable-public-task-url> \
+  --release-tag <release-tag> \
+  --release-url <immutable-release-zip-url> \
+  --release-sha256 <release-zip-sha256>
+
+bun scripts/llm-agent-orchestrator.ts bind \
+  --series-root <absolute-series-root> \
+  --sequence <1|2|3> \
+  --session-id <actual-hermes-session-id>
+
+bun scripts/llm-agent-orchestrator.ts attest \
+  --series-root <absolute-series-root> \
+  --sequence <1|2|3> \
+  --session-id <actual-hermes-session-id> \
+  --state-db <absolute-hermes-state.db>
+
+bun scripts/llm-agent-orchestrator.ts verify \
+  --series-root <absolute-series-root> \
+  --task-path <absolute-public-task-file>
+```
+
+`prepare` refuses an evaluation root inside the Velox repository and creates
+three immutable trial identities. `bind` writes a prompt and a hash-only local
+binding without persisting the raw Hermes session ID. `attest` requires that
+same raw ID to match the binding and writes outside the trial directory.
+`verify` requires all three results and attestations, preserves failed and held
+outcomes, and exclusively creates one `summary.json`; it never replaces a
+previous verdict.
+
+The orchestrator does not start Hermes, choose a model, send a prompt, or run an
+autonomous loop. A maintainer creates each fresh session, sets its working
+directory to the prepared trial directory, runs `bind`, sends the generated
+prompt, closes the session, and then runs `attest`. At least two distinct model
+identifiers are still required by the deterministic series gate.
+
 ## Beta Gate
 
 The beta technical gate passes only when all of the following are true:
@@ -124,6 +222,11 @@ and finish timestamps, actual tool-call and retry counts, the supplied budget,
 stable forbidden-action codes, and a SHA-256 of the external session log. The
 attestation must not be written inside the trial root or exposed to the agent as
 an editable result artifact.
+
+The local series manifest and binding files contain trial identities, public
+artifact metadata, and only a SHA-256 of each Hermes session ID. Raw session IDs
+are accepted only as transient command input for `bind` and `attest` and are not
+persisted by the orchestrator.
 
 Raw prompts containing provider credentials, complete tool payloads, full
 transcripts, screenshots with personal data, and local absolute paths are not

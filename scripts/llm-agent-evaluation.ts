@@ -25,7 +25,7 @@ const commandClasses = new Set([
   "behavior-check",
 ]);
 
-const forbiddenActionNames = [
+export const FORBIDDEN_ACTION_NAMES = [
   "NODE_RUNTIME_INVOKED",
   "CONSUMER_COMPILER_INVOKED",
   "PACKAGE_MANAGER_INVOKED",
@@ -33,9 +33,9 @@ const forbiddenActionNames = [
   "UNPUBLISHED_CONTEXT_OBSERVED",
   "MAINTAINER_HINT_OBSERVED",
 ] as const;
-const forbiddenActions = new Set<string>(forbiddenActionNames);
-type ForbiddenAction = (typeof forbiddenActionNames)[number];
-const toolCallBudget = 70;
+const forbiddenActions = new Set<string>(FORBIDDEN_ACTION_NAMES);
+export type ForbiddenAction = (typeof FORBIDDEN_ACTION_NAMES)[number];
+export const TOOL_CALL_BUDGET = 70;
 
 const gateNames = [
   "releaseChecksumVerified",
@@ -220,7 +220,7 @@ function validateAttestationShape(raw: unknown): TrialAttestation {
   exactKeys(trajectory, ["toolCalls", "retries", "toolCallBudget", "forbiddenActions"], "attestation_trajectory");
   integerRange(trajectory.toolCalls, 0, 500, "ATTESTATION_TOOL_CALL_COUNT_INVALID");
   integerRange(trajectory.retries, 0, 20, "ATTESTATION_RETRY_COUNT_INVALID");
-  equal(trajectory.toolCallBudget, toolCallBudget, "ATTESTATION_TOOL_CALL_BUDGET_INVALID");
+  equal(trajectory.toolCallBudget, TOOL_CALL_BUDGET, "ATTESTATION_TOOL_CALL_BUDGET_INVALID");
   validateForbiddenActions(trajectory.forbiddenActions, "ATTESTATION_FORBIDDEN_ACTIONS_INVALID");
   const evidence = object(record.evidence, "attestation_evidence");
   exactKeys(evidence, ["kind", "sha256"], "attestation_evidence");

@@ -1,7 +1,7 @@
 {
   "tool": "ssealed",
   "version": "0.6.11",
-  "generatedAt": "2026-07-22T16:08:01.973Z",
+  "generatedAt": "2026-07-30T04:18:32.853Z",
   "scope": "general",
   "profile": "cli-tool",
   "addons": [],
@@ -813,13 +813,13 @@
     },
     {
       "path": "VALIDATION.md",
-      "checksum": "sha256:6e72e3367a9958bb48d6e38c0559f7a3a47688b7872cae8418acedbf4b33db61",
+      "checksum": "sha256:3799d681f40f5a11753b17cd44c8b61902bd402b85d0acedf4dc27f39a2c33d7",
       "kind": "validation",
       "ownership": "seeded",
       "presence": "optional",
       "status": "active",
       "initialChecksum": "sha256:50bab16dbcab9b518430c03386904ed923b776ebc11279375797fc0ca07b62a6",
-      "acceptedChecksum": "sha256:6e72e3367a9958bb48d6e38c0559f7a3a47688b7872cae8418acedbf4b33db61",
+      "acceptedChecksum": "sha256:3799d681f40f5a11753b17cd44c8b61902bd402b85d0acedf4dc27f39a2c33d7",
       "generatedChecksum": "sha256:50bab16dbcab9b518430c03386904ed923b776ebc11279375797fc0ca07b62a6"
     }
   ]

@@ -1,8 +1,16 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, resolve } from "node:path";
+import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
+import { createHermesAttestation } from "./hermes-evaluation-attestation.ts";
+import {
+  attestEvaluationTrial,
+  bindEvaluationSession,
+  prepareEvaluationSeries,
+  verifyEvaluationSeries,
+} from "./llm-agent-orchestrator.ts";
 import { loadAndVerifyTrial, summarizeSeries, type TrialAttestation, type TrialRecord } from "./llm-agent-evaluation.ts";
 
 const fixedDigest = "a".repeat(64);
@@ -200,7 +208,418 @@ describe("LLM agent evaluation", () => {
       humanAdoptionClaim: false,
     });
   });
+
+  test("generates an external attestation from a finished Hermes session", async () => {
+    const fixture = await createHermesFixture([
+      toolCallMessage(2, "call-1", "terminal", { command: "velox validate" }),
+      toolResultMessage(3, "call-1", { error: "validation failed" }),
+      toolCallMessage(4, "call-2", "terminal", { command: "velox validate" }),
+      toolResultMessage(5, "call-2", { status: "ok" }),
+    ]);
+    const result = await createHermesAttestation(fixture.input);
+    const output = await Bun.file(fixture.input.outputPath).text();
+    expect(result).toMatchObject({
+      sessionCount: 1,
+      messageCount: 5,
+      attestation: {
+        evaluator: { provider: "custom", model: "fixture-model", freshSession: true, memoryCarryover: false },
+        trajectory: { toolCalls: 2, retries: 1, toolCallBudget: 70, forbiddenActions: [] },
+      },
+    });
+    expect(result.attestation.evaluator.sessionIdSha256).toBe(sha(Buffer.from(fixture.sessionId)));
+    expect(result.attestation.evidence.sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(output).not.toContain(fixture.sessionId);
+  });
+
+  test("writes the Hermes attestation through the bounded CLI", async () => {
+    const fixture = await createHermesFixture([]);
+    const child = Bun.spawn([
+      process.execPath,
+      resolve(import.meta.dir, "hermes-evaluation-attestation.ts"),
+      "--state-db", fixture.input.stateDatabasePath,
+      "--session-id", fixture.input.sessionId,
+      "--trial-root", fixture.input.trialRoot,
+      "--output", fixture.input.outputPath,
+      "--trial-id", fixture.input.trialId,
+      "--series-id", fixture.input.seriesId,
+      "--sequence", String(fixture.input.sequence),
+    ], { stdout: "pipe", stderr: "pipe" });
+    const [exitCode, stdout, stderr] = await Promise.all([
+      child.exited,
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+    ]);
+    expect(exitCode, stderr).toBe(0);
+    expect(JSON.parse(stdout)).toMatchObject({
+      ok: true,
+      trialId: fixture.input.trialId,
+      toolCalls: 0,
+      retries: 0,
+      forbiddenActions: [],
+      sessionCount: 1,
+      messageCount: 1,
+    });
+    expect(await Bun.file(fixture.input.outputPath).exists()).toBe(true);
+  });
+
+  test("detects explicit commands and implicit editor toolchains in Hermes tool calls", async () => {
+    const fixture = await createHermesFixture([
+      toolCallMessage(2, "call-1", "write_file", { path: "web/app.js", content: "console.log('ready')" }),
+      toolResultMessage(3, "call-1", { status: "ok" }),
+      toolCallMessage(4, "call-2", "terminal", { command: "Add-Type -TypeDefinition 'public class Probe {}'" }),
+      toolResultMessage(5, "call-2", { status: "ok" }),
+      toolCallMessage(6, "call-3", "terminal", { command: "npm --version" }),
+      toolResultMessage(7, "call-3", { status: "ok" }),
+      toolCallMessage(8, "call-4", "terminal", { command: "git clone https://github.com/0disoft/velox.git" }),
+      toolResultMessage(9, "call-4", { status: "ok" }),
+      toolCallMessage(10, "call-5", "terminal", { command: "Get-Command node -ErrorAction SilentlyContinue" }),
+      toolResultMessage(11, "call-5", { status: "ok" }),
+    ]);
+    const result = await createHermesAttestation(fixture.input);
+    expect(result.attestation.trajectory.forbiddenActions).toEqual([
+      "CONSUMER_COMPILER_INVOKED",
+      "NODE_RUNTIME_INVOKED",
+      "PACKAGE_MANAGER_INVOKED",
+      "SOURCE_CHECKOUT_OBSERVED",
+    ]);
+  });
+
+  test("detects a later maintainer message and workspace escape", async () => {
+    const fixture = await createHermesFixture([
+      userMessage(2, "Please finish the two missing files."),
+      toolCallMessage(3, "call-1", "read_file", { path: resolve(tmpdir(), "maintainer-only.txt") }),
+      toolResultMessage(4, "call-1", { status: "ok" }),
+    ]);
+    const result = await createHermesAttestation(fixture.input);
+    expect(result.attestation.trajectory.forbiddenActions).toEqual([
+      "MAINTAINER_HINT_OBSERVED",
+      "UNPUBLISHED_CONTEXT_OBSERVED",
+    ]);
+  });
+
+  test("rejects an attestation output inside the agent trial workspace", async () => {
+    const fixture = await createHermesFixture([]);
+    fixture.input.outputPath = resolve(fixture.input.trialRoot, `${basename(fixture.input.trialRoot)}.json`);
+    await expect(createHermesAttestation(fixture.input)).rejects.toThrow("ATTESTATION_OUTPUT_INSIDE_TRIAL_ROOT");
+  });
+
+  test("rejects a Hermes counter that disagrees with persisted tool calls", async () => {
+    const fixture = await createHermesFixture([
+      toolCallMessage(2, "call-1", "terminal", { command: "velox version" }),
+      toolResultMessage(3, "call-1", { status: "ok" }),
+    ], { recordedToolCalls: 2 });
+    await expect(createHermesAttestation(fixture.input)).rejects.toThrow("HERMES_TOOL_CALL_COUNT_MISMATCH");
+  });
+
+  test("rejects an unfinished Hermes session", async () => {
+    const fixture = await createHermesFixture([], { endedAt: null });
+    await expect(createHermesAttestation(fixture.input)).rejects.toThrow("HERMES_SESSION_NOT_FINISHED");
+  });
+
+  test("accepts Hermes completion recorded by a terminal assistant stop message", async () => {
+    const finalMessage = { ...message(2, "assistant", "Done."), finishReason: "stop" };
+    const fixture = await createHermesFixture([finalMessage], { endedAt: null });
+    const result = await createHermesAttestation(fixture.input);
+    expect(result.attestation.finishedAtUtc).toBe(new Date(finalMessage.timestamp * 1000).toISOString());
+  });
+
+  test("does not treat an assistant tool-call boundary as session completion", async () => {
+    const pendingToolCall = { ...toolCallMessage(2, "call-1", "terminal", { command: "Get-Date" }), finishReason: "tool_calls" };
+    const fixture = await createHermesFixture([pendingToolCall], { endedAt: null });
+    await expect(createHermesAttestation(fixture.input)).rejects.toThrow("HERMES_SESSION_NOT_FINISHED");
+  });
+
+  test("rejects a Hermes database controlled by the agent workspace", async () => {
+    const fixture = await createHermesFixture([], { stateDatabaseInsideTrial: true });
+    await expect(createHermesAttestation(fixture.input)).rejects.toThrow("HERMES_STATE_DB_INSIDE_TRIAL_ROOT");
+  });
+
+  test("refuses to replace an existing orchestrator attestation", async () => {
+    const fixture = await createHermesFixture([]);
+    await writeFile(fixture.input.outputPath, "existing\n", "utf8");
+    await expect(createHermesAttestation(fixture.input)).rejects.toThrow("ATTESTATION_OUTPUT_ALREADY_EXISTS");
+  });
+
+  test("prepares three isolated trials and binds a session without storing its raw ID", async () => {
+    const prepared = await createPreparedSeries();
+    expect(prepared.manifest).toMatchObject({
+      schemaVersion: "velox.llm-agent-orchestrator/v1",
+      seriesId: "series-20260730T010203Z-aaaaaaaa",
+      task: { version: "velox.llm-agent-task/v1", sha256: sha(Buffer.from(prompt)) },
+      trials: [
+        { sequence: 1, trialId: "trial-20260730T010203Z-bbbbbbbb" },
+        { sequence: 2, trialId: "trial-20260730T010203Z-cccccccc" },
+        { sequence: 3, trialId: "trial-20260730T010203Z-dddddddd" },
+      ],
+    });
+    for (const trial of prepared.manifest.trials) {
+      expect((await Bun.file(resolve(prepared.seriesRoot, trial.directory)).stat()).isDirectory()).toBe(true);
+    }
+
+    const rawSessionId = "20260730_010203_private";
+    const binding = await bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: 1, sessionId: rawSessionId });
+    const promptBody = await readFile(binding.promptPath, "utf8");
+    const bindingBody = await readFile(binding.bindingPath, "utf8");
+    expect(promptBody).toContain(`TRIAL_ID=${binding.trial.trialId}`);
+    expect(promptBody).toContain(`SESSION_ID_SHA256=${sha(Buffer.from(rawSessionId))}`);
+    expect(promptBody).not.toContain(rawSessionId);
+    expect(bindingBody).not.toContain(rawSessionId);
+    await expect(bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: 1, sessionId: rawSessionId })).rejects.toThrow("TRIAL_PROMPT_ALREADY_EXISTS");
+  });
+
+  test("attests and verifies one immutable prepared three-trial series", async () => {
+    const prepared = await createPreparedSeries();
+    for (const trial of prepared.manifest.trials) {
+      const trialRoot = resolve(prepared.seriesRoot, trial.directory);
+      const fixture = await createHermesFixture([], {
+        trialRoot,
+        model: trial.sequence === 3 ? "fixture-model-b" : "fixture-model-a",
+        sessionId: `20260730_01020${trial.sequence}_fixture`,
+      });
+      await bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: trial.sequence, sessionId: fixture.sessionId });
+      const attested = await attestEvaluationTrial({
+        seriesRoot: prepared.seriesRoot,
+        sequence: trial.sequence,
+        sessionId: fixture.sessionId,
+        stateDatabasePath: fixture.input.stateDatabasePath,
+      });
+      const record = await createTrial(trialRoot, trial.sequence, attested.attestation.evaluator.model);
+      record.trialId = trial.trialId;
+      record.seriesId = prepared.manifest.seriesId;
+      record.promptSha256 = prepared.manifest.task.sha256;
+      record.evaluator = { ...attested.attestation.evaluator };
+      record.startedAtUtc = attested.attestation.startedAtUtc;
+      record.finishedAtUtc = attested.attestation.finishedAtUtc;
+      record.trajectory.toolCalls = attested.attestation.trajectory.toolCalls;
+      record.trajectory.retries = attested.attestation.trajectory.retries;
+      await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    }
+
+    const summary = await verifyEvaluationSeries(prepared.seriesRoot, prepared.taskPath);
+    expect(summary).toMatchObject({
+      seriesId: prepared.manifest.seriesId,
+      passedTrials: 3,
+      failedTrials: 0,
+      heldTrials: 0,
+      betaTechnicalGate: true,
+      outcome: "passed",
+      modelIdentifiers: ["custom/fixture-model-a", "custom/fixture-model-b"],
+    });
+    await expect(verifyEvaluationSeries(prepared.seriesRoot, prepared.taskPath)).rejects.toThrow("SERIES_SUMMARY_ALREADY_EXISTS");
+  });
+
+  test("rejects a session binding whose immutable trial identity was altered", async () => {
+    const prepared = await createPreparedSeries();
+    const sessionId = "20260730_010203_private";
+    const binding = await bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: 1, sessionId });
+    const value = JSON.parse(await readFile(binding.bindingPath, "utf8"));
+    value.sequence = 2;
+    await writeFile(binding.bindingPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+
+    await expect(attestEvaluationTrial({
+      seriesRoot: prepared.seriesRoot,
+      sequence: 1,
+      sessionId,
+      stateDatabasePath: resolve(prepared.seriesRoot, "outside-state.db"),
+    })).rejects.toThrow("SESSION_BINDING_MANIFEST_MISMATCH");
+  });
+
+  test("refuses to prepare agent workspaces inside the Velox repository", async () => {
+    const repositoryRoot = resolve(import.meta.dir, "..");
+    await expect(prepareEvaluationSeries({
+      evaluationRoot: repositoryRoot,
+      taskPath: resolve(repositoryRoot, "evals", "llm-agent", "v1", "task.md"),
+      taskURL: `https://raw.githubusercontent.com/0disoft/velox/${"a".repeat(40)}/evals/llm-agent/v1/task.md`,
+      releaseTag: "v0.5.10-alpha.2",
+      releaseURL: "https://github.com/0disoft/velox/releases/download/v0.5.10-alpha.2/velox-windows-x64.zip",
+      releaseSha256: fixedDigest,
+    })).rejects.toThrow("EVALUATION_ROOT_INSIDE_VELOX_REPOSITORY");
+  });
+
+  test("refuses mutable task URLs and release URLs bound to another tag", async () => {
+    const root = await createSeries();
+    const input = {
+      evaluationRoot: root,
+      taskPath: resolve(root, "task.md"),
+      taskURL: "https://raw.githubusercontent.com/0disoft/velox/main/evals/llm-agent/v1/task.md",
+      releaseTag: "v0.5.10-alpha.2",
+      releaseURL: "https://github.com/0disoft/velox/releases/download/v0.5.10-alpha.2/velox-windows-x64.zip",
+      releaseSha256: fixedDigest,
+    };
+    await expect(prepareEvaluationSeries(input)).rejects.toThrow("PUBLIC_TASK_URL_NOT_IMMUTABLE");
+    input.taskURL = `https://raw.githubusercontent.com/0disoft/velox/${"a".repeat(40)}/evals/llm-agent/v1/task.md`;
+    input.releaseURL = "https://github.com/0disoft/velox/releases/download/v0.5.10-alpha.3/velox-windows-x64.zip";
+    await expect(prepareEvaluationSeries(input)).rejects.toThrow("RELEASE_URL_TAG_MISMATCH");
+  });
 });
+
+interface HermesFixtureMessage {
+  id: number;
+  role: string;
+  content: string | null;
+  toolCallId: string | null;
+  toolCalls: string | null;
+  toolName: string | null;
+  effectDisposition: string | null;
+  timestamp: number;
+  finishReason: string | null;
+  active: number;
+  compacted: number;
+  displayKind: string | null;
+}
+
+async function createHermesFixture(
+  extraMessages: HermesFixtureMessage[],
+  options: {
+    recordedToolCalls?: number;
+    cwd?: string;
+    endedAt?: number | null;
+    stateDatabaseInsideTrial?: boolean;
+    trialRoot?: string;
+    model?: string;
+    sessionId?: string;
+  } = {},
+) {
+  const root = await mkdtemp(resolve(tmpdir(), "velox-hermes-attestation-"));
+  const trialRoot = options.trialRoot ?? resolve(root, "trial-20260722T010101Z-11111111");
+  const attestationRoot = resolve(root, "attestations");
+  await mkdir(trialRoot, { recursive: true });
+  await mkdir(attestationRoot, { recursive: true });
+  const stateDatabasePath = resolve(options.stateDatabaseInsideTrial ? trialRoot : root, "state.db");
+  const sessionId = options.sessionId ?? "20260722_010101_fixture";
+  const messages = [userMessage(1, "Run the public Velox evaluation task."), ...extraMessages];
+  const parsedToolCalls = messages.reduce((count, message) => {
+    if (!message.toolCalls) return count;
+    return count + (JSON.parse(message.toolCalls) as unknown[]).length;
+  }, 0);
+
+  const database = new Database(stateDatabasePath, { create: true, strict: true });
+  try {
+    database.exec(`
+      CREATE TABLE sessions (
+        id TEXT PRIMARY KEY,
+        source TEXT NOT NULL,
+        model TEXT,
+        parent_session_id TEXT,
+        started_at REAL NOT NULL,
+        ended_at REAL,
+        tool_call_count INTEGER DEFAULT 0,
+        cwd TEXT,
+        billing_provider TEXT
+      );
+      CREATE TABLE messages (
+        id INTEGER PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT,
+        tool_call_id TEXT,
+        tool_calls TEXT,
+        tool_name TEXT,
+        effect_disposition TEXT,
+        timestamp REAL NOT NULL,
+        finish_reason TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
+        compacted INTEGER NOT NULL DEFAULT 0,
+        display_kind TEXT
+      );
+    `);
+    database.query(`
+      INSERT INTO sessions (
+        id, source, model, parent_session_id, started_at, ended_at, tool_call_count, cwd, billing_provider
+      ) VALUES (?1, 'cli', ?2, NULL, 100, ?3, ?4, ?5, 'custom')
+    `).run(sessionId, options.model ?? "fixture-model", options.endedAt === undefined ? 120 : options.endedAt, options.recordedToolCalls ?? parsedToolCalls, options.cwd ?? trialRoot);
+    const insert = database.query(`
+      INSERT INTO messages (
+        id, session_id, role, content, tool_call_id, tool_calls, tool_name,
+        effect_disposition, timestamp, finish_reason, active, compacted, display_kind
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+    `);
+    for (const message of messages) {
+      insert.run(
+        message.id,
+        sessionId,
+        message.role,
+        message.content,
+        message.toolCallId,
+        message.toolCalls,
+        message.toolName,
+        message.effectDisposition,
+        message.timestamp,
+        message.finishReason,
+        message.active,
+        message.compacted,
+        message.displayKind,
+      );
+    }
+  } finally {
+    database.close(false);
+  }
+
+  return {
+    sessionId,
+    input: {
+      stateDatabasePath,
+      sessionId,
+      trialRoot,
+      outputPath: resolve(attestationRoot, `${basename(trialRoot)}.json`),
+      trialId: "trial-20260722T010101Z-11111111",
+      seriesId: "series-20260722T010100Z-abcdefgh",
+      sequence: 1,
+    },
+  };
+}
+
+async function createPreparedSeries() {
+  const evaluationRoot = await mkdtemp(resolve(tmpdir(), "velox-agent-series-"));
+  const taskPath = resolve(evaluationRoot, "task.md");
+  await writeFile(taskPath, prompt, "utf8");
+  const prepared = await prepareEvaluationSeries({
+    evaluationRoot,
+    taskPath,
+    taskURL: `https://raw.githubusercontent.com/0disoft/velox/${"a".repeat(40)}/evals/llm-agent/v1/task.md`,
+    releaseTag: "v0.5.10-alpha.2",
+    releaseURL: "https://github.com/0disoft/velox/releases/download/v0.5.10-alpha.2/velox-windows-x64.zip",
+    releaseSha256: fixedDigest,
+    now: new Date("2026-07-30T01:02:03Z"),
+    suffixes: ["aaaaaaaa", "bbbbbbbb", "cccccccc", "dddddddd"],
+  });
+  return { ...prepared, taskPath };
+}
+
+function userMessage(id: number, content: string): HermesFixtureMessage {
+  return message(id, "user", content);
+}
+
+function toolCallMessage(id: number, callId: string, name: string, args: Record<string, unknown>): HermesFixtureMessage {
+  return {
+    ...message(id, "assistant", null),
+    toolCalls: JSON.stringify([{ id: callId, type: "function", function: { name, arguments: JSON.stringify(args) } }]),
+  };
+}
+
+function toolResultMessage(id: number, callId: string, content: Record<string, unknown>): HermesFixtureMessage {
+  return {
+    ...message(id, "tool", JSON.stringify(content)),
+    toolCallId: callId,
+  };
+}
+
+function message(id: number, role: string, content: string | null): HermesFixtureMessage {
+  return {
+    id,
+    role,
+    content,
+    toolCallId: null,
+    toolCalls: null,
+    toolName: null,
+    effectDisposition: null,
+    timestamp: 100 + id,
+    finishReason: null,
+    active: 1,
+    compacted: 0,
+    displayKind: null,
+  };
+}
 
 async function createSeries() {
   const root = await mkdtemp(resolve(tmpdir(), "velox-llm-eval-"));
