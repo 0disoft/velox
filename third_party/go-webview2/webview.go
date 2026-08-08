@@ -225,11 +225,11 @@ func (w *webview) msgcb(msg string) {
 
 	id := strconv.Itoa(d.ID)
 	if res, err := w.callbinding(d); err != nil {
-		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); window._rpc[" + id + "] = undefined")
+		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); delete window._rpc[" + id + "]")
 	} else if b, err := json.Marshal(res); err != nil {
-		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); window._rpc[" + id + "] = undefined")
+		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); delete window._rpc[" + id + "]")
 	} else {
-		w.dispatchBindingResponse("window._rpc[" + id + "].resolve(" + string(b) + "); window._rpc[" + id + "] = undefined")
+		w.dispatchBindingResponse("window._rpc[" + id + "].resolve(" + string(b) + "); delete window._rpc[" + id + "]")
 	}
 }
 
@@ -398,13 +398,17 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 	if windowHeight == 0 {
 		windowHeight = 480
 	}
+	screenWidth, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CXSCREEN)
+	screenHeight, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CYSCREEN)
+	if screenWidth > 0 && windowWidth > uint(screenWidth) {
+		windowWidth = uint(screenWidth)
+	}
+	if screenHeight > 0 && windowHeight > uint(screenHeight) {
+		windowHeight = uint(screenHeight)
+	}
 
 	var posX, posY uint
 	if opts.Center {
-		// get screen size
-		screenWidth, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CXSCREEN)
-		screenHeight, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CYSCREEN)
-		// calculate window position
 		posX = (uint(screenWidth) - windowWidth) / 2
 		posY = (uint(screenHeight) - windowHeight) / 2
 	} else {
