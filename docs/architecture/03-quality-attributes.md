@@ -48,7 +48,7 @@ docs/engineering/03-performance-budget.md.
 - Native capabilities are absent unless explicitly declared and granted.
 - No listening socket, local server, plugin scan, shell, process, or arbitrary
   filesystem API exists in the MVP.
-- Path validation and atomic output ownership prevent source escape and unsafe
+- Path validation and recoverable output ownership prevent source escape and unsafe
   cleanup.
 - Directory asset tampering is a documented limitation, not a solved property.
 

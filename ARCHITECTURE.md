@@ -63,8 +63,9 @@ The M1 build path is split across `internal/manifest`, `internal/assettree`,
 filesystem discovery complete before the builder mutates the output root. The
 builder copies the release-bundled host without patching it, emits a separate
 runtime configuration, assembles an owned sibling staging directory, writes a
-normalized ZIP, and then promotes the directory and archive while preserving
-recoverable previous outputs on handled failures.
+normalized ZIP, and then promotes the directory and archive. A later invocation
+reconciles process-interrupted rename states from retained previous outputs.
+This two-path publication is recoverable, not crash-atomic or power-loss safe.
 
 The release bundle binds the CLI and host through `velox-host.json`. The CLI
 rejects a host when release version, target, host contract, runtime contract,

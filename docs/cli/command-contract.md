@@ -75,7 +75,7 @@ process.
 ### velox build
 
 Validate the project and create a portable application directory,
-machine-readable build report, and deterministic ZIP through an atomic staging
+machine-readable build report, and deterministic ZIP through a recoverable staging
 flow.
 
 The current output names use the complete `app.id`, preventing projects with

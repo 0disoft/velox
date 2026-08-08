@@ -60,7 +60,7 @@ application business data.
 7. Copy the unchanged host, runtime configuration, and assets.
 8. Write a machine-readable build report.
 9. Create a deterministic ZIP.
-10. Promote the completed output atomically.
+10. Promote the completed directory and ZIP with recoverable paired renames.
 
 No compiler, package manager, local server, code generator, or network lookup
 runs in this flow.

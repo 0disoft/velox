@@ -14,6 +14,7 @@ import (
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/ipc"
+	"github.com/0disoft/velox/internal/outputpair"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 	"github.com/0disoft/velox/internal/safefs"
 )
@@ -98,109 +99,7 @@ func Build(plan buildplan.Plan) (Result, error) {
 }
 
 func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error {
-	return promoteWithOperations(plan, stageDirectory, stageArchive, promotionOperations{
-		rename:    os.Rename,
-		remove:    os.Remove,
-		removeAll: os.RemoveAll,
-	})
-}
-
-type promotionOperations struct {
-	rename    func(string, string) error
-	remove    func(string) error
-	removeAll func(string) error
-}
-
-func promoteWithOperations(plan buildplan.Snapshot, stageDirectory, stageArchive string, operations promotionOperations) error {
-	backupDirectory := plan.AppDirectory + ".previous"
-	backupArchive := plan.ArchivePath + ".previous"
-	if exists(backupDirectory) || exists(backupArchive) {
-		return errors.New("previous-output backup already exists; refusing to overwrite recovery data")
-	}
-	if err := validateExistingOutput(plan.AppDirectory, true); err != nil {
-		return fmt.Errorf("validate previous app directory: %w", err)
-	}
-	if err := validateExistingOutput(plan.ArchivePath, false); err != nil {
-		return fmt.Errorf("validate previous archive: %w", err)
-	}
-	directoryBackedUp := false
-	archiveBackedUp := false
-	if exists(plan.AppDirectory) {
-		if err := operations.rename(plan.AppDirectory, backupDirectory); err != nil {
-			return fmt.Errorf("backup previous app directory: %w", err)
-		}
-		directoryBackedUp = true
-	}
-	if exists(plan.ArchivePath) {
-		if err := operations.rename(plan.ArchivePath, backupArchive); err != nil {
-			backupErr := fmt.Errorf("backup previous archive: %w", err)
-			if directoryBackedUp {
-				if restoreErr := operations.rename(backupDirectory, plan.AppDirectory); restoreErr != nil {
-					return errors.Join(backupErr, fmt.Errorf("restore previous app directory after archive backup failure: %w", restoreErr))
-				}
-			}
-			return backupErr
-		}
-		archiveBackedUp = true
-	}
-	rollback := func() error {
-		var rollbackErr error
-		if err := operations.removeAll(plan.AppDirectory); err != nil {
-			rollbackErr = errors.Join(rollbackErr, fmt.Errorf("remove partially promoted app directory: %w", err))
-		}
-		if err := operations.remove(plan.ArchivePath); err != nil && !errors.Is(err, os.ErrNotExist) {
-			rollbackErr = errors.Join(rollbackErr, fmt.Errorf("remove partially promoted archive: %w", err))
-		}
-		if directoryBackedUp {
-			if err := operations.rename(backupDirectory, plan.AppDirectory); err != nil {
-				rollbackErr = errors.Join(rollbackErr, fmt.Errorf("restore previous app directory: %w", err))
-			}
-		}
-		if archiveBackedUp {
-			if err := operations.rename(backupArchive, plan.ArchivePath); err != nil {
-				rollbackErr = errors.Join(rollbackErr, fmt.Errorf("restore previous archive: %w", err))
-			}
-		}
-		return rollbackErr
-	}
-	if err := operations.rename(stageDirectory, plan.AppDirectory); err != nil {
-		return errors.Join(fmt.Errorf("promote app directory: %w", err), rollback())
-	}
-	if err := operations.rename(stageArchive, plan.ArchivePath); err != nil {
-		return errors.Join(fmt.Errorf("promote archive: %w", err), rollback())
-	}
-	var cleanupErr error
-	if directoryBackedUp {
-		if err := operations.removeAll(backupDirectory); err != nil {
-			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("remove previous app directory after promotion: %w", err))
-		}
-	}
-	if archiveBackedUp {
-		if err := operations.remove(backupArchive); err != nil && !errors.Is(err, os.ErrNotExist) {
-			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("remove previous archive after promotion: %w", err))
-		}
-	}
-	return cleanupErr
-}
-
-func validateExistingOutput(path string, wantDirectory bool) error {
-	info, err := os.Lstat(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		return errors.New("output must not be a symbolic link")
-	}
-	if wantDirectory && !info.IsDir() {
-		return errors.New("output is not a directory")
-	}
-	if !wantDirectory && !info.Mode().IsRegular() {
-		return errors.New("output is not a regular file")
-	}
-	return nil
+	return outputpair.Promote(plan.AppDirectory, plan.ArchivePath, stageDirectory, stageArchive)
 }
 
 func copyVerified(source, destination string, mode os.FileMode, expectedSize int64, expectedSHA256 string) error {

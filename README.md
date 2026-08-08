@@ -11,7 +11,7 @@ code.
 
 The repository now contains a policy-enforcing pure-Go WebView2 host, a frozen
 and permission-checked IPC v1 bridge, manifest
-validation, an immutable build plan, atomic portable-directory assembly, a
+validation, an immutable build plan, recoverable portable-output assembly, a
 deterministic ZIP writer, all seven M1 CLI commands, an unsigned deterministic
 Windows x64 release bundle, startup fixtures, zero-cache consumer evidence,
 and an alpha evidence workflow. The workflow builds the release twice, emits

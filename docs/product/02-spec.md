@@ -156,8 +156,10 @@ who can modify the installed asset directory.
 - Source assets are never modified.
 - Output is assembled in a sibling staging directory and promoted only after
   validation succeeds.
-- Failure leaves the previous successful output intact and removes only the
-  staging directory owned by the current run.
+- Handled failure leaves the previous successful output intact. A later build
+  reconciles supported process-interrupted rename states from retained
+  `.previous` outputs before mutation. This does not claim power-loss safety or
+  atomic visibility across the directory and ZIP paths.
 - Paths outside the project and output roots are rejected.
 - Equivalent normalized inputs and the same Velox release produce identical
   unsigned archive bytes.

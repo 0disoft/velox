@@ -16,13 +16,15 @@
 9. Write the build-result document.
 10. Create the deterministic ZIP.
 11. Verify planned output counts and digests.
-12. Atomically promote completed output.
+12. Promote the completed directory and ZIP with recoverable paired renames.
 
 ### Build Failure
 
 - Parsing and validation fail before output mutation.
 - Copy and archive failures remove only the current staging directory.
 - Previous successful output and project source remain untouched.
+- A later invocation reconciles supported process-interrupted rename states;
+  the two public paths are not crash-atomic or power-loss safe.
 - Errors return a stable exit code and structured diagnostic.
 - Cancellation follows the same cleanup path.
 

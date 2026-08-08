@@ -45,7 +45,7 @@ who can replace installed directory assets or the external runtime config.
 | A frame or remote page reaches the bridge | top-level virtual-origin enforcement and frame denial |
 | IPC exhausts memory or parser work | 64 KiB payload, depth 16, uint32 IDs, and 64 in-flight requests |
 | Browser features escape the product boundary | popup, download, permission, and remote-navigation denial |
-| Project paths overwrite unrelated files | canonical containment, link/reparse checks, owned staging, atomic promotion |
+| Project paths overwrite unrelated files | canonical containment, link/reparse checks, owned staging, recoverable paired promotion |
 | A release swaps the generic host | target, contract, size, and SHA-256 verification |
 | Unsigned preview publication substitutes different bytes | unsigned equality gate, checkout-free consumer dependency, exact artifact allowlist, checksum verification, immutable tag, and no-replacement publication |
 | A future signing step substitutes different bytes | provider request binding, signed manifest, Authenticode verification, and final artifact attestation |

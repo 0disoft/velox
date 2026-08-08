@@ -16,6 +16,7 @@ import (
 	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/outputpair"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 	"github.com/0disoft/velox/internal/safefs"
 )
@@ -215,54 +216,7 @@ func writeJSON(path string, value any) error {
 }
 
 func promote(finalDirectory, finalArchive, stageDirectory, stageArchive string) error {
-	backupDirectory := finalDirectory + ".previous"
-	backupArchive := finalArchive + ".previous"
-	if exists(backupDirectory) || exists(backupArchive) {
-		return errors.New("release recovery output already exists")
-	}
-	directoryBackedUp := false
-	archiveBackedUp := false
-	if exists(finalDirectory) {
-		if err := os.Rename(finalDirectory, backupDirectory); err != nil {
-			return fmt.Errorf("backup release directory: %w", err)
-		}
-		directoryBackedUp = true
-	}
-	if exists(finalArchive) {
-		if err := os.Rename(finalArchive, backupArchive); err != nil {
-			if directoryBackedUp {
-				_ = os.Rename(backupDirectory, finalDirectory)
-			}
-			return fmt.Errorf("backup release archive: %w", err)
-		}
-		archiveBackedUp = true
-	}
-	if err := os.Rename(stageDirectory, finalDirectory); err != nil {
-		if directoryBackedUp {
-			_ = os.Rename(backupDirectory, finalDirectory)
-		}
-		if archiveBackedUp {
-			_ = os.Rename(backupArchive, finalArchive)
-		}
-		return fmt.Errorf("promote release directory: %w", err)
-	}
-	if err := os.Rename(stageArchive, finalArchive); err != nil {
-		_ = os.RemoveAll(finalDirectory)
-		if directoryBackedUp {
-			_ = os.Rename(backupDirectory, finalDirectory)
-		}
-		if archiveBackedUp {
-			_ = os.Rename(backupArchive, finalArchive)
-		}
-		return fmt.Errorf("promote release archive: %w", err)
-	}
-	if directoryBackedUp {
-		_ = os.RemoveAll(backupDirectory)
-	}
-	if archiveBackedUp {
-		_ = os.Remove(backupArchive)
-	}
-	return nil
+	return outputpair.Promote(finalDirectory, finalArchive, stageDirectory, stageArchive)
 }
 
 func exists(path string) bool {
