@@ -20,6 +20,13 @@ import (
 
 const historySchemaVersion = "velox.startup-history/v1"
 
+const (
+	historyRequestTimeout = 90 * time.Second
+	maxArtifactFiles      = 1_000
+	maxArtifactEntryBytes = 16 << 20
+	maxArtifactTotalBytes = 64 << 20
+)
+
 type metricStats struct {
 	P50Ms float64 `json:"p50Ms"`
 	P95Ms float64 `json:"p95Ms"`
@@ -156,8 +163,10 @@ func run(args []string) error {
 	if err != nil {
 		return fmt.Errorf("decode current summary: %w", err)
 	}
-	c := collector{client: http.DefaultClient, baseURL: strings.TrimRight(*apiBase, "/"), token: token}
-	result, err := c.collect(context.Background(), *repository, *workflow, current, *limit, time.Now().UTC())
+	c := collector{client: &http.Client{Timeout: 30 * time.Second}, baseURL: strings.TrimRight(*apiBase, "/"), token: token}
+	ctx, cancel := context.WithTimeout(context.Background(), historyRequestTimeout)
+	defer cancel()
+	result, err := c.collect(ctx, *repository, *workflow, current, *limit, time.Now().UTC())
 	if err != nil {
 		return err
 	}
@@ -194,7 +203,7 @@ func (c collector) collect(ctx context.Context, repository, workflow string, cur
 			if item.ID == currentRunID {
 				continue
 			}
-			body, code, err := c.downloadSummary(ctx, repository, item.ID)
+			body, code, err := c.downloadSummary(ctx, repository, item)
 			if err != nil {
 				result.CollectionIssues = append(result.CollectionIssues, collectionIssue{RunID: item.ID, Code: code})
 				continue
@@ -236,15 +245,16 @@ func (c collector) listRuns(ctx context.Context, repository, workflow string, pe
 	return result.WorkflowRuns, nil
 }
 
-func (c collector) downloadSummary(ctx context.Context, repository string, runID int64) ([]byte, string, error) {
+func (c collector) downloadSummary(ctx context.Context, repository string, run workflowRun) ([]byte, string, error) {
 	var listed artifactsResponse
-	if err := c.getJSON(ctx, fmt.Sprintf("/repos/%s/actions/runs/%d/artifacts?per_page=100", repository, runID), &listed); err != nil {
+	if err := c.getJSON(ctx, fmt.Sprintf("/repos/%s/actions/runs/%d/artifacts?per_page=100", repository, run.ID), &listed); err != nil {
 		return nil, "ARTIFACT_LIST_FAILED", err
 	}
 	var selected *artifact
+	expectedName := fmt.Sprintf("startup-lifecycle-%d-%d", run.ID, run.RunAttempt)
 	for index := range listed.Artifacts {
 		item := &listed.Artifacts[index]
-		if strings.HasPrefix(item.Name, "startup-lifecycle-") && !item.Expired {
+		if item.Name == expectedName && !item.Expired {
 			selected = item
 			break
 		}
@@ -258,6 +268,9 @@ func (c collector) downloadSummary(ctx context.Context, repository string, runID
 	}
 	reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
+		return nil, "INVALID_ARTIFACT_ARCHIVE", err
+	}
+	if err := validateArtifactBudget(reader.File); err != nil {
 		return nil, "INVALID_ARTIFACT_ARCHIVE", err
 	}
 	for _, file := range reader.File {
@@ -279,6 +292,23 @@ func (c collector) downloadSummary(ctx context.Context, repository string, runID
 		return result, "", nil
 	}
 	return nil, "SUMMARY_MISSING", errors.New("startup lifecycle summary is missing from artifact")
+}
+
+func validateArtifactBudget(files []*zip.File) error {
+	if len(files) > maxArtifactFiles {
+		return errors.New("artifact archive exceeds file-count limit")
+	}
+	var total uint64
+	for _, file := range files {
+		if file.UncompressedSize64 > maxArtifactEntryBytes {
+			return fmt.Errorf("artifact entry exceeds size limit: %s", file.Name)
+		}
+		if total > maxArtifactTotalBytes-file.UncompressedSize64 {
+			return errors.New("artifact archive exceeds total size limit")
+		}
+		total += file.UncompressedSize64
+	}
+	return nil
 }
 
 func (c collector) getJSON(ctx context.Context, path string, target any) error {
@@ -344,6 +374,15 @@ func decodeSummary(body []byte) (lifecycleSummary, error) {
 }
 
 func makePoint(run workflowRun, raw lifecycleSummary) (historyPoint, error) {
+	if raw.Environment.GitHubRunID == nil || *raw.Environment.GitHubRunID != strconv.FormatInt(run.ID, 10) {
+		return historyPoint{}, errors.New("summary GitHub run ID does not match artifact run")
+	}
+	if raw.Environment.GitHubRunAttempt == nil || *raw.Environment.GitHubRunAttempt != strconv.Itoa(run.RunAttempt) {
+		return historyPoint{}, errors.New("summary GitHub run attempt does not match artifact run")
+	}
+	if raw.Environment.GitCommit == nil || !strings.EqualFold(*raw.Environment.GitCommit, run.HeadSHA) {
+		return historyPoint{}, errors.New("summary Git commit does not match artifact run")
+	}
 	metric := func(name string) (metricStats, error) {
 		value, ok := raw.Metrics[name]
 		if !ok {
@@ -422,12 +461,24 @@ func writeJSON(path string, value any) error {
 		return err
 	}
 	body = append(body, '\n')
-	temporary := path + ".tmp"
-	if err := os.WriteFile(temporary, body, 0o644); err != nil {
+	temporaryFile, err := os.CreateTemp(filepath.Dir(path), ".velox-history-*.tmp")
+	if err != nil {
+		return err
+	}
+	temporary := temporaryFile.Name()
+	defer os.Remove(temporary)
+	if err := temporaryFile.Chmod(0o644); err != nil {
+		temporaryFile.Close()
+		return err
+	}
+	if _, err := temporaryFile.Write(body); err != nil {
+		temporaryFile.Close()
+		return err
+	}
+	if err := temporaryFile.Close(); err != nil {
 		return err
 	}
 	if err := os.Rename(temporary, path); err != nil {
-		_ = os.Remove(temporary)
 		return err
 	}
 	return nil

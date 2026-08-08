@@ -149,3 +149,20 @@ func TestRunRejectsTrailingJSON(t *testing.T) {
 		t.Fatal("run accepted a trailing JSON value")
 	}
 }
+
+func TestRunDoesNotPublishMainSummaryWhenPhaseSummaryFails(t *testing.T) {
+	directory := t.TempDir()
+	input := filepath.Join(directory, "input.json")
+	output := filepath.Join(directory, "output.json")
+	phaseOutput := filepath.Join(directory, "phase.json")
+	body := `{"schemaVersion":"velox.startup-lifecycle/v3","scope":"fresh-and-immediate-same-profile-startup","evidenceLevel":"test","outcome":"success","repetitions":1,"environment":{"os":"windows","architecture":"amd64","webView2Version":"1"},"measurement":{},"samples":[{"index":0,"outcome":"success","first":{"readyMs":1,"hostExitMs":1,"browserProcessId":1,"browserExitAfterHostMs":1},"immediate":{"readyMs":1,"hostExitMs":1,"browserProcessId":2,"browserExitAfterHostMs":1},"profileReleaseMs":1,"timeline":{"immediateProcessStartAfterFirstHostExitMs":1,"firstBrowserExitAfterImmediateStartMs":1,"immediateReadyAfterFirstBrowserExitMs":0,"immediateReadyWaitedForFirstBrowserExit":true}}]}`
+	if err := os.WriteFile(input, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := run([]string{"--input", input, "--output", output, "--phase-output", phaseOutput}); err == nil {
+		t.Fatal("run accepted missing phase timelines")
+	}
+	if _, err := os.Stat(output); !os.IsNotExist(err) {
+		t.Fatalf("main summary was published after phase failure: %v", err)
+	}
+}

@@ -56,6 +56,13 @@ func TestInspectLogsRejectsInvalidArchive(t *testing.T) {
 	}
 }
 
+func TestValidateLogArchiveBudgetRejectsOversizedExpansion(t *testing.T) {
+	file := &zip.File{FileHeader: zip.FileHeader{Name: "large.log", UncompressedSize64: maxLogEntryBytes + 1}}
+	if err := validateLogArchiveBudget([]*zip.File{file}); err == nil {
+		t.Fatal("oversized expanded log was accepted")
+	}
+}
+
 func TestReadBoundedRejectsTruncatedEvidence(t *testing.T) {
 	if _, err := readBounded(strings.NewReader("12345"), 4); err == nil {
 		t.Fatal("expected oversized evidence to fail")

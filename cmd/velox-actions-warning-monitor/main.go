@@ -19,6 +19,13 @@ import (
 
 const monitorSchemaVersion = "velox.actions-warning-monitor/v1"
 
+const (
+	requestTimeout     = 30 * time.Second
+	maxLogArchiveFiles = 10_000
+	maxLogEntryBytes   = 16 << 20
+	maxLogArchiveTotal = 128 << 20
+)
+
 var downloadArtifactBufferWarning = warningSignature{
 	Action: "actions/download-artifact",
 	Code:   "DEP0005",
@@ -82,8 +89,10 @@ func run(args []string) error {
 	if token == "" {
 		return errors.New("GITHUB_TOKEN is required")
 	}
-	m := monitor{client: http.DefaultClient, baseURL: strings.TrimRight(*apiBase, "/"), token: token}
-	archive, err := m.downloadLogs(context.Background(), *repository, runID)
+	m := monitor{client: &http.Client{Timeout: requestTimeout}, baseURL: strings.TrimRight(*apiBase, "/"), token: token}
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	archive, err := m.downloadLogs(ctx, *repository, runID)
 	if err != nil {
 		return err
 	}
@@ -123,6 +132,9 @@ func inspectLogs(repository string, runID int64, archive []byte, now time.Time) 
 	reader, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
 	if err != nil {
 		return report{}, fmt.Errorf("open workflow log archive: %w", err)
+	}
+	if err := validateLogArchiveBudget(reader.File); err != nil {
+		return report{}, err
 	}
 	needleCounts := make([]int, len(downloadArtifactBufferWarning.Needles))
 	for _, file := range reader.File {
@@ -165,6 +177,23 @@ func inspectLogs(repository string, runID int64, archive []byte, now time.Time) 
 	return result, nil
 }
 
+func validateLogArchiveBudget(files []*zip.File) error {
+	if len(files) > maxLogArchiveFiles {
+		return errors.New("workflow log archive exceeds file-count limit")
+	}
+	var total uint64
+	for _, file := range files {
+		if file.UncompressedSize64 > maxLogEntryBytes {
+			return fmt.Errorf("workflow log entry exceeds size limit: %s", file.Name)
+		}
+		if total > maxLogArchiveTotal-file.UncompressedSize64 {
+			return errors.New("workflow log archive exceeds total size limit")
+		}
+		total += file.UncompressedSize64
+	}
+	return nil
+}
+
 func readBounded(reader io.Reader, limit int64) ([]byte, error) {
 	body, err := io.ReadAll(io.LimitReader(reader, limit+1))
 	if err != nil {
@@ -185,12 +214,24 @@ func writeJSON(path string, value any) error {
 		return err
 	}
 	body = append(body, '\n')
-	temporary := path + ".tmp"
-	if err := os.WriteFile(temporary, body, 0o644); err != nil {
+	temporaryFile, err := os.CreateTemp(filepath.Dir(path), ".velox-warning-*.tmp")
+	if err != nil {
+		return err
+	}
+	temporary := temporaryFile.Name()
+	defer os.Remove(temporary)
+	if err := temporaryFile.Chmod(0o644); err != nil {
+		temporaryFile.Close()
+		return err
+	}
+	if _, err := temporaryFile.Write(body); err != nil {
+		temporaryFile.Close()
+		return err
+	}
+	if err := temporaryFile.Close(); err != nil {
 		return err
 	}
 	if err := os.Rename(temporary, path); err != nil {
-		_ = os.Remove(temporary)
 		return err
 	}
 	return nil

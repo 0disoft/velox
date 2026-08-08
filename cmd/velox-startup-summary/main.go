@@ -199,17 +199,17 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := writeJSON(*output, result); err != nil {
-		return err
-	}
 	if *phaseOutput == "" {
-		return nil
+		return writeJSON(*output, result)
 	}
 	phases, err := summarizePhases(raw, body)
 	if err != nil {
 		return err
 	}
-	return writeJSON(*phaseOutput, phases)
+	if err := writeJSON(*phaseOutput, phases); err != nil {
+		return err
+	}
+	return writeJSON(*output, result)
 }
 
 func summarize(raw evidence, source []byte) (summary, error) {
@@ -439,12 +439,24 @@ func writeJSON(path string, value any) error {
 		return err
 	}
 	body = append(body, '\n')
-	temporary := path + ".tmp"
-	if err := os.WriteFile(temporary, body, 0o644); err != nil {
+	temporaryFile, err := os.CreateTemp(filepath.Dir(path), ".velox-summary-*.tmp")
+	if err != nil {
+		return err
+	}
+	temporary := temporaryFile.Name()
+	defer os.Remove(temporary)
+	if err := temporaryFile.Chmod(0o644); err != nil {
+		temporaryFile.Close()
+		return err
+	}
+	if _, err := temporaryFile.Write(body); err != nil {
+		temporaryFile.Close()
+		return err
+	}
+	if err := temporaryFile.Close(); err != nil {
 		return err
 	}
 	if err := os.Rename(temporary, path); err != nil {
-		_ = os.Remove(temporary)
 		return err
 	}
 	return nil

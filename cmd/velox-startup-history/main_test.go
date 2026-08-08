@@ -13,7 +13,7 @@ import (
 )
 
 func TestCollectBuildsOrderedEnvironmentGroupedHistory(t *testing.T) {
-	oldSummary := summaryFixture("100", "runner-a", "1", "120.1", 500, 450, 50)
+	oldSummary := summaryFixture("100", "1", "old", "runner-a", "1", "120.1", 500, 450, 50)
 	archive := zipSummary(t, oldSummary)
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request.Header.Get("Authorization") != "Bearer secret" {
@@ -41,7 +41,7 @@ func TestCollectBuildsOrderedEnvironmentGroupedHistory(t *testing.T) {
 	}))
 	defer server.Close()
 
-	current := summaryFixture("200", "runner-a", "1", "120.1", 600, 550, 50)
+	current := summaryFixture("200", "2", "current", "runner-a", "1", "120.1", 600, 550, 50)
 	c := collector{client: server.Client(), baseURL: server.URL, token: "secret"}
 	result, err := c.collect(context.Background(), "0disoft/velox", "consumer-evidence.yml", current, 12, time.Date(2026, 7, 13, 4, 0, 0, 0, time.UTC))
 	if err != nil {
@@ -62,7 +62,7 @@ func TestCollectBuildsOrderedEnvironmentGroupedHistory(t *testing.T) {
 }
 
 func TestCollectRejectsCurrentSummaryWithoutRunID(t *testing.T) {
-	current := summaryFixture("", "runner-a", "1", "120.1", 600, 550, 50)
+	current := summaryFixture("", "1", "commit", "runner-a", "1", "120.1", 600, 550, 50)
 	c := collector{client: http.DefaultClient, baseURL: "https://example.invalid", token: "secret"}
 	if _, err := c.collect(context.Background(), "0disoft/velox", "consumer-evidence.yml", current, 12, time.Now()); err == nil {
 		t.Fatal("expected missing run ID to fail")
@@ -70,7 +70,7 @@ func TestCollectRejectsCurrentSummaryWithoutRunID(t *testing.T) {
 }
 
 func TestDecodeSummaryRejectsTrailingJSON(t *testing.T) {
-	body, err := json.Marshal(summaryFixture("200", "runner-a", "1", "120.1", 600, 550, 50))
+	body, err := json.Marshal(summaryFixture("200", "2", "current", "runner-a", "1", "120.1", 600, 550, 50))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,16 +86,30 @@ func TestReadBoundedRejectsTruncatedEvidence(t *testing.T) {
 	}
 }
 
-func summaryFixture(runID, image, imageVersion, webView string, ready, browserExit, afterExit float64) lifecycleSummary {
+func summaryFixture(runID, runAttempt, commit, image, imageVersion, webView string, ready, browserExit, afterExit float64) lifecycleSummary {
 	return lifecycleSummary{
 		SchemaVersion: "velox.startup-lifecycle-summary/v1", Outcome: "success",
-		Environment: environment{RunnerImage: &image, RunnerImageVersion: &imageVersion, WebView2Version: webView, GitHubRunID: &runID},
+		Environment: environment{RunnerImage: &image, RunnerImageVersion: &imageVersion, WebView2Version: webView, GitHubRunID: &runID, GitHubRunAttempt: &runAttempt, GitCommit: &commit},
 		Metrics: map[string]metricStats{
 			"immediateReadyMs":                      {P50Ms: ready, P95Ms: ready + 10},
 			"firstBrowserExitAfterImmediateStartMs": {P50Ms: browserExit, P95Ms: browserExit + 10},
 			"immediateReadyAfterFirstBrowserExitMs": {P50Ms: afterExit, P95Ms: afterExit + 10},
 		},
 		Ordering: ordering{ReadyWaitedForFirstBrowserExitCount: 10},
+	}
+}
+
+func TestMakePointRejectsMismatchedEvidenceIdentity(t *testing.T) {
+	raw := summaryFixture("99", "1", "other", "runner", "1", "120", 10, 9, 1)
+	if _, err := makePoint(workflowRun{ID: 100, RunAttempt: 1, HeadSHA: "expected"}, raw); err == nil {
+		t.Fatal("makePoint accepted evidence from another run")
+	}
+}
+
+func TestValidateArtifactBudgetRejectsOversizedExpansion(t *testing.T) {
+	file := &zip.File{FileHeader: zip.FileHeader{Name: "large.json", UncompressedSize64: maxArtifactEntryBytes + 1}}
+	if err := validateArtifactBudget([]*zip.File{file}); err == nil {
+		t.Fatal("oversized expanded artifact was accepted")
 	}
 }
 

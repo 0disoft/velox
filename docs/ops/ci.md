@@ -169,6 +169,12 @@ An inaccessible or malformed log archive fails the monitor because that means
 there is no evidence. When the upstream action stops emitting the signature,
 the report changes to `absent` without a repository change.
 
+The warning monitor and startup-history collector use bounded HTTP deadlines.
+Downloaded ZIP evidence is rejected before extraction when file-count,
+per-entry uncompressed size, or total uncompressed size budgets are exceeded.
+History points bind the exact run ID, attempt, commit, and artifact name
+reported by GitHub rather than accepting a matching filename prefix.
+
 ## Failure Policy
 
 - Do not retry a failure and report only the green attempt.
