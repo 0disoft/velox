@@ -3,6 +3,8 @@ package archive
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"testing"
@@ -38,6 +40,13 @@ func TestCreateFilesIsDeterministicAndRootless(t *testing.T) {
 	}
 	if !bytes.Equal(oneData, twoData) {
 		t.Fatal("equivalent file lists produced different ZIP bytes")
+	}
+	oneDigest := sha256.Sum256(oneData)
+	if firstResult.SHA256 != hex.EncodeToString(oneDigest[:]) {
+		t.Fatalf("archive result digest = %s, disk digest = %x", firstResult.SHA256, oneDigest)
+	}
+	if firstResult.Size != int64(len(oneData)) {
+		t.Fatalf("archive result size = %d, disk size = %d", firstResult.Size, len(oneData))
 	}
 
 	reader, err := zip.OpenReader(one)

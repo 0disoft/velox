@@ -63,7 +63,7 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return Result{}, fmt.Errorf("inspect archive output: %w", err)
 	}
-	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0o644)
 	if err != nil {
 		return Result{}, fmt.Errorf("create archive: %w", err)
 	}
@@ -75,8 +75,7 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 		}
 	}()
 
-	hash := sha256.New()
-	writer := zip.NewWriter(io.MultiWriter(output, hash))
+	writer := zip.NewWriter(output)
 	for _, input := range inputs {
 		header := &zip.FileHeader{
 			Name:     input.Name,
@@ -115,12 +114,23 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 	if err := output.Sync(); err != nil {
 		return Result{}, fmt.Errorf("sync archive: %w", err)
 	}
-	if err := output.Close(); err != nil {
-		return Result{}, fmt.Errorf("close archive: %w", err)
+	if _, err := output.Seek(0, io.SeekStart); err != nil {
+		return Result{}, fmt.Errorf("rewind archive for verification: %w", err)
 	}
-	info, err := os.Stat(destination)
+	hash := sha256.New()
+	verifiedSize, err := io.Copy(hash, output)
+	if err != nil {
+		return Result{}, fmt.Errorf("verify archive bytes: %w", err)
+	}
+	info, err := output.Stat()
 	if err != nil {
 		return Result{}, fmt.Errorf("inspect archive: %w", err)
+	}
+	if verifiedSize != info.Size() {
+		return Result{}, fmt.Errorf("verify archive size: read %d bytes, expected %d", verifiedSize, info.Size())
+	}
+	if err := output.Close(); err != nil {
+		return Result{}, fmt.Errorf("close archive: %w", err)
 	}
 	success = true
 	return Result{FileCount: len(inputs), Size: info.Size(), SHA256: hex.EncodeToString(hash.Sum(nil))}, nil
