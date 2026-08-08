@@ -5,17 +5,19 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 func TestValidateRelativePathRejectsWindowsHazards(t *testing.T) {
 	invalid := []string{
-		"CON", "con.txt", "nested/PRN.json", "COM1", "LPT9.log",
+		"CON", "con.txt", "CON.foo.bar", "nested/PRN.json", "COM1", "LPT9.log", "LPT1.tar.gz",
 		"name:stream", "trailing.", "trailing ",
 	}
 	for _, path := range invalid {
 		t.Run(path, func(t *testing.T) {
-			if err := validateRelativePath(path); err == nil {
-				t.Fatalf("validateRelativePath(%q) succeeded", path)
+			if err := safefs.ValidateRelativePath(path); err == nil {
+				t.Fatalf("ValidateRelativePath(%q) succeeded", path)
 			}
 		})
 	}

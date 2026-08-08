@@ -17,6 +17,7 @@ import (
 	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 const (
@@ -160,17 +161,10 @@ func Build(options Options) (Result, error) {
 }
 
 func copyArtifact(source, destination, relative string) (Artifact, error) {
-	info, err := os.Lstat(source)
-	if err != nil {
-		return Artifact{}, err
-	}
-	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-		return Artifact{}, errors.New("release input must be a regular file")
-	}
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return Artifact{}, err
 	}
-	input, err := os.Open(source)
+	input, info, err := safefs.OpenVerifiedRegular(source)
 	if err != nil {
 		return Artifact{}, err
 	}

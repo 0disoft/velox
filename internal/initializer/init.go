@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 var invalidSlug = regexp.MustCompile(`[^a-z0-9-]+`)
@@ -54,6 +56,9 @@ func Create(directory string) (Result, error) {
 	if err != nil {
 		return Result{}, fmt.Errorf("resolve project directory: %w", err)
 	}
+	if err := safefs.RejectLinkedComponents(absolute); err != nil {
+		return Result{}, fmt.Errorf("validate project directory: %w", err)
+	}
 	base := filepath.Base(filepath.Clean(absolute))
 	slug := projectSlug(base)
 	if slug == "" {
@@ -65,6 +70,15 @@ func Create(directory string) (Result, error) {
 	}
 	appID := "dev.velox." + slug
 	rootExisted := pathExists(absolute)
+	if rootExisted {
+		info, err := os.Lstat(absolute)
+		if err != nil || !info.IsDir() {
+			return Result{}, errors.New("project path must be a directory")
+		}
+	}
+	if err := safefs.RejectLinkedComponents(filepath.Join(absolute, "web")); err != nil {
+		return Result{}, fmt.Errorf("validate web directory: %w", err)
+	}
 	webExisted := pathExists(filepath.Join(absolute, "web"))
 
 	manifest := manifestFile{SchemaVersion: 1}
@@ -108,7 +122,7 @@ func Create(directory string) (Result, error) {
 	}
 	for _, file := range files {
 		fullPath := filepath.Join(absolute, filepath.FromSlash(file.path))
-		if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+		if err := safefs.EnsureDirectory(filepath.Dir(fullPath), 0o755); err != nil {
 			rollback()
 			return Result{}, fmt.Errorf("create project directory: %w", err)
 		}

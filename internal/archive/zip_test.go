@@ -63,6 +63,7 @@ func TestCreateFilesRejectsUnsafeAndDuplicateEntries(t *testing.T) {
 		inputs []Input
 	}{
 		{name: "empty", inputs: nil},
+		{name: "parent root", inputs: []Input{{Source: input, Name: ".."}}},
 		{name: "parent traversal", inputs: []Input{{Source: input, Name: "../input.bin"}}},
 		{name: "backslash", inputs: []Input{{Source: input, Name: `dir\\input.bin`}}},
 		{name: "drive", inputs: []Input{{Source: input, Name: "C:/input.bin"}}},

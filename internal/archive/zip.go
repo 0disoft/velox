@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 var normalizedTime = time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC)
@@ -88,28 +89,10 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 			writer.Close()
 			return Result{}, fmt.Errorf("create archive entry %s: %w", input.Name, err)
 		}
-		linkInfo, err := os.Lstat(input.Source)
-		if err != nil {
-			writer.Close()
-			return Result{}, fmt.Errorf("inspect archive input %s: %w", input.Name, err)
-		}
-		if !linkInfo.Mode().IsRegular() || linkInfo.Mode()&os.ModeSymlink != 0 {
-			writer.Close()
-			return Result{}, fmt.Errorf("archive input %s must be a regular file", input.Name)
-		}
-		source, err := os.Open(input.Source)
+		source, info, err := safefs.OpenVerifiedRegular(input.Source)
 		if err != nil {
 			writer.Close()
 			return Result{}, fmt.Errorf("open archive input %s: %w", input.Name, err)
-		}
-		info, statErr := source.Stat()
-		if statErr != nil || !info.Mode().IsRegular() || !os.SameFile(linkInfo, info) {
-			source.Close()
-			writer.Close()
-			if statErr != nil {
-				return Result{}, fmt.Errorf("inspect opened archive input %s: %w", input.Name, statErr)
-			}
-			return Result{}, fmt.Errorf("archive input %s changed while opening", input.Name)
 		}
 		written, copyErr := io.Copy(entry, source)
 		closeErr := source.Close()
@@ -144,15 +127,7 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 }
 
 func safeEntryName(name string) bool {
-	return name != "" &&
-		!strings.Contains(name, "\\") &&
-		!strings.Contains(name, ":") &&
-		!path.IsAbs(name) &&
-		!filepath.IsAbs(name) &&
-		filepath.VolumeName(name) == "" &&
-		path.Clean(name) == name &&
-		name != "." &&
-		!strings.HasPrefix(name, "../")
+	return safefs.ValidateArchiveEntry(name) == nil
 }
 
 func collectFiles(root string) ([]string, error) {

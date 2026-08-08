@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 type File struct {
@@ -34,7 +36,7 @@ func ValidateResolvedEntry(root, entry string) error {
 	if err != nil {
 		return fmt.Errorf("inspect asset root: %w", err)
 	}
-	if linked, err := isLinkOrReparse(root, rootInfo); err != nil {
+	if linked, err := safefs.IsLinkOrReparse(root, rootInfo); err != nil {
 		return err
 	} else if linked {
 		return errors.New("asset root must not be a link or reparse point")
@@ -58,7 +60,7 @@ func ValidateResolvedEntry(root, entry string) error {
 		if err != nil {
 			return fmt.Errorf("inspect entry point: %w", err)
 		}
-		linked, err := isLinkOrReparse(current, info)
+		linked, err := safefs.IsLinkOrReparse(current, info)
 		if err != nil {
 			return err
 		}
@@ -83,7 +85,7 @@ func Scan(root string) (Tree, error) {
 	if !info.IsDir() {
 		return Tree{}, errors.New("asset root is not a directory")
 	}
-	if linked, err := isLinkOrReparse(root, info); err != nil {
+	if linked, err := safefs.IsLinkOrReparse(root, info); err != nil {
 		return Tree{}, err
 	} else if linked {
 		return Tree{}, errors.New("asset root must not be a link or reparse point")
@@ -102,7 +104,7 @@ func Scan(root string) (Tree, error) {
 		if err != nil {
 			return err
 		}
-		linked, err := isLinkOrReparse(path, info)
+		linked, err := safefs.IsLinkOrReparse(path, info)
 		if err != nil {
 			return err
 		}
@@ -113,7 +115,7 @@ func Scan(root string) (Tree, error) {
 		if err != nil {
 			return err
 		}
-		if err := validateRelativePath(relative); err != nil {
+		if err := safefs.ValidateRelativePath(relative); err != nil {
 			return fmt.Errorf("invalid asset path %q: %w", filepath.ToSlash(relative), err)
 		}
 		key := strings.ToLower(filepath.ToSlash(relative))
@@ -157,40 +159,8 @@ func Summarize(files []File) Tree {
 	return Tree{Files: files, TotalBytes: total, Digest: hex.EncodeToString(hash.Sum(nil))}
 }
 
-func validateRelativePath(path string) error {
-	for _, part := range strings.FieldsFunc(filepath.ToSlash(path), func(r rune) bool { return r == '/' }) {
-		if part == "" || part == "." || part == ".." {
-			return errors.New("empty or traversal segment")
-		}
-		if strings.Contains(part, ":") {
-			return errors.New("alternate data streams are not allowed")
-		}
-		trimmed := strings.TrimRight(part, ". ")
-		if trimmed != part {
-			return errors.New("trailing dots or spaces are not allowed")
-		}
-		base := strings.ToUpper(strings.TrimSuffix(trimmed, filepath.Ext(trimmed)))
-		if isReservedName(base) {
-			return fmt.Errorf("reserved Windows name %q", part)
-		}
-	}
-	return nil
-}
-
-func isReservedName(name string) bool {
-	if name == "CON" || name == "PRN" || name == "AUX" || name == "NUL" {
-		return true
-	}
-	for i := 1; i <= 9; i++ {
-		if name == fmt.Sprintf("COM%d", i) || name == fmt.Sprintf("LPT%d", i) {
-			return true
-		}
-	}
-	return false
-}
-
 func hashFile(path string) (string, error) {
-	file, err := os.Open(path)
+	file, _, err := safefs.OpenVerifiedRegular(path)
 	if err != nil {
 		return "", err
 	}

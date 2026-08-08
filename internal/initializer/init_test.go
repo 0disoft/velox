@@ -49,3 +49,28 @@ func TestCreateRefusesConflictWithoutPartialWrites(t *testing.T) {
 		t.Fatalf("conflicting file changed: %q %v", data, err)
 	}
 }
+
+func TestCreateRejectsLinkedWebDirectoryWithoutExternalWrites(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "project")
+	outside := filepath.Join(root, "outside")
+	if err := os.MkdirAll(target, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(outside, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(target, "web")); err != nil {
+		t.Skipf("symbolic links unavailable: %v", err)
+	}
+	if _, err := Create(target); err == nil {
+		t.Fatal("Create() accepted a linked web directory")
+	}
+	entries, err := os.ReadDir(outside)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("Create() wrote outside the project: %v", entries)
+	}
+}

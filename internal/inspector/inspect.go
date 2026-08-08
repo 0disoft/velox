@@ -17,6 +17,7 @@ import (
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 const (
@@ -128,7 +129,7 @@ func inspectZIP(archivePath string) (Result, error) {
 	root := ""
 	for _, entry := range reader.File {
 		name := entry.Name
-		if entry.FileInfo().IsDir() || strings.Contains(name, "\\") || strings.Contains(name, ":") || strings.HasPrefix(name, "/") || path.Clean(name) != name {
+		if entry.FileInfo().IsDir() || safefs.ValidateArchiveEntry(name) != nil {
 			return Result{}, fmt.Errorf("unsafe ZIP entry %q", name)
 		}
 		parts := strings.SplitN(name, "/", 2)
@@ -159,6 +160,9 @@ func inspectZIP(archivePath string) (Result, error) {
 	report, err := buildreport.Decode(bytes.NewReader(reportData))
 	if err != nil {
 		return Result{}, err
+	}
+	if root != report.App.ID {
+		return Result{}, errors.New("ZIP application root does not match build result")
 	}
 	if len(entries) != report.Outputs.PortableFiles {
 		return Result{}, fmt.Errorf("portable file count %d does not match report %d", len(entries), report.Outputs.PortableFiles)

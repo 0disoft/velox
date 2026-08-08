@@ -15,6 +15,7 @@ import (
 	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 type Result struct {
@@ -206,11 +207,14 @@ func copyVerified(source, destination string, mode os.FileMode, expectedSize int
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return err
 	}
-	input, err := os.Open(source)
+	input, info, err := safefs.OpenVerifiedRegular(source)
 	if err != nil {
 		return err
 	}
 	defer input.Close()
+	if info.Size() != expectedSize {
+		return errors.New("source changed after build planning")
+	}
 	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_WRONLY, mode)
 	if err != nil {
 		return err

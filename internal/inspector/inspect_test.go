@@ -4,8 +4,10 @@ import (
 	"archive/zip"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/0disoft/velox/internal/builder"
@@ -22,7 +24,7 @@ func TestInspectValidatesDirectoryAndZIP(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Inspect(%s): %v", test.kind, err)
 		}
-		if result.Kind != test.kind || result.ReleaseVersion != "0.5.10-alpha.5" || result.App.ID != "com.example.inspect" || result.PortableFiles != 4 {
+		if result.Kind != test.kind || result.ReleaseVersion != "0.5.10-alpha.6" || result.App.ID != "com.example.inspect" || result.PortableFiles != 4 {
 			t.Fatalf("unexpected %s result: %+v", test.kind, result)
 		}
 	}
@@ -65,6 +67,65 @@ func TestInspectRejectsUnsafeZIPPaths(t *testing.T) {
 	}
 }
 
+func TestInspectRejectsParentApplicationRoot(t *testing.T) {
+	build := buildFixture(t)
+	destinationPath := rewriteZIPRoot(t, build.ArchivePath, "..")
+	if _, err := Inspect(destinationPath); err == nil {
+		t.Fatal("Inspect() accepted an archive rooted at ..")
+	}
+}
+
+func TestInspectRejectsApplicationRootThatDisagreesWithReport(t *testing.T) {
+	build := buildFixture(t)
+	destinationPath := rewriteZIPRoot(t, build.ArchivePath, "other.application")
+	if _, err := Inspect(destinationPath); err == nil {
+		t.Fatal("Inspect() accepted an archive rooted under another application")
+	}
+}
+
+func rewriteZIPRoot(t *testing.T, sourcePath, root string) string {
+	t.Helper()
+	source, err := zip.OpenReader(sourcePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer source.Close()
+	destinationPath := filepath.Join(t.TempDir(), "rewritten-root.zip")
+	destination, err := os.Create(destinationPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writer := zip.NewWriter(destination)
+	for _, original := range source.File {
+		parts := strings.SplitN(original.Name, "/", 2)
+		if len(parts) != 2 {
+			t.Fatalf("fixture entry lacks root: %s", original.Name)
+		}
+		header := original.FileHeader
+		header.Name = root + "/" + parts[1]
+		entry, err := writer.CreateHeader(&header)
+		if err != nil {
+			t.Fatal(err)
+		}
+		input, err := original.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, copyErr := io.Copy(entry, input)
+		closeErr := input.Close()
+		if copyErr != nil || closeErr != nil {
+			t.Fatalf("copy fixture entry: copy=%v close=%v", copyErr, closeErr)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := destination.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return destinationPath
+}
+
 func TestValidateArchiveBudgetRejectsUnsafeEntries(t *testing.T) {
 	tests := []struct {
 		name string
@@ -95,7 +156,7 @@ func buildFixture(t *testing.T) builder.Result {
 	hostPath := filepath.Join(root, "release", "velox-host.exe")
 	writeInspectFile(t, hostPath, host)
 	digest := sha256.Sum256(host)
-	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.5","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
+	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.6","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
 	writeInspectFile(t, filepath.Join(filepath.Dir(hostPath), "velox-host.json"), []byte(metadata))
 	writeInspectFile(t, filepath.Join(root, "web", "index.html"), []byte("<title>Inspect</title>"))
 	manifest := `{"schemaVersion":1,"app":{"id":"com.example.inspect","name":"Inspect","version":"1.0.0"}}`
