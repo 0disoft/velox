@@ -1,6 +1,6 @@
 # Clean-Room LLM Agent Evaluation
 
-- Status: Beta technical-evidence contract ready; no qualifying trial set recorded
+- Status: Session-log evaluation available; beta gate held pending enforced sandbox evidence
 - Owner: Project maintainer
 - Decision: ADR 0018
 
@@ -54,7 +54,8 @@ authority.
 An LLM's final prose, self-review, confidence, result booleans, or claim of
 completion is never an oracle. Deterministic hashes, CLI results, final files,
 process outcome, observable application state, and the external orchestrator
-attestation own the verdict.
+attestation own the observed verdict. The Hermes attestation is not proof that
+unrecorded filesystem or process access was impossible.
 
 The repository-owned verifier in `scripts/verify-llm-agent-evaluation.ts`
 recomputes prompt and artifact hashes, rejects unsafe paths and symbolic links,
@@ -114,16 +115,22 @@ In particular, Hermes file tools that write `.js`, `.ts`, `.go`, or `.rs` can
 implicitly invoke a runtime, package manager, or compiler and therefore count
 as forbidden even when the model did not type that subprocess command.
 
-The generator hashes a canonical projection of the selected session and
-message rows in memory. It does not write raw prompts, tool arguments, tool
-results, reasoning, the raw session ID, or the database into the attestation.
+The generator preserves a redacted canonical projection of the selected
+session and message rows and hashes that exact projection. Identifiers and
+message/tool payloads appear only as SHA-256 values, and working directories
+appear only as inside/outside/missing scope labels. This lets a reviewer
+recompute the digest without storing raw prompts, tool arguments, tool results,
+reasoning, raw session IDs, local paths, or the database.
 The generator is maintainer orchestration and uses Bun outside the consumer
 trial; Bun must never be exposed to or invoked by the evaluated agent.
 
-This adapter is not operating-system process telemetry. It can classify the
+This adapter is not operating-system process telemetry. Its v1 evidence fixes
+`observationLevel` to `session-log-heuristic` and `sandboxEnforced` to `false`.
+It can classify the
 Hermes tool calls and known implicit editor behavior stored in the session
 ledger, but a future Hermes helper that launches an unrecorded subprocess needs
-a classifier update before its trials can be treated as qualifying evidence.
+a classifier update. Such trials remain useful diagnostics but cannot pass the
+beta technical gate.
 Likewise, a root Hermes session proves that no parent transcript was resumed;
 the orchestrator still owns the separate requirement to launch the evaluator
 without provider-side or profile-side memory carryover.
@@ -174,7 +181,8 @@ identifiers are still required by the deterministic series gate.
 
 ## Beta Gate
 
-The beta technical gate passes only when all of the following are true:
+The beta technical gate passes only when all of the following are true. The
+current Hermes v1 adapter cannot satisfy item 7 and therefore yields `held`:
 
 1. Three consecutive trials pass against the same release bytes, task version,
    and result schema.
@@ -188,6 +196,8 @@ The beta technical gate passes only when all of the following are true:
   evidence, or unclassified failure.
 6. The orchestrator attestation matches the trial identity and trajectory, and
   the actual tool-call count does not exceed the supplied budget.
+7. An independently controlled OS sandbox or process supervisor enforces the
+   allowed filesystem and process boundary and emits a versioned attestation.
 
 Do not discard a failed trial and keep sampling until three convenient passes
 appear. A product, prompt, release, schema, or documentation change starts a

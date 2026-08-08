@@ -30,8 +30,9 @@ describe("LLM agent evaluation", () => {
       passedTrials: 3,
       failedTrials: 0,
       heldTrials: 0,
-      outcome: "passed",
-      betaTechnicalGate: true,
+      outcome: "held",
+      betaTechnicalGate: false,
+      diagnostics: ["SANDBOX_ENFORCEMENT_UNVERIFIED"],
       modelIdentifiers: ["provider/model-a", "provider/model-b"],
       humanAdoptionClaim: false,
     });
@@ -153,7 +154,7 @@ describe("LLM agent evaluation", () => {
     expect(summarizeSeries(trials)).toMatchObject({
       outcome: "held",
       betaTechnicalGate: false,
-      diagnostics: ["MODEL_DIVERSITY_INSUFFICIENT"],
+      diagnostics: ["MODEL_DIVERSITY_INSUFFICIENT", "SANDBOX_ENFORCEMENT_UNVERIFIED"],
     });
   });
 
@@ -176,7 +177,7 @@ describe("LLM agent evaluation", () => {
       failedTrials: 1,
       outcome: "failed",
       betaTechnicalGate: false,
-      diagnostics: ["TRIAL_FAILURE_PRESENT"],
+      diagnostics: ["TRIAL_FAILURE_PRESENT", "SANDBOX_ENFORCEMENT_UNVERIFIED"],
     });
   });
 
@@ -201,10 +202,10 @@ describe("LLM agent evaluation", () => {
       new Response(child.stderr).text(),
     ]);
     expect(exitCode, stderr).toBe(0);
-    expect(JSON.parse(stdout)).toMatchObject({ betaTechnicalGate: true, outcome: "passed" });
+    expect(JSON.parse(stdout)).toMatchObject({ betaTechnicalGate: false, outcome: "held" });
     expect(JSON.parse(await Bun.file(summaryPath).text())).toMatchObject({
       schemaVersion: "velox.llm-agent-evaluation-series/v1",
-      betaTechnicalGate: true,
+      betaTechnicalGate: false,
       humanAdoptionClaim: false,
     });
   });
@@ -401,8 +402,9 @@ describe("LLM agent evaluation", () => {
       passedTrials: 3,
       failedTrials: 0,
       heldTrials: 0,
-      betaTechnicalGate: true,
-      outcome: "passed",
+      betaTechnicalGate: false,
+      outcome: "held",
+      diagnostics: ["SANDBOX_ENFORCEMENT_UNVERIFIED"],
       modelIdentifiers: ["custom/fixture-model-a", "custom/fixture-model-b"],
     });
     await expect(verifyEvaluationSeries(prepared.seriesRoot, prepared.taskPath)).rejects.toThrow("SERIES_SUMMARY_ALREADY_EXISTS");
@@ -744,9 +746,17 @@ async function createTrial(root: string, sequence: number, model: string): Promi
     },
     evidence: {
       kind: "orchestrator-session-log",
-      sha256: sha(Buffer.from(`session-log-${sequence}`)),
+      observationLevel: "session-log-heuristic",
+      sandboxEnforced: false,
+      sha256: "",
+      projection: {
+        schemaVersion: "velox.hermes-session-log-digest/v1",
+        sessions: [],
+        messages: [],
+      },
     },
   };
+  attestation.evidence.sha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.projection)));
   await writeAttestation(root, attestation);
   return record;
 }

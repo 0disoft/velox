@@ -45,6 +45,8 @@ A qualifying trial must:
   `humanAdoptionClaim` to `false`.
 - match a separate orchestrator attestation for the actual session identity,
   timestamps, tool counts, budget, and forbidden-action observations.
+- include independently enforced filesystem and process isolation; a
+  session-log classifier alone is diagnostic and cannot satisfy the beta gate.
 
 Beta requires three consecutive passing trials against the same release and
 task version, representing at least two distinct model identifiers. Stable
@@ -107,6 +109,8 @@ still trigger signing, support, repositioning, or project-stop decisions.
   operational inputs outside the product artifact.
 - Provider tool wrappers can invoke hidden linters or compilers, so the trial's
   own trajectory fields are insufficient without external attestation.
+- The current Hermes v1 attestation observes stored session records but does
+  not enforce an OS sandbox, so it intentionally leaves beta readiness held.
 
 ## Validation
 

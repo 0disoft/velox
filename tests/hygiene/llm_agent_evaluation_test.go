@@ -98,6 +98,9 @@ func TestLLMAgentEvaluationAttestationSchemaKeepsTrajectoryExternal(t *testing.T
 		`"CONSUMER_COMPILER_INVOKED"`,
 		`"PACKAGE_MANAGER_INVOKED"`,
 		`"kind": { "const": "orchestrator-session-log" }`,
+		`"observationLevel": { "const": "session-log-heuristic" }`,
+		`"sandboxEnforced": { "const": false }`,
+		`"projection"`,
 	}
 	for _, marker := range markers {
 		if !strings.Contains(string(data), marker) {

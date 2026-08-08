@@ -32,6 +32,7 @@
 | R-017 | Future signing obscures the reproducible unsigned lineage | Medium | Critical | Monitoring | `velox.signing-record/v1` and its dry-run verifier bind the unsigned files, signing-input ZIP, provider-output placeholders, final manifest and ZIP, checksums, and SBOM while remaining non-publishable; keep the tooling dormant until an ADR 0011 adoption trigger justifies real provider output and release-mode evidence |
 | R-018 | Future provider token, signing policy, or certificate is compromised | Low | Critical | Monitoring | No active provider credential or signing workflow exists. If signing resumes, keep private keys provider-held, scope the API token to a protected environment, separate publication permission, record request identities, and define revocation and consumer notice before activation |
 | R-019 | LLM evaluation overfits the maintainer prompt or one model family | High | High | Monitoring | ADR 0018 requires a public versioned task, fresh sessions, no memory or source checkout, three consecutive passes, at least two model identifiers, deterministic final-state evidence, preserved failures and holds, and an explicit false human-adoption claim |
+| R-020 | Session-log heuristics miss unrecorded filesystem or subprocess access | Medium | Critical | Blocking beta | Hermes attestation v1 fixes `sandboxEnforced: false`, preserves a redacted replayable projection, and forces the beta verdict to held until an independently controlled OS sandbox or process supervisor emits versioned enforcement evidence |
 
 ## Review Rules
 

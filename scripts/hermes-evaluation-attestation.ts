@@ -236,6 +236,7 @@ function attestSnapshot(
     : finiteNumber(terminalMessage?.timestamp, "HERMES_FINISH_TIME_INVALID");
   if (finishedAt < startedAt) fail("HERMES_TIME_RANGE_INVALID");
 
+  const projection = snapshotProjection(trialRoot, sessions, messages);
   return {
     schemaVersion: "velox.llm-agent-evaluation-attestation/v1",
     trialId: input.trialId,
@@ -258,7 +259,10 @@ function attestSnapshot(
     },
     evidence: {
       kind: "orchestrator-session-log",
-      sha256: digestSnapshot(sessions, messages),
+      observationLevel: "session-log-heuristic",
+      sandboxEnforced: false,
+      sha256: sha256(JSON.stringify(projection)),
+      projection,
     },
   };
 }
@@ -395,27 +399,27 @@ function toolResultFailed(message: HermesMessageRow) {
   return typeof exitCode === "number" && exitCode !== 0;
 }
 
-function digestSnapshot(sessions: HermesSessionRow[], messages: HermesMessageRow[]) {
-  const snapshot = {
+function snapshotProjection(trialRoot: string, sessions: HermesSessionRow[], messages: HermesMessageRow[]) {
+  return {
     schemaVersion: "velox.hermes-session-log-digest/v1",
     sessions: sessions.map((session) => ({
-      id: session.id,
+      sessionIdSha256: sha256(session.id),
       source: session.source,
       model: session.model,
-      parentSessionId: session.parent_session_id,
+      parentSessionIdSha256: session.parent_session_id ? sha256(session.parent_session_id) : null,
       startedAt: session.started_at,
       endedAt: session.ended_at,
       toolCallCount: session.tool_call_count,
-      cwd: session.cwd,
+      cwdScope: session.cwd ? (isContained(trialRoot, resolve(session.cwd)) ? "trial-root" : "outside-trial-root") : "missing",
       billingProvider: session.billing_provider,
     })),
     messages: messages.map((message) => ({
       id: message.id,
-      sessionId: message.session_id,
+      sessionIdSha256: sha256(message.session_id),
       role: message.role,
-      content: message.content,
-      toolCallId: message.tool_call_id,
-      toolCalls: message.tool_calls,
+      contentSha256: message.content === null ? null : sha256(message.content),
+      toolCallIdSha256: message.tool_call_id === null ? null : sha256(message.tool_call_id),
+      toolCallsSha256: message.tool_calls === null ? null : sha256(message.tool_calls),
       toolName: message.tool_name,
       effectDisposition: message.effect_disposition,
       timestamp: message.timestamp,
@@ -425,7 +429,6 @@ function digestSnapshot(sessions: HermesSessionRow[], messages: HermesMessageRow
       displayKind: message.display_kind,
     })),
   };
-  return sha256(JSON.stringify(snapshot));
 }
 
 function resolveExternalOutput(path: string, trialRoot: string) {

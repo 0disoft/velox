@@ -140,9 +140,14 @@ export interface TrialAttestation {
   };
   evidence: {
     kind: "orchestrator-session-log";
+    observationLevel: "session-log-heuristic";
+    sandboxEnforced: boolean;
     sha256: string;
+    projection: Record<string, unknown>;
   };
 }
+
+const verifiedAttestations = new WeakMap<TrialRecord, TrialAttestation>();
 
 export interface SeriesSummary {
   schemaVersion: "velox.llm-agent-evaluation-series/v1";
@@ -223,9 +228,13 @@ function validateAttestationShape(raw: unknown): TrialAttestation {
   equal(trajectory.toolCallBudget, TOOL_CALL_BUDGET, "ATTESTATION_TOOL_CALL_BUDGET_INVALID");
   validateForbiddenActions(trajectory.forbiddenActions, "ATTESTATION_FORBIDDEN_ACTIONS_INVALID");
   const evidence = object(record.evidence, "attestation_evidence");
-  exactKeys(evidence, ["kind", "sha256"], "attestation_evidence");
+  exactKeys(evidence, ["kind", "observationLevel", "sandboxEnforced", "sha256", "projection"], "attestation_evidence");
   equal(evidence.kind, "orchestrator-session-log", "ATTESTATION_EVIDENCE_KIND_INVALID");
+  equal(evidence.observationLevel, "session-log-heuristic", "ATTESTATION_OBSERVATION_LEVEL_INVALID");
+  equal(evidence.sandboxEnforced, false, "ATTESTATION_SANDBOX_CLAIM_INVALID");
   stringMatch(evidence.sha256, sha256Pattern, "ATTESTATION_EVIDENCE_DIGEST_INVALID");
+  const projection = object(evidence.projection, "attestation_projection");
+  equal(evidence.sha256, digest(Buffer.from(JSON.stringify(projection))), "ATTESTATION_PROJECTION_DIGEST_MISMATCH");
   return record as unknown as TrialAttestation;
 }
 
@@ -252,6 +261,7 @@ function verifyAttestation(trial: TrialRecord, attestation: TrialAttestation) {
   verifyGate(trial.gates.noSourceCheckout, !observed.has("SOURCE_CHECKOUT_OBSERVED"), "ATTESTATION_SOURCE_GATE_MISMATCH");
   verifyGate(trial.gates.publicDocsOnly, !observed.has("UNPUBLISHED_CONTEXT_OBSERVED"), "ATTESTATION_CONTEXT_GATE_MISMATCH");
   if (observed.has("MAINTAINER_HINT_OBSERVED")) fail("ATTESTED_MAINTAINER_HINT_OBSERVED");
+  verifiedAttestations.set(trial, attestation);
 }
 
 export function summarizeSeries(trials: TrialRecord[]): SeriesSummary {
@@ -276,7 +286,9 @@ export function summarizeSeries(trials: TrialRecord[]): SeriesSummary {
   if (modelIdentifiers.length < 2) diagnostics.push("MODEL_DIVERSITY_INSUFFICIENT");
   if (failedTrials > 0) diagnostics.push("TRIAL_FAILURE_PRESENT");
   if (heldTrials > 0) diagnostics.push("TRIAL_HOLD_PRESENT");
-  const betaTechnicalGate = passedTrials === 3 && modelIdentifiers.length >= 2;
+  const sandboxEnforced = ordered.every((trial) => verifiedAttestations.get(trial)?.evidence.sandboxEnforced === true);
+  if (!sandboxEnforced) diagnostics.push("SANDBOX_ENFORCEMENT_UNVERIFIED");
+  const betaTechnicalGate = passedTrials === 3 && modelIdentifiers.length >= 2 && sandboxEnforced;
   const outcome: TrialOutcome = failedTrials > 0 ? "failed" : betaTechnicalGate ? "passed" : "held";
 
   return {
