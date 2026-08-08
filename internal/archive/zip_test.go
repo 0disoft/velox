@@ -111,6 +111,23 @@ func TestCreateFilesRefusesExistingOutputAndRemovesPartialOutput(t *testing.T) {
 	}
 }
 
+func TestCreateFilesStoresAlreadyCompressedFormats(t *testing.T) {
+	root := t.TempDir()
+	input := writeInput(t, root, "image.png", "compressed fixture")
+	output := filepath.Join(root, "archive.zip")
+	if _, err := CreateFiles(output, []Input{{Source: input, Name: "web/image.png"}}); err != nil {
+		t.Fatal(err)
+	}
+	reader, err := zip.OpenReader(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	if len(reader.File) != 1 || reader.File[0].Method != zip.Store {
+		t.Fatalf("compressed asset method = %d, want Store", reader.File[0].Method)
+	}
+}
+
 func writeInput(t *testing.T, root, name, content string) string {
 	t.Helper()
 	path := filepath.Join(root, name)

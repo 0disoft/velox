@@ -78,6 +78,28 @@ func ValidateResolvedEntry(root, entry string) error {
 }
 
 func Scan(root string) (Tree, error) {
+	return scan(root, true)
+}
+
+// RevalidateSnapshot checks shape and sizes without rehashing every source.
+// The builder verifies each planned digest while copying immediately afterward.
+func RevalidateSnapshot(root string, expected Tree) error {
+	current, err := scan(root, false)
+	if err != nil {
+		return err
+	}
+	if len(current.Files) != len(expected.Files) || current.TotalBytes != expected.TotalBytes {
+		return errors.New("asset tree shape or size changed")
+	}
+	for index := range current.Files {
+		if current.Files[index].RelativePath != expected.Files[index].RelativePath || current.Files[index].Size != expected.Files[index].Size {
+			return errors.New("asset tree shape or size changed")
+		}
+	}
+	return nil
+}
+
+func scan(root string, hashContents bool) (Tree, error) {
 	info, err := os.Lstat(root)
 	if err != nil {
 		return Tree{}, fmt.Errorf("inspect asset root: %w", err)
@@ -129,9 +151,12 @@ func Scan(root string) (Tree, error) {
 		if !info.Mode().IsRegular() {
 			return fmt.Errorf("asset is not a regular file: %s", filepath.ToSlash(relative))
 		}
-		digest, err := hashFile(path)
-		if err != nil {
-			return fmt.Errorf("hash asset %s: %w", filepath.ToSlash(relative), err)
+		digest := ""
+		if hashContents {
+			digest, err = hashFile(path)
+			if err != nil {
+				return fmt.Errorf("hash asset %s: %w", filepath.ToSlash(relative), err)
+			}
 		}
 		files = append(files, File{
 			RelativePath: filepath.ToSlash(relative),
@@ -144,7 +169,15 @@ func Scan(root string) (Tree, error) {
 	if err != nil {
 		return Tree{}, err
 	}
-	return Summarize(files), nil
+	if hashContents {
+		return Summarize(files), nil
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].RelativePath < files[j].RelativePath })
+	var total int64
+	for _, file := range files {
+		total += file.Size
+	}
+	return Tree{Files: files, TotalBytes: total}, nil
 }
 
 func Summarize(files []File) Tree {

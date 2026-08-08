@@ -80,7 +80,7 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 	for _, input := range inputs {
 		header := &zip.FileHeader{
 			Name:     input.Name,
-			Method:   zip.Deflate,
+			Method:   compressionMethod(input.Name),
 			Modified: normalizedTime,
 		}
 		header.SetMode(0o644)
@@ -124,6 +124,15 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 	}
 	success = true
 	return Result{FileCount: len(inputs), Size: info.Size(), SHA256: hex.EncodeToString(hash.Sum(nil))}, nil
+}
+
+func compressionMethod(name string) uint16 {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".7z", ".avif", ".br", ".gif", ".gz", ".jpeg", ".jpg", ".mp3", ".mp4", ".pdf", ".png", ".webm", ".webp", ".woff", ".woff2", ".zip":
+		return zip.Store
+	default:
+		return zip.Deflate
+	}
 }
 
 func safeEntryName(name string) bool {

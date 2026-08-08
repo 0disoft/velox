@@ -58,6 +58,24 @@ func TestScanRejectsSymbolicLinks(t *testing.T) {
 	}
 }
 
+func TestRevalidateSnapshotChecksShapeWithoutReplacingContentDigest(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "app.js")
+	writeAsset(t, path, "one")
+	planned, err := Scan(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeAsset(t, path, "two")
+	if err := RevalidateSnapshot(root, planned); err != nil {
+		t.Fatalf("same-shape content is verified later by the copying boundary: %v", err)
+	}
+	writeAsset(t, path, "longer")
+	if err := RevalidateSnapshot(root, planned); err == nil {
+		t.Fatal("RevalidateSnapshot() accepted a changed asset size")
+	}
+}
+
 func writeAsset(t *testing.T, path, value string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

@@ -94,10 +94,14 @@ func inspectDirectory(root string) (Result, error) {
 	if !exists || host.Size != report.Host.Bytes || host.SHA256 != report.Host.SHA256 {
 		return Result{}, errors.New("host artifact does not match build result")
 	}
-	assets, err := assettree.Scan(filepath.Join(root, "web"))
-	if err != nil {
-		return Result{}, err
+	assetFiles := make([]assettree.File, 0, report.Assets.Files)
+	for _, file := range all.Files {
+		if strings.HasPrefix(file.RelativePath, "web/") {
+			file.RelativePath = strings.TrimPrefix(file.RelativePath, "web/")
+			assetFiles = append(assetFiles, file)
+		}
 	}
+	assets := assettree.Summarize(assetFiles)
 	if err := validateAssets(report, assets); err != nil {
 		return Result{}, err
 	}

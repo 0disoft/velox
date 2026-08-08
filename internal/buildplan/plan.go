@@ -231,12 +231,8 @@ func (plan Plan) RevalidateInputs() error {
 	if !samePath(currentOutputRoot, plan.outputRoot) {
 		return fail(ErrorConfig, errors.New("output root target changed after build planning"))
 	}
-	assets, err := assettree.Scan(plan.manifest.AssetRoot)
-	if err != nil {
+	if err := assettree.RevalidateSnapshot(plan.manifest.AssetRoot, plan.assets); err != nil {
 		return fail(ErrorAsset, fmt.Errorf("revalidate asset tree: %w", err))
-	}
-	if assets.Digest != plan.assets.Digest || assets.TotalBytes != plan.assets.TotalBytes || len(assets.Files) != len(plan.assets.Files) {
-		return fail(ErrorAsset, errors.New("asset tree changed after build planning"))
 	}
 	return nil
 }

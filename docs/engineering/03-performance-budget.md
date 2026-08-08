@@ -29,6 +29,11 @@ ZIP completion. The local harness reuses one initialized project and gives each
 sample a new output root. It does not reset the OS file cache, so this profile
 must not be called a cold build.
 
+The build plan hashes each source asset once. Pre-copy revalidation repeats
+path, type, and size checks, while the copy itself verifies the planned digest.
+ZIP creation stores common already-compressed formats instead of spending CPU
+on ineffective recompression.
+
 ### Fresh-profile startup
 
 Elapsed time from process creation until the application emits the ready marker
