@@ -67,6 +67,27 @@ func TestCreateUsesFullApplicationIDAsCollisionFreeOutputKey(t *testing.T) {
 	}
 }
 
+func TestCreateRuntimeValidatesAssetShapeWithoutContentDigest(t *testing.T) {
+	root := t.TempDir()
+	manifestPath := filepath.Join(root, "velox.json")
+	hostPath := filepath.Join(root, "velox-host.exe")
+	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
+	writePlanFile(t, hostPath, "host")
+	writePlanHostMetadata(t, root, "host")
+	writePlanFile(t, manifestPath, `{"schemaVersion":1,"app":{"id":"com.example.runtime","name":"Runtime","version":"1"}}`)
+	plan, err := CreateRuntime(Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot := plan.Snapshot()
+	if len(snapshot.Assets.Files) == 0 || snapshot.Assets.TotalBytes == 0 {
+		t.Fatalf("runtime asset metadata is incomplete: %+v", snapshot.Assets)
+	}
+	if snapshot.Assets.Digest != "" {
+		t.Fatalf("runtime plan unexpectedly hashed asset content: %s", snapshot.Assets.Digest)
+	}
+}
+
 func TestCreateCanonicalizesRedirectedOutputAncestor(t *testing.T) {
 	root := t.TempDir()
 	writePlanFile(t, filepath.Join(root, "web", "index.html"), "ok")
@@ -126,7 +147,7 @@ func TestCreateCanonicalizesRedirectedHostAncestor(t *testing.T) {
 func writePlanHostMetadata(t *testing.T, root, host string) {
 	t.Helper()
 	digest := sha256.Sum256([]byte(host))
-	body := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.11","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
+	body := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.12","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest)
 	writePlanFile(t, filepath.Join(root, "velox-host.json"), body)
 }
 

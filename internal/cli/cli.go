@@ -219,7 +219,7 @@ func runDoctor(args []string, dependencies Dependencies) int {
 		probe = webview2.InstalledVersion
 	}
 	version, probeErr := probe()
-	plan, planErr := createPlan(*options, dependencies.HostPath)
+	plan, planErr := createRuntimePlan(*options, dependencies.HostPath)
 	result, failure := doctor.Evaluate(doctor.Evidence{
 		GOOS: goos, GOARCH: goarch, WindowsVersion: windowsProbe(), WebView2Version: version,
 		WebView2ProbeError: probeErr, Plan: plan, PlanError: planErr,
@@ -267,7 +267,7 @@ func runProject(args []string, dependencies Dependencies) int {
 	if flags.NArg() != 0 {
 		return emitFailure(dependencies, "run", options.json, 2, "USAGE_INVALID", "Run does not accept positional arguments.", errors.New("unexpected positional arguments"))
 	}
-	plan, err := createPlan(*options, dependencies.HostPath)
+	plan, err := createRuntimePlan(*options, dependencies.HostPath)
 	if err != nil {
 		return emitPlanError(dependencies, "run", options.json, err)
 	}
@@ -419,6 +419,14 @@ func runInspect(args []string, dependencies Dependencies) int {
 }
 
 func createPlan(options commonOptions, hostPath string) (buildplan.Plan, error) {
+	return createPlanWith(options, hostPath, false)
+}
+
+func createRuntimePlan(options commonOptions, hostPath string) (buildplan.Plan, error) {
+	return createPlanWith(options, hostPath, true)
+}
+
+func createPlanWith(options commonOptions, hostPath string, runtimeOnly bool) (buildplan.Plan, error) {
 	if hostPath == "" {
 		executable, err := os.Executable()
 		if err != nil {
@@ -426,13 +434,17 @@ func createPlan(options commonOptions, hostPath string) (buildplan.Plan, error) 
 		}
 		hostPath = filepath.Join(filepath.Dir(executable), "velox-host.exe")
 	}
-	return buildplan.Create(buildplan.Options{
+	planOptions := buildplan.Options{
 		ManifestPath:     options.config,
 		HostPath:         hostPath,
 		HostMetadataPath: filepath.Join(filepath.Dir(hostPath), "velox-host.json"),
 		OutputRoot:       options.out,
 		Target:           options.target,
-	})
+	}
+	if runtimeOnly {
+		return buildplan.CreateRuntime(planOptions)
+	}
+	return buildplan.Create(planOptions)
 }
 
 func validateResult(plan buildplan.Plan) ValidateResult {

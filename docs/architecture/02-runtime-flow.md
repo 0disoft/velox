@@ -28,6 +28,11 @@
 - Errors return a stable exit code and structured diagnostic.
 - Cancellation follows the same cleanup path.
 
+`run` and `doctor` validate the manifest, complete asset-tree shape, entry
+point, and host compatibility without hashing every static asset. Content
+hashing remains owned by `validate` and `build`, where the digest is part of the
+reported contract.
+
 ## Host Startup Flow
 
 1. The operating system starts the generic host.

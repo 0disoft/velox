@@ -79,6 +79,16 @@ type Snapshot struct {
 }
 
 func Create(options Options) (Plan, error) {
+	return create(options, true)
+}
+
+// CreateRuntime validates runtime inputs without hashing static asset content.
+// Build and validate commands must continue to use Create.
+func CreateRuntime(options Options) (Plan, error) {
+	return create(options, false)
+}
+
+func create(options Options, hashAssets bool) (Plan, error) {
 	if options.Target == "" {
 		options.Target = TargetWindowsX64
 	}
@@ -89,7 +99,12 @@ func Create(options Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, fail(ErrorManifest, err)
 	}
-	assets, err := assettree.Scan(resolved.AssetRoot)
+	var assets assettree.Tree
+	if hashAssets {
+		assets, err = assettree.Scan(resolved.AssetRoot)
+	} else {
+		assets, err = assettree.ScanMetadata(resolved.AssetRoot)
+	}
 	if err != nil {
 		return Plan{}, fail(ErrorAsset, err)
 	}

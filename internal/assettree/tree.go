@@ -81,6 +81,11 @@ func Scan(root string) (Tree, error) {
 	return scan(root, true)
 }
 
+// ScanMetadata validates the complete tree without reading file contents.
+func ScanMetadata(root string) (Tree, error) {
+	return scan(root, false)
+}
+
 // RevalidateSnapshot checks shape and sizes without rehashing every source.
 // The builder verifies each planned digest while copying immediately afterward.
 func RevalidateSnapshot(root string, expected Tree) error {
