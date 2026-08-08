@@ -24,6 +24,7 @@ const (
 	maxLogArchiveFiles = 10_000
 	maxLogEntryBytes   = 16 << 20
 	maxLogArchiveTotal = 128 << 20
+	maxLogExpandRatio  = 1_000
 )
 
 var downloadArtifactBufferWarning = warningSignature{
@@ -190,6 +191,12 @@ func validateLogArchiveBudget(files []*zip.File) error {
 			return errors.New("workflow log archive exceeds total size limit")
 		}
 		total += file.UncompressedSize64
+		if file.UncompressedSize64 > 0 && file.CompressedSize64 == 0 {
+			return fmt.Errorf("workflow log entry has invalid compressed size: %s", file.Name)
+		}
+		if file.CompressedSize64 > 0 && file.UncompressedSize64 > file.CompressedSize64*maxLogExpandRatio {
+			return fmt.Errorf("workflow log entry exceeds expansion ratio: %s", file.Name)
+		}
 	}
 	return nil
 }

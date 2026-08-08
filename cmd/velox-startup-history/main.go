@@ -234,15 +234,24 @@ func (c collector) getRun(ctx context.Context, repository string, runID int64) (
 }
 
 func (c collector) listRuns(ctx context.Context, repository, workflow string, perPage int) ([]workflowRun, error) {
-	if perPage > 100 {
-		perPage = 100
+	maximum := perPage
+	pageSize := min(maximum, 100)
+	var runs []workflowRun
+	for page := 1; len(runs) < maximum; page++ {
+		var result workflowRunsResponse
+		path := fmt.Sprintf("/repos/%s/actions/workflows/%s/runs?event=schedule&status=success&per_page=%d&page=%d", repository, workflow, pageSize, page)
+		if err := c.getJSON(ctx, path, &result); err != nil {
+			return nil, err
+		}
+		runs = append(runs, result.WorkflowRuns...)
+		if len(result.WorkflowRuns) < pageSize {
+			break
+		}
 	}
-	var result workflowRunsResponse
-	path := fmt.Sprintf("/repos/%s/actions/workflows/%s/runs?event=schedule&status=success&per_page=%d", repository, workflow, perPage)
-	if err := c.getJSON(ctx, path, &result); err != nil {
-		return nil, err
+	if len(runs) > maximum {
+		runs = runs[:maximum]
 	}
-	return result.WorkflowRuns, nil
+	return runs, nil
 }
 
 func (c collector) downloadSummary(ctx context.Context, repository string, run workflowRun) ([]byte, string, error) {
@@ -273,11 +282,18 @@ func (c collector) downloadSummary(ctx context.Context, repository string, run w
 	if err := validateArtifactBudget(reader.File); err != nil {
 		return nil, "INVALID_ARTIFACT_ARCHIVE", err
 	}
+	var summaryFile *zip.File
 	for _, file := range reader.File {
-		if filepath.Base(file.Name) != "startup-lifecycle-summary.json" {
+		if file.Name != "startup-lifecycle-summary.json" {
 			continue
 		}
-		stream, err := file.Open()
+		if summaryFile != nil {
+			return nil, "SUMMARY_AMBIGUOUS", errors.New("startup lifecycle summary is duplicated")
+		}
+		summaryFile = file
+	}
+	if summaryFile != nil {
+		stream, err := summaryFile.Open()
 		if err != nil {
 			return nil, "SUMMARY_READ_FAILED", err
 		}

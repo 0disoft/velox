@@ -63,6 +63,13 @@ func TestValidateLogArchiveBudgetRejectsOversizedExpansion(t *testing.T) {
 	}
 }
 
+func TestValidateLogArchiveBudgetRejectsUnsafeCompressionRatio(t *testing.T) {
+	file := &zip.File{FileHeader: zip.FileHeader{Name: "bomb.log", UncompressedSize64: 10_001, CompressedSize64: 10}}
+	if err := validateLogArchiveBudget([]*zip.File{file}); err == nil {
+		t.Fatal("unsafe log expansion ratio was accepted")
+	}
+}
+
 func TestReadBoundedRejectsTruncatedEvidence(t *testing.T) {
 	if _, err := readBounded(strings.NewReader("12345"), 4); err == nil {
 		t.Fatal("expected oversized evidence to fail")

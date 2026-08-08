@@ -225,11 +225,11 @@ func (w *webview) msgcb(msg string) {
 
 	id := strconv.Itoa(d.ID)
 	if res, err := w.callbinding(d); err != nil {
-		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); delete window._rpc[" + id + "]")
+		w.dispatchBindingResponse("try { window._rpc[" + id + "].reject(" + jsString(err.Error()) + ") } finally { delete window._rpc[" + id + "] }")
 	} else if b, err := json.Marshal(res); err != nil {
-		w.dispatchBindingResponse("window._rpc[" + id + "].reject(" + jsString(err.Error()) + "); delete window._rpc[" + id + "]")
+		w.dispatchBindingResponse("try { window._rpc[" + id + "].reject(" + jsString(err.Error()) + ") } finally { delete window._rpc[" + id + "] }")
 	} else {
-		w.dispatchBindingResponse("window._rpc[" + id + "].resolve(" + string(b) + "); delete window._rpc[" + id + "]")
+		w.dispatchBindingResponse("try { window._rpc[" + id + "].resolve(" + string(b) + ") } finally { delete window._rpc[" + id + "] }")
 	}
 }
 
