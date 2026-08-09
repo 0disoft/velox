@@ -142,6 +142,58 @@ func TestBuildReportIsStableAndContainsNoAbsolutePaths(t *testing.T) {
 	}
 }
 
+func TestBuildPreservesLongUnicodeAssetPath(t *testing.T) {
+	root, manifestPath, hostPath := fixture(t)
+	segment := strings.Repeat("long-path-", 8)
+	relative := filepath.Join(segment, segment, segment, "측량-데이터.txt")
+	content := []byte("unicode asset content\n")
+	writeFixture(t, filepath.Join(root, "web", relative), content)
+	plan, err := buildplan.CreateBuild(buildplan.Options{
+		ManifestPath: manifestPath,
+		HostPath:     hostPath,
+		OutputRoot:   filepath.Join(root, "dist"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := Build(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	portable, err := os.ReadFile(filepath.Join(result.DirectoryPath, "web", relative))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(portable, content) {
+		t.Fatalf("portable Unicode asset = %q", portable)
+	}
+	reader, err := zip.OpenReader(result.ArchivePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	wantName := "com.example.hello/web/" + filepath.ToSlash(relative)
+	for _, file := range reader.File {
+		if file.Name != wantName {
+			continue
+		}
+		entry, err := file.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		archived, err := io.ReadAll(entry)
+		entry.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(archived, content) {
+			t.Fatalf("archived Unicode asset = %q", archived)
+		}
+		return
+	}
+	t.Fatalf("archive is missing %q", wantName)
+}
+
 func TestBuildRejectsSourceChangesAfterPlanning(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)
 	plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
@@ -208,7 +260,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.23","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.24","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {
