@@ -32,7 +32,9 @@ must not be called a cold build.
 The build plan hashes each source asset once. Pre-copy revalidation repeats
 path, type, and size checks, while the copy itself verifies the planned digest.
 ZIP creation stores common already-compressed formats instead of spending CPU
-on ineffective recompression.
+on ineffective recompression. Remaining Deflate entries use Go's deterministic
+best-speed encoder because build latency takes priority over maximum archive
+compression in the narrow portable-packager scope.
 
 ### Fresh-profile startup
 
@@ -176,6 +178,14 @@ staging, host and asset copy, runtime and report writes, archive collection,
 entry writing, finalization, sync, read-back verification, and output promotion.
 The records are emitted only when both benchmark environment switches are set;
 normal CLI output and artifacts contain no timing telemetry.
+
+On the same local 1,000-file, exact-10-MiB high-entropy fixture, switching
+Deflate entries to the best-speed encoder reduced the observed
+`archive.entries` p50 from 11.57 seconds to 6.49 seconds and total build p50
+from 20.72 seconds to 17.50 seconds. The ZIP grew from 12,176,705 to
+12,325,620 bytes (about 1.2%). These three-sample local observations justify
+the latency-first default but are not hosted or cross-machine performance
+claims; filesystem and antivirus variance remains visible in the samples.
 
 The harness records controlled local observations under
 `velox.consumer-benchmark/v1`, validates them against

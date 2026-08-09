@@ -2,6 +2,7 @@ package archive
 
 import (
 	"archive/zip"
+	"compress/flate"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -85,6 +86,9 @@ func createFiles(destination string, inputs []Input, observer buildphase.Observe
 	}()
 
 	writer := zip.NewWriter(output)
+	writer.RegisterCompressor(zip.Deflate, func(destination io.Writer) (io.WriteCloser, error) {
+		return flate.NewWriter(destination, flate.BestSpeed)
+	})
 	entriesStarted := time.Now()
 	for _, input := range inputs {
 		header := &zip.FileHeader{
