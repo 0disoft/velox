@@ -151,6 +151,14 @@ It initializes one dependency-free project and gives each repetition a clean
 output root. Build-command duration excludes initialization, inspection, schema
 validation, and process-trace draining.
 
+The default `hello` mode measures the generated starter. The explicit
+`asset-pack` mode adds the same versioned 1,000-file, exact-10-MiB xorshift32
+fixture used by `velox-bench`, verifies its pinned tree digest before timing,
+and reports generated file, byte, and tree-digest evidence separately from the
+starter assets. Fixture generation remains outside the measured build command.
+The two-second gate belongs only to the hello fixture; asset-pack duration is a
+diagnostic scaling measurement until a separate budget is accepted.
+
 The harness records controlled local observations under
 `velox.consumer-benchmark/v1`, validates them against
 `schema/consumer-benchmark-v1.schema.json`, and reports:

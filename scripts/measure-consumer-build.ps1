@@ -14,6 +14,9 @@ param(
     [ValidateRange(3, 100)]
     [int] $Repetitions = 10,
 
+    [ValidateSet('hello', 'asset-pack')]
+    [string] $FixtureKind = 'hello',
+
     [switch] $Enforce
 )
 
@@ -97,6 +100,64 @@ function Get-Percentile {
     return [Math]::Round([double] $sorted[$index], 3)
 }
 
+function New-AssetPackFixture {
+    param([string] $Root)
+
+    $seed = [uint32] 1447383631
+    $fileCount = 1000
+    $totalBytes = 10485760
+    $baseSize = [Math]::Floor($totalBytes / $fileCount)
+    $remainder = $totalBytes % $fileCount
+    $expectedTreeSha256 = '8b7fb697154d4fb91ae7a4f9c797109ff2b83f25cad8d0d947b9f523ef83005f'
+    $treeHash = [System.Security.Cryptography.IncrementalHash]::CreateHash([System.Security.Cryptography.HashAlgorithmName]::SHA256)
+    $utf8 = [System.Text.UTF8Encoding]::new($false)
+
+    try {
+        for ($index = 0; $index -lt $fileCount; $index++) {
+            $directory = ([int] [Math]::Floor($index / 100)).ToString('D3')
+            $relative = 'assets/{0}/{1}.bin' -f $directory, $index.ToString('D6')
+            $destination = Join-Path $Root ($relative.Replace('/', [System.IO.Path]::DirectorySeparatorChar))
+            [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($destination)) | Out-Null
+
+            $size = [int] ($baseSize + $(if ($index -lt $remainder) { 1 } else { 0 }))
+            $bytes = [byte[]]::new($size)
+            $mixed = [uint32] (([uint64] ($index + 1) * [uint64] 2654435769) -band [uint64] 4294967295)
+            $state = [uint32] ($seed -bxor $mixed)
+            $state = [uint32] (([uint64] ($state -bxor ($state -shr 16))) -band [uint64] 4294967295)
+            $state = [uint32] (([uint64] $state * [uint64] 2246822507) -band [uint64] 4294967295)
+            $state = [uint32] (([uint64] ($state -bxor ($state -shr 13))) -band [uint64] 4294967295)
+            $state = [uint32] (([uint64] $state * [uint64] 3266489909) -band [uint64] 4294967295)
+            $state = [uint32] (([uint64] ($state -bxor ($state -shr 16))) -band [uint64] 4294967295)
+            if ($state -eq 0) {
+                $state = [uint32] 1831565813
+            }
+            for ($offset = 0; $offset -lt $bytes.Length; $offset++) {
+                $state = [uint32] (([uint64] ($state -bxor ($state -shl 13))) -band [uint64] 4294967295)
+                $state = [uint32] (([uint64] ($state -bxor ($state -shr 17))) -band [uint64] 4294967295)
+                $state = [uint32] (([uint64] ($state -bxor ($state -shl 5))) -band [uint64] 4294967295)
+                $bytes[$offset] = [byte] ($state -band 0xff)
+            }
+
+            [System.IO.File]::WriteAllBytes($destination, $bytes)
+            $treeHash.AppendData($utf8.GetBytes($relative))
+            $treeHash.AppendData([byte[]] @(0))
+            $treeHash.AppendData([System.BitConverter]::GetBytes([uint64] $bytes.Length))
+            $treeHash.AppendData($bytes)
+        }
+        $treeSha256 = [System.Convert]::ToHexString($treeHash.GetHashAndReset()).ToLowerInvariant()
+    } finally {
+        $treeHash.Dispose()
+    }
+    if ($treeSha256 -ne $expectedTreeSha256) {
+        throw "Asset-pack generator digest mismatch: $treeSha256"
+    }
+    return [pscustomobject]@{
+        files = $fileCount
+        bytes = [int64] $totalBytes
+        treeSha256 = $treeSha256
+    }
+}
+
 function Get-ProcessTrace {
     param($Events, [int] $ParentPid, [string] $CliName, [bool] $Available)
 
@@ -165,6 +226,11 @@ $initialized = Invoke-VeloxJson -Arguments @('init', $projectRoot, '--json')
 $configPath = Join-Path $projectRoot 'velox.json'
 $appId = [string] $initialized.result.appId
 $appKey = $appId
+$generatedFixture = if ($FixtureKind -eq 'asset-pack') {
+    New-AssetPackFixture -Root (Join-Path $projectRoot 'web')
+} else {
+    [pscustomobject]@{ files = 0; bytes = [int64] 0; treeSha256 = $null }
+}
 $validation = Invoke-VeloxJson -Arguments @('validate', '--config', $configPath, '--json')
 $projectBefore = Get-FileSnapshot -Root $projectRoot
 
@@ -264,7 +330,7 @@ $result = [ordered]@{
     repetitions = $Repetitions
     measurement = [ordered]@{
         tool = 'scripts/measure-consumer-build.ps1'
-        toolVersion = 1
+        toolVersion = 2
         metric = 'build-command-duration'
         unit = 'milliseconds'
         clock = 'System.Diagnostics.Stopwatch'
@@ -278,11 +344,14 @@ $result = [ordered]@{
         excludedWork = @('project-initialization', 'project-validation', 'artifact-inspection', 'schema-validation', 'process-trace-drain')
     }
     fixture = [ordered]@{
-        kind = 'dependency-free-init-template'
+        kind = if ($FixtureKind -eq 'asset-pack') { 'deterministic-asset-pack' } else { 'dependency-free-init-template' }
         appId = $appId
         assetFiles = [int] $validation.result.assetFiles
         assetBytes = [int64] $validation.result.assetBytes
         assetSha256 = [string] $validation.result.assetSha256
+        generatedFiles = [int] $generatedFixture.files
+        generatedBytes = [int64] $generatedFixture.bytes
+        generatedTreeSha256 = $generatedFixture.treeSha256
     }
     environment = [ordered]@{
         os = [Environment]::OSVersion.VersionString
@@ -308,7 +377,7 @@ $result = [ordered]@{
         survivingIntermediateFiles = $intermediateCount
     }
     gates = [ordered]@{
-        p95AtOrBelowTwoSeconds = if ($p95 -le 2000) { 'pass' } else { 'fail' }
+        p95AtOrBelowTwoSeconds = if ($FixtureKind -eq 'asset-pack') { 'not-applicable' } elseif ($p95 -le 2000) { 'pass' } else { 'fail' }
         zeroVeloxCacheGrowth = if ($cacheDelta -eq 0) { 'pass' } else { 'fail' }
         zeroSurvivingIntermediates = if ($intermediateCount -eq 0 -and $projectChanges.Count -eq 0) { 'pass' } else { 'fail' }
         noCompilerOrPackageManagerChildren = $processStatus

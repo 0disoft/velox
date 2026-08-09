@@ -17,7 +17,7 @@
       "required": ["tool", "toolVersion", "metric", "unit", "clock", "startsAt", "endsAt", "warmupSamples", "concurrency", "projectState", "outputState", "osFileCacheState", "excludedWork"],
       "properties": {
         "tool": { "const": "scripts/measure-consumer-build.ps1" },
-        "toolVersion": { "const": 1 },
+        "toolVersion": { "const": 2 },
         "metric": { "const": "build-command-duration" },
         "unit": { "const": "milliseconds" },
         "clock": { "const": "System.Diagnostics.Stopwatch" },
@@ -34,13 +34,19 @@
     "fixture": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "appId", "assetFiles", "assetBytes", "assetSha256"],
+      "required": ["kind", "appId", "assetFiles", "assetBytes", "assetSha256", "generatedFiles", "generatedBytes", "generatedTreeSha256"],
       "properties": {
-        "kind": { "const": "dependency-free-init-template" },
+        "kind": { "enum": ["dependency-free-init-template", "deterministic-asset-pack"] },
         "appId": { "type": "string", "minLength": 1 },
         "assetFiles": { "type": "integer", "minimum": 1 },
         "assetBytes": { "type": "integer", "minimum": 1 },
-        "assetSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        "assetSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "generatedFiles": { "enum": [0, 1000] },
+        "generatedBytes": { "enum": [0, 10485760] },
+        "generatedTreeSha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        }
       }
     },
     "environment": {
@@ -76,7 +82,7 @@
       "type": "object",
       "required": ["p95AtOrBelowTwoSeconds", "zeroVeloxCacheGrowth", "zeroSurvivingIntermediates", "noCompilerOrPackageManagerChildren"],
       "properties": {
-        "p95AtOrBelowTwoSeconds": { "enum": ["pass", "fail"] },
+        "p95AtOrBelowTwoSeconds": { "enum": ["pass", "fail", "not-applicable"] },
         "zeroVeloxCacheGrowth": { "enum": ["pass", "fail"] },
         "zeroSurvivingIntermediates": { "enum": ["pass", "fail"] },
         "noCompilerOrPackageManagerChildren": { "enum": ["pass", "fail", "unverified"] }

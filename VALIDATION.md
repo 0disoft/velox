@@ -57,6 +57,9 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_consumer_benchmark_smoke` runs three local samples to validate the
   benchmark harness and schema without turning unavailable process tracing into
   a false pass.
+- `velox_consumer_asset_benchmark_smoke` runs three local samples with the
+  pinned 1,000-file, exact-10-MiB asset-pack fixture to expose archive and
+  filesystem scaling regressions without making hosted comparison claims.
 - `velox_consumer_benchmark` runs ten local clean-output samples and enforces
   build-duration, cache, intermediate-file, and compiler/package-manager
   child-process gates. It is expected to fail when Windows process-start
