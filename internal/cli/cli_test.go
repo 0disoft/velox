@@ -73,6 +73,24 @@ func TestBuildJSONContractAndOutputs(t *testing.T) {
 	}
 }
 
+func TestBuildEmitsPhasesOnlyInBenchmarkMode(t *testing.T) {
+	t.Setenv("VELOX_BENCH_MODE", "1")
+	t.Setenv("VELOX_BENCH_PHASES", "1")
+	root, config, host := cliFixture(t)
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"build", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+	})
+	if exitCode != 0 || !json.Valid(stdout.Bytes()) {
+		t.Fatalf("exit=%d stderr=%q stdout=%q", exitCode, stderr.String(), stdout.String())
+	}
+	for _, phase := range []string{"assets.copy", "archive.entries", "archive.verify", "build.total"} {
+		if !strings.Contains(stderr.String(), "VELOX_PHASE "+phase+" ") {
+			t.Fatalf("missing %s phase in stderr %q", phase, stderr.String())
+		}
+	}
+}
+
 func TestFailureJSONDoesNotExposeAbsolutePath(t *testing.T) {
 	root := t.TempDir()
 	missing := filepath.Join(root, "private", "velox.json")
@@ -293,7 +311,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.17","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.18","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

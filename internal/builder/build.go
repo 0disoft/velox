@@ -9,9 +9,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/0disoft/velox/internal/archive"
 	"github.com/0disoft/velox/internal/assettree"
+	"github.com/0disoft/velox/internal/buildphase"
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/ipc"
@@ -29,21 +31,31 @@ type Result struct {
 }
 
 func Build(plan buildplan.Plan) (Result, error) {
+	return BuildObserved(plan, nil)
+}
+
+func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, error) {
+	totalStarted := time.Now()
+	defer buildphase.Record(observer, "build.total", totalStarted)
 	snapshot := plan.Snapshot()
 	if err := os.MkdirAll(snapshot.OutputRoot, 0o755); err != nil {
 		return Result{}, fmt.Errorf("create output root: %w", err)
 	}
+	revalidateStarted := time.Now()
 	if err := plan.RevalidateInputs(); err != nil {
 		return Result{}, err
 	}
+	buildphase.Record(observer, "inputs.revalidate", revalidateStarted)
 	stageDirectory := filepath.Join(snapshot.OutputRoot, "."+snapshot.ApplicationKey+".staging")
 	stageArchive := filepath.Join(snapshot.OutputRoot, "."+snapshot.ApplicationKey+".zip.staging")
 	if exists(stageDirectory) || exists(stageArchive) {
 		return Result{}, errors.New("owned staging output already exists; remove it after confirming no build is active")
 	}
+	stageStarted := time.Now()
 	if err := os.Mkdir(stageDirectory, 0o755); err != nil {
 		return Result{}, fmt.Errorf("create staging directory: %w", err)
 	}
+	buildphase.Record(observer, "stage.create", stageStarted)
 	success := false
 	defer func() {
 		if !success {
@@ -53,11 +65,14 @@ func Build(plan buildplan.Plan) (Result, error) {
 	}()
 
 	hostName := snapshot.ApplicationKey + ".exe"
+	hostStarted := time.Now()
 	if _, err := copyVerified(snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, 0, snapshot.HostSHA256); err != nil {
 		return Result{}, fmt.Errorf("copy host template: %w", err)
 	}
+	buildphase.Record(observer, "host.copy", hostStarted)
 	webRoot := filepath.Join(stageDirectory, "web")
 	copiedAssets := make([]assettree.File, 0, len(snapshot.Assets.Files))
+	assetsStarted := time.Now()
 	for _, asset := range snapshot.Assets.Files {
 		destination := filepath.Join(webRoot, filepath.FromSlash(asset.RelativePath))
 		digest, err := copyVerified(asset.SourcePath, destination, 0o644, asset.Size, asset.ModifiedUnixNano, asset.SHA256)
@@ -68,11 +83,14 @@ func Build(plan buildplan.Plan) (Result, error) {
 		copiedAssets = append(copiedAssets, asset)
 	}
 	verifiedAssets := assettree.Summarize(copiedAssets)
+	buildphase.Record(observer, "assets.copy", assetsStarted)
 
 	runtimeValue := runtimeconfig.FromManifest(snapshot.Manifest, "web")
+	runtimeStarted := time.Now()
 	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue); err != nil {
 		return Result{}, err
 	}
+	buildphase.Record(observer, "runtime.write", runtimeStarted)
 	report := buildreport.Report{
 		SchemaVersion:  buildreport.SchemaVersion,
 		ReleaseVersion: snapshot.HostMetadata.ReleaseVersion,
@@ -84,19 +102,23 @@ func Build(plan buildplan.Plan) (Result, error) {
 		Permissions:    append([]string{}, snapshot.Manifest.Security.Permissions...),
 		Outputs:        buildreport.OutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
 	}
+	reportStarted := time.Now()
 	if err := writeJSON(filepath.Join(stageDirectory, "build-result.json"), report); err != nil {
 		return Result{}, err
 	}
-	archiveResult, err := archive.Create(stageDirectory, stageArchive, snapshot.ApplicationKey)
+	buildphase.Record(observer, "report.write", reportStarted)
+	archiveResult, err := archive.CreateObserved(stageDirectory, stageArchive, snapshot.ApplicationKey, observer)
 	if err != nil {
 		return Result{}, err
 	}
 	if archiveResult.FileCount != report.Outputs.PortableFiles {
 		return Result{}, fmt.Errorf("archive file count %d does not match build report %d", archiveResult.FileCount, report.Outputs.PortableFiles)
 	}
+	promoteStarted := time.Now()
 	if err := promote(snapshot, stageDirectory, stageArchive); err != nil {
 		return Result{}, err
 	}
+	buildphase.Record(observer, "output.promote", promoteStarted)
 	success = true
 	return Result{
 		Report: report, DirectoryPath: snapshot.AppDirectory, ArchivePath: snapshot.ArchivePath,

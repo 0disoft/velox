@@ -171,6 +171,12 @@ hashed; the build report is derived from those copied bytes. `validate` retains
 its independent full content-hash pass because its output explicitly reports
 the source asset digest.
 
+Benchmark mode also records local phase durations for input revalidation,
+staging, host and asset copy, runtime and report writes, archive collection,
+entry writing, finalization, sync, read-back verification, and output promotion.
+The records are emitted only when both benchmark environment switches are set;
+normal CLI output and artifacts contain no timing telemetry.
+
 The harness records controlled local observations under
 `velox.consumer-benchmark/v1`, validates them against
 `schema/consumer-benchmark-v1.schema.json`, and reports:

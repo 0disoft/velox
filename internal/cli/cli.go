@@ -10,9 +10,11 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/0disoft/velox/internal/builder"
 	"github.com/0disoft/velox/internal/buildinfo"
+	"github.com/0disoft/velox/internal/buildphase"
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/doctor"
 	"github.com/0disoft/velox/internal/hostmeta"
@@ -340,7 +342,13 @@ func runBuild(args []string, dependencies Dependencies) int {
 	if err != nil {
 		return emitPlanError(dependencies, "build", options.json, err)
 	}
-	result, err := builder.Build(plan)
+	var observer buildphase.Observer
+	if os.Getenv("VELOX_BENCH_MODE") == "1" && os.Getenv("VELOX_BENCH_PHASES") == "1" {
+		observer = func(name string, duration time.Duration) {
+			fmt.Fprintf(dependencies.Stderr, "VELOX_PHASE %s %d\n", name, duration.Microseconds())
+		}
+	}
+	result, err := builder.BuildObserved(plan, observer)
 	if err != nil {
 		return emitFailure(dependencies, "build", options.json, 6, "PACKAGING_FAILED", "Application packaging failed.", err)
 	}

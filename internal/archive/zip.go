@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0disoft/velox/internal/buildphase"
 	"github.com/0disoft/velox/internal/safefs"
 )
 
@@ -30,7 +31,15 @@ type Input struct {
 }
 
 func Create(sourceDirectory, destination, rootName string) (Result, error) {
+	return CreateObserved(sourceDirectory, destination, rootName, nil)
+}
+
+func CreateObserved(sourceDirectory, destination, rootName string, observer buildphase.Observer) (Result, error) {
+	totalStarted := time.Now()
+	defer buildphase.Record(observer, "archive.total", totalStarted)
+	collectStarted := time.Now()
 	paths, err := collectFiles(sourceDirectory)
+	buildphase.Record(observer, "archive.collect", collectStarted)
 	if err != nil {
 		return Result{}, err
 	}
@@ -38,14 +47,14 @@ func Create(sourceDirectory, destination, rootName string) (Result, error) {
 	for _, relative := range paths {
 		inputs = append(inputs, Input{Source: filepath.Join(sourceDirectory, relative), Name: rootName + "/" + filepath.ToSlash(relative)})
 	}
-	return createFiles(destination, inputs)
+	return createFiles(destination, inputs, observer)
 }
 
 func CreateFiles(destination string, inputs []Input) (Result, error) {
-	return createFiles(destination, append([]Input(nil), inputs...))
+	return createFiles(destination, append([]Input(nil), inputs...), nil)
 }
 
-func createFiles(destination string, inputs []Input) (Result, error) {
+func createFiles(destination string, inputs []Input, observer buildphase.Observer) (Result, error) {
 	if len(inputs) == 0 {
 		return Result{}, errors.New("archive requires at least one input")
 	}
@@ -76,6 +85,7 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 	}()
 
 	writer := zip.NewWriter(output)
+	entriesStarted := time.Now()
 	for _, input := range inputs {
 		header := &zip.FileHeader{
 			Name:     input.Name,
@@ -108,12 +118,18 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 			return Result{}, fmt.Errorf("archive input %s changed while reading", input.Name)
 		}
 	}
+	buildphase.Record(observer, "archive.entries", entriesStarted)
+	finalizeStarted := time.Now()
 	if err := writer.Close(); err != nil {
 		return Result{}, fmt.Errorf("finalize archive: %w", err)
 	}
+	buildphase.Record(observer, "archive.finalize", finalizeStarted)
+	syncStarted := time.Now()
 	if err := output.Sync(); err != nil {
 		return Result{}, fmt.Errorf("sync archive: %w", err)
 	}
+	buildphase.Record(observer, "archive.sync", syncStarted)
+	verifyStarted := time.Now()
 	if _, err := output.Seek(0, io.SeekStart); err != nil {
 		return Result{}, fmt.Errorf("rewind archive for verification: %w", err)
 	}
@@ -129,6 +145,7 @@ func createFiles(destination string, inputs []Input) (Result, error) {
 	if verifiedSize != info.Size() {
 		return Result{}, fmt.Errorf("verify archive size: read %d bytes, expected %d", verifiedSize, info.Size())
 	}
+	buildphase.Record(observer, "archive.verify", verifyStarted)
 	if err := output.Close(); err != nil {
 		return Result{}, fmt.Errorf("close archive: %w", err)
 	}

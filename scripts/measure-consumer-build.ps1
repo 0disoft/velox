@@ -261,6 +261,10 @@ for ($index = 0; $index -lt $Repetitions; $index++) {
         }
     }
     try {
+        $previousBenchMode = $env:VELOX_BENCH_MODE
+        $previousBenchPhases = $env:VELOX_BENCH_PHASES
+        $env:VELOX_BENCH_MODE = '1'
+        $env:VELOX_BENCH_PHASES = '1'
         $timer = [System.Diagnostics.Stopwatch]::StartNew()
         $stdoutLines = & $Cli build --config $configPath --out $outputRoot --json 2> $stderrPath
         $exitCode = $LASTEXITCODE
@@ -273,6 +277,8 @@ for ($index = 0; $index -lt $Repetitions; $index++) {
             $events = @()
         }
     } finally {
+        if ($null -eq $previousBenchMode) { Remove-Item Env:VELOX_BENCH_MODE -ErrorAction SilentlyContinue } else { $env:VELOX_BENCH_MODE = $previousBenchMode }
+        if ($null -eq $previousBenchPhases) { Remove-Item Env:VELOX_BENCH_PHASES -ErrorAction SilentlyContinue } else { $env:VELOX_BENCH_PHASES = $previousBenchPhases }
         if ($traceAvailable) {
             Unregister-Event -SourceIdentifier $sourceIdentifier -ErrorAction SilentlyContinue
             Remove-Event -SourceIdentifier $sourceIdentifier -ErrorAction SilentlyContinue
@@ -281,6 +287,16 @@ for ($index = 0; $index -lt $Repetitions; $index++) {
     $stderrText = if (Test-Path -LiteralPath $stderrPath) { [System.IO.File]::ReadAllText($stderrPath) } else { '' }
     if ($exitCode -ne 0) {
         throw "Measured build $index exited with code ${exitCode}: $stderrText"
+    }
+    $phases = @(
+        foreach ($line in ($stderrText -split '\r?\n')) {
+            if ($line -match '^VELOX_PHASE ([a-z.]+) ([0-9]+)$') {
+                [pscustomobject]@{ name = $Matches[1]; durationUs = [int64] $Matches[2] }
+            }
+        }
+    )
+    if ($phases.Count -eq 0) {
+        throw "Measured build $index returned no phase evidence."
     }
     $envelope = (($stdoutLines -join [Environment]::NewLine) | ConvertFrom-Json)
     if (-not $envelope.ok) {
@@ -304,6 +320,7 @@ for ($index = 0; $index -lt $Repetitions; $index++) {
         portableBytes = [int64] $inspection.result.portableBytes
         survivingIntermediateFiles = $unexpected.Count
         survivingIntermediatePaths = @($unexpected | ForEach-Object { $_.Name } | Sort-Object)
+        phases = $phases
         processTrace = $trace
     })
 }
@@ -330,7 +347,7 @@ $result = [ordered]@{
     repetitions = $Repetitions
     measurement = [ordered]@{
         tool = 'scripts/measure-consumer-build.ps1'
-        toolVersion = 2
+        toolVersion = 3
         metric = 'build-command-duration'
         unit = 'milliseconds'
         clock = 'System.Diagnostics.Stopwatch'

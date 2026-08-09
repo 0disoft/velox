@@ -17,7 +17,7 @@
       "required": ["tool", "toolVersion", "metric", "unit", "clock", "startsAt", "endsAt", "warmupSamples", "concurrency", "projectState", "outputState", "osFileCacheState", "excludedWork"],
       "properties": {
         "tool": { "const": "scripts/measure-consumer-build.ps1" },
-        "toolVersion": { "const": 2 },
+        "toolVersion": { "const": 3 },
         "metric": { "const": "build-command-duration" },
         "unit": { "const": "milliseconds" },
         "clock": { "const": "System.Diagnostics.Stopwatch" },
@@ -93,9 +93,22 @@
       "minItems": 3,
       "items": {
         "type": "object",
-        "required": ["index", "outcome", "durationMs", "archiveBytes", "archiveSha256", "portableFiles", "portableBytes", "survivingIntermediateFiles", "survivingIntermediatePaths", "processTrace"],
+        "required": ["index", "outcome", "durationMs", "archiveBytes", "archiveSha256", "portableFiles", "portableBytes", "survivingIntermediateFiles", "survivingIntermediatePaths", "phases", "processTrace"],
         "properties": {
-          "outcome": { "const": "success" }
+          "outcome": { "const": "success" },
+          "phases": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "durationUs"],
+              "properties": {
+                "name": { "type": "string", "pattern": "^[a-z]+(?:\\.[a-z]+)*$" },
+                "durationUs": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
         }
       }
     }
