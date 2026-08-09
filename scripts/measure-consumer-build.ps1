@@ -336,6 +336,23 @@ $allTraceComplete = @($samples | Where-Object { -not $_.processTrace.complete })
 $forbiddenProcesses = @($samples | ForEach-Object { $_.processTrace.forbiddenDescendants })
 $intermediateCount = [int] (($samples | Measure-Object -Property survivingIntermediateFiles -Sum).Sum ?? 0)
 $cacheDelta = [Math]::Max([int64] 0, $cacheAfter - $cacheBefore)
+$phaseNames = @($samples | ForEach-Object { $_.phases } | ForEach-Object { $_.name } | Sort-Object -Unique)
+$phaseSummary = @(
+    foreach ($phaseName in $phaseNames) {
+        $values = [double[]] @($samples | ForEach-Object { $_.phases } | Where-Object { $_.name -eq $phaseName } | ForEach-Object { $_.durationUs })
+        if ($values.Count -ne $samples.Count) {
+            throw "Phase $phaseName is missing from one or more samples."
+        }
+        [pscustomobject]@{
+            name = $phaseName
+            minUs = [int64] (($values | Measure-Object -Minimum).Minimum)
+            p50Us = [int64] (Get-Percentile -Values $values -Percentile 0.50)
+            p95Us = [int64] (Get-Percentile -Values $values -Percentile 0.95)
+            maxUs = [int64] (($values | Measure-Object -Maximum).Maximum)
+        }
+    }
+)
+$dominantPhase = @($phaseSummary | Where-Object { -not $_.name.EndsWith('.total') } | Sort-Object p50Us -Descending | Select-Object -First 1)[0]
 
 $processStatus = if (-not $allTraceComplete) { 'unverified' } elseif ($forbiddenProcesses.Count -gt 0) { 'fail' } else { 'pass' }
 $p95 = Get-Percentile -Values $durations -Percentile 0.95
@@ -347,7 +364,7 @@ $result = [ordered]@{
     repetitions = $Repetitions
     measurement = [ordered]@{
         tool = 'scripts/measure-consumer-build.ps1'
-        toolVersion = 3
+        toolVersion = 4
         metric = 'build-command-duration'
         unit = 'milliseconds'
         clock = 'System.Diagnostics.Stopwatch'
@@ -381,6 +398,14 @@ $result = [ordered]@{
         p50Ms = Get-Percentile -Values $durations -Percentile 0.50
         p95Ms = $p95
         maxMs = [Math]::Round(($durations | Measure-Object -Maximum).Maximum, 3)
+    }
+    phaseSummary = [ordered]@{
+        dominant = [ordered]@{
+            name = $dominantPhase.name
+            p50Us = [int64] $dominantPhase.p50Us
+            p95Us = [int64] $dominantPhase.p95Us
+        }
+        phases = $phaseSummary
     }
     cache = [ordered]@{
         workflowDeclaredActionsCacheUploadBytes = 0

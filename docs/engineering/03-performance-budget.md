@@ -178,6 +178,8 @@ staging, host and asset copy, runtime and report writes, archive collection,
 entry writing, finalization, sync, read-back verification, and output promotion.
 The records are emitted only when both benchmark environment switches are set;
 normal CLI output and artifacts contain no timing telemetry.
+The benchmark result derives phase-level min, p50, p95, and max durations and
+names the highest-p50 non-total phase while retaining every raw sample.
 
 On the same local 1,000-file, exact-10-MiB high-entropy fixture, switching
 Deflate entries to the best-speed encoder reduced the observed
