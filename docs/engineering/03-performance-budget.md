@@ -159,6 +159,12 @@ starter assets. Fixture generation remains outside the measured build command.
 The two-second gate belongs only to the hello fixture; asset-pack duration is a
 diagnostic scaling measurement until a separate budget is accepted.
 
+Staged host and asset copies are content-verified and closed but are not synced
+one file at a time. Velox promises process-interruption recovery, not power-loss
+durability, and per-file flushes make build time scale with file count. The
+completed ZIP remains explicitly synced and then read back for its reported
+size and SHA-256.
+
 The harness records controlled local observations under
 `velox.consumer-benchmark/v1`, validates them against
 `schema/consumer-benchmark-v1.schema.json`, and reports:

@@ -130,10 +130,6 @@ func copyVerified(source, destination string, mode os.FileMode, expectedSize int
 		os.Remove(destination)
 		return errors.New("source changed after build planning")
 	}
-	if err := output.Sync(); err != nil {
-		output.Close()
-		return err
-	}
 	return output.Close()
 }
 
