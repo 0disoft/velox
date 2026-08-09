@@ -103,7 +103,10 @@ Performance evidence follows docs/engineering/03-performance-budget.md.
 Every MUST rule in docs/engineering/04-security-baseline.md needs a positive or
 negative executable test before alpha.
 
-Fuzzing targets runtime configuration and IPC parsing once those parsers exist.
+Go fuzz targets cover runtime-configuration parsing and IPC decoding and
+dispatch. Their seed corpora run with the ordinary test suite; longer fuzzing
+campaigns remain an explicit bounded security-validation action rather than an
+unbounded pull-request job.
 
 ## Validation by Change
 
