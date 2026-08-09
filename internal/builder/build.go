@@ -63,10 +63,28 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 			os.Remove(stageArchive)
 		}
 	}()
+	archiveStarted := time.Now()
+	archiveStream, err := archive.NewStream(stageArchive)
+	if err != nil {
+		return Result{}, err
+	}
+	defer archiveStream.Abort()
+	var archiveEntryDuration time.Duration
+	archiveRoot := snapshot.ApplicationKey + "/"
+	createArchiveEntry := func(name string) (io.Writer, error) {
+		started := time.Now()
+		entry, createErr := archiveStream.CreateEntry(name, 0o644)
+		archiveEntryDuration += time.Since(started)
+		return entry, createErr
+	}
 
 	hostName := snapshot.ApplicationKey + ".exe"
+	hostArchiveEntry, err := createArchiveEntry(archiveRoot + hostName)
+	if err != nil {
+		return Result{}, err
+	}
 	hostStarted := time.Now()
-	if _, err := copyVerified(snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, 0, snapshot.HostSHA256); err != nil {
+	if _, err := copyVerified(snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, 0, snapshot.HostSHA256, observedWriter{writer: hostArchiveEntry, duration: &archiveEntryDuration}); err != nil {
 		return Result{}, fmt.Errorf("copy host template: %w", err)
 	}
 	buildphase.Record(observer, "host.copy", hostStarted)
@@ -75,7 +93,11 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 	assetsStarted := time.Now()
 	for _, asset := range snapshot.Assets.Files {
 		destination := filepath.Join(webRoot, filepath.FromSlash(asset.RelativePath))
-		digest, err := copyVerified(asset.SourcePath, destination, 0o644, asset.Size, asset.ModifiedUnixNano, asset.SHA256)
+		assetArchiveEntry, err := createArchiveEntry(archiveRoot + "web/" + asset.RelativePath)
+		if err != nil {
+			return Result{}, err
+		}
+		digest, err := copyVerified(asset.SourcePath, destination, 0o644, asset.Size, asset.ModifiedUnixNano, asset.SHA256, observedWriter{writer: assetArchiveEntry, duration: &archiveEntryDuration})
 		if err != nil {
 			return Result{}, fmt.Errorf("copy asset %s: %w", asset.RelativePath, err)
 		}
@@ -86,8 +108,12 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 	buildphase.Record(observer, "assets.copy", assetsStarted)
 
 	runtimeValue := runtimeconfig.FromManifest(snapshot.Manifest, "web")
+	runtimeArchiveEntry, err := createArchiveEntry(archiveRoot + "velox.runtime.json")
+	if err != nil {
+		return Result{}, err
+	}
 	runtimeStarted := time.Now()
-	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue); err != nil {
+	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue, observedWriter{writer: runtimeArchiveEntry, duration: &archiveEntryDuration}); err != nil {
 		return Result{}, err
 	}
 	buildphase.Record(observer, "runtime.write", runtimeStarted)
@@ -102,15 +128,21 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 		Permissions:    append([]string{}, snapshot.Manifest.Security.Permissions...),
 		Outputs:        buildreport.OutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
 	}
-	reportStarted := time.Now()
-	if err := writeJSON(filepath.Join(stageDirectory, "build-result.json"), report); err != nil {
-		return Result{}, err
-	}
-	buildphase.Record(observer, "report.write", reportStarted)
-	archiveResult, err := archive.CreateObserved(stageDirectory, stageArchive, snapshot.ApplicationKey, observer)
+	reportArchiveEntry, err := createArchiveEntry(archiveRoot + "build-result.json")
 	if err != nil {
 		return Result{}, err
 	}
+	reportStarted := time.Now()
+	if err := writeJSON(filepath.Join(stageDirectory, "build-result.json"), report, observedWriter{writer: reportArchiveEntry, duration: &archiveEntryDuration}); err != nil {
+		return Result{}, err
+	}
+	buildphase.Record(observer, "report.write", reportStarted)
+	buildphase.Emit(observer, "archive.entries", archiveEntryDuration)
+	archiveResult, err := archiveStream.CloseObserved(observer)
+	if err != nil {
+		return Result{}, err
+	}
+	buildphase.Record(observer, "archive.total", archiveStarted)
 	if archiveResult.FileCount != report.Outputs.PortableFiles {
 		return Result{}, fmt.Errorf("archive file count %d does not match build report %d", archiveResult.FileCount, report.Outputs.PortableFiles)
 	}
@@ -130,7 +162,7 @@ func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error
 	return outputpair.Promote(plan.AppDirectory, plan.ArchivePath, stageDirectory, stageArchive)
 }
 
-func copyVerified(source, destination string, mode os.FileMode, expectedSize, expectedModifiedUnixNano int64, expectedSHA256 string) (string, error) {
+func copyVerified(source, destination string, mode os.FileMode, expectedSize, expectedModifiedUnixNano int64, expectedSHA256 string, mirrors ...io.Writer) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return "", err
 	}
@@ -147,7 +179,9 @@ func copyVerified(source, destination string, mode os.FileMode, expectedSize, ex
 		return "", err
 	}
 	hash := sha256.New()
-	written, err := io.Copy(io.MultiWriter(output, hash), input)
+	writers := []io.Writer{output, hash}
+	writers = append(writers, mirrors...)
+	written, err := io.Copy(io.MultiWriter(writers...), input)
 	if err != nil {
 		output.Close()
 		return "", err
@@ -167,7 +201,7 @@ func copyVerified(source, destination string, mode os.FileMode, expectedSize, ex
 	return actualSHA256, nil
 }
 
-func writeJSON(path string, value any) error {
+func writeJSON(path string, value any, mirrors ...io.Writer) error {
 	data, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encode %s: %w", filepath.Base(path), err)
@@ -176,7 +210,28 @@ func writeJSON(path string, value any) error {
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", filepath.Base(path), err)
 	}
+	for _, mirror := range mirrors {
+		written, err := mirror.Write(data)
+		if err != nil {
+			return fmt.Errorf("archive %s: %w", filepath.Base(path), err)
+		}
+		if written != len(data) {
+			return fmt.Errorf("archive %s: short write", filepath.Base(path))
+		}
+	}
 	return nil
+}
+
+type observedWriter struct {
+	writer   io.Writer
+	duration *time.Duration
+}
+
+func (writer observedWriter) Write(value []byte) (int, error) {
+	started := time.Now()
+	written, err := writer.writer.Write(value)
+	*writer.duration += time.Since(started)
+	return written, err
 }
 
 func exists(path string) bool {

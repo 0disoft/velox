@@ -12,16 +12,19 @@
 5. Select the pinned Windows x64 host template.
 6. Create an immutable build plan.
 7. Create a sibling staging directory owned by the current run.
-8. Copy the unchanged host, runtime configuration, and assets.
-9. Write the build-result document.
-10. Create the deterministic ZIP.
+8. Open the deterministic ZIP stream and read each host or asset source once,
+   writing the same bytes to the staged portable tree, content hash, and ZIP.
+9. Encode the runtime configuration and build report once and write the same
+   bytes to both outputs.
+10. Finalize, sync, and read back the ZIP for its size and SHA-256.
 11. Verify planned output counts and digests.
 12. Promote the completed directory and ZIP with recoverable paired renames.
 
 ### Build Failure
 
 - Parsing and validation fail before output mutation.
-- Copy and archive failures remove only the current staging directory.
+- Copy and archive failures remove the current staging directory and partial
+  staging ZIP.
 - Previous successful output and project source remain untouched.
 - A later invocation reconciles supported process-interrupted rename states;
   the two public paths are not crash-atomic or power-loss safe.

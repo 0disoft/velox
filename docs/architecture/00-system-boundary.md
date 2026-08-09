@@ -57,9 +57,11 @@ application business data.
 4. Resolve a pinned host template bundled with the Velox release.
 5. Create an immutable build plan.
 6. Assemble output in a sibling staging directory.
-7. Copy the unchanged host, runtime configuration, and assets.
-8. Write a machine-readable build report.
-9. Create a deterministic ZIP.
+7. Read each host or asset source once and stream identical bytes into the
+   portable tree, content hash, and deterministic ZIP.
+8. Encode the runtime configuration and machine-readable build report once and
+   write identical bytes to both outputs.
+9. Finalize, sync, and read back the deterministic ZIP.
 10. Promote the completed directory and ZIP with recoverable paired renames.
 
 No compiler, package manager, local server, code generator, or network lookup

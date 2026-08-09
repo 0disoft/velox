@@ -29,8 +29,11 @@ ZIP completion. The local harness reuses one initialized project and gives each
 sample a new output root. It does not reset the OS file cache, so this profile
 must not be called a cold build.
 
-The build plan hashes each source asset once. Pre-copy revalidation repeats
-path, type, and size checks, while the copy itself verifies the planned digest.
+Build materialization opens each source asset once and writes that stream to
+the portable file, SHA-256 state, and ZIP entry. Pre-copy revalidation repeats
+path, type, size, and modification-time checks; post-copy verification rejects
+changes observed during the read. The independent `validate` command retains
+its full source-content digest.
 ZIP creation stores common already-compressed formats instead of spending CPU
 on ineffective recompression. Remaining Deflate entries use Go's deterministic
 best-speed encoder because build latency takes priority over maximum archive
@@ -180,6 +183,11 @@ The records are emitted only when both benchmark environment switches are set;
 normal CLI output and artifacts contain no timing telemetry.
 The benchmark result derives phase-level min, p50, p95, and max durations and
 names the highest-p50 non-total phase while retaining every raw sample.
+Streaming-build `assets.copy` is an inclusive materialization phase, while
+`archive.entries` measures only ZIP entry creation and writes within it; these
+overlapping values must not be added together. Entry order is a fixed build
+sequence (host, sorted assets, runtime configuration, build report), and every
+entry's bytes are tested against the portable directory.
 
 On the same local 1,000-file, exact-10-MiB high-entropy fixture, switching
 Deflate entries to the best-speed encoder reduced the observed
@@ -188,6 +196,14 @@ from 20.72 seconds to 17.50 seconds. The ZIP grew from 12,176,705 to
 12,325,620 bytes (about 1.2%). These three-sample local observations justify
 the latency-first default but are not hosted or cross-machine performance
 claims; filesystem and antivirus variance remains visible in the samples.
+
+The subsequent single-read staging path was compared against the immediately
+preceding alpha on the same fixture and machine. Streaming source bytes to the
+portable file, hash, and ZIP reduced total build p50 from 10.81 seconds to 6.39
+seconds and p95 from 12.22 seconds to 7.41 seconds. ZIP size remained
+effectively unchanged (12,325,618 versus 12,325,614 bytes). This is controlled
+local evidence, not a hosted cold-build claim, and the overlapping phase model
+is described above.
 
 The harness records controlled local observations under
 `velox.consumer-benchmark/v1`, validates them against
