@@ -82,7 +82,8 @@ There is no database or remote state rollback.
   execution.
 - version reports supported contract ranges.
 
-These commands are planned contracts until implementation exists.
+These commands are implemented contracts. Their current behavior is owned by
+the CLI command and output specifications plus executable tests.
 
 ## Release Blockers
 

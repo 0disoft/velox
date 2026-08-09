@@ -12,7 +12,8 @@ Human output is concise, phase oriented, and written to the appropriate stream.
 - Errors and actionable diagnostics use stderr.
 - Progress output is absent in non-interactive or JSON mode.
 - quiet suppresses non-error output.
-- verbose adds bounded diagnostic context without secrets or source contents.
+- verbose adds bounded human-mode diagnostic context to stderr without secrets,
+  source contents, absolute paths, timestamps, or timing claims; quiet wins.
 
 Human wording is not a machine contract.
 
@@ -110,7 +111,8 @@ Successful build JSON should include:
 - Output paths relative to the selected output root.
 - File and byte counts.
 - Artifact digests.
-- Phase durations.
+- No phase durations; versioned benchmark results own timing evidence so build
+  artifacts and ordinary JSON output remain deterministic.
 - Cache upload is measured by benchmark tooling, not guessed by build output.
 
 Build output must not claim reproducibility until the reproducibility check

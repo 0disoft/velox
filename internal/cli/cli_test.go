@@ -91,6 +91,30 @@ func TestBuildEmitsPhasesOnlyInBenchmarkMode(t *testing.T) {
 	}
 }
 
+func TestValidateVerboseIsBoundedAndQuietWins(t *testing.T) {
+	root, config, host := cliFixture(t)
+	var stdout, stderr bytes.Buffer
+	exitCode := Run([]string{"validate", "--config", config, "--out", filepath.Join(root, "dist"), "--verbose"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+	})
+	if exitCode != 0 || !strings.Contains(stdout.String(), "Valid: com.example.hello") {
+		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+	want := "velox: detail: release=0.5.10-alpha.25 target=windows-x64 assets=1 permissions=0\n"
+	if stderr.String() != want || strings.Contains(stderr.String(), root) {
+		t.Fatalf("verbose stderr = %q, want %q", stderr.String(), want)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	exitCode = Run([]string{"validate", "--config", config, "--out", filepath.Join(root, "dist"), "--verbose", "--quiet"}, Dependencies{
+		Stdout: &stdout, Stderr: &stderr, HostPath: host,
+	})
+	if exitCode != 0 || stdout.Len() != 0 || stderr.Len() != 0 {
+		t.Fatalf("quiet verbose exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+}
+
 func TestFailureJSONDoesNotExposeAbsolutePath(t *testing.T) {
 	root := t.TempDir()
 	missing := filepath.Join(root, "private", "velox.json")
@@ -311,7 +335,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.24","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.25","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

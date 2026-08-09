@@ -246,6 +246,7 @@ func runDoctor(args []string, dependencies Dependencies) int {
 	} else if !options.quiet {
 		printDoctor(dependencies.Stdout, result)
 	}
+	emitVerbose(options, dependencies.Stderr, "ready=%t checks=%d", result.Ready, len(result.Checks))
 	return 0
 }
 
@@ -294,6 +295,7 @@ func runProject(args []string, dependencies Dependencies) int {
 	} else if !options.quiet {
 		fmt.Fprintln(dependencies.Stdout, "Host exited cleanly.")
 	}
+	emitVerbose(options, dependencies.Stderr, "hostExitCode=%d", result.ExitCode)
 	return 0
 }
 
@@ -321,6 +323,7 @@ func runValidate(args []string, dependencies Dependencies) int {
 	} else if !options.quiet {
 		fmt.Fprintf(dependencies.Stdout, "Valid: %s (%d assets, %d bytes)\n", result.AppID, result.AssetFiles, result.AssetBytes)
 	}
+	emitVerbose(options, dependencies.Stderr, "release=%s target=%s assets=%d permissions=%d", result.ReleaseVersion, result.Target, result.AssetFiles, len(result.Permissions))
 	return 0
 }
 
@@ -364,7 +367,14 @@ func runBuild(args []string, dependencies Dependencies) int {
 	} else if !options.quiet {
 		fmt.Fprintf(dependencies.Stdout, "Built %s\nArchive: %s\nSHA-256: %s\n", presented.AppID, presented.Archive, presented.ArchiveSHA256)
 	}
+	emitVerbose(options, dependencies.Stderr, "release=%s target=%s archiveBytes=%d", presented.ReleaseVersion, presented.Target, presented.ArchiveBytes)
 	return 0
+}
+
+func emitVerbose(options *commonOptions, writer io.Writer, format string, values ...any) {
+	if options.verbose && !options.json && !options.quiet {
+		fmt.Fprintf(writer, "velox: detail: "+format+"\n", values...)
+	}
 }
 
 func runVersion(args []string, dependencies Dependencies) int {

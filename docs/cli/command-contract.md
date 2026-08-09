@@ -118,7 +118,7 @@ IPC versions, and bundled targets.
 | --out PATH | Output root; default is dist |
 | --json | Emit one JSON document and no decorative human output |
 | --quiet | Suppress non-error human output |
-| --verbose | Add bounded diagnostics without secrets or source contents |
+| --verbose | Add bounded human-mode diagnostics to stderr without secrets, source contents, absolute paths, timestamps, or timing claims; quiet wins |
 | --help | Print command help and exit successfully |
 | --version | Alias the version command |
 
@@ -127,6 +127,10 @@ and asset root may not contain each other.
 
 Command-specific options must be added to this document before implementation
 is considered stable.
+
+`doctor`, `run`, `validate`, and `build` share the project options above.
+`init`, `inspect`, and `version` expose only their command-specific subset;
+unsupported options fail instead of being silently ignored.
 
 ## Configuration Precedence
 
