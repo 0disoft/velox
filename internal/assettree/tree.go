@@ -16,10 +16,11 @@ import (
 )
 
 type File struct {
-	RelativePath string
-	SourcePath   string
-	Size         int64
-	SHA256       string
+	RelativePath     string
+	SourcePath       string
+	Size             int64
+	ModifiedUnixNano int64
+	SHA256           string
 }
 
 type Tree struct {
@@ -97,8 +98,10 @@ func RevalidateSnapshot(root string, expected Tree) error {
 		return errors.New("asset tree shape or size changed")
 	}
 	for index := range current.Files {
-		if current.Files[index].RelativePath != expected.Files[index].RelativePath || current.Files[index].Size != expected.Files[index].Size {
-			return errors.New("asset tree shape or size changed")
+		if current.Files[index].RelativePath != expected.Files[index].RelativePath ||
+			current.Files[index].Size != expected.Files[index].Size ||
+			current.Files[index].ModifiedUnixNano != expected.Files[index].ModifiedUnixNano {
+			return errors.New("asset tree shape, size, or modification time changed")
 		}
 	}
 	return nil
@@ -164,10 +167,11 @@ func scan(root string, hashContents bool) (Tree, error) {
 			}
 		}
 		files = append(files, File{
-			RelativePath: filepath.ToSlash(relative),
-			SourcePath:   path,
-			Size:         info.Size(),
-			SHA256:       digest,
+			RelativePath:     filepath.ToSlash(relative),
+			SourcePath:       path,
+			Size:             info.Size(),
+			ModifiedUnixNano: info.ModTime().UnixNano(),
+			SHA256:           digest,
 		})
 		return nil
 	})

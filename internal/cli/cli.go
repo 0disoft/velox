@@ -336,7 +336,7 @@ func runBuild(args []string, dependencies Dependencies) int {
 	if flags.NArg() != 0 {
 		return emitFailure(dependencies, "build", options.json, 2, "USAGE_INVALID", "Build does not accept positional arguments.", errors.New("unexpected positional arguments"))
 	}
-	plan, err := createPlan(*options, dependencies.HostPath)
+	plan, err := createBuildPlan(*options, dependencies.HostPath)
 	if err != nil {
 		return emitPlanError(dependencies, "build", options.json, err)
 	}
@@ -426,7 +426,18 @@ func createRuntimePlan(options commonOptions, hostPath string) (buildplan.Plan, 
 	return createPlanWith(options, hostPath, true)
 }
 
+func createBuildPlan(options commonOptions, hostPath string) (buildplan.Plan, error) {
+	return createPlanFor(options, hostPath, buildplan.CreateBuild)
+}
+
 func createPlanWith(options commonOptions, hostPath string, runtimeOnly bool) (buildplan.Plan, error) {
+	if runtimeOnly {
+		return createPlanFor(options, hostPath, buildplan.CreateRuntime)
+	}
+	return createPlanFor(options, hostPath, buildplan.Create)
+}
+
+func createPlanFor(options commonOptions, hostPath string, create func(buildplan.Options) (buildplan.Plan, error)) (buildplan.Plan, error) {
 	if hostPath == "" {
 		executable, err := os.Executable()
 		if err != nil {
@@ -441,10 +452,7 @@ func createPlanWith(options commonOptions, hostPath string, runtimeOnly bool) (b
 		OutputRoot:       options.out,
 		Target:           options.target,
 	}
-	if runtimeOnly {
-		return buildplan.CreateRuntime(planOptions)
-	}
-	return buildplan.Create(planOptions)
+	return create(planOptions)
 }
 
 func validateResult(plan buildplan.Plan) ValidateResult {

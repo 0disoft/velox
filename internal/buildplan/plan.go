@@ -82,8 +82,13 @@ func Create(options Options) (Plan, error) {
 	return create(options, true)
 }
 
+// CreateBuild validates asset metadata. The builder computes content digests
+// while copying each source once into staging.
+func CreateBuild(options Options) (Plan, error) {
+	return create(options, false)
+}
+
 // CreateRuntime validates runtime inputs without hashing static asset content.
-// Build and validate commands must continue to use Create.
 func CreateRuntime(options Options) (Plan, error) {
 	return create(options, false)
 }

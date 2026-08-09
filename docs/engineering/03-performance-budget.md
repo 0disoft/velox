@@ -165,6 +165,12 @@ durability, and per-file flushes make build time scale with file count. The
 completed ZIP remains explicitly synced and then read back for its reported
 size and SHA-256.
 
+The build command plans asset paths, sizes, and modification times without a
+content pass. Each source is then read once while it is copied to staging and
+hashed; the build report is derived from those copied bytes. `validate` retains
+its independent full content-hash pass because its output explicitly reports
+the source asset digest.
+
 The harness records controlled local observations under
 `velox.consumer-benchmark/v1`, validates them against
 `schema/consumer-benchmark-v1.schema.json`, and reports:

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0disoft/velox/internal/safefs"
 )
@@ -58,7 +59,7 @@ func TestScanRejectsSymbolicLinks(t *testing.T) {
 	}
 }
 
-func TestRevalidateSnapshotChecksShapeWithoutReplacingContentDigest(t *testing.T) {
+func TestRevalidateSnapshotChecksShapeAndModificationTime(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "app.js")
 	writeAsset(t, path, "one")
@@ -67,8 +68,12 @@ func TestRevalidateSnapshotChecksShapeWithoutReplacingContentDigest(t *testing.T
 		t.Fatal(err)
 	}
 	writeAsset(t, path, "two")
-	if err := RevalidateSnapshot(root, planned); err != nil {
-		t.Fatalf("same-shape content is verified later by the copying boundary: %v", err)
+	future := planned.Files[0].ModifiedUnixNano + int64(2*time.Second)
+	if err := os.Chtimes(path, time.Unix(0, future), time.Unix(0, future)); err != nil {
+		t.Fatal(err)
+	}
+	if err := RevalidateSnapshot(root, planned); err == nil {
+		t.Fatal("RevalidateSnapshot() accepted a changed modification time")
 	}
 	writeAsset(t, path, "longer")
 	if err := RevalidateSnapshot(root, planned); err == nil {

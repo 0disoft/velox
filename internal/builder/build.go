@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/0disoft/velox/internal/archive"
+	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/ipc"
@@ -52,16 +53,21 @@ func Build(plan buildplan.Plan) (Result, error) {
 	}()
 
 	hostName := snapshot.ApplicationKey + ".exe"
-	if err := copyVerified(snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, snapshot.HostSHA256); err != nil {
+	if _, err := copyVerified(snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, 0, snapshot.HostSHA256); err != nil {
 		return Result{}, fmt.Errorf("copy host template: %w", err)
 	}
 	webRoot := filepath.Join(stageDirectory, "web")
+	copiedAssets := make([]assettree.File, 0, len(snapshot.Assets.Files))
 	for _, asset := range snapshot.Assets.Files {
 		destination := filepath.Join(webRoot, filepath.FromSlash(asset.RelativePath))
-		if err := copyVerified(asset.SourcePath, destination, 0o644, asset.Size, asset.SHA256); err != nil {
+		digest, err := copyVerified(asset.SourcePath, destination, 0o644, asset.Size, asset.ModifiedUnixNano, asset.SHA256)
+		if err != nil {
 			return Result{}, fmt.Errorf("copy asset %s: %w", asset.RelativePath, err)
 		}
+		asset.SHA256 = digest
+		copiedAssets = append(copiedAssets, asset)
 	}
+	verifiedAssets := assettree.Summarize(copiedAssets)
 
 	runtimeValue := runtimeconfig.FromManifest(snapshot.Manifest, "web")
 	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue); err != nil {
@@ -74,7 +80,7 @@ func Build(plan buildplan.Plan) (Result, error) {
 		Target:         snapshot.Target,
 		Contracts:      buildreport.Contracts{Manifest: 1, Runtime: runtimeconfig.Version, Host: snapshot.HostMetadata.Contracts.Host, IPC: ipc.Version},
 		Host:           buildreport.File{File: hostName, Bytes: snapshot.HostSize, SHA256: snapshot.HostSHA256},
-		Assets:         buildreport.Assets{Files: len(snapshot.Assets.Files), Bytes: snapshot.Assets.TotalBytes, SHA256: snapshot.Assets.Digest},
+		Assets:         buildreport.Assets{Files: len(verifiedAssets.Files), Bytes: verifiedAssets.TotalBytes, SHA256: verifiedAssets.Digest},
 		Permissions:    append([]string{}, snapshot.Manifest.Security.Permissions...),
 		Outputs:        buildreport.OutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
 	}
@@ -102,35 +108,41 @@ func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error
 	return outputpair.Promote(plan.AppDirectory, plan.ArchivePath, stageDirectory, stageArchive)
 }
 
-func copyVerified(source, destination string, mode os.FileMode, expectedSize int64, expectedSHA256 string) error {
+func copyVerified(source, destination string, mode os.FileMode, expectedSize, expectedModifiedUnixNano int64, expectedSHA256 string) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
-		return err
+		return "", err
 	}
 	input, info, err := safefs.OpenVerifiedRegular(source)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer input.Close()
-	if info.Size() != expectedSize {
-		return errors.New("source changed after build planning")
+	if info.Size() != expectedSize || (expectedModifiedUnixNano != 0 && info.ModTime().UnixNano() != expectedModifiedUnixNano) {
+		return "", errors.New("source changed after build planning")
 	}
 	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_WRONLY, mode)
 	if err != nil {
-		return err
+		return "", err
 	}
 	hash := sha256.New()
 	written, err := io.Copy(io.MultiWriter(output, hash), input)
 	if err != nil {
 		output.Close()
-		return err
+		return "", err
 	}
+	after, statErr := input.Stat()
 	actualSHA256 := hex.EncodeToString(hash.Sum(nil))
-	if written != expectedSize || actualSHA256 != expectedSHA256 {
+	if statErr != nil || written != expectedSize || after.Size() != expectedSize ||
+		(expectedModifiedUnixNano != 0 && after.ModTime().UnixNano() != expectedModifiedUnixNano) ||
+		(expectedSHA256 != "" && actualSHA256 != expectedSHA256) {
 		output.Close()
 		os.Remove(destination)
-		return errors.New("source changed after build planning")
+		return "", errors.New("source changed after build planning")
 	}
-	return output.Close()
+	if err := output.Close(); err != nil {
+		return "", err
+	}
+	return actualSHA256, nil
 }
 
 func writeJSON(path string, value any) error {

@@ -15,7 +15,7 @@ import (
 
 func TestBuildIsDeterministicAndKeepsHostUnchanged(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)
-	plan, err := buildplan.Create(buildplan.Options{
+	plan, err := buildplan.CreateBuild(buildplan.Options{
 		ManifestPath: manifestPath,
 		HostPath:     hostPath,
 		OutputRoot:   filepath.Join(root, "dist"),
@@ -65,7 +65,7 @@ func TestBuildIsDeterministicAndKeepsHostUnchanged(t *testing.T) {
 
 func TestBuildPreservesPreviousOutputWhenStagingIsOccupied(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)
-	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func TestBuildPreservesPreviousOutputWhenStagingIsOccupied(t *testing.T) {
 
 func TestBuildReportIsStableAndContainsNoAbsolutePaths(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)
-	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func TestBuildReportIsStableAndContainsNoAbsolutePaths(t *testing.T) {
 
 func TestBuildRejectsSourceChangesAfterPlanning(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)
-	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestBuildRejectsSourceChangesAfterPlanning(t *testing.T) {
 
 func TestBuildRejectsAssetsAddedAfterPlanning(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)
-	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,7 +140,7 @@ func TestBuildRejectsAssetsAddedAfterPlanning(t *testing.T) {
 
 func TestBuildRejectsInvalidExistingArchiveBeforePromotion(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)
-	plan, err := buildplan.Create(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
+	plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: manifestPath, HostPath: hostPath, OutputRoot: filepath.Join(root, "dist")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +177,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.16","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.17","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {
