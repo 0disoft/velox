@@ -2,9 +2,6 @@ package archive
 
 import (
 	"archive/zip"
-	"compress/flate"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -68,93 +65,35 @@ func createFiles(destination string, inputs []Input, observer buildphase.Observe
 			return Result{}, fmt.Errorf("duplicate archive entry %s", input.Name)
 		}
 	}
-	if _, err := os.Lstat(destination); err == nil {
-		return Result{}, errors.New("archive output already exists")
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return Result{}, fmt.Errorf("inspect archive output: %w", err)
-	}
-	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0o644)
+	stream, err := NewStream(destination)
 	if err != nil {
-		return Result{}, fmt.Errorf("create archive: %w", err)
+		return Result{}, err
 	}
-	success := false
-	defer func() {
-		output.Close()
-		if !success {
-			os.Remove(destination)
-		}
-	}()
-
-	writer := zip.NewWriter(output)
-	writer.RegisterCompressor(zip.Deflate, func(destination io.Writer) (io.WriteCloser, error) {
-		return flate.NewWriter(destination, flate.BestSpeed)
-	})
+	defer stream.Abort()
 	entriesStarted := time.Now()
 	for _, input := range inputs {
-		header := &zip.FileHeader{
-			Name:     input.Name,
-			Method:   compressionMethod(input.Name),
-			Modified: normalizedTime,
-		}
-		header.SetMode(0o644)
-		entry, err := writer.CreateHeader(header)
+		entry, err := stream.CreateEntry(input.Name, 0o644)
 		if err != nil {
-			writer.Close()
-			return Result{}, fmt.Errorf("create archive entry %s: %w", input.Name, err)
+			return Result{}, err
 		}
 		source, info, err := safefs.OpenVerifiedRegular(input.Source)
 		if err != nil {
-			writer.Close()
 			return Result{}, fmt.Errorf("open archive input %s: %w", input.Name, err)
 		}
 		written, copyErr := io.Copy(entry, source)
 		closeErr := source.Close()
 		if copyErr != nil {
-			writer.Close()
 			return Result{}, fmt.Errorf("write archive entry %s: %w", input.Name, copyErr)
 		}
 		if closeErr != nil {
-			writer.Close()
 			return Result{}, fmt.Errorf("close archive input %s: %w", input.Name, closeErr)
 		}
 		if written != info.Size() {
-			writer.Close()
 			return Result{}, fmt.Errorf("archive input %s changed while reading", input.Name)
 		}
 	}
 	buildphase.Record(observer, "archive.entries", entriesStarted)
-	finalizeStarted := time.Now()
-	if err := writer.Close(); err != nil {
-		return Result{}, fmt.Errorf("finalize archive: %w", err)
-	}
-	buildphase.Record(observer, "archive.finalize", finalizeStarted)
-	syncStarted := time.Now()
-	if err := output.Sync(); err != nil {
-		return Result{}, fmt.Errorf("sync archive: %w", err)
-	}
-	buildphase.Record(observer, "archive.sync", syncStarted)
-	verifyStarted := time.Now()
-	if _, err := output.Seek(0, io.SeekStart); err != nil {
-		return Result{}, fmt.Errorf("rewind archive for verification: %w", err)
-	}
-	hash := sha256.New()
-	verifiedSize, err := io.Copy(hash, output)
-	if err != nil {
-		return Result{}, fmt.Errorf("verify archive bytes: %w", err)
-	}
-	info, err := output.Stat()
-	if err != nil {
-		return Result{}, fmt.Errorf("inspect archive: %w", err)
-	}
-	if verifiedSize != info.Size() {
-		return Result{}, fmt.Errorf("verify archive size: read %d bytes, expected %d", verifiedSize, info.Size())
-	}
-	buildphase.Record(observer, "archive.verify", verifyStarted)
-	if err := output.Close(); err != nil {
-		return Result{}, fmt.Errorf("close archive: %w", err)
-	}
-	success = true
-	return Result{FileCount: len(inputs), Size: info.Size(), SHA256: hex.EncodeToString(hash.Sum(nil))}, nil
+	return stream.CloseObserved(observer)
 }
 
 func compressionMethod(name string) uint16 {
