@@ -58,6 +58,7 @@ func TestBuildIsDeterministicAndKeepsHostUnchanged(t *testing.T) {
 	if len(reader.File) != second.Report.Outputs.PortableFiles {
 		t.Fatalf("archive files = %d, want %d", len(reader.File), second.Report.Outputs.PortableFiles)
 	}
+	var portableBytes int64
 	expectedOrder := []string{
 		"com.example.hello/com.example.hello.exe",
 		"com.example.hello/web/app.js",
@@ -86,6 +87,10 @@ func TestBuildIsDeterministicAndKeepsHostUnchanged(t *testing.T) {
 		if !bytes.Equal(archived, portable) {
 			t.Fatalf("archive entry %s differs from portable output", file.Name)
 		}
+		portableBytes += int64(len(portable))
+	}
+	if second.PortableBytes != portableBytes {
+		t.Fatalf("portable bytes = %d, want %d", second.PortableBytes, portableBytes)
 	}
 	for index, name := range expectedOrder {
 		if reader.File[index].Name != name {
@@ -260,7 +265,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.25","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.26","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {

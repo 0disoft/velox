@@ -16,6 +16,7 @@ import (
 	"github.com/0disoft/velox/internal/buildinfo"
 	"github.com/0disoft/velox/internal/buildphase"
 	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/doctor"
 	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/initializer"
@@ -74,13 +75,20 @@ type ValidateResult struct {
 }
 
 type BuildResult struct {
-	ReleaseVersion string `json:"releaseVersion"`
-	AppID          string `json:"appId"`
-	Target         string `json:"target"`
-	Directory      string `json:"directory"`
-	Archive        string `json:"archive"`
-	ArchiveBytes   int64  `json:"archiveBytes"`
-	ArchiveSHA256  string `json:"archiveSha256"`
+	ReleaseVersion string                `json:"releaseVersion"`
+	AppID          string                `json:"appId"`
+	AppVersion     string                `json:"appVersion"`
+	Target         string                `json:"target"`
+	Contracts      buildreport.Contracts `json:"contracts"`
+	AssetFiles     int                   `json:"assetFiles"`
+	AssetBytes     int64                 `json:"assetBytes"`
+	AssetSHA256    string                `json:"assetSha256"`
+	Directory      string                `json:"directory"`
+	Archive        string                `json:"archive"`
+	PortableFiles  int                   `json:"portableFiles"`
+	PortableBytes  int64                 `json:"portableBytes"`
+	ArchiveBytes   int64                 `json:"archiveBytes"`
+	ArchiveSHA256  string                `json:"archiveSha256"`
 }
 
 type VersionResult struct {
@@ -357,9 +365,11 @@ func runBuild(args []string, dependencies Dependencies) int {
 	}
 	snapshot := plan.Snapshot()
 	presented := BuildResult{
-		ReleaseVersion: result.Report.ReleaseVersion, AppID: result.Report.App.ID, Target: result.Report.Target,
-		Directory:    safePath(snapshot.Manifest.ProjectRoot, result.DirectoryPath),
-		Archive:      safePath(snapshot.Manifest.ProjectRoot, result.ArchivePath),
+		ReleaseVersion: result.Report.ReleaseVersion, AppID: result.Report.App.ID, AppVersion: result.Report.App.Version,
+		Target: result.Report.Target, Contracts: result.Report.Contracts,
+		AssetFiles: result.Report.Assets.Files, AssetBytes: result.Report.Assets.Bytes, AssetSHA256: result.Report.Assets.SHA256,
+		Directory: safePath(snapshot.OutputRoot, result.DirectoryPath), Archive: safePath(snapshot.OutputRoot, result.ArchivePath),
+		PortableFiles: result.Report.Outputs.PortableFiles, PortableBytes: result.PortableBytes,
 		ArchiveBytes: result.ArchiveSize, ArchiveSHA256: result.ArchiveSHA256,
 	}
 	if options.json {

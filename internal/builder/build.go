@@ -26,6 +26,7 @@ type Result struct {
 	Report        buildreport.Report
 	DirectoryPath string
 	ArchivePath   string
+	PortableBytes int64
 	ArchiveSize   int64
 	ArchiveSHA256 string
 }
@@ -113,7 +114,8 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 		return Result{}, err
 	}
 	runtimeStarted := time.Now()
-	if err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue, observedWriter{writer: runtimeArchiveEntry, duration: &archiveEntryDuration}); err != nil {
+	runtimeBytes, err := writeJSON(filepath.Join(stageDirectory, "velox.runtime.json"), runtimeValue, observedWriter{writer: runtimeArchiveEntry, duration: &archiveEntryDuration})
+	if err != nil {
 		return Result{}, err
 	}
 	buildphase.Record(observer, "runtime.write", runtimeStarted)
@@ -133,7 +135,8 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 		return Result{}, err
 	}
 	reportStarted := time.Now()
-	if err := writeJSON(filepath.Join(stageDirectory, "build-result.json"), report, observedWriter{writer: reportArchiveEntry, duration: &archiveEntryDuration}); err != nil {
+	reportBytes, err := writeJSON(filepath.Join(stageDirectory, "build-result.json"), report, observedWriter{writer: reportArchiveEntry, duration: &archiveEntryDuration})
+	if err != nil {
 		return Result{}, err
 	}
 	buildphase.Record(observer, "report.write", reportStarted)
@@ -154,7 +157,8 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 	success = true
 	return Result{
 		Report: report, DirectoryPath: snapshot.AppDirectory, ArchivePath: snapshot.ArchivePath,
-		ArchiveSize: archiveResult.Size, ArchiveSHA256: archiveResult.SHA256,
+		PortableBytes: snapshot.HostSize + verifiedAssets.TotalBytes + runtimeBytes + reportBytes,
+		ArchiveSize:   archiveResult.Size, ArchiveSHA256: archiveResult.SHA256,
 	}, nil
 }
 
@@ -201,25 +205,25 @@ func copyVerified(source, destination string, mode os.FileMode, expectedSize, ex
 	return actualSHA256, nil
 }
 
-func writeJSON(path string, value any, mirrors ...io.Writer) error {
+func writeJSON(path string, value any, mirrors ...io.Writer) (int64, error) {
 	data, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
-		return fmt.Errorf("encode %s: %w", filepath.Base(path), err)
+		return 0, fmt.Errorf("encode %s: %w", filepath.Base(path), err)
 	}
 	data = append(data, '\n')
 	if err := os.WriteFile(path, data, 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", filepath.Base(path), err)
+		return 0, fmt.Errorf("write %s: %w", filepath.Base(path), err)
 	}
 	for _, mirror := range mirrors {
 		written, err := mirror.Write(data)
 		if err != nil {
-			return fmt.Errorf("archive %s: %w", filepath.Base(path), err)
+			return 0, fmt.Errorf("archive %s: %w", filepath.Base(path), err)
 		}
 		if written != len(data) {
-			return fmt.Errorf("archive %s: short write", filepath.Base(path))
+			return 0, fmt.Errorf("archive %s: short write", filepath.Base(path))
 		}
 	}
-	return nil
+	return int64(len(data)), nil
 }
 
 type observedWriter struct {
