@@ -206,8 +206,8 @@ func preparePrompt(path, trialRoot string) (string, string, string, error) {
 		return "", "", "", fmt.Errorf("prompt path must be absolute")
 	}
 	clean := filepath.Clean(path)
-	if !contained(clean, trialRoot) {
-		return "", "", "", fmt.Errorf("prompt path must be inside the trial root")
+	if contained(clean, trialRoot) {
+		return "", "", "", fmt.Errorf("prompt path must be outside the agent-controlled trial root")
 	}
 	info, err := os.Lstat(clean)
 	if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Size() > 64*1024 {

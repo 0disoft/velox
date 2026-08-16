@@ -22,7 +22,7 @@ func TestReceiptJSONContainsNoLocalPaths(t *testing.T) {
 			ProcessBoundary:    "job-object-no-breakaway",
 			NetworkCapability:  "internet-client",
 		},
-		Supervisor:          Supervisor{Version: "0.5.10-alpha.33", SHA256: "a"},
+		Supervisor:          Supervisor{Version: "0.5.10-alpha.34", SHA256: "a"},
 		CommandSHA256:       "b",
 		EnvironmentSHA256:   "d",
 		PromptSHA256:        "e",

@@ -6,9 +6,11 @@ import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
 import { createHermesAttestation } from "./hermes-evaluation-attestation.ts";
 import {
+  attestSandboxEvaluationTrial,
   attestEvaluationTrial,
   bindEvaluationSession,
   prepareEvaluationSeries,
+  stageSandboxEvaluationTrial,
   verifyEvaluationSeries,
 } from "./llm-agent-orchestrator.ts";
 import {
@@ -312,7 +314,7 @@ describe("LLM agent evaluation", () => {
         processBoundary: "job-object-no-breakaway",
         networkCapability: "internet-client",
       },
-      supervisor: { version: "0.5.10-alpha.33", sha256: "b".repeat(64) },
+      supervisor: { version: "0.5.10-alpha.34", sha256: "b".repeat(64) },
       commandSha256: "c".repeat(64),
       environmentSha256: "f".repeat(64),
       promptSha256: sha(Buffer.from("Run the public Velox evaluation task.")),
@@ -516,6 +518,58 @@ describe("LLM agent evaluation", () => {
     await expect(verifyEvaluationSeries(prepared.seriesRoot, prepared.taskPath)).rejects.toThrow("SERIES_SUMMARY_ALREADY_EXISTS");
   });
 
+  test("stages and attests a newly created sandbox session without a pre-known ID", async () => {
+    const prepared = await createPreparedSeries();
+    const staged = await stageSandboxEvaluationTrial({ seriesRoot: prepared.seriesRoot, sequence: 1 });
+    const promptBody = await readFile(staged.promptPath, "utf8");
+    const trialRoot = resolve(prepared.seriesRoot, staged.trial.directory);
+    const fixture = await createHermesFixture([], {
+      trialRoot,
+      sessionId: "20260816_010203_sandbox",
+      initialPrompt: promptBody,
+    });
+    const receiptPath = resolve(prepared.seriesRoot, "orchestrator", "sandbox-receipt.json");
+    const receipt = {
+      schemaVersion: "velox.eval-sandbox-receipt/v1",
+      trialId: staged.trial.trialId,
+      seriesId: prepared.manifest.seriesId,
+      sequence: 1,
+      policy: {
+        schemaVersion: "velox.eval-sandbox-policy/v1",
+        platform: "windows",
+        filesystemBoundary: "appcontainer-explicit-acl",
+        processBoundary: "job-object-no-breakaway",
+        networkCapability: "internet-client",
+      },
+      supervisor: { version: "0.5.10-alpha.34", sha256: "b".repeat(64) },
+      commandSha256: "c".repeat(64),
+      environmentSha256: "f".repeat(64),
+      promptSha256: sha(Buffer.from(promptBody)),
+      stateDatabaseSha256: sha(await readFile(fixture.input.stateDatabasePath)),
+      startedAtUtc: "1970-01-01T00:01:30.000Z",
+      finishedAtUtc: "1970-01-01T00:03:00.000Z",
+      exitCode: 0,
+      timedOut: false,
+      containment: { filesystemEnforced: true, processTreeEnforced: true, cleanupCompleted: true },
+      grants: [
+        { role: "trial-read-write-execute", pathSha256: "d".repeat(64), rights: "read-write-execute" },
+        { role: "tool-read-execute", pathSha256: "e".repeat(64), rights: "read-execute" },
+      ],
+    };
+    await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
+    const result = await attestSandboxEvaluationTrial({
+      seriesRoot: prepared.seriesRoot,
+      sequence: 1,
+      stateDatabasePath: fixture.input.stateDatabasePath,
+      sandboxReceiptPath: receiptPath,
+    });
+    expect(result.attestation).toMatchObject({
+      schemaVersion: "velox.llm-agent-evaluation-attestation/v2",
+      evaluator: { sessionIdSha256: sha(Buffer.from(fixture.sessionId)) },
+      evidence: { sandboxEnforced: true },
+    });
+  });
+
   test("rejects a session binding whose immutable trial identity was altered", async () => {
     const prepared = await createPreparedSeries();
     const sessionId = "20260730_010203_private";
@@ -586,6 +640,7 @@ async function createHermesFixture(
     trialRoot?: string;
     model?: string;
     sessionId?: string;
+    initialPrompt?: string;
   } = {},
 ) {
   const root = await mkdtemp(resolve(tmpdir(), "velox-hermes-attestation-"));
@@ -595,7 +650,7 @@ async function createHermesFixture(
   await mkdir(attestationRoot, { recursive: true });
   const stateDatabasePath = resolve(options.stateDatabaseInsideTrial ? trialRoot : root, "state.db");
   const sessionId = options.sessionId ?? "20260722_010101_fixture";
-  const messages = [userMessage(1, "Run the public Velox evaluation task."), ...extraMessages];
+  const messages = [userMessage(1, options.initialPrompt ?? "Run the public Velox evaluation task."), ...extraMessages];
   const parsedToolCalls = messages.reduce((count, message) => {
     if (!message.toolCalls) return count;
     return count + (JSON.parse(message.toolCalls) as unknown[]).length;
@@ -899,7 +954,7 @@ async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestati
       processBoundary: "job-object-no-breakaway" as const,
       networkCapability: "internet-client" as const,
     },
-    supervisor: { version: "0.5.10-alpha.33", sha256: "b".repeat(64) },
+    supervisor: { version: "0.5.10-alpha.34", sha256: "b".repeat(64) },
     commandSha256: "c".repeat(64),
     environmentSha256: "f".repeat(64),
     promptSha256: "9".repeat(64),

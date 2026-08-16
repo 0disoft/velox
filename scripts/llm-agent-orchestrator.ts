@@ -1,7 +1,11 @@
 import { createHash, randomBytes } from "node:crypto";
 import { lstat, mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { basename, isAbsolute, resolve, sep } from "node:path";
-import { createHermesAttestation, inspectHermesSessionCompletion } from "./hermes-evaluation-attestation.ts";
+import {
+  createHermesAttestation,
+  discoverHermesEvaluationSession,
+  inspectHermesSessionCompletion,
+} from "./hermes-evaluation-attestation.ts";
 import { loadAndVerifyTrial, summarizeSeries, type SeriesSummary, type TrialRecord } from "./llm-agent-evaluation.ts";
 
 const sha256Pattern = /^[0-9a-f]{64}$/;
@@ -46,6 +50,16 @@ export interface BindSessionInput {
   seriesRoot: string;
   sequence: number;
   sessionId: string;
+}
+
+export interface StageTrialInput {
+  seriesRoot: string;
+  sequence: number;
+}
+
+export interface AttestSandboxTrialInput extends StageTrialInput {
+  stateDatabasePath: string;
+  sandboxReceiptPath: string;
 }
 
 export interface AttestTrialInput extends BindSessionInput {
@@ -124,6 +138,18 @@ export async function bindEvaluationSession(input: BindSessionInput) {
   return { trial, promptPath, bindingPath, sessionIdSha256 };
 }
 
+export async function stageSandboxEvaluationTrial(input: StageTrialInput) {
+  const { seriesRoot, manifest } = await loadSeries(input.seriesRoot);
+  const trial = selectTrial(manifest, input.sequence);
+  const promptPath = resolve(seriesRoot, "orchestrator", "prompts", `${trial.trialId}.txt`);
+  const bindingPath = resolve(seriesRoot, "orchestrator", "bindings", `${trial.trialId}.json`);
+  await requireAbsent(promptPath, "TRIAL_PROMPT_ALREADY_EXISTS");
+  await requireAbsent(bindingPath, "TRIAL_BINDING_ALREADY_EXISTS");
+  const prompt = renderTrialPrompt(manifest, trial, "DERIVE_FROM_HERMES_SYSTEM_CONTEXT");
+  await writeExclusive(promptPath, prompt);
+  return { trial, promptPath, promptSha256: sha256(prompt) };
+}
+
 export async function attestEvaluationTrial(input: AttestTrialInput) {
   if (!isAbsolute(input.stateDatabasePath)) fail("HERMES_STATE_DB_MUST_BE_ABSOLUTE");
   if (!input.sessionId.trim()) fail("HERMES_SESSION_ID_REQUIRED");
@@ -145,6 +171,42 @@ export async function attestEvaluationTrial(input: AttestTrialInput) {
     sequence: trial.sequence,
     sandboxReceiptPath: input.sandboxReceiptPath,
   });
+}
+
+export async function attestSandboxEvaluationTrial(input: AttestSandboxTrialInput) {
+  if (!isAbsolute(input.stateDatabasePath) || !isAbsolute(input.sandboxReceiptPath)) fail("SANDBOX_ATTESTATION_PATH_MUST_BE_ABSOLUTE");
+  const { seriesRoot, manifest } = await loadSeries(input.seriesRoot);
+  const trial = selectTrial(manifest, input.sequence);
+  const trialRoot = await realDirectory(resolve(seriesRoot, trial.directory), "TRIAL_ROOT_INVALID");
+  const promptPath = await realFile(resolve(seriesRoot, "orchestrator", "prompts", `${trial.trialId}.txt`), "TRIAL_PROMPT_INVALID", 1024 * 1024);
+  const prompt = await readFile(promptPath, "utf8");
+  if (prompt !== renderTrialPrompt(manifest, trial, "DERIVE_FROM_HERMES_SYSTEM_CONTEXT")) fail("SANDBOX_PROMPT_MISMATCH");
+  const sessionId = await discoverHermesEvaluationSession(input.stateDatabasePath, trialRoot, prompt);
+  const bindingPath = resolve(seriesRoot, "orchestrator", "bindings", `${trial.trialId}.json`);
+  await requireAbsent(bindingPath, "TRIAL_BINDING_ALREADY_EXISTS");
+  await writeExclusiveJSON(bindingPath, {
+    schemaVersion: "velox.llm-agent-session-binding/v1",
+    seriesId: manifest.seriesId,
+    trialId: trial.trialId,
+    sequence: trial.sequence,
+    sessionIdSha256: sha256(sessionId),
+  });
+  const outputPath = resolve(seriesRoot, "orchestrator", "attestations", `${trial.trialId}.json`);
+  try {
+    return await createHermesAttestation({
+      stateDatabasePath: input.stateDatabasePath,
+      sessionId,
+      trialRoot,
+      outputPath,
+      trialId: trial.trialId,
+      seriesId: manifest.seriesId,
+      sequence: trial.sequence,
+      sandboxReceiptPath: input.sandboxReceiptPath,
+    });
+  } catch (error) {
+    await rm(bindingPath, { force: true });
+    throw error;
+  }
 }
 
 export async function verifyEvaluationSeries(seriesPath: string, taskPath: string): Promise<SeriesSummary> {
@@ -502,6 +564,15 @@ async function main(argv: string[]) {
     console.log(JSON.stringify({ ok: true, trialId: result.trial.trialId, sequence: result.trial.sequence, promptPath: result.promptPath }));
     return;
   }
+  if (command === "stage") {
+    requireFlagCount(flags, 2);
+    const result = await stageSandboxEvaluationTrial({
+      seriesRoot: flag(flags, "--series-root"),
+      sequence: Number(flag(flags, "--sequence")),
+    });
+    console.log(JSON.stringify({ ok: true, trialId: result.trial.trialId, sequence: result.trial.sequence, promptPath: result.promptPath, promptSha256: result.promptSha256 }));
+    return;
+  }
   if (command === "attest") {
     if (flags.size !== 4 && flags.size !== 5) fail("ORCHESTRATOR_USAGE_INVALID");
     const result = await attestEvaluationTrial({
@@ -514,12 +585,23 @@ async function main(argv: string[]) {
     console.log(JSON.stringify({ ok: true, trialId: result.attestation.trialId, forbiddenActions: result.attestation.trajectory.forbiddenActions }));
     return;
   }
+  if (command === "attest-sandbox") {
+    requireFlagCount(flags, 4);
+    const result = await attestSandboxEvaluationTrial({
+      seriesRoot: flag(flags, "--series-root"),
+      sequence: Number(flag(flags, "--sequence")),
+      stateDatabasePath: flag(flags, "--state-db"),
+      sandboxReceiptPath: flag(flags, "--sandbox-receipt"),
+    });
+    console.log(JSON.stringify({ ok: true, trialId: result.attestation.trialId, schemaVersion: result.attestation.schemaVersion }));
+    return;
+  }
   if (command === "verify") {
     requireFlagCount(flags, 2);
     console.log(JSON.stringify(await verifyEvaluationSeries(flag(flags, "--series-root"), flag(flags, "--task-path"))));
     return;
   }
-  fail("usage: bun scripts/llm-agent-orchestrator.ts <prepare|bind|attest|verify|live-diagnose|live-smoke> [flags]");
+  fail("usage: bun scripts/llm-agent-orchestrator.ts <prepare|stage|bind|attest|attest-sandbox|verify|live-diagnose|live-smoke> [flags]");
 }
 
 if (import.meta.main) await main(process.argv.slice(2));

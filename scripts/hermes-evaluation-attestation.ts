@@ -86,6 +86,33 @@ export interface HermesCompletionDiagnostic {
   } | null;
 }
 
+export async function discoverHermesEvaluationSession(
+  stateDatabasePath: string,
+  trialRootPath: string,
+  exactPrompt: string,
+): Promise<string> {
+  if (!isAbsolute(stateDatabasePath) || !isAbsolute(trialRootPath) || !exactPrompt) fail("HERMES_DISCOVERY_INPUT_INVALID");
+  const trialRoot = await realpath(trialRootPath);
+  const databasePath = await realpath(stateDatabasePath);
+  if (isContained(trialRoot, databasePath)) fail("HERMES_STATE_DB_INSIDE_TRIAL_ROOT");
+  const database = new Database(databasePath, { readonly: true, strict: true });
+  try {
+    verifyHermesSchema(database);
+    const candidates = database.query(`
+      SELECT DISTINCT s.id, s.cwd
+      FROM sessions s
+      JOIN messages m ON m.session_id = s.id
+      WHERE s.parent_session_id IS NULL AND m.role = 'user' AND m.content = ?1
+      ORDER BY s.started_at, s.id
+    `).all(exactPrompt) as Array<{ id: string; cwd: string | null }>;
+    const matching = candidates.filter((candidate) => candidate.cwd !== null && isAbsolute(candidate.cwd) && pathsEqual(resolve(candidate.cwd), trialRoot));
+    if (matching.length !== 1) fail("HERMES_SANDBOX_SESSION_NOT_UNIQUE");
+    return matching[0].id;
+  } finally {
+    database.close(false);
+  }
+}
+
 export function inspectHermesSessionCompletion(
   stateDatabasePath: string,
   sessionId: string,
@@ -487,6 +514,10 @@ function isContained(root: string, path: string) {
   const normalizedRoot = process.platform === "win32" ? root.toLowerCase() : root;
   const normalizedPath = process.platform === "win32" ? path.toLowerCase() : path;
   return normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}${sep}`);
+}
+
+function pathsEqual(left: string, right: string) {
+  return process.platform === "win32" ? left.toLowerCase() === right.toLowerCase() : left === right;
 }
 
 function parseJSON(value: string, code: string): unknown {

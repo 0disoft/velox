@@ -36,7 +36,7 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 	}
 	allowedPath := filepath.Join(trialRoot, "inside.txt")
 	prompt := "run the sandbox boundary probe"
-	promptPath := filepath.Join(trialRoot, "prompt.txt")
+	promptPath := filepath.Join(receiptRoot, "prompt.txt")
 	if err := os.WriteFile(promptPath, []byte(prompt), 0o600); err != nil {
 		t.Fatal(err)
 	}
