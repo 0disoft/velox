@@ -68,7 +68,7 @@ func TestBuildJSONContractAndOutputs(t *testing.T) {
 	if err := json.Unmarshal(resultData, &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.ReleaseVersion != "0.5.10-alpha.26" || result.AppID != "com.example.hello" || result.AppVersion != "1.0.0" || result.Target != "windows-x64" {
+	if result.ReleaseVersion != "0.5.10-alpha.27" || result.AppID != "com.example.hello" || result.AppVersion != "1.0.0" || result.Target != "windows-x64" {
 		t.Fatalf("unexpected identity result: %+v", result)
 	}
 	if result.Contracts.Manifest != 1 || result.Contracts.Runtime != 1 || result.Contracts.Host != 1 || result.Contracts.IPC != 1 {
@@ -112,7 +112,7 @@ func TestValidateVerboseIsBoundedAndQuietWins(t *testing.T) {
 	if exitCode != 0 || !strings.Contains(stdout.String(), "Valid: com.example.hello") {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
 	}
-	want := "velox: detail: release=0.5.10-alpha.26 target=windows-x64 assets=1 permissions=0\n"
+	want := "velox: detail: release=0.5.10-alpha.27 target=windows-x64 assets=1 permissions=0\n"
 	if stderr.String() != want || strings.Contains(stderr.String(), root) {
 		t.Fatalf("verbose stderr = %q, want %q", stderr.String(), want)
 	}
@@ -147,6 +147,29 @@ func TestFailureJSONDoesNotExposeAbsolutePath(t *testing.T) {
 	if envelope.OK || envelope.Error == nil || envelope.Error.Code != "MANIFEST_INVALID" {
 		t.Fatalf("unexpected failure: %+v", envelope)
 	}
+	if len(envelope.Diagnostics) != 1 || envelope.Diagnostics[0].Path != "velox.json" || envelope.Diagnostics[0].Facts["kind"] != "manifest" {
+		t.Fatalf("unexpected diagnostic: %+v", envelope.Diagnostics)
+	}
+}
+
+func TestMalformedManifestDiagnosticIncludesLocation(t *testing.T) {
+	root := t.TempDir()
+	config := filepath.Join(root, "velox.json")
+	writeCLIFile(t, config, "{\n  \"schemaVersion\": 1,\n  \"app\": }\n")
+	var stdout bytes.Buffer
+	exitCode := Run([]string{"validate", "--config", config, "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: io.Discard, HostPath: filepath.Join(root, "velox-host.exe"),
+	})
+	if exitCode != 2 {
+		t.Fatalf("exit=%d stdout=%q", exitCode, stdout.String())
+	}
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if len(envelope.Diagnostics) != 1 || envelope.Diagnostics[0].Path != "velox.json" || envelope.Diagnostics[0].Line != 3 || envelope.Diagnostics[0].Column == 0 {
+		t.Fatalf("unexpected diagnostic location: %+v", envelope.Diagnostics)
+	}
 }
 
 func TestValidateRejectsHostTampering(t *testing.T) {
@@ -167,6 +190,9 @@ func TestValidateRejectsHostTampering(t *testing.T) {
 	}
 	if envelope.OK || envelope.Error == nil || envelope.Error.Code != "HOST_INCOMPATIBLE" {
 		t.Fatalf("unexpected envelope: %+v", envelope)
+	}
+	if len(envelope.Diagnostics) != 1 || envelope.Diagnostics[0].Path != "velox-host.exe" || envelope.Diagnostics[0].Facts["kind"] != "host" || len(envelope.Diagnostics[0].RelatedLocations) != 1 || envelope.Diagnostics[0].RelatedLocations[0].Path != "velox.json" {
+		t.Fatalf("unexpected host diagnostic: %+v", envelope.Diagnostics)
 	}
 	if _, err := os.Stat(filepath.Join(root, "dist")); !os.IsNotExist(err) {
 		t.Fatalf("validation failure created output: %v", err)
@@ -347,7 +373,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.26","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.27","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

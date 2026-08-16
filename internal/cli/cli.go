@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -55,11 +56,22 @@ type ErrorResult struct {
 }
 
 type Diagnostic struct {
-	Code     string `json:"code"`
-	Severity string `json:"severity"`
-	Category string `json:"category"`
-	Path     string `json:"path,omitempty"`
-	Message  string `json:"message"`
+	Code             string               `json:"code"`
+	Severity         string               `json:"severity"`
+	Category         string               `json:"category"`
+	Path             string               `json:"path,omitempty"`
+	Line             int                  `json:"line,omitempty"`
+	Column           int                  `json:"column,omitempty"`
+	Message          string               `json:"message"`
+	Facts            map[string]string    `json:"facts,omitempty"`
+	RelatedLocations []DiagnosticLocation `json:"relatedLocations,omitempty"`
+}
+
+type DiagnosticLocation struct {
+	Path    string `json:"path"`
+	Line    int    `json:"line,omitempty"`
+	Column  int    `json:"column,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 type ValidateResult struct {
@@ -280,7 +292,7 @@ func runProject(args []string, dependencies Dependencies) int {
 	}
 	plan, err := createRuntimePlan(*options, dependencies.HostPath)
 	if err != nil {
-		return emitPlanError(dependencies, "run", options.json, err)
+		return emitPlanError(dependencies, "run", *options, err)
 	}
 
 	hostStdout, hostStderr := dependencies.Stdout, dependencies.Stderr
@@ -323,7 +335,7 @@ func runValidate(args []string, dependencies Dependencies) int {
 	}
 	plan, err := createPlan(*options, dependencies.HostPath)
 	if err != nil {
-		return emitPlanError(dependencies, "validate", options.json, err)
+		return emitPlanError(dependencies, "validate", *options, err)
 	}
 	result := validateResult(plan)
 	if options.json {
@@ -351,7 +363,7 @@ func runBuild(args []string, dependencies Dependencies) int {
 	}
 	plan, err := createBuildPlan(*options, dependencies.HostPath)
 	if err != nil {
-		return emitPlanError(dependencies, "build", options.json, err)
+		return emitPlanError(dependencies, "build", *options, err)
 	}
 	var observer buildphase.Observer
 	if os.Getenv("VELOX_BENCH_MODE") == "1" && os.Getenv("VELOX_BENCH_PHASES") == "1" {
@@ -493,29 +505,47 @@ func validateResult(plan buildplan.Plan) ValidateResult {
 	}
 }
 
-func emitPlanError(dependencies Dependencies, command string, jsonOutput bool, err error) int {
+func emitPlanError(dependencies Dependencies, command string, options commonOptions, err error) int {
 	var planError *buildplan.Error
 	if !errors.As(err, &planError) {
-		return emitFailure(dependencies, command, jsonOutput, 10, "INTERNAL", "Unexpected internal failure.", err)
+		return emitFailure(dependencies, command, options.json, 10, "INTERNAL", "Unexpected internal failure.", err)
+	}
+	diagnostic := Diagnostic{Severity: "error", Facts: map[string]string{"kind": string(planError.Kind), "target": options.target}}
+	diagnostic.Path = safeDiagnosticPath(options.config)
+	if planError.Kind == buildplan.ErrorHost {
+		diagnostic.Path = safeDiagnosticPath(dependencies.HostPath)
+		if manifestPath := safeDiagnosticPath(options.config); manifestPath != "" {
+			diagnostic.RelatedLocations = []DiagnosticLocation{{Path: manifestPath, Message: "project manifest"}}
+		}
+	} else if planError.Kind == buildplan.ErrorManifest || planError.Kind == buildplan.ErrorConfig {
+		diagnostic.Line, diagnostic.Column = diagnosticLineColumn(options.config, err)
 	}
 	switch planError.Kind {
 	case buildplan.ErrorManifest, buildplan.ErrorConfig:
-		return emitFailure(dependencies, command, jsonOutput, 2, "MANIFEST_INVALID", "Project manifest is invalid.", err)
+		return emitFailureWithDiagnostic(dependencies, command, options.json, 2, "MANIFEST_INVALID", "Project manifest is invalid.", diagnostic, err)
 	case buildplan.ErrorAsset:
-		return emitFailure(dependencies, command, jsonOutput, 3, "ASSET_INVALID", "Project assets are invalid.", err)
+		return emitFailureWithDiagnostic(dependencies, command, options.json, 3, "ASSET_INVALID", "Project assets are invalid.", diagnostic, err)
 	case buildplan.ErrorHost:
-		return emitFailure(dependencies, command, jsonOutput, 4, "HOST_INCOMPATIBLE", "Host template is unavailable or incompatible.", err)
+		return emitFailureWithDiagnostic(dependencies, command, options.json, 4, "HOST_INCOMPATIBLE", "Host template is unavailable or incompatible.", diagnostic, err)
 	default:
-		return emitFailure(dependencies, command, jsonOutput, 10, "INTERNAL", "Unexpected internal failure.", err)
+		return emitFailure(dependencies, command, options.json, 10, "INTERNAL", "Unexpected internal failure.", err)
 	}
 }
 
 func emitFailure(dependencies Dependencies, command string, jsonOutput bool, exitCode int, code, message string, detail error) int {
+	return emitFailureWithDiagnostic(dependencies, command, jsonOutput, exitCode, code, message, Diagnostic{}, detail)
+}
+
+func emitFailureWithDiagnostic(dependencies Dependencies, command string, jsonOutput bool, exitCode int, code, message string, diagnostic Diagnostic, detail error) int {
+	diagnostic.Code = code
+	diagnostic.Severity = "error"
+	diagnostic.Category = category(code)
+	diagnostic.Message = message
 	if jsonOutput {
 		if err := emitJSON(dependencies.Stdout, Envelope{
 			SchemaVersion: 1, OK: false, Command: command,
 			Error:       &ErrorResult{Code: code, Message: message},
-			Diagnostics: []Diagnostic{{Code: code, Severity: "error", Category: category(code), Message: message}},
+			Diagnostics: []Diagnostic{diagnostic},
 		}); err != nil {
 			return 10
 		}
@@ -523,6 +553,40 @@ func emitFailure(dependencies Dependencies, command string, jsonOutput bool, exi
 		fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", code, safeMessage(detail))
 	}
 	return exitCode
+}
+
+func safeDiagnosticPath(path string) string {
+	if strings.TrimSpace(path) == "" {
+		return ""
+	}
+	clean := filepath.Clean(path)
+	if filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return filepath.Base(clean)
+	}
+	return filepath.ToSlash(clean)
+}
+
+func diagnosticLineColumn(path string, err error) (int, int) {
+	var offset int64
+	var syntaxError *json.SyntaxError
+	var typeError *json.UnmarshalTypeError
+	switch {
+	case errors.As(err, &syntaxError):
+		offset = syntaxError.Offset
+	case errors.As(err, &typeError):
+		offset = typeError.Offset
+	default:
+		return 0, 0
+	}
+	data, readErr := os.ReadFile(path)
+	if readErr != nil || offset < 1 || offset > int64(len(data))+1 {
+		return 0, 0
+	}
+	prefix := data[:offset-1]
+	line := bytes.Count(prefix, []byte{'\n'}) + 1
+	lastNewline := bytes.LastIndexByte(prefix, '\n')
+	column := len(prefix) - lastNewline
+	return line, column
 }
 
 func emitSuccessJSON(writer io.Writer, value Envelope) int {
