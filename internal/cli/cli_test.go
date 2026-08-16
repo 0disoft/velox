@@ -68,7 +68,7 @@ func TestBuildJSONContractAndOutputs(t *testing.T) {
 	if err := json.Unmarshal(resultData, &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.ReleaseVersion != "0.5.10-alpha.28" || result.AppID != "com.example.hello" || result.AppVersion != "1.0.0" || result.Target != "windows-x64" {
+	if result.ReleaseVersion != "0.5.10-alpha.29" || result.AppID != "com.example.hello" || result.AppVersion != "1.0.0" || result.Target != "windows-x64" {
 		t.Fatalf("unexpected identity result: %+v", result)
 	}
 	if result.Contracts.Manifest != 1 || result.Contracts.Runtime != 1 || result.Contracts.Host != 1 || result.Contracts.IPC != 1 {
@@ -105,6 +105,7 @@ func TestBuildEmitsPhasesOnlyInBenchmarkMode(t *testing.T) {
 
 func TestValidateVerboseIsBoundedAndQuietWins(t *testing.T) {
 	root, config, host := cliFixture(t)
+	filesBefore := regularFileSet(t, root)
 	var stdout, stderr bytes.Buffer
 	exitCode := Run([]string{"validate", "--config", config, "--out", filepath.Join(root, "dist"), "--verbose"}, Dependencies{
 		Stdout: &stdout, Stderr: &stderr, HostPath: host,
@@ -112,7 +113,7 @@ func TestValidateVerboseIsBoundedAndQuietWins(t *testing.T) {
 	if exitCode != 0 || !strings.Contains(stdout.String(), "Valid: com.example.hello") {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
 	}
-	want := "velox: detail: release=0.5.10-alpha.28 target=windows-x64 assets=1 permissions=0\n"
+	want := "velox: detail: release=0.5.10-alpha.29 target=windows-x64 assets=1 permissions=0\n"
 	if stderr.String() != want || strings.Contains(stderr.String(), root) {
 		t.Fatalf("verbose stderr = %q, want %q", stderr.String(), want)
 	}
@@ -124,6 +125,15 @@ func TestValidateVerboseIsBoundedAndQuietWins(t *testing.T) {
 	})
 	if exitCode != 0 || stdout.Len() != 0 || stderr.Len() != 0 {
 		t.Fatalf("quiet verbose exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
+	}
+	filesAfter := regularFileSet(t, root)
+	if len(filesBefore) != len(filesAfter) {
+		t.Fatalf("verbose mode created persistent files: before=%v after=%v", filesBefore, filesAfter)
+	}
+	for path := range filesBefore {
+		if _, exists := filesAfter[path]; !exists {
+			t.Fatalf("verbose mode changed the persistent file set: before=%v after=%v", filesBefore, filesAfter)
+		}
 	}
 }
 
@@ -373,7 +383,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.28","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.29","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host
@@ -387,4 +397,25 @@ func writeCLIFile(t *testing.T, path, value string) {
 	if err := os.WriteFile(path, []byte(value), 0o644); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func regularFileSet(t *testing.T, root string) map[string]struct{} {
+	t.Helper()
+	files := map[string]struct{}{}
+	if err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.Type().IsRegular() {
+			relative, relErr := filepath.Rel(root, path)
+			if relErr != nil {
+				return relErr
+			}
+			files[filepath.ToSlash(relative)] = struct{}{}
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	return files
 }

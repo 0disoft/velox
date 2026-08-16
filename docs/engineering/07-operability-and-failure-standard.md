@@ -49,11 +49,16 @@ native stack traces in normal mode, and unstable progress prose.
 
 ## Logs
 
-Normal operation does not require a persistent log file.
+Normal operation and explicit verbose mode do not create persistent log files.
+`--verbose` emits bounded repair context to stderr only; `--quiet` suppresses
+it, and JSON mode keeps stdout to one machine-readable document. The host has
+no file logger, log directory, retention task, upload path, or environment flag
+that silently enables persistence.
 
-Explicit verbose or diagnostic modes may emit bounded local logs. The exact
-file location, retention, and redaction implementation remain UNDECIDED until
-the host exists.
+Any future persistent diagnostic file requires a new ADR that defines an
+opt-in trigger, application-owned location, byte and age limits, redaction,
+cleanup, and performance evidence. It must not reuse the WebView2 user-data
+directory or enter build and release artifacts.
 
 Logs are not uploaded automatically.
 
