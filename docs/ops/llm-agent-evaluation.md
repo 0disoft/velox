@@ -124,13 +124,15 @@ reasoning, raw session IDs, local paths, or the database.
 The generator is maintainer orchestration and uses Bun outside the consumer
 trial; Bun must never be exposed to or invoked by the evaluated agent.
 
-This adapter is not operating-system process telemetry. Its v1 evidence fixes
-`observationLevel` to `session-log-heuristic` and `sandboxEnforced` to `false`.
-It can classify the
+This adapter alone is not operating-system process telemetry. Its v1 evidence
+fixes `observationLevel` to `session-log-heuristic` and `sandboxEnforced` to
+`false`. It can classify the
 Hermes tool calls and known implicit editor behavior stored in the session
 ledger, but a future Hermes helper that launches an unrecorded subprocess needs
-a classifier update. Such trials remain useful diagnostics but cannot pass the
-beta technical gate.
+a classifier update. V1 trials remain useful diagnostics but cannot pass the
+beta technical gate. A qualifying trial combines that projection with an
+independently emitted `velox.eval-sandbox-receipt/v1` in
+`velox.llm-agent-evaluation-attestation/v2`.
 Likewise, a root Hermes session proves that no parent transcript was resumed;
 the orchestrator still owns the separate requirement to launch the evaluator
 without provider-side or profile-side memory carryover.
@@ -138,7 +140,7 @@ without provider-side or profile-side memory carryover.
 ## Series Orchestration
 
 `scripts/llm-agent-orchestrator.ts` keeps agent-owned trial files separate from
-maintainer-owned prompts, bindings, and attestations. The supported sequence is:
+maintainer-owned prompts, bindings, and attestations. The qualifying sequence is:
 
 ```text
 bun scripts/llm-agent-orchestrator.ts prepare \
@@ -149,40 +151,64 @@ bun scripts/llm-agent-orchestrator.ts prepare \
   --release-url <immutable-release-zip-url> \
   --release-sha256 <release-zip-sha256>
 
-bun scripts/llm-agent-orchestrator.ts bind \
+bun scripts/llm-agent-orchestrator.ts stage \
   --series-root <absolute-series-root> \
-  --sequence <1|2|3> \
-  --session-id <actual-hermes-session-id>
+  --sequence <1|2|3>
 
-bun scripts/llm-agent-orchestrator.ts attest \
+go build -trimpath -o <tool-dir>/velox-eval-sandbox.exe ./cmd/velox-eval-sandbox
+
+<tool-dir>/velox-eval-sandbox.exe \
+  --trial-id <trial-id> --series-id <series-id> --sequence <1|2|3> \
+  --trial-root <absolute-trial-root> \
+  --tool-root <absolute-evaluator-install-root> \
+  --pass-env PATH --pass-env <provider-credential-variable> \
+  --prompt <absolute-staged-prompt> \
+  --state-db-export <absolute-external-temporary-state.db> \
+  --receipt <absolute-external-sandbox-receipt.json> \
+  --timeout 45m -- <absolute-evaluator.exe> <new-session-arguments> <exact-prompt-argument>
+
+bun scripts/llm-agent-orchestrator.ts attest-sandbox \
   --series-root <absolute-series-root> \
   --sequence <1|2|3> \
-  --session-id <actual-hermes-session-id> \
-  --state-db <absolute-hermes-state.db>
+  --state-db <absolute-external-temporary-state.db> \
+  --sandbox-receipt <absolute-external-sandbox-receipt.json>
 
 bun scripts/llm-agent-orchestrator.ts verify \
   --series-root <absolute-series-root> \
   --task-path <absolute-public-task-file>
 ```
 
-`prepare` refuses an evaluation root inside the Velox repository and creates
-three immutable trial identities. `bind` writes a prompt and a hash-only local
-binding without persisting the raw Hermes session ID. `attest` requires that
-same raw ID to match the binding and writes outside the trial directory.
+`prepare` creates three immutable identities and `stage` writes the exact
+maintainer-owned prompt before a session ID exists. The supervisor launches a
+new evaluator session in an ephemeral AppContainer, assigns its process tree to
+a no-breakaway Job Object, grants only the trial and selected tool roots, and
+constructs an isolated environment. The exact prompt must be one command
+argument. For Hermes, use noninteractive single-query mode, pass the new session
+ID into system context, ignore user rules and configuration, and supply provider
+and model settings explicitly.
+
+After normal exit, the supervisor exports isolated `HERMES_HOME/state.db`,
+records its SHA-256 plus prompt, command, environment, supervisor, and grant
+digests, revokes ACLs, deletes the AppContainer profile and private state, and
+only then writes a receipt. Timeout, nonzero exit, uncheckpointed SQLite WAL,
+export failure, or cleanup failure emits no qualifying receipt.
+
+`attest-sandbox` discovers exactly one root session by staged prompt and trial
+working directory, creates the hash-only binding, validates the DB and receipt,
+and writes v2 evidence. Delete the temporary exported database after successful
+attestation; raw session data is not retained evidence.
 `verify` requires all three results and attestations, preserves failed and held
 outcomes, and exclusively creates one `summary.json`; it never replaces a
 previous verdict.
 
-The orchestrator does not start Hermes, choose a model, send a prompt, or run an
-autonomous loop. A maintainer creates each fresh session, sets its working
-directory to the prepared trial directory, runs `bind`, sends the generated
-prompt, closes the session, and then runs `attest`. At least two distinct model
-identifiers are still required by the deterministic series gate.
+The orchestrator does not choose a provider or model. At least two distinct
+model identifiers are still required by the deterministic series gate. Legacy
+`bind` and `attest` remain available for v1 diagnostic evidence only.
 
 ## Beta Gate
 
-The beta technical gate passes only when all of the following are true. The
-current Hermes v1 adapter cannot satisfy item 7 and therefore yields `held`:
+The beta technical gate passes only when all of the following are true. A v1
+attestation cannot satisfy item 7 and therefore yields `held`:
 
 1. Three consecutive trials pass against the same release bytes, task version,
    and result schema.
@@ -231,12 +257,16 @@ trial identity, actual provider and model, actual session-ID hash, actual start
 and finish timestamps, actual tool-call and retry counts, the supplied budget,
 stable forbidden-action codes, and a SHA-256 of the external session log. The
 attestation must not be written inside the trial root or exposed to the agent as
-an editable result artifact.
+an editable result artifact. V2 additionally binds the exact staged prompt,
+isolated state database, supervisor binary, command, sanitized environment,
+AppContainer filesystem policy, Job Object process policy, grant set, exit
+status, timeout state, and cleanup completion without retaining local paths or
+environment values.
 
 The local series manifest and binding files contain trial identities, public
 artifact metadata, and only a SHA-256 of each Hermes session ID. Raw session IDs
-are accepted only as transient command input for `bind` and `attest` and are not
-persisted by the orchestrator.
+are accepted only as transient input or discovered from the temporary isolated
+database and are not persisted by the orchestrator.
 
 Raw prompts containing provider credentials, complete tool payloads, full
 transcripts, screenshots with personal data, and local absolute paths are not

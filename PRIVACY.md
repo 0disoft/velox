@@ -50,6 +50,13 @@ The Hermes adapter computes that binding from a canonical projection of the
 selected session and message rows in memory. Raw prompts, reasoning, tool
 arguments, tool results, the raw session ID, and the Hermes database are not
 written to the attestation output.
+For v2, the supervisor uses an isolated `HERMES_HOME`, exports its `state.db`
+to a maintainer-controlled temporary path, binds that file's SHA-256 to the
+receipt, and deletes the in-sandbox copy before emitting evidence. The
+temporary export may contain raw session data and must be deleted immediately
+after `attest-sandbox`; it is never a retained or public artifact. The receipt
+stores only hashes of the prompt, command, sanitized environment, grants,
+supervisor, and state database, not their values or local paths.
 The series orchestrator also stores only a SHA-256 session binding. The raw
 Hermes session ID is transient command input and is not written to the series
 manifest, generated prompt, binding, attestation, summary, or public packet.

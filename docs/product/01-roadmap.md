@@ -261,9 +261,13 @@ gate. ADR 0008 records the explicit PWA and Neutralino counterarguments; user
 attempts must now test whether its narrow portable-artifact boundary has real
 value.
 
-No qualifying LLM trial series is recorded yet. The public task, trial result
-schema, pass, fail, and held semantics, contamination controls, and privacy
-boundary are versioned under `evals/llm-agent/v1`, `schema`, and
+No qualifying LLM trial series is recorded yet. The Windows AppContainer and
+Job Object supervisor, isolated Hermes state export, v2 attestation contract,
+and `stage`/`attest-sandbox` path are implemented and locally verified. Beta
+remains held until three consecutive real v2 trials against one immutable
+public release pass across at least two model identifiers. The public task,
+trial result schema, pass, fail, and held semantics, contamination controls,
+and privacy boundary are versioned under `evals/llm-agent/v1`, `schema`, and
 `docs/ops/llm-agent-evaluation.md`.
 
 ## Not Authorized by M5

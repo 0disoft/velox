@@ -101,3 +101,6 @@ Beta now requires three consecutive clean-room LLM agent trials across at least
 two model identifiers. Every result remains maintainer-orchestrated and fixes
 the human-adoption claim to false. Voluntary human attempts remain market
 evidence, not a technical release gate.
+The Windows AppContainer and Job Object supervisor and v2 attestation path are
+implemented. No qualifying three-trial series has been recorded, so the active
+channel remains alpha.

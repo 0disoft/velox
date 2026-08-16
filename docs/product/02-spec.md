@@ -86,6 +86,9 @@ does not approve an application-specific Go backend or a broader native
 capability surface. ADR 0018 makes clean-room LLM agent evaluation the beta
 technical gate while fixing every trial's human-adoption claim to false.
 Passing agent trials do not prove market demand.
+The qualifying evaluation path uses a maintainer-built Windows AppContainer
+supervisor and no-breakaway Job Object. This maintainer tool is not shipped in
+the consumer release bundle and does not expand the application runtime API.
 
 The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
 developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.

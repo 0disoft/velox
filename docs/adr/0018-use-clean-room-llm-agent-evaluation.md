@@ -109,8 +109,9 @@ still trigger signing, support, repositioning, or project-stop decisions.
   operational inputs outside the product artifact.
 - Provider tool wrappers can invoke hidden linters or compilers, so the trial's
   own trajectory fields are insufficient without external attestation.
-- The current Hermes v1 attestation observes stored session records but does
-  not enforce an OS sandbox, so it intentionally leaves beta readiness held.
+- Hermes v1 remains a session-log diagnostic and intentionally leaves beta
+  readiness held. V2 combines the same redacted trajectory with an independent
+  Windows AppContainer and Job Object supervisor receipt.
 
 ## Validation
 
@@ -122,6 +123,13 @@ still trigger signing, support, repositioning, or project-stop decisions.
 - `schema/llm-agent-evaluation-attestation-v1.schema.json` fixes the
   orchestrator-owned session, timing, tool-budget, forbidden-action, and log
   digest contract outside the agent-controlled trial root.
+- `schema/llm-agent-evaluation-attestation-v2.schema.json` requires prompt and
+  isolated-state binding, hashed supervisor, command and environment evidence,
+  explicit ACL grants, AppContainer filesystem enforcement, no-breakaway Job
+  Object containment, successful cleanup, no timeout, and a zero exit code.
+- `cmd/velox-eval-sandbox` implements that Windows-only supervisor. Its
+  adversarial test proves denied outside reads and writes, allowed trial writes,
+  contained child execution, exclusive state export, and cleanup.
 - `evals/llm-agent/v1/task.md` is the public task and contains no provider
   credential, private path, Velox source instruction, or hidden maintainer step.
 - `docs/QUICKSTART.md` fixes the immutable-release, checksum, extraction, public
@@ -167,5 +175,6 @@ the old LLM results as human demand.
 - `evals/llm-agent/v1/task.md`
 - `schema/llm-agent-evaluation-v1.schema.json`
 - `schema/llm-agent-evaluation-attestation-v1.schema.json`
+- `schema/llm-agent-evaluation-attestation-v2.schema.json`
 - `schema/llm-agent-evaluation-series-v1.schema.json`
 - hygiene tests

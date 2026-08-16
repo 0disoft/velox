@@ -90,6 +90,8 @@ ADR 0017 closes the M5 product choice by continuing narrow alpha development
 inside the static and browser-owned capability boundary. ADR 0018 replaces the
 uncontrollable human beta gate with replayable clean-room LLM agent evaluation
 while preserving the absence of human adoption as a market risk.
+Its Windows AppContainer and Job Object supervisor is implemented, but no
+qualifying v2 three-trial series has been recorded.
 
 Service-oriented backup, environment, secret, incident, and observability
 templates are intentionally retired until a real support surface requires them.

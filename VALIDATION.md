@@ -114,7 +114,12 @@ The parent workspace command contract currently provides these bounded intents:
   retry, forbidden-toolchain, maintainer-hint, workspace-escape, and exclusive
   output checks. It also exercises three-trial preparation, hash-only session
   binding, attestation, immutable summary creation, model diversity, and the
-  prohibition on agent workspaces inside the Velox repository.
+  prohibition on agent workspaces inside the Velox repository. V2 coverage
+  includes prompt and isolated-state binding, sandbox staging, post-run session
+  discovery, exclusive attestation, and admission only for three enforced
+  receipts. The ordinary Go test intent runs the Windows AppContainer and Job
+  Object adversarial test for denied outside access, contained child execution,
+  state export, and ACL, profile, environment, and private-state cleanup.
 - `velox_hermes_attestation_live_smoke` reads one explicitly selected, finished
   local Hermes session through the read-only adapter and writes only a compact
   diagnostic attestation under ignored `.cache/hermes-attestation-smoke`. It is
@@ -208,10 +213,10 @@ ADR 0018 replaces the uncontrollable human-attempt beta gate with three
 consecutive clean-room LLM agent trials across at least two model identifiers.
 The versioned task is `evals/llm-agent/v1/task.md`; each trial must conform to
 `schema/llm-agent-evaluation-v1.schema.json`, preserve failed and held outcomes,
-keep `humanAdoptionClaim: false`, and match an external
-`schema/llm-agent-evaluation-attestation-v1.schema.json` record for actual
-session identity, timestamps, tool counts, budget, and forbidden actions. No
-qualifying trial set is recorded yet.
+keep `humanAdoptionClaim: false`, and match an external v2 attestation for
+actual session identity, timestamps, tool counts, budget, forbidden actions,
+and enforced sandbox evidence. V1 remains diagnostic-only. The v2 path is
+implemented and locally tested, but no qualifying three-trial set is recorded.
 `docs/QUICKSTART.md` is the public source-free discovery path for those trials;
 hygiene tests reject moving release URLs, source checkout, consumer toolchain
 installation, and local maintainer-copy fallbacks in that path.
