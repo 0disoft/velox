@@ -17,6 +17,13 @@ selected, the producer runs three paired same-UDF and fresh-UDF relaunch trials,
 validates `velox.startup-profile-comparison/v1`, and retains the raw comparison
 for 30 days. It is diagnostic evidence and does not expand the normal CI path.
 
+Manual dispatch additionally exposes disabled-by-default bounded security
+fuzzing. `include_security_fuzz` runs the runtime-configuration parser and IPC
+dispatcher fuzz targets serially for a selected 30-second, two-minute, or
+ten-minute duration per target. The job uploads only a failing corpus, retains
+it for seven days, and uses no Actions cache. Pull requests, schedules, and
+release-candidate tags skip the job before runner allocation.
+
 The weekly schedule builds `velox.startup-history/v1` from its current
 lifecycle summary plus up to eleven prior successful scheduled artifacts. A
 manual `include_startup_history` dispatch can exercise the same path. Points

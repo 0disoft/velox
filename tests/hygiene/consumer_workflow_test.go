@@ -39,6 +39,45 @@ func TestConsumerEvidenceWorkflowPinsActionsAndAvoidsCaches(t *testing.T) {
 	}
 }
 
+func TestConsumerEvidenceWorkflowSecurityFuzzIsManualAndBounded(t *testing.T) {
+	path := filepath.Join("..", "..", ".github", "workflows", "consumer-evidence.yml")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := string(data)
+	start := strings.Index(workflow, "\n  security-fuzz:\n")
+	end := strings.Index(workflow, "\n  consumer:\n")
+	if start < 0 || end <= start {
+		t.Fatal("bounded security fuzz job is missing or misplaced")
+	}
+	job := workflow[start:end]
+	for _, required := range []string{
+		"if: github.event_name == 'workflow_dispatch' && inputs.include_security_fuzz",
+		"timeout-minutes: 25",
+		"FUZZ_DURATION: ${{ inputs.security_fuzz_duration }}",
+		"-fuzz='^FuzzParse$'",
+		"-fuzz='^FuzzDispatcher$'",
+		"continue-on-error: true",
+		"security-fuzz-corpus-${{ github.run_id }}-${{ github.run_attempt }}",
+		"retention-days: 7",
+		"RUNTIME_FUZZ_OUTCOME",
+		"IPC_FUZZ_OUTCOME",
+	} {
+		if !strings.Contains(job, required) {
+			t.Errorf("bounded security fuzz job is missing %q", required)
+		}
+	}
+	for _, required := range []string{"include_security_fuzz:", "default: false", "security_fuzz_duration:", "- 30s", "- 2m", "- 10m"} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("bounded security fuzz input is missing %q", required)
+		}
+	}
+	if strings.Contains(job, "actions/cache@") {
+		t.Fatal("bounded security fuzz must not upload a Go cache")
+	}
+}
+
 func TestConsumerEvidenceWorkflowKeepsConsumerBuildCompilerFree(t *testing.T) {
 	path := filepath.Join("..", "..", ".github", "workflows", "consumer-evidence.yml")
 	data, err := os.ReadFile(path)

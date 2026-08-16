@@ -125,6 +125,13 @@ The parent workspace command contract currently provides these bounded intents:
   values from a final active assistant `finish_reason=stop` without printing
   message content, tool arguments, or the raw session ID.
 
+The manual `Consumer evidence` workflow exposes a disabled-by-default
+`include_security_fuzz` action. It runs `FuzzParse` and `FuzzDispatcher`
+serially with a bounded per-target duration, preserves a failing corpus for
+seven days, and never runs for pull requests, schedules, or release-candidate
+tags. The ordinary `velox_test` intent continues to execute the fuzz seed
+corpora without starting an unbounded campaign.
+
 The hosted `Alpha release evidence` workflow builds the unsigned release twice,
 requires byte-identical ZIPs, generates checksum, SPDX, and unsigned provenance
 artifacts, and passes the artifact to a checkout-free consumer job. That job

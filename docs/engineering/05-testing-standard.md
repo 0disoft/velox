@@ -104,9 +104,12 @@ Every MUST rule in docs/engineering/04-security-baseline.md needs a positive or
 negative executable test before alpha.
 
 Go fuzz targets cover runtime-configuration parsing and IPC decoding and
-dispatch. Their seed corpora run with the ordinary test suite; longer fuzzing
-campaigns remain an explicit bounded security-validation action rather than an
-unbounded pull-request job.
+dispatch. Their seed corpora run with the ordinary test suite. A manual
+`Consumer evidence` dispatch can enable `include_security_fuzz` and select a
+per-target duration of 30 seconds, two minutes, or ten minutes. The two targets
+run serially without `actions/cache`; a failure preserves the generated corpus
+for seven days and fails the job after both targets have run. Pull requests,
+weekly evidence, and release-candidate tags never allocate the fuzz job.
 
 ## Validation by Change
 

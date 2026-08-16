@@ -36,6 +36,20 @@ on:
         required: true
         default: false
         type: boolean
+      include_security_fuzz:
+        description: Run bounded runtime configuration and IPC fuzz campaigns
+        required: true
+        default: false
+        type: boolean
+      security_fuzz_duration:
+        description: Per-target fuzz duration
+        required: true
+        default: 30s
+        type: choice
+        options:
+          - 30s
+          - 2m
+          - 10m
   push:
     tags:
       - "v*-rc.*"
@@ -229,6 +243,72 @@ jobs:
           compression-level: 0
           retention-days: 1
           if-no-files-found: error
+
+  security-fuzz:
+    name: Bounded security fuzz
+    if: github.event_name == 'workflow_dispatch' && inputs.include_security_fuzz
+    runs-on: windows-2025
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          check-latest: false
+          cache: false
+
+      - name: Fuzz runtime configuration parser
+        id: runtime_fuzz
+        continue-on-error: true
+        shell: pwsh
+        env:
+          FUZZ_DURATION: ${{ inputs.security_fuzz_duration }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-fuzz'
+          go test -run='^$' -fuzz='^FuzzParse$' -fuzztime=$env:FUZZ_DURATION ./internal/runtimeconfig
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Fuzz IPC decoder and dispatcher
+        id: ipc_fuzz
+        continue-on-error: true
+        shell: pwsh
+        env:
+          FUZZ_DURATION: ${{ inputs.security_fuzz_duration }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-fuzz'
+          go test -run='^$' -fuzz='^FuzzDispatcher$' -fuzztime=$env:FUZZ_DURATION ./internal/ipc
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload failing fuzz corpus
+        if: steps.runtime_fuzz.outcome == 'failure' || steps.ipc_fuzz.outcome == 'failure'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: security-fuzz-corpus-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            internal/runtimeconfig/testdata/fuzz/
+            internal/ipc/testdata/fuzz/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Enforce fuzz outcomes
+        if: always()
+        shell: pwsh
+        env:
+          RUNTIME_FUZZ_OUTCOME: ${{ steps.runtime_fuzz.outcome }}
+          IPC_FUZZ_OUTCOME: ${{ steps.ipc_fuzz.outcome }}
+        run: |
+          if ($env:RUNTIME_FUZZ_OUTCOME -ne 'success' -or $env:IPC_FUZZ_OUTCOME -ne 'success') {
+            throw "One or more bounded fuzz campaigns failed."
+          }
 
   consumer:
     name: Consumer sample ${{ matrix.sample }}
