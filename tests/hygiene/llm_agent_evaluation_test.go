@@ -109,6 +109,36 @@ func TestLLMAgentEvaluationAttestationSchemaKeepsTrajectoryExternal(t *testing.T
 	}
 }
 
+func TestLLMAgentEvaluationAttestationV2RequiresEnforcedSandboxReceipt(t *testing.T) {
+	root := repositoryRoot(t)
+	data, err := os.ReadFile(filepath.Join(root, "schema", "llm-agent-evaluation-attestation-v2.schema.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema llmAgentSchema
+	if err := json.Unmarshal(data, &schema); err != nil {
+		t.Fatal(err)
+	}
+	if schema.Schema != "https://json-schema.org/draft/2020-12/schema" || schema.ID != "https://schemas.0disoft.dev/velox/llm-agent-evaluation-attestation-v2.schema.json" {
+		t.Fatalf("unexpected LLM attestation v2 schema identity: %q %q", schema.Schema, schema.ID)
+	}
+	assertJSONConst(t, schema.Properties["schemaVersion"], "velox.llm-agent-evaluation-attestation/v2")
+	for _, marker := range []string{
+		`"kind": { "const": "orchestrator-session-log-with-os-sandbox" }`,
+		`"sandboxEnforced": { "const": true }`,
+		`"schemaVersion": { "const": "velox.eval-sandbox-receipt/v1" }`,
+		`"filesystemBoundary": { "const": "appcontainer-explicit-acl" }`,
+		`"processBoundary": { "const": "job-object-no-breakaway" }`,
+		`"networkCapability": { "const": "internet-client" }`,
+		`"cleanupCompleted": { "const": true }`,
+		`"timedOut": { "const": false }`,
+	} {
+		if !strings.Contains(string(data), marker) {
+			t.Errorf("LLM attestation v2 schema lacks %q", marker)
+		}
+	}
+}
+
 func TestLLMAgentSeriesSchemaRequiresThreePassesWithoutHumanClaim(t *testing.T) {
 	root := repositoryRoot(t)
 	data, err := os.ReadFile(filepath.Join(root, "schema", "llm-agent-evaluation-series-v1.schema.json"))

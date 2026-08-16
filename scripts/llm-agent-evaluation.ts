@@ -118,8 +118,7 @@ export interface TrialRecord {
   humanAdoptionClaim: false;
 }
 
-export interface TrialAttestation {
-  schemaVersion: "velox.llm-agent-evaluation-attestation/v1";
+interface TrialAttestationBase {
   trialId: string;
   seriesId: string;
   sequence: number;
@@ -138,14 +137,61 @@ export interface TrialAttestation {
     toolCallBudget: number;
     forbiddenActions: ForbiddenAction[];
   };
+}
+
+export interface TrialAttestationV1 extends TrialAttestationBase {
+  schemaVersion: "velox.llm-agent-evaluation-attestation/v1";
   evidence: {
     kind: "orchestrator-session-log";
     observationLevel: "session-log-heuristic";
-    sandboxEnforced: boolean;
+    sandboxEnforced: false;
     sha256: string;
     projection: Record<string, unknown>;
   };
 }
+
+interface SandboxReceipt {
+  schemaVersion: "velox.eval-sandbox-receipt/v1";
+  trialId: string;
+  seriesId: string;
+  sequence: number;
+  policy: {
+    schemaVersion: "velox.eval-sandbox-policy/v1";
+    platform: "windows";
+    filesystemBoundary: "appcontainer-explicit-acl";
+    processBoundary: "job-object-no-breakaway";
+    networkCapability: "internet-client";
+  };
+  supervisor: { version: string; sha256: string };
+  commandSha256: string;
+  startedAtUtc: string;
+  finishedAtUtc: string;
+  exitCode: 0;
+  timedOut: false;
+  containment: {
+    filesystemEnforced: true;
+    processTreeEnforced: true;
+    cleanupCompleted: true;
+  };
+  grants: Array<{
+    role: "trial-read-write-execute" | "tool-read-execute";
+    pathSha256: string;
+    rights: "read-write-execute" | "read-execute";
+  }>;
+}
+
+export interface TrialAttestationV2 extends TrialAttestationBase {
+  schemaVersion: "velox.llm-agent-evaluation-attestation/v2";
+  evidence: {
+    kind: "orchestrator-session-log-with-os-sandbox";
+    observationLevel: "session-log-plus-enforced-sandbox";
+    sandboxEnforced: true;
+    session: { sha256: string; projection: Record<string, unknown> };
+    sandbox: { receiptSha256: string; receipt: SandboxReceipt };
+  };
+}
+
+export type TrialAttestation = TrialAttestationV1 | TrialAttestationV2;
 
 const verifiedAttestations = new WeakMap<TrialRecord, TrialAttestation>();
 
@@ -214,7 +260,10 @@ function validateAttestationShape(raw: unknown): TrialAttestation {
   exactKeys(record, [
     "schemaVersion", "trialId", "seriesId", "sequence", "evaluator", "startedAtUtc", "finishedAtUtc", "trajectory", "evidence",
   ], "attestation");
-  equal(record.schemaVersion, "velox.llm-agent-evaluation-attestation/v1", "ATTESTATION_SCHEMA_VERSION_INVALID");
+  oneOf(record.schemaVersion, [
+    "velox.llm-agent-evaluation-attestation/v1",
+    "velox.llm-agent-evaluation-attestation/v2",
+  ], "ATTESTATION_SCHEMA_VERSION_INVALID");
   stringMatch(record.trialId, trialIDPattern, "ATTESTATION_TRIAL_ID_INVALID");
   stringMatch(record.seriesId, seriesIDPattern, "ATTESTATION_SERIES_ID_INVALID");
   integerRange(record.sequence, 1, 3, "ATTESTATION_SEQUENCE_INVALID");
@@ -228,6 +277,15 @@ function validateAttestationShape(raw: unknown): TrialAttestation {
   equal(trajectory.toolCallBudget, TOOL_CALL_BUDGET, "ATTESTATION_TOOL_CALL_BUDGET_INVALID");
   validateForbiddenActions(trajectory.forbiddenActions, "ATTESTATION_FORBIDDEN_ACTIONS_INVALID");
   const evidence = object(record.evidence, "attestation_evidence");
+  if (record.schemaVersion === "velox.llm-agent-evaluation-attestation/v1") {
+    validateV1Evidence(evidence);
+  } else {
+    validateV2Evidence(record, evidence);
+  }
+  return record as unknown as TrialAttestation;
+}
+
+function validateV1Evidence(evidence: Record<string, unknown>) {
   exactKeys(evidence, ["kind", "observationLevel", "sandboxEnforced", "sha256", "projection"], "attestation_evidence");
   equal(evidence.kind, "orchestrator-session-log", "ATTESTATION_EVIDENCE_KIND_INVALID");
   equal(evidence.observationLevel, "session-log-heuristic", "ATTESTATION_OBSERVATION_LEVEL_INVALID");
@@ -235,7 +293,85 @@ function validateAttestationShape(raw: unknown): TrialAttestation {
   stringMatch(evidence.sha256, sha256Pattern, "ATTESTATION_EVIDENCE_DIGEST_INVALID");
   const projection = object(evidence.projection, "attestation_projection");
   equal(evidence.sha256, digest(Buffer.from(JSON.stringify(projection))), "ATTESTATION_PROJECTION_DIGEST_MISMATCH");
-  return record as unknown as TrialAttestation;
+}
+
+function validateV2Evidence(attestation: Record<string, unknown>, evidence: Record<string, unknown>) {
+  exactKeys(evidence, ["kind", "observationLevel", "sandboxEnforced", "session", "sandbox"], "attestation_evidence");
+  equal(evidence.kind, "orchestrator-session-log-with-os-sandbox", "ATTESTATION_EVIDENCE_KIND_INVALID");
+  equal(evidence.observationLevel, "session-log-plus-enforced-sandbox", "ATTESTATION_OBSERVATION_LEVEL_INVALID");
+  equal(evidence.sandboxEnforced, true, "ATTESTATION_SANDBOX_CLAIM_INVALID");
+
+  const session = object(evidence.session, "attestation_session_evidence");
+  exactKeys(session, ["sha256", "projection"], "attestation_session_evidence");
+  stringMatch(session.sha256, sha256Pattern, "ATTESTATION_SESSION_EVIDENCE_DIGEST_INVALID");
+  const projection = object(session.projection, "attestation_session_projection");
+  equal(session.sha256, digest(Buffer.from(JSON.stringify(projection))), "ATTESTATION_PROJECTION_DIGEST_MISMATCH");
+
+  const sandbox = object(evidence.sandbox, "attestation_sandbox_evidence");
+  exactKeys(sandbox, ["receiptSha256", "receipt"], "attestation_sandbox_evidence");
+  stringMatch(sandbox.receiptSha256, sha256Pattern, "ATTESTATION_SANDBOX_RECEIPT_DIGEST_INVALID");
+  const receipt = object(sandbox.receipt, "attestation_sandbox_receipt");
+  validateSandboxReceipt(attestation, receipt);
+  equal(sandbox.receiptSha256, digest(Buffer.from(JSON.stringify(receipt))), "ATTESTATION_SANDBOX_RECEIPT_DIGEST_MISMATCH");
+}
+
+function validateSandboxReceipt(attestation: Record<string, unknown>, receipt: Record<string, unknown>) {
+  exactKeys(receipt, [
+    "schemaVersion", "trialId", "seriesId", "sequence", "policy", "supervisor", "commandSha256",
+    "startedAtUtc", "finishedAtUtc", "exitCode", "timedOut", "containment", "grants",
+  ], "attestation_sandbox_receipt");
+  equal(receipt.schemaVersion, "velox.eval-sandbox-receipt/v1", "ATTESTATION_SANDBOX_RECEIPT_VERSION_INVALID");
+  equal(receipt.trialId, attestation.trialId, "ATTESTATION_SANDBOX_TRIAL_ID_MISMATCH");
+  equal(receipt.seriesId, attestation.seriesId, "ATTESTATION_SANDBOX_SERIES_ID_MISMATCH");
+  equal(receipt.sequence, attestation.sequence, "ATTESTATION_SANDBOX_SEQUENCE_MISMATCH");
+
+  const policy = object(receipt.policy, "attestation_sandbox_policy");
+  exactKeys(policy, ["schemaVersion", "platform", "filesystemBoundary", "processBoundary", "networkCapability"], "attestation_sandbox_policy");
+  equal(policy.schemaVersion, "velox.eval-sandbox-policy/v1", "ATTESTATION_SANDBOX_POLICY_VERSION_INVALID");
+  equal(policy.platform, "windows", "ATTESTATION_SANDBOX_PLATFORM_INVALID");
+  equal(policy.filesystemBoundary, "appcontainer-explicit-acl", "ATTESTATION_FILESYSTEM_BOUNDARY_INVALID");
+  equal(policy.processBoundary, "job-object-no-breakaway", "ATTESTATION_PROCESS_BOUNDARY_INVALID");
+  equal(policy.networkCapability, "internet-client", "ATTESTATION_NETWORK_CAPABILITY_INVALID");
+
+  const supervisor = object(receipt.supervisor, "attestation_sandbox_supervisor");
+  exactKeys(supervisor, ["version", "sha256"], "attestation_sandbox_supervisor");
+  stringMatch(supervisor.version, /^[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta)\.[1-9][0-9]*$/, "ATTESTATION_SANDBOX_SUPERVISOR_VERSION_INVALID");
+  stringMatch(supervisor.sha256, sha256Pattern, "ATTESTATION_SANDBOX_SUPERVISOR_DIGEST_INVALID");
+  stringMatch(receipt.commandSha256, sha256Pattern, "ATTESTATION_SANDBOX_COMMAND_DIGEST_INVALID");
+  dateTime(receipt.startedAtUtc, "ATTESTATION_SANDBOX_START_TIME_INVALID");
+  dateTime(receipt.finishedAtUtc, "ATTESTATION_SANDBOX_FINISH_TIME_INVALID");
+  equal(receipt.exitCode, 0, "ATTESTATION_SANDBOX_EXIT_CODE_INVALID");
+  equal(receipt.timedOut, false, "ATTESTATION_SANDBOX_TIMEOUT_INVALID");
+
+  if (Date.parse(receipt.startedAtUtc as string) > Date.parse(attestation.startedAtUtc as string)
+    || Date.parse(receipt.finishedAtUtc as string) < Date.parse(attestation.finishedAtUtc as string)) {
+    fail("ATTESTATION_SANDBOX_TIME_RANGE_NOT_COVERED");
+  }
+
+  const containment = object(receipt.containment, "attestation_sandbox_containment");
+  exactKeys(containment, ["filesystemEnforced", "processTreeEnforced", "cleanupCompleted"], "attestation_sandbox_containment");
+  equal(containment.filesystemEnforced, true, "ATTESTATION_FILESYSTEM_ENFORCEMENT_INVALID");
+  equal(containment.processTreeEnforced, true, "ATTESTATION_PROCESS_ENFORCEMENT_INVALID");
+  equal(containment.cleanupCompleted, true, "ATTESTATION_SANDBOX_CLEANUP_INVALID");
+  validateSandboxGrants(receipt.grants);
+}
+
+function validateSandboxGrants(raw: unknown) {
+  if (!Array.isArray(raw) || raw.length < 2 || raw.length > 16) fail("ATTESTATION_SANDBOX_GRANTS_INVALID");
+  let trialGrant = 0;
+  let toolGrant = 0;
+  const paths = new Set<string>();
+  for (const value of raw) {
+    const grant = object(value, "attestation_sandbox_grant");
+    exactKeys(grant, ["role", "pathSha256", "rights"], "attestation_sandbox_grant");
+    stringMatch(grant.pathSha256, sha256Pattern, "ATTESTATION_SANDBOX_GRANT_DIGEST_INVALID");
+    if (paths.has(grant.pathSha256 as string)) fail("ATTESTATION_SANDBOX_GRANT_DUPLICATE");
+    paths.add(grant.pathSha256 as string);
+    if (grant.role === "trial-read-write-execute" && grant.rights === "read-write-execute") trialGrant += 1;
+    else if (grant.role === "tool-read-execute" && grant.rights === "read-execute") toolGrant += 1;
+    else fail("ATTESTATION_SANDBOX_GRANT_ROLE_INVALID");
+  }
+  if (trialGrant !== 1 || toolGrant < 1) fail("ATTESTATION_SANDBOX_GRANTS_INCOMPLETE");
 }
 
 function verifyAttestation(trial: TrialRecord, attestation: TrialAttestation) {

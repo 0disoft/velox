@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.0disoft.dev/velox/llm-agent-evaluation-attestation-v2.schema.json",
+  "title": "Velox enforced sandbox evaluation attestation v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "trialId",
+    "seriesId",
+    "sequence",
+    "evaluator",
+    "startedAtUtc",
+    "finishedAtUtc",
+    "trajectory",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "velox.llm-agent-evaluation-attestation/v2" },
+    "trialId": { "type": "string", "pattern": "^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+    "seriesId": { "type": "string", "pattern": "^series-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+    "sequence": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "evaluator": { "$ref": "#/$defs/evaluator" },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "finishedAtUtc": { "type": "string", "format": "date-time" },
+    "trajectory": { "$ref": "#/$defs/trajectory" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "observationLevel", "sandboxEnforced", "session", "sandbox"],
+      "properties": {
+        "kind": { "const": "orchestrator-session-log-with-os-sandbox" },
+        "observationLevel": { "const": "session-log-plus-enforced-sandbox" },
+        "sandboxEnforced": { "const": true },
+        "session": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sha256", "projection"],
+          "properties": {
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "projection": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["schemaVersion", "sessions", "messages"],
+              "properties": {
+                "schemaVersion": { "const": "velox.hermes-session-log-digest/v1" },
+                "sessions": { "type": "array", "maxItems": 100, "items": { "type": "object" } },
+                "messages": { "type": "array", "maxItems": 2000, "items": { "type": "object" } }
+              }
+            }
+          }
+        },
+        "sandbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["receiptSha256", "receipt"],
+          "properties": {
+            "receiptSha256": { "$ref": "#/$defs/sha256" },
+            "receipt": { "$ref": "#/$defs/sandboxReceipt" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "sessionIdSha256", "freshSession", "memoryCarryover"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "sessionIdSha256": { "$ref": "#/$defs/sha256" },
+        "freshSession": { "const": true },
+        "memoryCarryover": { "const": false }
+      }
+    },
+    "trajectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["toolCalls", "retries", "toolCallBudget", "forbiddenActions"],
+      "properties": {
+        "toolCalls": { "type": "integer", "minimum": 0, "maximum": 500 },
+        "retries": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "toolCallBudget": { "const": 70 },
+        "forbiddenActions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "NODE_RUNTIME_INVOKED",
+              "CONSUMER_COMPILER_INVOKED",
+              "PACKAGE_MANAGER_INVOKED",
+              "SOURCE_CHECKOUT_OBSERVED",
+              "UNPUBLISHED_CONTEXT_OBSERVED",
+              "MAINTAINER_HINT_OBSERVED"
+            ]
+          }
+        }
+      }
+    },
+    "sandboxReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "trialId",
+        "seriesId",
+        "sequence",
+        "policy",
+        "supervisor",
+        "commandSha256",
+        "startedAtUtc",
+        "finishedAtUtc",
+        "exitCode",
+        "timedOut",
+        "containment",
+        "grants"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "velox.eval-sandbox-receipt/v1" },
+        "trialId": { "type": "string", "pattern": "^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+        "seriesId": { "type": "string", "pattern": "^series-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$" },
+        "sequence": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "platform", "filesystemBoundary", "processBoundary", "networkCapability"],
+          "properties": {
+            "schemaVersion": { "const": "velox.eval-sandbox-policy/v1" },
+            "platform": { "const": "windows" },
+            "filesystemBoundary": { "const": "appcontainer-explicit-acl" },
+            "processBoundary": { "const": "job-object-no-breakaway" },
+            "networkCapability": { "const": "internet-client" }
+          }
+        },
+        "supervisor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "sha256"],
+          "properties": {
+            "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+-(alpha|beta)\\.[1-9][0-9]*$" },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "commandSha256": { "$ref": "#/$defs/sha256" },
+        "startedAtUtc": { "type": "string", "format": "date-time" },
+        "finishedAtUtc": { "type": "string", "format": "date-time" },
+        "exitCode": { "const": 0 },
+        "timedOut": { "const": false },
+        "containment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["filesystemEnforced", "processTreeEnforced", "cleanupCompleted"],
+          "properties": {
+            "filesystemEnforced": { "const": true },
+            "processTreeEnforced": { "const": true },
+            "cleanupCompleted": { "const": true }
+          }
+        },
+        "grants": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "pathSha256", "rights"],
+            "properties": {
+              "role": { "enum": ["trial-read-write-execute", "tool-read-execute"] },
+              "pathSha256": { "$ref": "#/$defs/sha256" },
+              "rights": { "enum": ["read-write-execute", "read-execute"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

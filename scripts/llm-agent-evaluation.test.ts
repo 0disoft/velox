@@ -11,7 +11,14 @@ import {
   prepareEvaluationSeries,
   verifyEvaluationSeries,
 } from "./llm-agent-orchestrator.ts";
-import { loadAndVerifyTrial, summarizeSeries, type TrialAttestation, type TrialRecord } from "./llm-agent-evaluation.ts";
+import {
+  loadAndVerifyTrial,
+  summarizeSeries,
+  type TrialAttestation,
+  type TrialAttestationV1,
+  type TrialAttestationV2,
+  type TrialRecord,
+} from "./llm-agent-evaluation.ts";
 
 const fixedDigest = "a".repeat(64);
 const prompt = "public evaluation task\n";
@@ -36,6 +43,49 @@ describe("LLM agent evaluation", () => {
       modelIdentifiers: ["provider/model-a", "provider/model-b"],
       humanAdoptionClaim: false,
     });
+  });
+
+  test("admits three diverse trials only with enforced sandbox v2 receipts", async () => {
+    const root = await createSeries();
+    const trials = [];
+    for (const [index, model] of ["model-a", "model-a", "model-b"].entries()) {
+      const trialRoot = resolve(root, `trial-${index + 1}`);
+      await createTrial(trialRoot, index + 1, model);
+      await upgradeAttestationToV2(trialRoot);
+      trials.push(await verifyTrial(root, trialRoot));
+    }
+    expect(summarizeSeries(trials)).toMatchObject({
+      passedTrials: 3,
+      failedTrials: 0,
+      heldTrials: 0,
+      outcome: "passed",
+      betaTechnicalGate: true,
+      diagnostics: [],
+      modelIdentifiers: ["provider/model-a", "provider/model-b"],
+      humanAdoptionClaim: false,
+    });
+  });
+
+  test("rejects a self-consistent v2 receipt with an incomplete sandbox grant set", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    await createTrial(trialRoot, 1, "model-a");
+    const attestation = await upgradeAttestationToV2(trialRoot);
+    attestation.evidence.sandbox.receipt.grants = attestation.evidence.sandbox.receipt.grants.slice(0, 1);
+    attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
+    await writeAttestation(trialRoot, attestation);
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_GRANTS_INVALID");
+  });
+
+  test("rejects a sandbox receipt that does not cover the evaluation session", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    await createTrial(trialRoot, 1, "model-a");
+    const attestation = await upgradeAttestationToV2(trialRoot);
+    attestation.evidence.sandbox.receipt.startedAtUtc = attestation.finishedAtUtc;
+    attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
+    await writeAttestation(trialRoot, attestation);
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_TIME_RANGE_NOT_COVERED");
   });
 
   test("rejects artifact tampering", async () => {
@@ -777,6 +827,51 @@ async function writeAttestation(trialRoot: string, attestation: TrialAttestation
   const path = attestationPath(trialRoot);
   await mkdir(resolve(path, ".."), { recursive: true });
   await writeFile(path, `${JSON.stringify(attestation, null, 2)}\n`, "utf8");
+}
+
+async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestationV2> {
+  const current = await readAttestation(trialRoot) as TrialAttestationV1;
+  const receipt = {
+    schemaVersion: "velox.eval-sandbox-receipt/v1" as const,
+    trialId: current.trialId,
+    seriesId: current.seriesId,
+    sequence: current.sequence,
+    policy: {
+      schemaVersion: "velox.eval-sandbox-policy/v1" as const,
+      platform: "windows" as const,
+      filesystemBoundary: "appcontainer-explicit-acl" as const,
+      processBoundary: "job-object-no-breakaway" as const,
+      networkCapability: "internet-client" as const,
+    },
+    supervisor: { version: "0.5.10-alpha.29", sha256: "b".repeat(64) },
+    commandSha256: "c".repeat(64),
+    startedAtUtc: new Date(Date.parse(current.startedAtUtc) - 1000).toISOString(),
+    finishedAtUtc: new Date(Date.parse(current.finishedAtUtc) + 1000).toISOString(),
+    exitCode: 0 as const,
+    timedOut: false as const,
+    containment: {
+      filesystemEnforced: true as const,
+      processTreeEnforced: true as const,
+      cleanupCompleted: true as const,
+    },
+    grants: [
+      { role: "trial-read-write-execute" as const, pathSha256: "d".repeat(64), rights: "read-write-execute" as const },
+      { role: "tool-read-execute" as const, pathSha256: "e".repeat(64), rights: "read-execute" as const },
+    ],
+  };
+  const attestation: TrialAttestationV2 = {
+    ...current,
+    schemaVersion: "velox.llm-agent-evaluation-attestation/v2",
+    evidence: {
+      kind: "orchestrator-session-log-with-os-sandbox",
+      observationLevel: "session-log-plus-enforced-sandbox",
+      sandboxEnforced: true,
+      session: { sha256: current.evidence.sha256, projection: current.evidence.projection },
+      sandbox: { receiptSha256: sha(Buffer.from(JSON.stringify(receipt))), receipt },
+    },
+  };
+  await writeAttestation(trialRoot, attestation);
+  return attestation;
 }
 
 function sha(value: Uint8Array) {
