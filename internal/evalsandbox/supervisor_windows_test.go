@@ -14,6 +14,7 @@ const (
 	probeEnabledEnv   = "VELOX_EVAL_SANDBOX_PROBE"
 	probeAllowedEnv   = "VELOX_EVAL_SANDBOX_ALLOWED"
 	probeForbiddenEnv = "VELOX_EVAL_SANDBOX_FORBIDDEN"
+	probeSessionIDEnv = "VELOX_HERMES_SESSION_ID"
 )
 
 func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
@@ -38,23 +39,28 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 	t.Setenv(probeEnabledEnv, "1")
 	t.Setenv(probeAllowedEnv, allowedPath)
 	t.Setenv(probeForbiddenEnv, forbiddenPath)
+	t.Setenv(probeSessionIDEnv, "sandbox-session-identity")
 	receiptPath := filepath.Join(receiptRoot, "receipt.json")
 	receipt, err := Run(Config{
-		TrialID:         "trial-20260816T010203Z-a1b2c3d4",
-		SeriesID:        "series-20260816T010203Z-a1b2c3d4",
-		Sequence:        1,
-		TrialRoot:       trialRoot,
-		ToolRoots:       []string{filepath.Dir(executable)},
-		PassEnvironment: []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv},
-		ReceiptPath:     receiptPath,
-		Timeout:         30 * time.Second,
-		Command:         []string{executable, "-test.run=^TestSandboxBoundaryProbeProcess$"},
+		TrialID:              "trial-20260816T010203Z-a1b2c3d4",
+		SeriesID:             "series-20260816T010203Z-a1b2c3d4",
+		Sequence:             1,
+		TrialRoot:            trialRoot,
+		ToolRoots:            []string{filepath.Dir(executable)},
+		PassEnvironment:      []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv},
+		SessionIDEnvironment: probeSessionIDEnv,
+		ReceiptPath:          receiptPath,
+		Timeout:              30 * time.Second,
+		Command:              []string{executable, "-test.run=^TestSandboxBoundaryProbeProcess$"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !receipt.Containment.FilesystemEnforced || !receipt.Containment.ProcessTreeEnforced || !receipt.Containment.CleanupCompleted {
 		t.Fatalf("incomplete containment receipt: %#v", receipt.Containment)
+	}
+	if receipt.SessionIDSHA256 != digest([]byte("sandbox-session-identity")) {
+		t.Fatal("sandbox receipt did not bind the evaluator session")
 	}
 	if _, err := os.Stat(receiptPath); err != nil {
 		t.Fatalf("sandbox receipt missing: %v", err)

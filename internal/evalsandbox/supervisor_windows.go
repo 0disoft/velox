@@ -128,6 +128,7 @@ func Run(config Config) (Receipt, error) {
 		Supervisor:        Supervisor{Version: buildinfo.Version, SHA256: supervisorSHA},
 		CommandSHA256:     commandSHA,
 		EnvironmentSHA256: prepared.EnvironmentSHA256,
+		SessionIDSHA256:   prepared.SessionIDSHA256,
 		StartedAtUTC:      started.Format(time.RFC3339Nano),
 		FinishedAtUTC:     finished.Format(time.RFC3339Nano),
 		ExitCode:          exitCode,

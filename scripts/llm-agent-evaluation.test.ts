@@ -12,6 +12,7 @@ import {
   verifyEvaluationSeries,
 } from "./llm-agent-orchestrator.ts";
 import {
+  combineEnforcedSandboxAttestation,
   loadAndVerifyTrial,
   summarizeSeries,
   type TrialAttestation,
@@ -86,6 +87,17 @@ describe("LLM agent evaluation", () => {
     attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
     await writeAttestation(trialRoot, attestation);
     await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_TIME_RANGE_NOT_COVERED");
+  });
+
+  test("rejects a sandbox receipt bound to another evaluator session", async () => {
+    const root = await createSeries();
+    const trialRoot = resolve(root, "trial-1");
+    await createTrial(trialRoot, 1, "model-a");
+    const attestation = await upgradeAttestationToV2(trialRoot);
+    attestation.evidence.sandbox.receipt.sessionIdSha256 = "0".repeat(64);
+    attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
+    await writeAttestation(trialRoot, attestation);
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_SESSION_DIGEST_MISMATCH");
   });
 
   test("rejects artifact tampering", async () => {
@@ -280,6 +292,49 @@ describe("LLM agent evaluation", () => {
     expect(result.attestation.evaluator.sessionIdSha256).toBe(sha(Buffer.from(fixture.sessionId)));
     expect(result.attestation.evidence.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(output).not.toContain(fixture.sessionId);
+  });
+
+  test("combines a finished Hermes session with its supervisor receipt", async () => {
+    const fixture = await createHermesFixture([
+      toolCallMessage(2, "call-1", "terminal", { command: "velox validate" }),
+      toolResultMessage(3, "call-1", { status: "ok" }),
+    ]);
+    const receiptPath = resolve(fixture.input.trialRoot, "..", "sandbox-receipt.json");
+    const receipt = {
+      schemaVersion: "velox.eval-sandbox-receipt/v1",
+      trialId: fixture.input.trialId,
+      seriesId: fixture.input.seriesId,
+      sequence: fixture.input.sequence,
+      policy: {
+        schemaVersion: "velox.eval-sandbox-policy/v1",
+        platform: "windows",
+        filesystemBoundary: "appcontainer-explicit-acl",
+        processBoundary: "job-object-no-breakaway",
+        networkCapability: "internet-client",
+      },
+      supervisor: { version: "0.5.10-alpha.32", sha256: "b".repeat(64) },
+      commandSha256: "c".repeat(64),
+      environmentSha256: "f".repeat(64),
+      sessionIdSha256: sha(Buffer.from(fixture.sessionId)),
+      startedAtUtc: "1970-01-01T00:01:30.000Z",
+      finishedAtUtc: "1970-01-01T00:03:00.000Z",
+      exitCode: 0,
+      timedOut: false,
+      containment: { filesystemEnforced: true, processTreeEnforced: true, cleanupCompleted: true },
+      grants: [
+        { role: "trial-read-write-execute", pathSha256: "d".repeat(64), rights: "read-write-execute" },
+        { role: "tool-read-execute", pathSha256: "e".repeat(64), rights: "read-execute" },
+      ],
+    };
+    await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
+    const result = await createHermesAttestation({ ...fixture.input, sandboxReceiptPath: receiptPath });
+    expect(result.attestation).toMatchObject({
+      schemaVersion: "velox.llm-agent-evaluation-attestation/v2",
+      evidence: {
+        sandboxEnforced: true,
+        sandbox: { receipt: { sessionIdSha256: sha(Buffer.from(fixture.sessionId)) } },
+      },
+    });
   });
 
   test("writes the Hermes attestation through the bounded CLI", async () => {
@@ -843,9 +898,10 @@ async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestati
       processBoundary: "job-object-no-breakaway" as const,
       networkCapability: "internet-client" as const,
     },
-    supervisor: { version: "0.5.10-alpha.31", sha256: "b".repeat(64) },
+    supervisor: { version: "0.5.10-alpha.32", sha256: "b".repeat(64) },
     commandSha256: "c".repeat(64),
     environmentSha256: "f".repeat(64),
+    sessionIdSha256: current.evaluator.sessionIdSha256,
     startedAtUtc: new Date(Date.parse(current.startedAtUtc) - 1000).toISOString(),
     finishedAtUtc: new Date(Date.parse(current.finishedAtUtc) + 1000).toISOString(),
     exitCode: 0 as const,
@@ -860,17 +916,7 @@ async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestati
       { role: "tool-read-execute" as const, pathSha256: "e".repeat(64), rights: "read-execute" as const },
     ],
   };
-  const attestation: TrialAttestationV2 = {
-    ...current,
-    schemaVersion: "velox.llm-agent-evaluation-attestation/v2",
-    evidence: {
-      kind: "orchestrator-session-log-with-os-sandbox",
-      observationLevel: "session-log-plus-enforced-sandbox",
-      sandboxEnforced: true,
-      session: { sha256: current.evidence.sha256, projection: current.evidence.projection },
-      sandbox: { receiptSha256: sha(Buffer.from(JSON.stringify(receipt))), receipt },
-    },
-  };
+  const attestation = combineEnforcedSandboxAttestation(current, receipt);
   await writeAttestation(trialRoot, attestation);
   return attestation;
 }

@@ -3,9 +3,11 @@ import { lstat, realpath, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, resolve, sep } from "node:path";
 import { Database } from "bun:sqlite";
 import {
+  combineEnforcedSandboxAttestation,
   TOOL_CALL_BUDGET,
   type ForbiddenAction,
   type TrialAttestation,
+  type TrialAttestationV1,
 } from "./llm-agent-evaluation.ts";
 
 const trialIDPattern = /^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$/;
@@ -64,6 +66,7 @@ export interface HermesAttestationInput {
   trialId: string;
   seriesId: string;
   sequence: number;
+  sandboxReceiptPath?: string;
 }
 
 export interface HermesAttestationResult {
@@ -127,7 +130,10 @@ export async function createHermesAttestation(input: HermesAttestationInput): Pr
     const sessions = loadSessionChain(database, input.sessionId);
     const messages = loadMessages(database, input.sessionId);
     requireFinishedSession(sessions, messages);
-    const attestation = attestSnapshot(input, trialRoot, sessions, messages);
+    const sessionAttestation = attestSnapshot(input, trialRoot, sessions, messages);
+    const attestation = input.sandboxReceiptPath
+      ? combineEnforcedSandboxAttestation(sessionAttestation, await readSandboxReceipt(input.sandboxReceiptPath, trialRoot))
+      : sessionAttestation;
     await writeExclusiveJSON(outputPath, attestation, trialRoot);
     return { attestation, sessionCount: sessions.length, messageCount: messages.length };
   } finally {
@@ -212,7 +218,7 @@ function attestSnapshot(
   trialRoot: string,
   sessions: HermesSessionRow[],
   messages: HermesMessageRow[],
-): TrialAttestation {
+): TrialAttestationV1 {
   const models = uniqueNonEmpty(sessions.map((session) => session.model));
   const providers = uniqueNonEmpty(sessions.map((session) => session.billing_provider));
   if (models.length !== 1) fail("HERMES_EVALUATOR_MODEL_AMBIGUOUS");
@@ -440,6 +446,16 @@ function resolveExternalOutput(path: string, trialRoot: string) {
   return output;
 }
 
+async function readSandboxReceipt(path: string, trialRoot: string) {
+  if (!isAbsolute(path)) fail("SANDBOX_RECEIPT_PATH_MUST_BE_ABSOLUTE");
+  const supplied = resolve(path);
+  const suppliedStat = await lstat(supplied).catch(() => fail("SANDBOX_RECEIPT_INVALID"));
+  if (!suppliedStat.isFile() || suppliedStat.isSymbolicLink() || suppliedStat.size > 64 * 1024) fail("SANDBOX_RECEIPT_INVALID");
+  const real = await realpath(supplied);
+  if (isContained(trialRoot, real)) fail("SANDBOX_RECEIPT_INSIDE_TRIAL_ROOT");
+  return parseJSON(await Bun.file(real).text(), "SANDBOX_RECEIPT_JSON_INVALID");
+}
+
 async function writeExclusiveJSON(path: string, value: unknown, trialRoot: string) {
   const parent = await realpath(dirname(path));
   if (isContained(trialRoot, parent)) fail("ATTESTATION_OUTPUT_INSIDE_TRIAL_ROOT");
@@ -519,7 +535,7 @@ function parseCLI(argv: string[]): HermesAttestationInput {
     if (!key?.startsWith("--") || !value || values.has(key)) fail("HERMES_ATTESTATION_USAGE_INVALID");
     values.set(key, value);
   }
-  if (values.size !== 7) fail("HERMES_ATTESTATION_USAGE_INVALID");
+  if (values.size !== 7 && values.size !== 8) fail("HERMES_ATTESTATION_USAGE_INVALID");
   return {
     stateDatabasePath: requiredFlag(values, "--state-db"),
     sessionId: requiredFlag(values, "--session-id"),
@@ -528,6 +544,7 @@ function parseCLI(argv: string[]): HermesAttestationInput {
     trialId: requiredFlag(values, "--trial-id"),
     seriesId: requiredFlag(values, "--series-id"),
     sequence: Number(requiredFlag(values, "--sequence")),
+    sandboxReceiptPath: values.get("--sandbox-receipt"),
   };
 }
 

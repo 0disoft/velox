@@ -46,6 +46,7 @@ func run(arguments []string) error {
 	receiptPath := flags.String("receipt", "", "exclusive output path outside the trial root")
 	timeout := flags.Duration("timeout", 45*time.Minute, "maximum evaluator lifetime")
 	jsonOutput := flags.Bool("json", false, "write a compact success result")
+	sessionIDEnvironment := flags.String("session-id-env", "VELOX_HERMES_SESSION_ID", "environment variable containing the evaluator session ID")
 	version := flags.Bool("version", false, "print the supervisor version")
 	flags.Var(&toolRoots, "tool-root", "absolute read-execute tool root; repeatable")
 	flags.Var(&passEnvironment, "pass-env", "explicitly forward one existing environment variable; repeatable")
@@ -61,15 +62,16 @@ func run(arguments []string) error {
 		return fmt.Errorf("a command is required after --")
 	}
 	receipt, err := evalsandbox.Run(evalsandbox.Config{
-		TrialID:         *trialID,
-		SeriesID:        *seriesID,
-		Sequence:        *sequence,
-		TrialRoot:       *trialRoot,
-		ToolRoots:       toolRoots,
-		PassEnvironment: passEnvironment,
-		ReceiptPath:     *receiptPath,
-		Timeout:         *timeout,
-		Command:         command,
+		TrialID:              *trialID,
+		SeriesID:             *seriesID,
+		Sequence:             *sequence,
+		TrialRoot:            *trialRoot,
+		ToolRoots:            toolRoots,
+		PassEnvironment:      passEnvironment,
+		SessionIDEnvironment: *sessionIDEnvironment,
+		ReceiptPath:          *receiptPath,
+		Timeout:              *timeout,
+		Command:              command,
 	})
 	if err != nil {
 		return err

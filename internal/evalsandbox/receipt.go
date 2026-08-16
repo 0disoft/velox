@@ -19,15 +19,16 @@ const (
 )
 
 type Config struct {
-	TrialID         string
-	SeriesID        string
-	Sequence        int
-	TrialRoot       string
-	ToolRoots       []string
-	PassEnvironment []string
-	ReceiptPath     string
-	Timeout         time.Duration
-	Command         []string
+	TrialID              string
+	SeriesID             string
+	Sequence             int
+	TrialRoot            string
+	ToolRoots            []string
+	PassEnvironment      []string
+	SessionIDEnvironment string
+	ReceiptPath          string
+	Timeout              time.Duration
+	Command              []string
 }
 
 type Receipt struct {
@@ -39,6 +40,7 @@ type Receipt struct {
 	Supervisor        Supervisor  `json:"supervisor"`
 	CommandSHA256     string      `json:"commandSha256"`
 	EnvironmentSHA256 string      `json:"environmentSha256"`
+	SessionIDSHA256   string      `json:"sessionIdSha256"`
 	StartedAtUTC      string      `json:"startedAtUtc"`
 	FinishedAtUTC     string      `json:"finishedAtUtc"`
 	ExitCode          uint32      `json:"exitCode"`
@@ -78,6 +80,7 @@ type preparedConfig struct {
 	Grants                 []preparedGrant
 	Environment            []string
 	EnvironmentSHA256      string
+	SessionIDSHA256        string
 	PrivateEnvironmentRoot string
 }
 
@@ -106,6 +109,14 @@ func prepare(config Config) (preparedConfig, error) {
 	if len(config.ToolRoots) == 0 || len(config.ToolRoots) > 15 {
 		return preparedConfig{}, fmt.Errorf("between one and fifteen tool roots are required")
 	}
+	if !environmentNamePattern.MatchString(config.SessionIDEnvironment) {
+		return preparedConfig{}, fmt.Errorf("session ID environment variable is required")
+	}
+	sessionID, exists := os.LookupEnv(config.SessionIDEnvironment)
+	if !exists || sessionID == "" {
+		return preparedConfig{}, fmt.Errorf("session ID environment variable %q is not set", config.SessionIDEnvironment)
+	}
+	config.PassEnvironment = append(config.PassEnvironment, config.SessionIDEnvironment)
 	passEnvironment, err := validateEnvironmentNames(config.PassEnvironment)
 	if err != nil {
 		return preparedConfig{}, err
@@ -171,6 +182,7 @@ func prepare(config Config) (preparedConfig, error) {
 		Grants:                 grants,
 		Environment:            environment,
 		EnvironmentSHA256:      environmentSHA,
+		SessionIDSHA256:        digest([]byte(sessionID)),
 		PrivateEnvironmentRoot: privateRoot,
 	}, nil
 }

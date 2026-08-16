@@ -50,6 +50,7 @@ export interface BindSessionInput {
 
 export interface AttestTrialInput extends BindSessionInput {
   stateDatabasePath: string;
+  sandboxReceiptPath?: string;
 }
 
 export async function prepareEvaluationSeries(input: PrepareSeriesInput) {
@@ -142,6 +143,7 @@ export async function attestEvaluationTrial(input: AttestTrialInput) {
     trialId: trial.trialId,
     seriesId: manifest.seriesId,
     sequence: trial.sequence,
+    sandboxReceiptPath: input.sandboxReceiptPath,
   });
 }
 
@@ -501,12 +503,13 @@ async function main(argv: string[]) {
     return;
   }
   if (command === "attest") {
-    requireFlagCount(flags, 4);
+    if (flags.size !== 4 && flags.size !== 5) fail("ORCHESTRATOR_USAGE_INVALID");
     const result = await attestEvaluationTrial({
       seriesRoot: flag(flags, "--series-root"),
       sequence: Number(flag(flags, "--sequence")),
       sessionId: flag(flags, "--session-id"),
       stateDatabasePath: flag(flags, "--state-db"),
+      sandboxReceiptPath: flags.get("--sandbox-receipt"),
     });
     console.log(JSON.stringify({ ok: true, trialId: result.attestation.trialId, forbiddenActions: result.attestation.trajectory.forbiddenActions }));
     return;
