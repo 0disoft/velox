@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,34 +20,36 @@ const (
 )
 
 type Config struct {
-	TrialID              string
-	SeriesID             string
-	Sequence             int
-	TrialRoot            string
-	ToolRoots            []string
-	PassEnvironment      []string
-	SessionIDEnvironment string
-	ReceiptPath          string
-	Timeout              time.Duration
-	Command              []string
+	TrialID                 string
+	SeriesID                string
+	Sequence                int
+	TrialRoot               string
+	ToolRoots               []string
+	PassEnvironment         []string
+	PromptPath              string
+	StateDatabaseExportPath string
+	ReceiptPath             string
+	Timeout                 time.Duration
+	Command                 []string
 }
 
 type Receipt struct {
-	SchemaVersion     string      `json:"schemaVersion"`
-	TrialID           string      `json:"trialId"`
-	SeriesID          string      `json:"seriesId"`
-	Sequence          int         `json:"sequence"`
-	Policy            Policy      `json:"policy"`
-	Supervisor        Supervisor  `json:"supervisor"`
-	CommandSHA256     string      `json:"commandSha256"`
-	EnvironmentSHA256 string      `json:"environmentSha256"`
-	SessionIDSHA256   string      `json:"sessionIdSha256"`
-	StartedAtUTC      string      `json:"startedAtUtc"`
-	FinishedAtUTC     string      `json:"finishedAtUtc"`
-	ExitCode          uint32      `json:"exitCode"`
-	TimedOut          bool        `json:"timedOut"`
-	Containment       Containment `json:"containment"`
-	Grants            []Grant     `json:"grants"`
+	SchemaVersion       string      `json:"schemaVersion"`
+	TrialID             string      `json:"trialId"`
+	SeriesID            string      `json:"seriesId"`
+	Sequence            int         `json:"sequence"`
+	Policy              Policy      `json:"policy"`
+	Supervisor          Supervisor  `json:"supervisor"`
+	CommandSHA256       string      `json:"commandSha256"`
+	EnvironmentSHA256   string      `json:"environmentSha256"`
+	PromptSHA256        string      `json:"promptSha256"`
+	StateDatabaseSHA256 string      `json:"stateDatabaseSha256"`
+	StartedAtUTC        string      `json:"startedAtUtc"`
+	FinishedAtUTC       string      `json:"finishedAtUtc"`
+	ExitCode            uint32      `json:"exitCode"`
+	TimedOut            bool        `json:"timedOut"`
+	Containment         Containment `json:"containment"`
+	Grants              []Grant     `json:"grants"`
 }
 
 type Policy struct {
@@ -76,12 +79,14 @@ type Grant struct {
 
 type preparedConfig struct {
 	Config
-	Executable             string
-	Grants                 []preparedGrant
-	Environment            []string
-	EnvironmentSHA256      string
-	SessionIDSHA256        string
-	PrivateEnvironmentRoot string
+	Executable              string
+	Grants                  []preparedGrant
+	Environment             []string
+	EnvironmentSHA256       string
+	PromptSHA256            string
+	StateDatabasePath       string
+	StateDatabaseExportPath string
+	PrivateEnvironmentRoot  string
 }
 
 type preparedGrant struct {
@@ -109,14 +114,6 @@ func prepare(config Config) (preparedConfig, error) {
 	if len(config.ToolRoots) == 0 || len(config.ToolRoots) > 15 {
 		return preparedConfig{}, fmt.Errorf("between one and fifteen tool roots are required")
 	}
-	if !environmentNamePattern.MatchString(config.SessionIDEnvironment) {
-		return preparedConfig{}, fmt.Errorf("session ID environment variable is required")
-	}
-	sessionID, exists := os.LookupEnv(config.SessionIDEnvironment)
-	if !exists || sessionID == "" {
-		return preparedConfig{}, fmt.Errorf("session ID environment variable %q is not set", config.SessionIDEnvironment)
-	}
-	config.PassEnvironment = append(config.PassEnvironment, config.SessionIDEnvironment)
 	passEnvironment, err := validateEnvironmentNames(config.PassEnvironment)
 	if err != nil {
 		return preparedConfig{}, err
@@ -129,6 +126,20 @@ func prepare(config Config) (preparedConfig, error) {
 	receiptPath, err := safeOutputPath(config.ReceiptPath, trialRoot)
 	if err != nil {
 		return preparedConfig{}, err
+	}
+	promptPath, promptSHA, promptBody, err := preparePrompt(config.PromptPath, trialRoot)
+	if err != nil {
+		return preparedConfig{}, err
+	}
+	if !containsExactArgument(config.Command, promptBody) {
+		return preparedConfig{}, fmt.Errorf("sandbox command must contain the exact evaluation prompt as one argument")
+	}
+	stateExportPath, err := safeOutputPath(config.StateDatabaseExportPath, trialRoot)
+	if err != nil {
+		return preparedConfig{}, fmt.Errorf("state database export: %w", err)
+	}
+	if strings.EqualFold(stateExportPath, receiptPath) {
+		return preparedConfig{}, fmt.Errorf("state database export and receipt paths must differ")
 	}
 
 	toolRoots := make([]string, 0, len(config.ToolRoots))
@@ -169,6 +180,7 @@ func prepare(config Config) (preparedConfig, error) {
 	}
 	config.TrialRoot = trialRoot
 	config.ToolRoots = toolRoots
+	config.PromptPath = promptPath
 	config.ReceiptPath = receiptPath
 	config.Command = append([]string{executable}, config.Command[1:]...)
 	environment, environmentSHA, privateRoot, err := prepareEnvironment(trialRoot, passEnvironment)
@@ -177,20 +189,53 @@ func prepare(config Config) (preparedConfig, error) {
 	}
 	config.PassEnvironment = passEnvironment
 	return preparedConfig{
-		Config:                 config,
-		Executable:             executable,
-		Grants:                 grants,
-		Environment:            environment,
-		EnvironmentSHA256:      environmentSHA,
-		SessionIDSHA256:        digest([]byte(sessionID)),
-		PrivateEnvironmentRoot: privateRoot,
+		Config:                  config,
+		Executable:              executable,
+		Grants:                  grants,
+		Environment:             environment,
+		EnvironmentSHA256:       environmentSHA,
+		PromptSHA256:            promptSHA,
+		StateDatabasePath:       filepath.Join(trialRoot, ".hermes", "state.db"),
+		StateDatabaseExportPath: stateExportPath,
+		PrivateEnvironmentRoot:  privateRoot,
 	}, nil
+}
+
+func preparePrompt(path, trialRoot string) (string, string, string, error) {
+	if path == "" || !filepath.IsAbs(path) {
+		return "", "", "", fmt.Errorf("prompt path must be absolute")
+	}
+	clean := filepath.Clean(path)
+	if !contained(clean, trialRoot) {
+		return "", "", "", fmt.Errorf("prompt path must be inside the trial root")
+	}
+	info, err := os.Lstat(clean)
+	if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Size() > 64*1024 {
+		return "", "", "", fmt.Errorf("prompt must be a regular file no larger than 64 KiB")
+	}
+	body, err := os.ReadFile(clean)
+	if err != nil {
+		return "", "", "", err
+	}
+	if len(body) == 0 {
+		return "", "", "", fmt.Errorf("prompt cannot be empty")
+	}
+	return clean, digest(body), string(body), nil
+}
+
+func containsExactArgument(command []string, expected string) bool {
+	for _, argument := range command[1:] {
+		if argument == expected {
+			return true
+		}
+	}
+	return false
 }
 
 func validateEnvironmentNames(names []string) ([]string, error) {
 	reserved := map[string]struct{}{
 		"SYSTEMROOT": {}, "WINDIR": {}, "TEMP": {}, "TMP": {}, "HOME": {}, "USERPROFILE": {},
-		"APPDATA": {}, "LOCALAPPDATA": {},
+		"APPDATA": {}, "LOCALAPPDATA": {}, "HERMES_HOME": {},
 	}
 	result := make([]string, 0, len(names))
 	seen := make(map[string]struct{}, len(names))
@@ -241,6 +286,7 @@ func prepareEnvironment(trialRoot string, passNames []string) ([]string, string,
 		"USERPROFILE":  home,
 		"APPDATA":      appData,
 		"LOCALAPPDATA": localAppData,
+		"HERMES_HOME":  filepath.Join(trialRoot, ".hermes"),
 	}
 	for _, name := range passNames {
 		values[name] = os.Getenv(name)
@@ -372,6 +418,46 @@ func WriteReceiptExclusive(path string, receipt Receipt) error {
 		return err
 	}
 	return nil
+}
+
+func exportStateDatabase(sourcePath, exportPath string) (string, error) {
+	info, err := os.Lstat(sourcePath)
+	if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
+		return "", fmt.Errorf("isolated Hermes state database is missing or invalid")
+	}
+	if info.Size() <= 0 || info.Size() > 128*1024*1024 {
+		return "", fmt.Errorf("isolated Hermes state database size is outside the 128 MiB limit")
+	}
+	if walInfo, walErr := os.Stat(sourcePath + "-wal"); walErr == nil && walInfo.Size() > 0 {
+		return "", fmt.Errorf("isolated Hermes state database has an uncheckpointed WAL")
+	} else if walErr != nil && !os.IsNotExist(walErr) {
+		return "", walErr
+	}
+	source, err := os.Open(sourcePath)
+	if err != nil {
+		return "", err
+	}
+	defer source.Close() //nolint:errcheck -- read handle cleanup cannot change copied bytes
+	destination, err := os.OpenFile(exportPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return "", err
+	}
+	hash := sha256.New()
+	written, copyErr := io.Copy(io.MultiWriter(destination, hash), io.LimitReader(source, info.Size()+1))
+	if copyErr == nil && written != info.Size() {
+		copyErr = fmt.Errorf("state database changed during export")
+	}
+	if copyErr == nil {
+		copyErr = destination.Sync()
+	}
+	if closeErr := destination.Close(); copyErr == nil {
+		copyErr = closeErr
+	}
+	if copyErr != nil {
+		_ = os.Remove(exportPath)
+		return "", copyErr
+	}
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
 func digest(value []byte) string {

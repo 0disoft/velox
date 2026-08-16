@@ -22,14 +22,15 @@ func TestReceiptJSONContainsNoLocalPaths(t *testing.T) {
 			ProcessBoundary:    "job-object-no-breakaway",
 			NetworkCapability:  "internet-client",
 		},
-		Supervisor:        Supervisor{Version: "0.5.10-alpha.32", SHA256: "a"},
-		CommandSHA256:     "b",
-		EnvironmentSHA256: "d",
-		SessionIDSHA256:   "e",
-		StartedAtUTC:      time.Now().UTC().Format(time.RFC3339Nano),
-		FinishedAtUTC:     time.Now().UTC().Format(time.RFC3339Nano),
-		Containment:       Containment{FilesystemEnforced: true, ProcessTreeEnforced: true, CleanupCompleted: true},
-		Grants:            []Grant{{Role: "trial-read-write-execute", PathSHA256: "c", Rights: "read-write-execute"}},
+		Supervisor:          Supervisor{Version: "0.5.10-alpha.33", SHA256: "a"},
+		CommandSHA256:       "b",
+		EnvironmentSHA256:   "d",
+		PromptSHA256:        "e",
+		StateDatabaseSHA256: "f",
+		StartedAtUTC:        time.Now().UTC().Format(time.RFC3339Nano),
+		FinishedAtUTC:       time.Now().UTC().Format(time.RFC3339Nano),
+		Containment:         Containment{FilesystemEnforced: true, ProcessTreeEnforced: true, CleanupCompleted: true},
+		Grants:              []Grant{{Role: "trial-read-write-execute", PathSHA256: "c", Rights: "read-write-execute"}},
 	}
 	body, err := json.Marshal(receipt)
 	if err != nil {

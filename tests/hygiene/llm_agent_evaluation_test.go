@@ -131,7 +131,8 @@ func TestLLMAgentEvaluationAttestationV2RequiresEnforcedSandboxReceipt(t *testin
 		`"processBoundary": { "const": "job-object-no-breakaway" }`,
 		`"networkCapability": { "const": "internet-client" }`,
 		`"environmentSha256": { "$ref": "#/$defs/sha256" }`,
-		`"sessionIdSha256": { "$ref": "#/$defs/sha256" }`,
+		`"promptSha256": { "$ref": "#/$defs/sha256" }`,
+		`"stateDatabaseSha256": { "$ref": "#/$defs/sha256" }`,
 		`"cleanupCompleted": { "const": true }`,
 		`"timedOut": { "const": false }`,
 	} {

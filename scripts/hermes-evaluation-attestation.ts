@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { lstat, realpath, writeFile } from "node:fs/promises";
+import { lstat, readFile, realpath, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, resolve, sep } from "node:path";
 import { Database } from "bun:sqlite";
 import {
@@ -122,6 +122,7 @@ export async function createHermesAttestation(input: HermesAttestationInput): Pr
   const databaseStat = await lstat(databasePath);
   if (!databaseStat.isFile() || databaseStat.isSymbolicLink()) fail("HERMES_STATE_DB_INVALID");
   if (isContained(trialRoot, databasePath)) fail("HERMES_STATE_DB_INSIDE_TRIAL_ROOT");
+	const stateDatabaseSha256 = sha256(await readFile(databasePath));
 
   const outputPath = resolveExternalOutput(input.outputPath, trialRoot);
   const database = new Database(databasePath, { readonly: true, strict: true });
@@ -132,7 +133,7 @@ export async function createHermesAttestation(input: HermesAttestationInput): Pr
     requireFinishedSession(sessions, messages);
     const sessionAttestation = attestSnapshot(input, trialRoot, sessions, messages);
     const attestation = input.sandboxReceiptPath
-      ? combineEnforcedSandboxAttestation(sessionAttestation, await readSandboxReceipt(input.sandboxReceiptPath, trialRoot))
+      ? combineEnforcedSandboxAttestation(sessionAttestation, await readSandboxReceipt(input.sandboxReceiptPath, trialRoot), stateDatabaseSha256)
       : sessionAttestation;
     await writeExclusiveJSON(outputPath, attestation, trialRoot);
     return { attestation, sessionCount: sessions.length, messageCount: messages.length };
@@ -519,7 +520,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function sha256(value: string) {
+function sha256(value: string | Uint8Array) {
   return createHash("sha256").update(value).digest("hex");
 }
 

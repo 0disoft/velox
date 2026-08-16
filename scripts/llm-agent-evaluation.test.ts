@@ -89,15 +89,15 @@ describe("LLM agent evaluation", () => {
     await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_TIME_RANGE_NOT_COVERED");
   });
 
-  test("rejects a sandbox receipt bound to another evaluator session", async () => {
+  test("rejects a sandbox receipt whose prompt was not observed", async () => {
     const root = await createSeries();
     const trialRoot = resolve(root, "trial-1");
     await createTrial(trialRoot, 1, "model-a");
     const attestation = await upgradeAttestationToV2(trialRoot);
-    attestation.evidence.sandbox.receipt.sessionIdSha256 = "0".repeat(64);
+    attestation.evidence.sandbox.receipt.promptSha256 = "0".repeat(64);
     attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
     await writeAttestation(trialRoot, attestation);
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_SESSION_DIGEST_MISMATCH");
+    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_PROMPT_NOT_OBSERVED");
   });
 
   test("rejects artifact tampering", async () => {
@@ -312,10 +312,11 @@ describe("LLM agent evaluation", () => {
         processBoundary: "job-object-no-breakaway",
         networkCapability: "internet-client",
       },
-      supervisor: { version: "0.5.10-alpha.32", sha256: "b".repeat(64) },
+      supervisor: { version: "0.5.10-alpha.33", sha256: "b".repeat(64) },
       commandSha256: "c".repeat(64),
       environmentSha256: "f".repeat(64),
-      sessionIdSha256: sha(Buffer.from(fixture.sessionId)),
+      promptSha256: sha(Buffer.from("Run the public Velox evaluation task.")),
+      stateDatabaseSha256: sha(await readFile(fixture.input.stateDatabasePath)),
       startedAtUtc: "1970-01-01T00:01:30.000Z",
       finishedAtUtc: "1970-01-01T00:03:00.000Z",
       exitCode: 0,
@@ -332,7 +333,7 @@ describe("LLM agent evaluation", () => {
       schemaVersion: "velox.llm-agent-evaluation-attestation/v2",
       evidence: {
         sandboxEnforced: true,
-        sandbox: { receipt: { sessionIdSha256: sha(Buffer.from(fixture.sessionId)) } },
+        sandbox: { receipt: { promptSha256: sha(Buffer.from("Run the public Velox evaluation task.")) } },
       },
     });
   });
@@ -857,7 +858,7 @@ async function createTrial(root: string, sequence: number, model: string): Promi
       projection: {
         schemaVersion: "velox.hermes-session-log-digest/v1",
         sessions: [],
-        messages: [],
+        messages: [{ contentSha256: "9".repeat(64) }],
       },
     },
   };
@@ -898,10 +899,11 @@ async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestati
       processBoundary: "job-object-no-breakaway" as const,
       networkCapability: "internet-client" as const,
     },
-    supervisor: { version: "0.5.10-alpha.32", sha256: "b".repeat(64) },
+    supervisor: { version: "0.5.10-alpha.33", sha256: "b".repeat(64) },
     commandSha256: "c".repeat(64),
     environmentSha256: "f".repeat(64),
-    sessionIdSha256: current.evaluator.sessionIdSha256,
+    promptSha256: "9".repeat(64),
+    stateDatabaseSha256: "8".repeat(64),
     startedAtUtc: new Date(Date.parse(current.startedAtUtc) - 1000).toISOString(),
     finishedAtUtc: new Date(Date.parse(current.finishedAtUtc) + 1000).toISOString(),
     exitCode: 0 as const,
@@ -916,7 +918,7 @@ async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestati
       { role: "tool-read-execute" as const, pathSha256: "e".repeat(64), rights: "read-execute" as const },
     ],
   };
-  const attestation = combineEnforcedSandboxAttestation(current, receipt);
+  const attestation = combineEnforcedSandboxAttestation(current, receipt, "8".repeat(64));
   await writeAttestation(trialRoot, attestation);
   return attestation;
 }

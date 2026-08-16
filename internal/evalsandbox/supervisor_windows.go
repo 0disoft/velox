@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -39,9 +40,13 @@ func Run(config Config) (Receipt, error) {
 		return Receipt{}, err
 	}
 	privateEnvironmentCleanupNeeded := true
+	evaluationStateCleanupNeeded := true
 	defer func() {
 		if privateEnvironmentCleanupNeeded {
 			_ = os.RemoveAll(prepared.PrivateEnvironmentRoot)
+		}
+		if evaluationStateCleanupNeeded {
+			_ = os.RemoveAll(filepath.Dir(prepared.StateDatabasePath))
 		}
 	}()
 	supervisorPath, err := os.Executable()
@@ -88,6 +93,11 @@ func Run(config Config) (Receipt, error) {
 		} else {
 			privateEnvironmentCleanupNeeded = false
 		}
+		if removeErr := os.RemoveAll(filepath.Dir(prepared.StateDatabasePath)); removeErr != nil {
+			cleanupErrors = append(cleanupErrors, fmt.Errorf("remove isolated Hermes state: %w", removeErr))
+		} else {
+			evaluationStateCleanupNeeded = false
+		}
 		return errors.Join(cleanupErrors...)
 	}
 
@@ -102,15 +112,20 @@ func Run(config Config) (Receipt, error) {
 	started := time.Now().UTC()
 	exitCode, timedOut, runErr := launchContained(prepared, appContainerSID, capabilities)
 	finished := time.Now().UTC()
-	cleanupErr := cleanup()
-	if runErr != nil || cleanupErr != nil {
+	if runErr != nil || timedOut || exitCode != 0 {
+		cleanupErr := cleanup()
+		if timedOut {
+			runErr = errors.Join(runErr, fmt.Errorf("sandbox command exceeded %s", prepared.Timeout))
+		} else if exitCode != 0 {
+			runErr = errors.Join(runErr, fmt.Errorf("sandbox command exited with code %d", exitCode))
+		}
 		return Receipt{}, errors.Join(runErr, cleanupErr)
 	}
-	if timedOut {
-		return Receipt{}, fmt.Errorf("sandbox command exceeded %s", prepared.Timeout)
-	}
-	if exitCode != 0 {
-		return Receipt{}, fmt.Errorf("sandbox command exited with code %d", exitCode)
+	stateDatabaseSHA, exportErr := exportStateDatabase(prepared.StateDatabasePath, prepared.StateDatabaseExportPath)
+	cleanupErr := cleanup()
+	if exportErr != nil || cleanupErr != nil {
+		_ = os.Remove(prepared.StateDatabaseExportPath)
+		return Receipt{}, errors.Join(exportErr, cleanupErr)
 	}
 
 	receipt := Receipt{
@@ -125,14 +140,15 @@ func Run(config Config) (Receipt, error) {
 			ProcessBoundary:    "job-object-no-breakaway",
 			NetworkCapability:  "internet-client",
 		},
-		Supervisor:        Supervisor{Version: buildinfo.Version, SHA256: supervisorSHA},
-		CommandSHA256:     commandSHA,
-		EnvironmentSHA256: prepared.EnvironmentSHA256,
-		SessionIDSHA256:   prepared.SessionIDSHA256,
-		StartedAtUTC:      started.Format(time.RFC3339Nano),
-		FinishedAtUTC:     finished.Format(time.RFC3339Nano),
-		ExitCode:          exitCode,
-		TimedOut:          false,
+		Supervisor:          Supervisor{Version: buildinfo.Version, SHA256: supervisorSHA},
+		CommandSHA256:       commandSHA,
+		EnvironmentSHA256:   prepared.EnvironmentSHA256,
+		PromptSHA256:        prepared.PromptSHA256,
+		StateDatabaseSHA256: stateDatabaseSHA,
+		StartedAtUTC:        started.Format(time.RFC3339Nano),
+		FinishedAtUTC:       finished.Format(time.RFC3339Nano),
+		ExitCode:            exitCode,
+		TimedOut:            false,
 		Containment: Containment{
 			FilesystemEnforced:  true,
 			ProcessTreeEnforced: true,
@@ -141,6 +157,7 @@ func Run(config Config) (Receipt, error) {
 		Grants: receiptGrants(prepared.Grants),
 	}
 	if err := WriteReceiptExclusive(prepared.ReceiptPath, receipt); err != nil {
+		_ = os.Remove(prepared.StateDatabaseExportPath)
 		return Receipt{}, fmt.Errorf("write sandbox receipt: %w", err)
 	}
 	return receipt, nil

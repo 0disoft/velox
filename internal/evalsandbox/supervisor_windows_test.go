@@ -14,7 +14,6 @@ const (
 	probeEnabledEnv   = "VELOX_EVAL_SANDBOX_PROBE"
 	probeAllowedEnv   = "VELOX_EVAL_SANDBOX_ALLOWED"
 	probeForbiddenEnv = "VELOX_EVAL_SANDBOX_FORBIDDEN"
-	probeSessionIDEnv = "VELOX_HERMES_SESSION_ID"
 )
 
 func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
@@ -36,22 +35,28 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	allowedPath := filepath.Join(trialRoot, "inside.txt")
+	prompt := "run the sandbox boundary probe"
+	promptPath := filepath.Join(trialRoot, "prompt.txt")
+	if err := os.WriteFile(promptPath, []byte(prompt), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	t.Setenv(probeEnabledEnv, "1")
 	t.Setenv(probeAllowedEnv, allowedPath)
 	t.Setenv(probeForbiddenEnv, forbiddenPath)
-	t.Setenv(probeSessionIDEnv, "sandbox-session-identity")
 	receiptPath := filepath.Join(receiptRoot, "receipt.json")
+	stateDatabaseExportPath := filepath.Join(receiptRoot, "state.db")
 	receipt, err := Run(Config{
-		TrialID:              "trial-20260816T010203Z-a1b2c3d4",
-		SeriesID:             "series-20260816T010203Z-a1b2c3d4",
-		Sequence:             1,
-		TrialRoot:            trialRoot,
-		ToolRoots:            []string{filepath.Dir(executable)},
-		PassEnvironment:      []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv},
-		SessionIDEnvironment: probeSessionIDEnv,
-		ReceiptPath:          receiptPath,
-		Timeout:              30 * time.Second,
-		Command:              []string{executable, "-test.run=^TestSandboxBoundaryProbeProcess$"},
+		TrialID:                 "trial-20260816T010203Z-a1b2c3d4",
+		SeriesID:                "series-20260816T010203Z-a1b2c3d4",
+		Sequence:                1,
+		TrialRoot:               trialRoot,
+		ToolRoots:               []string{filepath.Dir(executable)},
+		PassEnvironment:         []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv},
+		PromptPath:              promptPath,
+		StateDatabaseExportPath: stateDatabaseExportPath,
+		ReceiptPath:             receiptPath,
+		Timeout:                 30 * time.Second,
+		Command:                 []string{executable, "-test.run=^TestSandboxBoundaryProbeProcess$", "--", prompt},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -59,11 +64,14 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 	if !receipt.Containment.FilesystemEnforced || !receipt.Containment.ProcessTreeEnforced || !receipt.Containment.CleanupCompleted {
 		t.Fatalf("incomplete containment receipt: %#v", receipt.Containment)
 	}
-	if receipt.SessionIDSHA256 != digest([]byte("sandbox-session-identity")) {
-		t.Fatal("sandbox receipt did not bind the evaluator session")
+	if receipt.PromptSHA256 != digest([]byte(prompt)) {
+		t.Fatal("sandbox receipt did not bind the evaluator prompt")
 	}
 	if _, err := os.Stat(receiptPath); err != nil {
 		t.Fatalf("sandbox receipt missing: %v", err)
+	}
+	if body, err := os.ReadFile(stateDatabaseExportPath); err != nil || string(body) != "isolated-state" {
+		t.Fatalf("isolated state database export missing: %q %v", body, err)
 	}
 	if body, err := os.ReadFile(allowedPath); err != nil || string(body) != "inside\ngrandchild" {
 		t.Fatalf("allowed sandbox writes missing: %q %v", body, err)
@@ -92,6 +100,13 @@ func TestSandboxBoundaryProbeProcess(t *testing.T) {
 	}
 	if err := os.WriteFile(os.Getenv(probeAllowedEnv), []byte("inside"), 0o600); err != nil {
 		t.Fatalf("AppContainer could not write inside the trial root: %v", err)
+	}
+	hermesHome := os.Getenv("HERMES_HOME")
+	if err := os.MkdirAll(hermesHome, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(hermesHome, "state.db"), []byte("isolated-state"), 0o600); err != nil {
+		t.Fatal(err)
 	}
 	child := exec.Command(os.Args[0], "-test.run=^TestSandboxGrandchildProbeProcess$")
 	child.Env = os.Environ()

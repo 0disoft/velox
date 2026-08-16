@@ -35,9 +35,10 @@
         "session": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["sha256", "projection"],
+          "required": ["sha256", "stateDatabaseSha256", "projection"],
           "properties": {
             "sha256": { "$ref": "#/$defs/sha256" },
+            "stateDatabaseSha256": { "$ref": "#/$defs/sha256" },
             "projection": {
               "type": "object",
               "additionalProperties": false,
@@ -112,7 +113,8 @@
         "supervisor",
         "commandSha256",
         "environmentSha256",
-        "sessionIdSha256",
+        "promptSha256",
+        "stateDatabaseSha256",
         "startedAtUtc",
         "finishedAtUtc",
         "exitCode",
@@ -148,7 +150,8 @@
         },
         "commandSha256": { "$ref": "#/$defs/sha256" },
         "environmentSha256": { "$ref": "#/$defs/sha256" },
-        "sessionIdSha256": { "$ref": "#/$defs/sha256" },
+        "promptSha256": { "$ref": "#/$defs/sha256" },
+        "stateDatabaseSha256": { "$ref": "#/$defs/sha256" },
         "startedAtUtc": { "type": "string", "format": "date-time" },
         "finishedAtUtc": { "type": "string", "format": "date-time" },
         "exitCode": { "const": 0 },

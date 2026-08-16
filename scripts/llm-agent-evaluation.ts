@@ -165,7 +165,8 @@ interface SandboxReceipt {
   supervisor: { version: string; sha256: string };
   commandSha256: string;
   environmentSha256: string;
-  sessionIdSha256: string;
+  promptSha256: string;
+  stateDatabaseSha256: string;
   startedAtUtc: string;
   finishedAtUtc: string;
   exitCode: 0;
@@ -188,7 +189,7 @@ export interface TrialAttestationV2 extends TrialAttestationBase {
     kind: "orchestrator-session-log-with-os-sandbox";
     observationLevel: "session-log-plus-enforced-sandbox";
     sandboxEnforced: true;
-    session: { sha256: string; projection: Record<string, unknown> };
+    session: { sha256: string; stateDatabaseSha256: string; projection: Record<string, unknown> };
     sandbox: { receiptSha256: string; receipt: SandboxReceipt };
   };
 }
@@ -198,11 +199,13 @@ export type TrialAttestation = TrialAttestationV1 | TrialAttestationV2;
 export function combineEnforcedSandboxAttestation(
   sessionAttestation: TrialAttestationV1,
   sandboxReceipt: unknown,
+  stateDatabaseSha256: string,
 ): TrialAttestationV2 {
   if (sessionAttestation.schemaVersion !== "velox.llm-agent-evaluation-attestation/v1") {
     fail("ATTESTATION_SESSION_SCHEMA_VERSION_INVALID");
   }
   const receipt = object(sandboxReceipt, "attestation_sandbox_receipt");
+  stringMatch(stateDatabaseSha256, sha256Pattern, "ATTESTATION_STATE_DATABASE_DIGEST_INVALID");
   const combined: TrialAttestationV2 = {
     ...sessionAttestation,
     schemaVersion: "velox.llm-agent-evaluation-attestation/v2",
@@ -212,6 +215,7 @@ export function combineEnforcedSandboxAttestation(
       sandboxEnforced: true,
       session: {
         sha256: sessionAttestation.evidence.sha256,
+        stateDatabaseSha256,
         projection: sessionAttestation.evidence.projection,
       },
       sandbox: {
@@ -332,8 +336,9 @@ function validateV2Evidence(attestation: Record<string, unknown>, evidence: Reco
   equal(evidence.sandboxEnforced, true, "ATTESTATION_SANDBOX_CLAIM_INVALID");
 
   const session = object(evidence.session, "attestation_session_evidence");
-  exactKeys(session, ["sha256", "projection"], "attestation_session_evidence");
+  exactKeys(session, ["sha256", "stateDatabaseSha256", "projection"], "attestation_session_evidence");
   stringMatch(session.sha256, sha256Pattern, "ATTESTATION_SESSION_EVIDENCE_DIGEST_INVALID");
+  stringMatch(session.stateDatabaseSha256, sha256Pattern, "ATTESTATION_STATE_DATABASE_DIGEST_INVALID");
   const projection = object(session.projection, "attestation_session_projection");
   equal(session.sha256, digest(Buffer.from(JSON.stringify(projection))), "ATTESTATION_PROJECTION_DIGEST_MISMATCH");
 
@@ -347,7 +352,7 @@ function validateV2Evidence(attestation: Record<string, unknown>, evidence: Reco
 
 function validateSandboxReceipt(attestation: Record<string, unknown>, receipt: Record<string, unknown>) {
   exactKeys(receipt, [
-    "schemaVersion", "trialId", "seriesId", "sequence", "policy", "supervisor", "commandSha256", "environmentSha256", "sessionIdSha256",
+    "schemaVersion", "trialId", "seriesId", "sequence", "policy", "supervisor", "commandSha256", "environmentSha256", "promptSha256", "stateDatabaseSha256",
     "startedAtUtc", "finishedAtUtc", "exitCode", "timedOut", "containment", "grants",
   ], "attestation_sandbox_receipt");
   equal(receipt.schemaVersion, "velox.eval-sandbox-receipt/v1", "ATTESTATION_SANDBOX_RECEIPT_VERSION_INVALID");
@@ -369,7 +374,8 @@ function validateSandboxReceipt(attestation: Record<string, unknown>, receipt: R
   stringMatch(supervisor.sha256, sha256Pattern, "ATTESTATION_SANDBOX_SUPERVISOR_DIGEST_INVALID");
   stringMatch(receipt.commandSha256, sha256Pattern, "ATTESTATION_SANDBOX_COMMAND_DIGEST_INVALID");
   stringMatch(receipt.environmentSha256, sha256Pattern, "ATTESTATION_SANDBOX_ENVIRONMENT_DIGEST_INVALID");
-  equal(receipt.sessionIdSha256, object(attestation.evaluator, "attestation_evaluator").sessionIdSha256, "ATTESTATION_SANDBOX_SESSION_DIGEST_MISMATCH");
+  stringMatch(receipt.promptSha256, sha256Pattern, "ATTESTATION_SANDBOX_PROMPT_DIGEST_INVALID");
+  equal(receipt.stateDatabaseSha256, object(object(attestation.evidence, "attestation_evidence").session, "attestation_session_evidence").stateDatabaseSha256, "ATTESTATION_STATE_DATABASE_DIGEST_MISMATCH");
   dateTime(receipt.startedAtUtc, "ATTESTATION_SANDBOX_START_TIME_INVALID");
   dateTime(receipt.finishedAtUtc, "ATTESTATION_SANDBOX_FINISH_TIME_INVALID");
   equal(receipt.exitCode, 0, "ATTESTATION_SANDBOX_EXIT_CODE_INVALID");
@@ -386,6 +392,12 @@ function validateSandboxReceipt(attestation: Record<string, unknown>, receipt: R
   equal(containment.processTreeEnforced, true, "ATTESTATION_PROCESS_ENFORCEMENT_INVALID");
   equal(containment.cleanupCompleted, true, "ATTESTATION_SANDBOX_CLEANUP_INVALID");
   validateSandboxGrants(receipt.grants);
+  const session = object(object(attestation.evidence, "attestation_evidence").session, "attestation_session_evidence");
+  const projection = object(session.projection, "attestation_session_projection");
+  const messages = projection.messages;
+  if (!Array.isArray(messages) || !messages.some((value) => isRecord(value) && value.contentSha256 === receipt.promptSha256)) {
+    fail("ATTESTATION_SANDBOX_PROMPT_NOT_OBSERVED");
+  }
 }
 
 function validateSandboxGrants(raw: unknown) {
@@ -664,6 +676,10 @@ function parseJSON(bytes: Uint8Array, name: string) {
 function object(value: unknown, name: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) fail(`${name.toUpperCase()}_OBJECT_INVALID`);
   return value as Record<string, unknown>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function exactKeys(value: Record<string, unknown>, expected: readonly string[], name: string, allowMissing = false) {
