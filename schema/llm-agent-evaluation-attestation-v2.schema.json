@@ -111,6 +111,7 @@
         "policy",
         "supervisor",
         "commandSha256",
+        "environmentSha256",
         "startedAtUtc",
         "finishedAtUtc",
         "exitCode",
@@ -145,6 +146,7 @@
           }
         },
         "commandSha256": { "$ref": "#/$defs/sha256" },
+        "environmentSha256": { "$ref": "#/$defs/sha256" },
         "startedAtUtc": { "type": "string", "format": "date-time" },
         "finishedAtUtc": { "type": "string", "format": "date-time" },
         "exitCode": { "const": 0 },

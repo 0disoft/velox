@@ -1,0 +1,112 @@
+//go:build windows
+
+package evalsandbox
+
+import (
+	"os"
+	"os/exec"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+const (
+	probeEnabledEnv   = "VELOX_EVAL_SANDBOX_PROBE"
+	probeAllowedEnv   = "VELOX_EVAL_SANDBOX_ALLOWED"
+	probeForbiddenEnv = "VELOX_EVAL_SANDBOX_FORBIDDEN"
+)
+
+func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
+	base := t.TempDir()
+	trialRoot := filepath.Join(base, "trial")
+	forbiddenRoot := filepath.Join(base, "forbidden")
+	receiptRoot := filepath.Join(base, "receipts")
+	for _, directory := range []string{trialRoot, forbiddenRoot, receiptRoot} {
+		if err := os.MkdirAll(directory, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	forbiddenPath := filepath.Join(forbiddenRoot, "sentinel.txt")
+	if err := os.WriteFile(forbiddenPath, []byte("outside"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	allowedPath := filepath.Join(trialRoot, "inside.txt")
+	t.Setenv(probeEnabledEnv, "1")
+	t.Setenv(probeAllowedEnv, allowedPath)
+	t.Setenv(probeForbiddenEnv, forbiddenPath)
+	receiptPath := filepath.Join(receiptRoot, "receipt.json")
+	receipt, err := Run(Config{
+		TrialID:         "trial-20260816T010203Z-a1b2c3d4",
+		SeriesID:        "series-20260816T010203Z-a1b2c3d4",
+		Sequence:        1,
+		TrialRoot:       trialRoot,
+		ToolRoots:       []string{filepath.Dir(executable)},
+		PassEnvironment: []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv},
+		ReceiptPath:     receiptPath,
+		Timeout:         30 * time.Second,
+		Command:         []string{executable, "-test.run=^TestSandboxBoundaryProbeProcess$"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !receipt.Containment.FilesystemEnforced || !receipt.Containment.ProcessTreeEnforced || !receipt.Containment.CleanupCompleted {
+		t.Fatalf("incomplete containment receipt: %#v", receipt.Containment)
+	}
+	if _, err := os.Stat(receiptPath); err != nil {
+		t.Fatalf("sandbox receipt missing: %v", err)
+	}
+	if body, err := os.ReadFile(allowedPath); err != nil || string(body) != "inside\ngrandchild" {
+		t.Fatalf("allowed sandbox writes missing: %q %v", body, err)
+	}
+	if body, err := os.ReadFile(forbiddenPath); err != nil || string(body) != "outside" {
+		t.Fatalf("forbidden sentinel changed: %q %v", body, err)
+	}
+	if _, err := os.Stat(filepath.Join(forbiddenRoot, "escaped.txt")); !os.IsNotExist(err) {
+		t.Fatalf("sandbox wrote outside the trial root: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(trialRoot, ".velox-sandbox")); !os.IsNotExist(err) {
+		t.Fatalf("private sandbox environment was not removed: %v", err)
+	}
+}
+
+func TestSandboxBoundaryProbeProcess(t *testing.T) {
+	if os.Getenv(probeEnabledEnv) != "1" {
+		return
+	}
+	forbidden := os.Getenv(probeForbiddenEnv)
+	if _, err := os.ReadFile(forbidden); err == nil {
+		t.Fatal("AppContainer read a file outside its explicit grants")
+	}
+	if err := os.WriteFile(filepath.Join(filepath.Dir(forbidden), "escaped.txt"), []byte("escape"), 0o600); err == nil {
+		t.Fatal("AppContainer wrote outside its explicit grants")
+	}
+	if err := os.WriteFile(os.Getenv(probeAllowedEnv), []byte("inside"), 0o600); err != nil {
+		t.Fatalf("AppContainer could not write inside the trial root: %v", err)
+	}
+	child := exec.Command(os.Args[0], "-test.run=^TestSandboxGrandchildProbeProcess$")
+	child.Env = os.Environ()
+	if output, err := child.CombinedOutput(); err != nil {
+		t.Fatalf("contained grandchild failed: %v: %s", err, output)
+	}
+}
+
+func TestSandboxGrandchildProbeProcess(t *testing.T) {
+	if os.Getenv(probeEnabledEnv) != "1" {
+		return
+	}
+	file, err := os.OpenFile(os.Getenv(probeAllowedEnv), os.O_WRONLY|os.O_APPEND, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = file.WriteString("\ngrandchild"); err != nil {
+		_ = file.Close()
+		t.Fatal(err)
+	}
+	if err = file.Close(); err != nil {
+		t.Fatal(err)
+	}
+}

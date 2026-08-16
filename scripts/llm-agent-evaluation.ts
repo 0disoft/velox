@@ -164,6 +164,7 @@ interface SandboxReceipt {
   };
   supervisor: { version: string; sha256: string };
   commandSha256: string;
+  environmentSha256: string;
   startedAtUtc: string;
   finishedAtUtc: string;
   exitCode: 0;
@@ -317,7 +318,7 @@ function validateV2Evidence(attestation: Record<string, unknown>, evidence: Reco
 
 function validateSandboxReceipt(attestation: Record<string, unknown>, receipt: Record<string, unknown>) {
   exactKeys(receipt, [
-    "schemaVersion", "trialId", "seriesId", "sequence", "policy", "supervisor", "commandSha256",
+    "schemaVersion", "trialId", "seriesId", "sequence", "policy", "supervisor", "commandSha256", "environmentSha256",
     "startedAtUtc", "finishedAtUtc", "exitCode", "timedOut", "containment", "grants",
   ], "attestation_sandbox_receipt");
   equal(receipt.schemaVersion, "velox.eval-sandbox-receipt/v1", "ATTESTATION_SANDBOX_RECEIPT_VERSION_INVALID");
@@ -338,6 +339,7 @@ function validateSandboxReceipt(attestation: Record<string, unknown>, receipt: R
   stringMatch(supervisor.version, /^[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta)\.[1-9][0-9]*$/, "ATTESTATION_SANDBOX_SUPERVISOR_VERSION_INVALID");
   stringMatch(supervisor.sha256, sha256Pattern, "ATTESTATION_SANDBOX_SUPERVISOR_DIGEST_INVALID");
   stringMatch(receipt.commandSha256, sha256Pattern, "ATTESTATION_SANDBOX_COMMAND_DIGEST_INVALID");
+  stringMatch(receipt.environmentSha256, sha256Pattern, "ATTESTATION_SANDBOX_ENVIRONMENT_DIGEST_INVALID");
   dateTime(receipt.startedAtUtc, "ATTESTATION_SANDBOX_START_TIME_INVALID");
   dateTime(receipt.finishedAtUtc, "ATTESTATION_SANDBOX_FINISH_TIME_INVALID");
   equal(receipt.exitCode, 0, "ATTESTATION_SANDBOX_EXIT_CODE_INVALID");

@@ -130,6 +130,7 @@ func TestLLMAgentEvaluationAttestationV2RequiresEnforcedSandboxReceipt(t *testin
 		`"filesystemBoundary": { "const": "appcontainer-explicit-acl" }`,
 		`"processBoundary": { "const": "job-object-no-breakaway" }`,
 		`"networkCapability": { "const": "internet-client" }`,
+		`"environmentSha256": { "$ref": "#/$defs/sha256" }`,
 		`"cleanupCompleted": { "const": true }`,
 		`"timedOut": { "const": false }`,
 	} {
