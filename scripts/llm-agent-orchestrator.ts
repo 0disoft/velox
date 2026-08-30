@@ -84,6 +84,8 @@ export interface SandboxTrialExecutionPlan {
   supervisorCommand: string[];
 }
 
+export type SandboxTrialExecutor = (plan: SandboxTrialExecutionPlan) => Promise<number>;
+
 export interface AttestTrialInput extends BindSessionInput {
   stateDatabasePath: string;
   sandboxReceiptPath?: string;
@@ -294,19 +296,12 @@ export async function buildSandboxTrialExecutionPlan(input: RunSandboxTrialInput
   };
 }
 
-export async function runSandboxEvaluationTrial(input: RunSandboxTrialInput) {
+export async function runSandboxEvaluationTrial(
+  input: RunSandboxTrialInput,
+  execute: SandboxTrialExecutor = executeSandboxSupervisor,
+) {
   const plan = await buildSandboxTrialExecutionPlan(input);
-  const processHandle = Bun.spawn(plan.supervisorCommand, {
-    cwd: plan.trialRoot,
-    stdin: "ignore",
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [exitCode] = await Promise.all([
-    processHandle.exited,
-    new Response(processHandle.stdout).text(),
-    new Response(processHandle.stderr).text(),
-  ]);
+  const exitCode = await execute(plan);
   if (exitCode !== 0) fail("SANDBOX_SUPERVISOR_FAILED");
 
   const result = await attestSandboxEvaluationTrial({
@@ -324,6 +319,21 @@ export async function runSandboxEvaluationTrial(input: RunSandboxTrialInput) {
     fail("SANDBOX_STATE_DATABASE_CLEANUP_FAILED");
   }
   return { plan, attestation: result.attestation };
+}
+
+async function executeSandboxSupervisor(plan: SandboxTrialExecutionPlan) {
+  const processHandle = Bun.spawn(plan.supervisorCommand, {
+    cwd: plan.trialRoot,
+    stdin: "ignore",
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [exitCode] = await Promise.all([
+    processHandle.exited,
+    new Response(processHandle.stdout).text(),
+    new Response(processHandle.stderr).text(),
+  ]);
+  return exitCode;
 }
 
 export async function verifyEvaluationSeries(seriesPath: string, taskPath: string): Promise<SeriesSummary> {
