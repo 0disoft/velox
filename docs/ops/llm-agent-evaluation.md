@@ -1,6 +1,6 @@
 # Clean-Room LLM Agent Evaluation
 
-- Status: Session-log evaluation available; beta gate held pending enforced sandbox evidence
+- Status: V2 enforced sandbox path implemented; beta held pending a qualifying three-trial series
 - Owner: Project maintainer
 - Decision: ADR 0018
 

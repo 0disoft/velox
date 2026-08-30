@@ -192,6 +192,8 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 			"Tool-wrapper side effects count as invocations",
 		},
 		filepath.Join(root, "docs", "ops", "llm-agent-evaluation.md"): {
+			"V2 enforced sandbox path implemented",
+			"beta held pending a qualifying three-trial series",
 			"Three consecutive trials pass",
 			"At least two distinct model identifiers",
 			"Do not discard a failed trial",
