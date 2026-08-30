@@ -202,7 +202,9 @@ the technical M4 distribution gate while requiring
 independent adoption evidence. The repository is retained read-only as the
 one-shot receipt; future release verification stays in this repository.
 
-The bounded M5 readiness records are `docs/product/maintenance-cost-v1.json`,
+The bounded M5 readiness records are the immutable historical
+`docs/product/maintenance-cost-v1.json`, the current manual-only scheduling
+snapshot `docs/product/maintenance-cost-v2.json`,
 `docs/product/04-maintenance-cost-record.md`, and
 `docs/engineering/08-m4-security-review.md`. Hygiene tests validate their
 version, observation boundary, non-claim language, roadmap synchronization,

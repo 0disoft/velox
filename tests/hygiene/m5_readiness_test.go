@@ -13,6 +13,8 @@ type maintenanceRecord struct {
 	SchemaVersion     string `json:"schemaVersion"`
 	ReleaseVersion    string `json:"releaseVersion"`
 	CapturedOn        string `json:"capturedOn"`
+	PreviousRecord    string `json:"previousRecord"`
+	ChangeReason      string `json:"changeReason"`
 	ObservationWindow struct {
 		From           string `json:"from"`
 		Through        string `json:"through"`
@@ -106,6 +108,56 @@ func TestMaintenanceCostRecordIsBoundedAndMachineReadable(t *testing.T) {
 	}
 }
 
+func TestMaintenanceCostV2RecordsManualOnlyScheduling(t *testing.T) {
+	root := repositoryRoot(t)
+	data, err := os.ReadFile(filepath.Join(root, "docs", "product", "maintenance-cost-v2.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record maintenanceRecord
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	if record.SchemaVersion != "velox.maintenance-cost/v2" || record.ReleaseVersion != "0.5.10-alpha.36" {
+		t.Fatalf("maintenance v2 identity = %q %q", record.SchemaVersion, record.ReleaseVersion)
+	}
+	if record.PreviousRecord != "docs/product/maintenance-cost-v1.json" || !strings.Contains(record.ChangeReason, "manual-only") {
+		t.Fatalf("maintenance v2 lineage = %q %q", record.PreviousRecord, record.ChangeReason)
+	}
+	for _, value := range []string{record.CapturedOn, record.ObservationWindow.From, record.ObservationWindow.Through} {
+		if _, err := time.Parse("2006-01-02", value); err != nil {
+			t.Fatalf("maintenance v2 date %q is invalid: %v", value, err)
+		}
+	}
+	if record.ObservationWindow.BaselineCommit != "7d39d89b9ecfff339518b065ba78a13d69737160" ||
+		record.ObservationWindow.HeadCommit != "c4ffdb57b25075c2f42e24001dfdbda18cfef2c6" ||
+		record.ObservationWindow.Commits != 65 || record.ObservationWindow.ChangedFiles != 145 ||
+		record.ObservationWindow.Insertions != 13349 || record.ObservationWindow.Deletions != 676 {
+		t.Fatalf("maintenance v2 observation window drifted: %+v", record.ObservationWindow)
+	}
+	if record.RepositorySurface.ProductionGoFiles != 56 || record.RepositorySurface.ProductionGoLines != 8429 ||
+		record.RepositorySurface.TestGoFiles != 53 || record.RepositorySurface.TestGoLines != 7086 ||
+		record.RepositorySurface.VendoredGoFiles != 42 || record.RepositorySurface.VendoredGoLines != 3863 ||
+		record.RepositorySurface.WorkflowFiles != 5 || record.RepositorySurface.WorkflowLines != 1031 ||
+		record.RepositorySurface.SchemaFiles != 24 || record.RepositorySurface.DocumentationMarkdownFiles != 54 ||
+		record.RepositorySurface.DirectModuleDependencies != 2 || record.RepositorySurface.IndirectModuleDependencies != 1 ||
+		record.RepositorySurface.SupportedTargets != 1 || record.RepositorySurface.PublicCLICommands != 7 ||
+		record.RepositorySurface.NativeIPCMethods != 6 {
+		t.Fatalf("maintenance v2 repository surface drifted: %+v", record.RepositorySurface)
+	}
+	if record.RecurringHostedWork.ScheduledWorkflowsPerWeek != 0 || record.RecurringHostedWork.WindowsJobsPerWeek != 0 ||
+		record.RecurringHostedWork.MaximumWindowsJobMinutesPerWeek != 0 || record.RecurringHostedWork.UbuntuJobsPerWeek != 0 ||
+		record.RecurringHostedWork.MaximumUbuntuJobMinutesPerWeek != 0 {
+		t.Fatalf("maintenance v2 recurring work must be zero: %+v", record.RecurringHostedWork)
+	}
+	nonClaims := strings.Join(record.NonClaims, "\n")
+	for _, fragment := range []string{"does not estimate human engineering hours", "manual or release-candidate", "does not predict external support volume", "counted separately"} {
+		if !strings.Contains(nonClaims, fragment) {
+			t.Errorf("maintenance v2 is missing non-claim %q", fragment)
+		}
+	}
+}
+
 func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	root := repositoryRoot(t)
 	assertSourceMarkers(t, filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"), []string{
@@ -120,6 +172,8 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "04-maintenance-cost-record.md"), []string{
 		"implementation and evidence commits, 6,909 production Go lines",
 		"63 job-minutes",
+		"maintenance-cost-v2.json",
+		"zero scheduled workflows",
 		"Invented person-hours are not",
 		"M5 must not read fast consumer builds",
 		"first public preview required",

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "velox.maintenance-cost/v2",
+  "releaseVersion": "0.5.10-alpha.36",
+  "capturedOn": "2026-08-31",
+  "previousRecord": "docs/product/maintenance-cost-v1.json",
+  "changeReason": "scheduled CI shape changed from one weekly workflow to manual-only execution",
+  "observationWindow": {
+    "from": "2026-07-18",
+    "through": "2026-08-31",
+    "baselineCommit": "7d39d89b9ecfff339518b065ba78a13d69737160",
+    "headCommit": "c4ffdb57b25075c2f42e24001dfdbda18cfef2c6",
+    "commits": 65,
+    "changedFiles": 145,
+    "insertions": 13349,
+    "deletions": 676
+  },
+  "repositorySurface": {
+    "productionGoFiles": 56,
+    "productionGoLines": 8429,
+    "testGoFiles": 53,
+    "testGoLines": 7086,
+    "vendoredGoFiles": 42,
+    "vendoredGoLines": 3863,
+    "workflowFiles": 5,
+    "workflowLines": 1031,
+    "schemaFiles": 24,
+    "documentationMarkdownFiles": 54,
+    "directModuleDependencies": 2,
+    "indirectModuleDependencies": 1,
+    "supportedTargets": 1,
+    "publicCLICommands": 7,
+    "nativeIPCMethods": 6
+  },
+  "recurringHostedWork": {
+    "scheduledWorkflowsPerWeek": 0,
+    "windowsJobsPerWeek": 0,
+    "maximumWindowsJobMinutesPerWeek": 0,
+    "ubuntuJobsPerWeek": 0,
+    "maximumUbuntuJobMinutesPerWeek": 0
+  },
+  "manualPreviewSteps": [
+    "push the immutable alpha tag",
+    "dispatch the unsigned-preview publication gate",
+    "dispatch the public-download verifier with an independently recorded SHA-256"
+  ],
+  "nonClaims": [
+    "The record does not estimate human engineering hours.",
+    "Zero recurring jobs does not mean that explicit manual or release-candidate Actions runs consume no resources.",
+    "The record does not predict external support volume or future platform cost.",
+    "Vendored binding lines are counted separately from project-owned production lines."
+  ]
+}

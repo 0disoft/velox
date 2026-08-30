@@ -183,10 +183,12 @@ fixes `maintainerControlled: true` and `externalUserAttempt: false`.
 The repository is retained read-only as historical evidence; ongoing public-
 release verification remains in Velox itself.
 
-The bounded maintenance-cost snapshot and internal M4 security review are now
-complete M5 inputs. They explicitly record the maintained WebView2 fork,
-weekly hosted-job ceiling, unsigned-channel trust limit, and accepted mutable-
-asset boundary. They are not person-hour estimates or an independent audit.
+The bounded maintenance-cost snapshots and internal M4 security review are now
+complete M5 inputs. The immutable v1 record preserves the former weekly hosted-
+job ceiling; the current v2 record captures the manual-only scheduling boundary
+and zero recurring jobs. They also record the maintained WebView2 fork,
+unsigned-channel trust limit, and accepted mutable-asset boundary. They are not
+person-hour estimates or an independent audit.
 
 ADR 0015 retains Velox as the maintainer-approved product, command, module,
 schema, and release identity. The collision review still records Meta's

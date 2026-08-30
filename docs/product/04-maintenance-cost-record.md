@@ -1,9 +1,31 @@
 # Maintenance Cost Record
 
-- Status: Current bounded snapshot for M5 input
+- Status: Current v2 bounded snapshot for M5 input; v1 retained immutably
 - Owner: Project maintainer
-- Snapshot: `velox.maintenance-cost/v1`
-- Machine-readable record: `docs/product/maintenance-cost-v1.json`
+- Current snapshot: `velox.maintenance-cost/v2`
+- Current machine-readable record: `docs/product/maintenance-cost-v2.json`
+- Historical snapshot: `docs/product/maintenance-cost-v1.json`
+
+## Current Snapshot: v2
+
+The v1 refresh rule requires a new immutable record when scheduled CI shape
+changes. Commit `c4ffdb57b25075c2f42e24001dfdbda18cfef2c6` removed the last
+recurring product workflow path, so v2 records the repository at that exact
+head without rewriting v1.
+
+The v2 observation window starts at the v1 head and contains 65 later commits,
+145 changed files, 13,349 insertions, and 676 deletions. At the observed head,
+project-owned production Go occupies 56 files and 8,429 lines; Go tests occupy
+53 files and 7,086 lines. The maintained binding remains a separate 42-file,
+3,863-line surface.
+
+Recurring hosted work is now exactly zero scheduled workflows, zero Windows
+jobs, and zero Ubuntu jobs per week. This is a scheduling boundary, not a claim
+that explicit manual dispatches or release-candidate runs consume no Actions
+resources. Full evidence and startup history remain explicit maintainer
+operations.
+
+## Historical Snapshot: v1
 
 ## Question
 
@@ -12,7 +34,7 @@ the maintainer has to keep working. Commit count, source lines, workflow jobs,
 and configured timeout ceilings are imperfect proxies, but they are observable.
 Invented person-hours are not.
 
-This record therefore answers a bounded question: how much repository and
+The v1 record answers a bounded question: how much repository and
 recurring CI surface existed from the first complete implementation commit
 through the first selected public-preview candidate?
 
