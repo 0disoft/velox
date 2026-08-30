@@ -30,15 +30,7 @@ const prompt = "public evaluation task\n";
 
 describe("LLM agent evaluation", () => {
   test("verifies artifact bytes and summarizes three diverse passing trials", async () => {
-    const root = await createSeries();
-    const trials = [];
-    for (const [index, model] of ["model-a", "model-a", "model-b"].entries()) {
-      const trialRoot = resolve(root, `trial-${index + 1}`);
-      const record = await createTrial(trialRoot, index + 1, model);
-      trials.push(await verifyTrial(root, trialRoot));
-      expect(trials[index].trialId).toBe(record.trialId);
-    }
-    expect(summarizeSeries(trials)).toMatchObject({
+    expect(summarizeSeries(await verifiedSeries(["model-a", "model-a", "model-b"]))).toMatchObject({
       passedTrials: 3,
       failedTrials: 0,
       heldTrials: 0,
@@ -51,15 +43,7 @@ describe("LLM agent evaluation", () => {
   });
 
   test("admits three diverse trials only with enforced sandbox v2 receipts", async () => {
-    const root = await createSeries();
-    const trials = [];
-    for (const [index, model] of ["model-a", "model-a", "model-b"].entries()) {
-      const trialRoot = resolve(root, `trial-${index + 1}`);
-      await createTrial(trialRoot, index + 1, model);
-      await upgradeAttestationToV2(trialRoot);
-      trials.push(await verifyTrial(root, trialRoot));
-    }
-    expect(summarizeSeries(trials)).toMatchObject({
+    expect(summarizeSeries(await verifiedSeries(["model-a", "model-a", "model-b"], { enforced: true }))).toMatchObject({
       passedTrials: 3,
       failedTrials: 0,
       heldTrials: 0,
@@ -71,98 +55,46 @@ describe("LLM agent evaluation", () => {
     });
   });
 
-  test("rejects a self-consistent v2 receipt with an incomplete sandbox grant set", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    await createTrial(trialRoot, 1, "model-a");
-    const attestation = await upgradeAttestationToV2(trialRoot);
-    attestation.evidence.sandbox.receipt.grants = attestation.evidence.sandbox.receipt.grants.slice(0, 1);
-    attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
-    await writeAttestation(trialRoot, attestation);
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_GRANTS_INVALID");
-  });
-
-  test("rejects a sandbox receipt that does not cover the evaluation session", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    await createTrial(trialRoot, 1, "model-a");
-    const attestation = await upgradeAttestationToV2(trialRoot);
-    attestation.evidence.sandbox.receipt.startedAtUtc = attestation.finishedAtUtc;
-    attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
-    await writeAttestation(trialRoot, attestation);
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_TIME_RANGE_NOT_COVERED");
-  });
-
-  test("rejects a sandbox receipt whose prompt was not observed", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    await createTrial(trialRoot, 1, "model-a");
-    const attestation = await upgradeAttestationToV2(trialRoot);
-    attestation.evidence.sandbox.receipt.promptSha256 = "0".repeat(64);
-    attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
-    await writeAttestation(trialRoot, attestation);
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SANDBOX_PROMPT_NOT_OBSERVED");
-  });
+  for (const scenario of [
+    { name: "rejects a self-consistent v2 receipt with an incomplete sandbox grant set", error: "ATTESTATION_SANDBOX_GRANTS_INVALID", mutate: (value: TrialAttestationV2) => { value.evidence.sandbox.receipt.grants = value.evidence.sandbox.receipt.grants.slice(0, 1); } },
+    { name: "rejects a sandbox receipt that does not cover the evaluation session", error: "ATTESTATION_SANDBOX_TIME_RANGE_NOT_COVERED", mutate: (value: TrialAttestationV2) => { value.evidence.sandbox.receipt.startedAtUtc = value.finishedAtUtc; } },
+    { name: "rejects a sandbox receipt whose prompt was not observed", error: "ATTESTATION_SANDBOX_PROMPT_NOT_OBSERVED", mutate: (value: TrialAttestationV2) => { value.evidence.sandbox.receipt.promptSha256 = "0".repeat(64); } },
+  ]) {
+    test(scenario.name, async () => expectCorruptSandboxReceipt(scenario.mutate, scenario.error));
+  }
 
   test("rejects artifact tampering", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    await createTrial(trialRoot, 1, "model-a");
+    const { root, trialRoot } = await basicTrial();
     await writeFile(resolve(trialRoot, "artifacts/first.zip"), "tampered", "utf8");
     await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ARTIFACT_DIGEST_MISMATCH_FIRSTBUILDARCHIVE");
   });
 
-  test("rejects path traversal before reading an artifact", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    const record = await createTrial(trialRoot, 1, "model-a");
-    record.artifacts.safeReport = "../report.md";
-    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ARTIFACT_PATH_INVALID_SAFEREPORT");
-  });
-
-  test("rejects reuse of one artifact path for both builds", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    const record = await createTrial(trialRoot, 1, "model-a");
-    record.artifacts.secondBuildArchive = record.artifacts.firstBuildArchive;
-    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ARTIFACT_PATH_DUPLICATE");
-  });
+  for (const scenario of [
+    { name: "rejects path traversal before reading an artifact", error: "ARTIFACT_PATH_INVALID_SAFEREPORT", mutate: (record: TrialRecord) => { record.artifacts.safeReport = "../report.md"; } },
+    { name: "rejects reuse of one artifact path for both builds", error: "ARTIFACT_PATH_DUPLICATE", mutate: (record: TrialRecord) => { record.artifacts.secondBuildArchive = record.artifacts.firstBuildArchive; } },
+    { name: "rejects a passed claim with a failed hard gate", error: "PASSED_TRIAL_HAS_FAILED_GATE", mutate: (record: TrialRecord) => { record.gates.startupReady = false; } },
+    { name: "rejects an agent-generated session digest that differs from the orchestrator attestation", error: "ATTESTATION_SESSION_DIGEST_MISMATCH", mutate: (record: TrialRecord) => { record.evaluator.sessionIdSha256 = sha(Buffer.from("invented-session")); } },
+    { name: "rejects a reported time range that does not cover the orchestrator session", error: "ATTESTATION_TIME_RANGE_NOT_COVERED", mutate: (record: TrialRecord) => { record.startedAtUtc = record.finishedAtUtc; } },
+  ]) {
+    test(scenario.name, async () => {
+      const { root, trialRoot, record } = await basicTrial();
+      scenario.mutate(record);
+      await writeResult(trialRoot, record);
+      await expect(verifyTrial(root, trialRoot)).rejects.toThrow(scenario.error);
+    });
+  }
 
   test("rejects a self-consistent digest for the wrong build-result identity", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    const record = await createTrial(trialRoot, 1, "model-a");
+    const { root, trialRoot, record } = await basicTrial();
     const wrong = Buffer.from('{"schemaVersion":"not-velox"}\n');
     await writeFile(resolve(trialRoot, "artifacts/build-result.json"), wrong);
     record.artifacts.buildResultSha256 = sha(wrong);
-    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    await writeResult(trialRoot, record);
     await expect(verifyTrial(root, trialRoot)).rejects.toThrow("BUILD_RESULT_SCHEMA_INVALID");
   });
 
-  test("rejects a passed claim with a failed hard gate", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    const record = await createTrial(trialRoot, 1, "model-a");
-    record.gates.startupReady = false;
-    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("PASSED_TRIAL_HAS_FAILED_GATE");
-  });
-
-  test("rejects an agent-generated session digest that differs from the orchestrator attestation", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    const record = await createTrial(trialRoot, 1, "model-a");
-    record.evaluator.sessionIdSha256 = sha(Buffer.from("invented-session"));
-    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_SESSION_DIGEST_MISMATCH");
-  });
-
   test("rejects a passed claim that hides an attested Node.js invocation", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    await createTrial(trialRoot, 1, "model-a");
+    const { root, trialRoot } = await basicTrial();
     const attestation = await readAttestation(trialRoot);
     attestation.trajectory.forbiddenActions = ["NODE_RUNTIME_INVOKED"];
     await writeAttestation(trialRoot, attestation);
@@ -170,54 +102,32 @@ describe("LLM agent evaluation", () => {
   });
 
   test("rejects an under-reported tool-call count", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    await createTrial(trialRoot, 1, "model-a");
+    const { root, trialRoot } = await basicTrial();
     const attestation = await readAttestation(trialRoot);
     attestation.trajectory.toolCalls += 1;
     await writeAttestation(trialRoot, attestation);
     await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_TOOL_CALL_COUNT_MISMATCH");
   });
 
-  test("rejects a reported time range that does not cover the orchestrator session", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    const record = await createTrial(trialRoot, 1, "model-a");
-    record.startedAtUtc = record.finishedAtUtc;
-    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-    await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTATION_TIME_RANGE_NOT_COVERED");
-  });
-
   test("rejects an attested tool-call budget overrun", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    const record = await createTrial(trialRoot, 1, "model-a");
+    const { root, trialRoot, record } = await basicTrial();
     const attestation = await readAttestation(trialRoot);
     record.trajectory.toolCalls = 71;
     attestation.trajectory.toolCalls = 71;
-    await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+    await writeResult(trialRoot, record);
     await writeAttestation(trialRoot, attestation);
     await expect(verifyTrial(root, trialRoot)).rejects.toThrow("ATTESTED_TOOL_CALL_BUDGET_EXCEEDED");
   });
 
   test("rejects an attestation stored inside the agent-controlled trial root", async () => {
-    const root = await createSeries();
-    const trialRoot = resolve(root, "trial-1");
-    await createTrial(trialRoot, 1, "model-a");
+    const { root, trialRoot } = await basicTrial();
     const localAttestation = resolve(trialRoot, "attestation.json");
     await writeFile(localAttestation, `${JSON.stringify(await readAttestation(trialRoot), null, 2)}\n`, "utf8");
     await expect(loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(root, "task.md"), localAttestation)).rejects.toThrow("ATTESTATION_INSIDE_TRIAL_ROOT");
   });
 
   test("holds an otherwise passing single-model series", async () => {
-    const root = await createSeries();
-    const trials = [];
-    for (let index = 1; index <= 3; index += 1) {
-      const trialRoot = resolve(root, `trial-${index}`);
-      await createTrial(trialRoot, index, "model-a");
-      trials.push(await verifyTrial(root, trialRoot));
-    }
-    expect(summarizeSeries(trials)).toMatchObject({
+    expect(summarizeSeries(await verifiedSeries(["model-a", "model-a", "model-a"]))).toMatchObject({
       outcome: "held",
       betaTechnicalGate: false,
       diagnostics: ["MODEL_DIVERSITY_INSUFFICIENT", "SANDBOX_ENFORCEMENT_UNVERIFIED"],
@@ -225,19 +135,15 @@ describe("LLM agent evaluation", () => {
   });
 
   test("preserves a failed sequence in the series verdict", async () => {
-    const root = await createSeries();
-    const trials = [];
-    for (let index = 1; index <= 3; index += 1) {
-      const trialRoot = resolve(root, `trial-${index}`);
-      const record = await createTrial(trialRoot, index, index === 3 ? "model-b" : "model-a");
-      if (index === 2) {
+    const trials = await verifiedSeries(["model-a", "model-a", "model-b"], {
+      mutate: async (record, trialRoot, sequence) => {
+        if (sequence !== 2) return;
         record.outcome = "failed";
         record.gates.startupReady = false;
         record.failure = { phase: "startup", code: "STARTUP_NOT_READY" };
-        await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
-      }
-      trials.push(await verifyTrial(root, trialRoot));
-    }
+        await writeResult(trialRoot, record);
+      },
+    });
     expect(summarizeSeries(trials)).toMatchObject({
       passedTrials: 2,
       failedTrials: 1,
@@ -304,33 +210,13 @@ describe("LLM agent evaluation", () => {
       toolResultMessage(3, "call-1", { status: "ok" }),
     ]);
     const receiptPath = resolve(fixture.input.trialRoot, "..", "sandbox-receipt.json");
-    const receipt = {
-      schemaVersion: "velox.eval-sandbox-receipt/v1",
+    const receipt = sandboxReceipt({
       trialId: fixture.input.trialId,
       seriesId: fixture.input.seriesId,
       sequence: fixture.input.sequence,
-      policy: {
-        schemaVersion: "velox.eval-sandbox-policy/v1",
-        platform: "windows",
-        filesystemBoundary: "appcontainer-explicit-acl",
-        processBoundary: "job-object-no-breakaway",
-        networkCapability: "internet-client",
-      },
-      supervisor: { version: "0.5.10-alpha.34", sha256: "b".repeat(64) },
-      commandSha256: "c".repeat(64),
-      environmentSha256: "f".repeat(64),
       promptSha256: sha(Buffer.from("Run the public Velox evaluation task.")),
       stateDatabaseSha256: sha(await readFile(fixture.input.stateDatabasePath)),
-      startedAtUtc: "1970-01-01T00:01:30.000Z",
-      finishedAtUtc: "1970-01-01T00:03:00.000Z",
-      exitCode: 0,
-      timedOut: false,
-      containment: { filesystemEnforced: true, processTreeEnforced: true, cleanupCompleted: true },
-      grants: [
-        { role: "trial-read-write-execute", pathSha256: "d".repeat(64), rights: "read-write-execute" },
-        { role: "tool-read-execute", pathSha256: "e".repeat(64), rights: "read-execute" },
-      ],
-    };
+    });
     await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
     const result = await createHermesAttestation({ ...fixture.input, sandboxReceiptPath: receiptPath });
     expect(result.attestation).toMatchObject({
@@ -531,33 +417,13 @@ describe("LLM agent evaluation", () => {
       initialPrompt: promptBody,
     });
     const receiptPath = resolve(prepared.seriesRoot, "orchestrator", "sandbox-receipt.json");
-    const receipt = {
-      schemaVersion: "velox.eval-sandbox-receipt/v1",
+    const receipt = sandboxReceipt({
       trialId: staged.trial.trialId,
       seriesId: prepared.manifest.seriesId,
       sequence: 1,
-      policy: {
-        schemaVersion: "velox.eval-sandbox-policy/v1",
-        platform: "windows",
-        filesystemBoundary: "appcontainer-explicit-acl",
-        processBoundary: "job-object-no-breakaway",
-        networkCapability: "internet-client",
-      },
-      supervisor: { version: "0.5.10-alpha.34", sha256: "b".repeat(64) },
-      commandSha256: "c".repeat(64),
-      environmentSha256: "f".repeat(64),
       promptSha256: sha(Buffer.from(promptBody)),
       stateDatabaseSha256: sha(await readFile(fixture.input.stateDatabasePath)),
-      startedAtUtc: "1970-01-01T00:01:30.000Z",
-      finishedAtUtc: "1970-01-01T00:03:00.000Z",
-      exitCode: 0,
-      timedOut: false,
-      containment: { filesystemEnforced: true, processTreeEnforced: true, cleanupCompleted: true },
-      grants: [
-        { role: "trial-read-write-execute", pathSha256: "d".repeat(64), rights: "read-write-execute" },
-        { role: "tool-read-execute", pathSha256: "e".repeat(64), rights: "read-execute" },
-      ],
-    };
+    });
     await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
     const result = await attestSandboxEvaluationTrial({
       seriesRoot: prepared.seriesRoot,
@@ -640,33 +506,14 @@ describe("LLM agent evaluation", () => {
         initialPrompt: promptBody,
         stateDatabasePath: plan.stateDatabasePath,
       });
-      await writeFile(plan.sandboxReceiptPath, `${JSON.stringify({
-        schemaVersion: "velox.eval-sandbox-receipt/v1",
+      await writeFile(plan.sandboxReceiptPath, `${JSON.stringify(sandboxReceipt({
         trialId: plan.trialId,
         seriesId: plan.seriesId,
         sequence: plan.sequence,
-        policy: {
-          schemaVersion: "velox.eval-sandbox-policy/v1",
-          platform: "windows",
-          filesystemBoundary: "appcontainer-explicit-acl",
-          processBoundary: "job-object-no-breakaway",
-          networkCapability: "internet-client",
-        },
-        supervisor: { version: "0.5.10-alpha.35", sha256: "b".repeat(64) },
-        commandSha256: "c".repeat(64),
-        environmentSha256: "f".repeat(64),
         promptSha256: sha(Buffer.from(promptBody)),
         stateDatabaseSha256: sha(await readFile(plan.stateDatabasePath)),
-        startedAtUtc: "1970-01-01T00:01:30.000Z",
-        finishedAtUtc: "1970-01-01T00:03:00.000Z",
-        exitCode: 0,
-        timedOut: false,
-        containment: { filesystemEnforced: true, processTreeEnforced: true, cleanupCompleted: true },
-        grants: [
-          { role: "trial-read-write-execute", pathSha256: "d".repeat(64), rights: "read-write-execute" },
-          { role: "tool-read-execute", pathSha256: "e".repeat(64), rights: "read-execute" },
-        ],
-      }, null, 2)}\n`, "utf8");
+        supervisorVersion: "0.5.10-alpha.35",
+      }), null, 2)}\n`, "utf8");
       return 0;
     });
 
@@ -771,77 +618,31 @@ async function createHermesFixture(
   const database = new Database(stateDatabasePath, { create: true, strict: true });
   try {
     database.exec(`
-      CREATE TABLE sessions (
-        id TEXT PRIMARY KEY,
-        source TEXT NOT NULL,
-        model TEXT,
-        parent_session_id TEXT,
-        started_at REAL NOT NULL,
-        ended_at REAL,
-        tool_call_count INTEGER DEFAULT 0,
-        cwd TEXT,
-        billing_provider TEXT
-      );
-      CREATE TABLE messages (
-        id INTEGER PRIMARY KEY,
-        session_id TEXT NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT,
-        tool_call_id TEXT,
-        tool_calls TEXT,
-        tool_name TEXT,
-        effect_disposition TEXT,
-        timestamp REAL NOT NULL,
-        finish_reason TEXT,
-        active INTEGER NOT NULL DEFAULT 1,
-        compacted INTEGER NOT NULL DEFAULT 0,
-        display_kind TEXT
-      );
+      CREATE TABLE sessions (id TEXT PRIMARY KEY, source TEXT NOT NULL, model TEXT, parent_session_id TEXT,
+        started_at REAL NOT NULL, ended_at REAL, tool_call_count INTEGER DEFAULT 0, cwd TEXT, billing_provider TEXT);
+      CREATE TABLE messages (id INTEGER PRIMARY KEY, session_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT,
+        tool_call_id TEXT, tool_calls TEXT, tool_name TEXT, effect_disposition TEXT, timestamp REAL NOT NULL,
+        finish_reason TEXT, active INTEGER NOT NULL DEFAULT 1, compacted INTEGER NOT NULL DEFAULT 0, display_kind TEXT);
     `);
-    database.query(`
-      INSERT INTO sessions (
-        id, source, model, parent_session_id, started_at, ended_at, tool_call_count, cwd, billing_provider
-      ) VALUES (?1, 'cli', ?2, NULL, 100, ?3, ?4, ?5, 'custom')
-    `).run(sessionId, options.model ?? "fixture-model", options.endedAt === undefined ? 120 : options.endedAt, options.recordedToolCalls ?? parsedToolCalls, options.cwd ?? trialRoot);
+    database.query(`INSERT INTO sessions (id, source, model, parent_session_id, started_at, ended_at, tool_call_count, cwd, billing_provider)
+      VALUES (?1, 'cli', ?2, NULL, 100, ?3, ?4, ?5, 'custom')`).run(sessionId, options.model ?? "fixture-model", options.endedAt === undefined ? 120 : options.endedAt, options.recordedToolCalls ?? parsedToolCalls, options.cwd ?? trialRoot);
     const insert = database.query(`
-      INSERT INTO messages (
-        id, session_id, role, content, tool_call_id, tool_calls, tool_name,
-        effect_disposition, timestamp, finish_reason, active, compacted, display_kind
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+      INSERT INTO messages (id, session_id, role, content, tool_call_id, tool_calls, tool_name,
+        effect_disposition, timestamp, finish_reason, active, compacted, display_kind)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
     `);
     for (const message of messages) {
-      insert.run(
-        message.id,
-        sessionId,
-        message.role,
-        message.content,
-        message.toolCallId,
-        message.toolCalls,
-        message.toolName,
-        message.effectDisposition,
-        message.timestamp,
-        message.finishReason,
-        message.active,
-        message.compacted,
-        message.displayKind,
-      );
+      insert.run(message.id, sessionId, message.role, message.content, message.toolCallId, message.toolCalls,
+        message.toolName, message.effectDisposition, message.timestamp, message.finishReason, message.active, message.compacted, message.displayKind);
     }
   } finally {
     database.close(false);
   }
 
-  return {
-    sessionId,
-    input: {
-      stateDatabasePath,
-      sessionId,
-      trialRoot,
-      outputPath: resolve(attestationRoot, `${basename(trialRoot)}.json`),
-      trialId: "trial-20260722T010101Z-11111111",
-      seriesId: "series-20260722T010100Z-abcdefgh",
-      sequence: 1,
-    },
-  };
+  return { sessionId, input: {
+    stateDatabasePath, sessionId, trialRoot, outputPath: resolve(attestationRoot, `${basename(trialRoot)}.json`),
+    trialId: "trial-20260722T010101Z-11111111", seriesId: "series-20260722T010100Z-abcdefgh", sequence: 1,
+  } };
 }
 
 async function createPreparedSeries() {
@@ -908,15 +709,10 @@ async function createTrial(root: string, sequence: number, model: string): Promi
   await mkdir(artifacts, { recursive: true });
   const archive = Buffer.from("deterministic archive");
   const buildResult = Buffer.from(`${JSON.stringify({
-    schemaVersion: "velox.build-result/v1",
-    releaseVersion: "0.5.10-alpha.2",
+    schemaVersion: "velox.build-result/v1", releaseVersion: "0.5.10-alpha.2", target: "windows-x64",
     app: { id: "dev.velox.agent.focusledger", name: "Focus Ledger", version: "0.1.0" },
-    target: "windows-x64",
-    contracts: { manifest: 1, runtime: 1, host: 1, ipc: 1 },
-    host: { file: "velox-host.exe", bytes: 1, sha256: fixedDigest },
-    assets: { files: 3, bytes: 10, sha256: fixedDigest },
-    permissions: ["app.info", "window.basic"],
-    outputs: { portableFiles: 6 },
+    contracts: { manifest: 1, runtime: 1, host: 1, ipc: 1 }, host: { file: "velox-host.exe", bytes: 1, sha256: fixedDigest },
+    assets: { files: 3, bytes: 10, sha256: fixedDigest }, permissions: ["app.info", "window.basic"], outputs: { portableFiles: 6 },
   })}\n`);
   const report = Buffer.from("# Safe trial report\n\nAll observable checks passed.\n");
   await writeFile(resolve(artifacts, "first.zip"), archive);
@@ -931,72 +727,22 @@ async function createTrial(root: string, sequence: number, model: string): Promi
     sequence,
     promptVersion: "velox.llm-agent-task/v1",
     promptSha256: sha(Buffer.from(prompt)),
-    evaluator: {
-      provider: "provider",
-      model,
-      sessionIdSha256: sha(Buffer.from(`session-${sequence}`)),
-      freshSession: true,
-      memoryCarryover: false,
-    },
-    control: {
-      maintainerOrchestrated: true,
-      externalHuman: false,
-      veloxSourceCheckout: false,
-      unpublishedContext: false,
-      interactiveMaintainerHints: 0,
-    },
-    release: {
-      repository: "0disoft/velox",
-      tag: "v0.5.10-alpha.2",
-      url: "https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.2",
-      expectedSha256: fixedDigest,
-      observedSha256: fixedDigest,
-    },
-    application: {
-      id: "dev.velox.agent.focusledger",
-      name: "Focus Ledger",
-      version: "0.1.0",
-    },
-    environment: {
-      windowsVersion: "Windows fixture",
-      webView2Version: "fixture",
-      architecture: "AMD64",
-      workspaceIsolation: "fresh-local-directory",
-    },
+    evaluator: { provider: "provider", model, sessionIdSha256: sha(Buffer.from(`session-${sequence}`)), freshSession: true, memoryCarryover: false },
+    control: { maintainerOrchestrated: true, externalHuman: false, veloxSourceCheckout: false, unpublishedContext: false, interactiveMaintainerHints: 0 },
+    release: { repository: "0disoft/velox", tag: "v0.5.10-alpha.2", url: "https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.2", expectedSha256: fixedDigest, observedSha256: fixedDigest },
+    application: { id: "dev.velox.agent.focusledger", name: "Focus Ledger", version: "0.1.0" },
+    environment: { windowsVersion: "Windows fixture", webView2Version: "fixture", architecture: "AMD64", workspaceIsolation: "fresh-local-directory" },
     startedAtUtc: `2026-07-22T01:01:0${sequence}Z`,
     finishedAtUtc: `2026-07-22T01:02:0${sequence}Z`,
     outcome: "passed",
-    gates: {
-      releaseChecksumVerified: true,
-      publicDocsOnly: true,
-      noSourceCheckout: true,
-      noConsumerCompiler: true,
-      noNodeRuntime: true,
-      noPackageManager: true,
-      projectInitialized: true,
-      doctorReady: true,
-      deterministicBuild: true,
-      inspectionPassed: true,
-      startupReady: true,
-      appBehaviorVerified: true,
-      noForbiddenNativeCapability: true,
-    },
+    gates: passingGates(),
     trajectory: {
       toolCalls: 12,
       retries: 0,
       commandClasses: ["release-download", "checksum-verification", "init", "doctor", "build", "inspect", "run", "behavior-check"],
       forbiddenActions: [],
     },
-    artifacts: {
-      firstBuildArchive: "artifacts/first.zip",
-      firstBuildSha256: archiveDigest,
-      secondBuildArchive: "artifacts/second.zip",
-      secondBuildSha256: archiveDigest,
-      buildResult: "artifacts/build-result.json",
-      buildResultSha256: sha(buildResult),
-      safeReport: "artifacts/report.md",
-      safeReportSha256: sha(report),
-    },
+    artifacts: { firstBuildArchive: "artifacts/first.zip", firstBuildSha256: archiveDigest, secondBuildArchive: "artifacts/second.zip", secondBuildSha256: archiveDigest, buildResult: "artifacts/build-result.json", buildResultSha256: sha(buildResult), safeReport: "artifacts/report.md", safeReportSha256: sha(report) },
     diagnostics: [],
     failure: null,
     evidenceLevel: "maintainer-orchestrated-clean-room-llm-agent",
@@ -1011,23 +757,8 @@ async function createTrial(root: string, sequence: number, model: string): Promi
     evaluator: { ...record.evaluator },
     startedAtUtc: record.startedAtUtc,
     finishedAtUtc: record.finishedAtUtc,
-    trajectory: {
-      toolCalls: record.trajectory.toolCalls,
-      retries: record.trajectory.retries,
-      toolCallBudget: 70,
-      forbiddenActions: [],
-    },
-    evidence: {
-      kind: "orchestrator-session-log",
-      observationLevel: "session-log-heuristic",
-      sandboxEnforced: false,
-      sha256: "",
-      projection: {
-        schemaVersion: "velox.hermes-session-log-digest/v1",
-        sessions: [],
-        messages: [{ contentSha256: "9".repeat(64) }],
-      },
-    },
+    trajectory: { toolCalls: record.trajectory.toolCalls, retries: record.trajectory.retries, toolCallBudget: 70, forbiddenActions: [] },
+    evidence: { kind: "orchestrator-session-log", observationLevel: "session-log-heuristic", sandboxEnforced: false, sha256: "", projection: { schemaVersion: "velox.hermes-session-log-digest/v1", sessions: [], messages: [{ contentSha256: "9".repeat(64) }] } },
   };
   attestation.evidence.sha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.projection)));
   await writeAttestation(root, attestation);
@@ -1036,6 +767,55 @@ async function createTrial(root: string, sequence: number, model: string): Promi
 
 async function verifyTrial(seriesRoot: string, trialRoot: string) {
   return loadAndVerifyTrial(resolve(trialRoot, "result.json"), trialRoot, resolve(seriesRoot, "task.md"), attestationPath(trialRoot));
+}
+
+async function basicTrial() {
+  const root = await createSeries();
+  const trialRoot = resolve(root, "trial-1");
+  const record = await createTrial(trialRoot, 1, "model-a");
+  return { root, trialRoot, record };
+}
+
+async function verifiedSeries(
+  models: [string, string, string],
+  options: { enforced?: boolean; mutate?: (record: TrialRecord, trialRoot: string, sequence: number) => Promise<void> } = {},
+) {
+  const root = await createSeries();
+  const trials = [];
+  for (const [index, model] of models.entries()) {
+    const sequence = index + 1;
+    const trialRoot = resolve(root, `trial-${sequence}`);
+    const record = await createTrial(trialRoot, sequence, model);
+    if (options.enforced) await upgradeAttestationToV2(trialRoot);
+    await options.mutate?.(record, trialRoot, sequence);
+    const observed = await verifyTrial(root, trialRoot);
+    expect(observed.trialId).toBe(record.trialId);
+    trials.push(observed);
+  }
+  return trials;
+}
+
+async function writeResult(trialRoot: string, record: TrialRecord) {
+  await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+}
+
+async function expectCorruptSandboxReceipt(mutate: (value: TrialAttestationV2) => void, error: string) {
+  const { root, trialRoot } = await basicTrial();
+  const attestation = await upgradeAttestationToV2(trialRoot);
+  mutate(attestation);
+  attestation.evidence.sandbox.receiptSha256 = sha(Buffer.from(JSON.stringify(attestation.evidence.sandbox.receipt)));
+  await writeAttestation(trialRoot, attestation);
+  await expect(verifyTrial(root, trialRoot)).rejects.toThrow(error);
+}
+
+function passingGates(): TrialRecord["gates"] {
+  return {
+    releaseChecksumVerified: true, publicDocsOnly: true, noSourceCheckout: true,
+    noConsumerCompiler: true, noNodeRuntime: true, noPackageManager: true,
+    projectInitialized: true, doctorReady: true, deterministicBuild: true,
+    inspectionPassed: true, startupReady: true, appBehaviorVerified: true,
+    noForbiddenNativeCapability: true,
+  };
 }
 
 function attestationPath(trialRoot: string) {
@@ -1054,37 +834,15 @@ async function writeAttestation(trialRoot: string, attestation: TrialAttestation
 
 async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestationV2> {
   const current = await readAttestation(trialRoot) as TrialAttestationV1;
-  const receipt = {
-    schemaVersion: "velox.eval-sandbox-receipt/v1" as const,
+  const receipt = sandboxReceipt({
     trialId: current.trialId,
     seriesId: current.seriesId,
     sequence: current.sequence,
-    policy: {
-      schemaVersion: "velox.eval-sandbox-policy/v1" as const,
-      platform: "windows" as const,
-      filesystemBoundary: "appcontainer-explicit-acl" as const,
-      processBoundary: "job-object-no-breakaway" as const,
-      networkCapability: "internet-client" as const,
-    },
-    supervisor: { version: "0.5.10-alpha.34", sha256: "b".repeat(64) },
-    commandSha256: "c".repeat(64),
-    environmentSha256: "f".repeat(64),
     promptSha256: "9".repeat(64),
     stateDatabaseSha256: "8".repeat(64),
     startedAtUtc: new Date(Date.parse(current.startedAtUtc) - 1000).toISOString(),
     finishedAtUtc: new Date(Date.parse(current.finishedAtUtc) + 1000).toISOString(),
-    exitCode: 0 as const,
-    timedOut: false as const,
-    containment: {
-      filesystemEnforced: true as const,
-      processTreeEnforced: true as const,
-      cleanupCompleted: true as const,
-    },
-    grants: [
-      { role: "trial-read-write-execute" as const, pathSha256: "d".repeat(64), rights: "read-write-execute" as const },
-      { role: "tool-read-execute" as const, pathSha256: "e".repeat(64), rights: "read-execute" as const },
-    ],
-  };
+  });
   const attestation = combineEnforcedSandboxAttestation(current, receipt, "8".repeat(64));
   await writeAttestation(trialRoot, attestation);
   return attestation;
@@ -1092,4 +850,30 @@ async function upgradeAttestationToV2(trialRoot: string): Promise<TrialAttestati
 
 function sha(value: Uint8Array) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function sandboxReceipt(input: {
+  trialId: string; seriesId: string; sequence: number; promptSha256: string; stateDatabaseSha256: string;
+  supervisorVersion?: string; startedAtUtc?: string; finishedAtUtc?: string;
+}) {
+  return {
+    schemaVersion: "velox.eval-sandbox-receipt/v1" as const,
+    trialId: input.trialId, seriesId: input.seriesId, sequence: input.sequence,
+    policy: {
+      schemaVersion: "velox.eval-sandbox-policy/v1" as const, platform: "windows" as const,
+      filesystemBoundary: "appcontainer-explicit-acl" as const, processBoundary: "job-object-no-breakaway" as const,
+      networkCapability: "internet-client" as const,
+    },
+    supervisor: { version: input.supervisorVersion ?? "0.5.10-alpha.34", sha256: "b".repeat(64) },
+    commandSha256: "c".repeat(64), environmentSha256: "f".repeat(64),
+    promptSha256: input.promptSha256, stateDatabaseSha256: input.stateDatabaseSha256,
+    startedAtUtc: input.startedAtUtc ?? "1970-01-01T00:01:30.000Z",
+    finishedAtUtc: input.finishedAtUtc ?? "1970-01-01T00:03:00.000Z",
+    exitCode: 0 as const, timedOut: false as const,
+    containment: { filesystemEnforced: true as const, processTreeEnforced: true as const, cleanupCompleted: true as const },
+    grants: [
+      { role: "trial-read-write-execute" as const, pathSha256: "d".repeat(64), rights: "read-write-execute" as const },
+      { role: "tool-read-execute" as const, pathSha256: "e".repeat(64), rights: "read-execute" as const },
+    ],
+  };
 }
