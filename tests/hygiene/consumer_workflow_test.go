@@ -39,6 +39,20 @@ func TestConsumerEvidenceWorkflowPinsActionsAndAvoidsCaches(t *testing.T) {
 	}
 }
 
+func TestConsumerEvidenceWorkflowHasNoRecurringSchedule(t *testing.T) {
+	path := filepath.Join("..", "..", ".github", "workflows", "consumer-evidence.yml")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := string(data)
+	for _, forbidden := range []string{"\n  schedule:\n", "github.event_name == 'schedule'"} {
+		if strings.Contains(workflow, forbidden) {
+			t.Errorf("consumer evidence workflow contains recurring schedule surface %q", forbidden)
+		}
+	}
+}
+
 func TestConsumerEvidenceWorkflowSecurityFuzzIsManualAndBounded(t *testing.T) {
 	path := filepath.Join("..", "..", ".github", "workflows", "consumer-evidence.yml")
 	data, err := os.ReadFile(path)
@@ -166,7 +180,6 @@ func TestActionsWarningMonitorIsBoundedAndDiagnostic(t *testing.T) {
 		"- Consumer evidence",
 		"actions: read",
 		"contents: read",
-		"github.event.workflow_run.event == 'schedule'",
 		"github.event.workflow_run.event == 'push'",
 		"runs-on: ubuntu-24.04",
 		"go run ./cmd/velox-actions-warning-monitor",
@@ -180,6 +193,9 @@ func TestActionsWarningMonitorIsBoundedAndDiagnostic(t *testing.T) {
 	}
 	if strings.Contains(workflow, "actions/download-artifact@") {
 		t.Fatal("warning monitor must fetch completed logs through the bounded GitHub API client")
+	}
+	if strings.Contains(workflow, "github.event.workflow_run.event == 'schedule'") {
+		t.Fatal("warning monitor must not retain a recurring schedule path")
 	}
 	if strings.Contains(workflow, "runs-on: windows-") {
 		t.Fatal("platform-independent warning scanning must not consume a Windows runner")

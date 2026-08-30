@@ -9,8 +9,8 @@
 release artifact, then passes that exact ZIP to isolated consumer jobs. Pull
 requests run one consumer contract sample. Manual dispatches expose a bounded
 `quick` or `full` evidence tier: quick runs one consumer sample and three
-lifecycle samples, while full runs ten of each. The weekly schedule and
-release-candidate tags use the full tier.
+lifecycle samples, while full runs ten of each. Release-candidate tags use the
+full tier. No recurring schedule trigger is enabled.
 
 Manual dispatch also exposes a disabled-by-default profile comparison. When
 selected, the producer runs three paired same-UDF and fresh-UDF relaunch trials,
@@ -21,16 +21,17 @@ Manual dispatch additionally exposes disabled-by-default bounded security
 fuzzing. `include_security_fuzz` runs the runtime-configuration parser and IPC
 dispatcher fuzz targets serially for a selected 30-second, two-minute, or
 ten-minute duration per target. The job uploads only a failing corpus, retains
-it for seven days, and uses no Actions cache. Pull requests, schedules, and
-release-candidate tags skip the job before runner allocation.
+it for seven days, and uses no Actions cache. Pull requests and release-candidate
+tags skip the job before runner allocation.
 
-The weekly schedule builds `velox.startup-history/v1` from its current
-lifecycle summary plus up to eleven prior successful scheduled artifacts. A
-manual `include_startup_history` dispatch can exercise the same path. Points
+An explicit manual `include_startup_history` dispatch builds
+`velox.startup-history/v1` from its current lifecycle summary plus up to eleven
+retained historical scheduled artifacts. Points
 are grouped by exact runner image version and WebView2 version so environment
 changes are visible instead of being mistaken for product regressions. Missing
 or expired historical artifacts remain explicit collection issues. The history
-does not make an automatic pass/fail regression decision.
+does not make an automatic pass/fail regression decision. No recurring
+collector is enabled.
 
 After consumer jobs finish, an always-run summary job downloads every available
 raw result, rejects duplicate sample IDs, preserves failures and missing sample
@@ -73,8 +74,8 @@ The full cross-framework benchmark matrix does not run on every pull request.
   `velox.startup-lifecycle-summary/v1` correlation and ordering summary plus a
   `velox.startup-lifecycle-phase-summary/v1` interval and dominant-phase
   summary, and
-  preserves the lifecycle evidence for 90 days even when a sample fails. The
-  weekly schedule also aggregates at most twelve history points. Release
+  preserves the lifecycle evidence for 90 days even when a sample fails. A
+  manual history request aggregates at most twelve history points. Release
   candidate tags use the same ten-sample lifecycle path without history
   aggregation. Cross-framework immediate-relaunch cause classification lives in
   the separate `velox-bench` repository. It is not a product startup ranking:
@@ -119,8 +120,8 @@ The intermediate unsigned release artifact is retained for one day. Raw
 consumer result JSON is retained for seven days. Failed measurement jobs upload
 their structured failure result when the script reached result serialization.
 The generated consumer summary is retained for 30 days. Startup lifecycle
-evidence and its optional history are retained for 90 days so twelve weekly
-points remain collectible despite normal scheduling jitter.
+evidence and its optional history are retained for 90 days for bounded manual
+comparison.
 
 The workflow pins checkout and artifact actions to immutable commit SHAs. It
 also pins `setup-go`, reads the Go version from `go.mod`, and disables its
@@ -161,8 +162,8 @@ ordinary artifacts.
 ## Upstream Action Warning Monitor
 
 `Actions warning monitor` allocates its `ubuntu-24.04` runner only after a
-scheduled or release-candidate `Consumer evidence` run, or for an explicit
-completed run ID. Pull-request and ordinary manual evidence events create a
+release-candidate `Consumer evidence` run or for an explicit completed run ID.
+Pull-request and ordinary manual evidence events create a
 skipped job without runner allocation. It reads the selected run's log archive
 with `actions: read`, scans only for the known `actions/download-artifact`
 `DEP0005 Buffer()` signature, validates

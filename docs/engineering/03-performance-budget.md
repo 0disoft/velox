@@ -327,8 +327,9 @@ removal, controller close, COM release, window destruction, and message-loop
 exit. Browser-process exit and UDF release remain parent-observed boundaries.
 
 The hosted lifecycle evidence path runs three serial samples for pull requests
-and `quick` manual dispatches, and ten for `full` manual dispatches, the weekly
-schedule, and release-candidate tags. Every sample owns a fresh profile,
+and `quick` manual dispatches, and ten for `full` manual dispatches and
+release-candidate tags. No recurring schedule trigger is enabled. Every sample
+owns a fresh profile,
 performs one immediate same-profile
 relaunch, and records both launches plus their cross-process ordering under
 `velox.startup-lifecycle/v3`. A failed launch, browser-exit wait, or
@@ -368,13 +369,14 @@ An explicit manual diagnostic may additionally produce
 same UDF against a new UDF in three paired, serial samples. Trial order
 alternates by sample, and the two trials never run concurrently. This diagnostic
 separates WebView initialization cost from same-profile teardown contention; it
-does not run on pull requests, schedules, or release-candidate tags by default.
+does not run on pull requests or release-candidate tags by default.
 
-The weekly schedule aggregates the current lifecycle summary and up to eleven
-prior successful scheduled summaries into `velox.startup-history/v1`. History
+An explicit manual history request aggregates the current lifecycle summary and
+up to eleven retained historical scheduled summaries into
+`velox.startup-history/v1`. History
 points retain p50 and p95 lifecycle timing, ordering count, correlation, runner
 image version, and WebView2 version. Series with different environment tuples
 must be interpreted separately. Missing historical artifacts are recorded as
 collection issues, and the history is evidence only: it has no automatic
-regression threshold because twelve hosted weekly points are not a stable
-baseline across runner and WebView2 updates.
+regression threshold because sparse manually requested points are not a stable
+baseline across runner and WebView2 updates. No recurring collector is enabled.

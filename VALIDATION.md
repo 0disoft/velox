@@ -133,7 +133,7 @@ The parent workspace command contract currently provides these bounded intents:
 The manual `Consumer evidence` workflow exposes a disabled-by-default
 `include_security_fuzz` action. It runs `FuzzParse` and `FuzzDispatcher`
 serially with a bounded per-target duration, preserves a failing corpus for
-seven days, and never runs for pull requests, schedules, or release-candidate
+seven days, and never runs for pull requests or release-candidate
 tags. The ordinary `velox_test` intent continues to execute the fuzz seed
 corpora without starting an unbounded campaign.
 
@@ -223,8 +223,8 @@ installation, and local maintainer-copy fallbacks in that path.
 
 The hosted `Consumer evidence` workflow additionally runs three startup
 lifecycle samples for pull requests and `quick` manual dispatches. A `full`
-manual dispatch, weekly schedule, or release-candidate tag runs ten lifecycle
-and ten consumer samples. It validates
+manual dispatch or release-candidate tag runs ten lifecycle and ten consumer
+samples. It has no recurring schedule trigger. It validates
 `velox.startup-lifecycle/v3`, derives and validates
 `velox.startup-lifecycle-summary/v1` plus
 `velox.startup-lifecycle-phase-summary/v1`, and uploads all results with
@@ -237,18 +237,18 @@ This longer evidence path is intentionally separate from the local one-sample
 
 An explicit manual `include_profile_comparison` input runs three alternating,
 serial same-profile versus fresh-profile pairs and validates
-`velox.startup-profile-comparison/v1`. It is disabled for ordinary pull request,
-scheduled, and release-candidate evidence.
+`velox.startup-profile-comparison/v1`. It is disabled for ordinary pull-request
+and release-candidate evidence.
 
-Each weekly schedule also builds `velox.startup-history/v1` from the current
-lifecycle summary and up to eleven prior successful scheduled artifacts. The
-history is grouped by runner image version and WebView2 version, retained for
-90 days, and remains diagnostic evidence rather than an automatic regression
-gate. Manual runs can exercise the same collector with
-`include_startup_history`.
+An explicit manual `include_startup_history` run builds
+`velox.startup-history/v1` from the current lifecycle summary and up to eleven
+retained historical scheduled artifacts. The history is grouped by runner
+image version and WebView2 version, retained for 90 days, and remains diagnostic
+evidence rather than an automatic regression gate. No recurring collector is
+enabled.
 
-The `Actions warning monitor` workflow allocates a runner after scheduled or
-release-candidate consumer evidence, or for an explicit manual run ID. Pull
+The `Actions warning monitor` workflow allocates a runner after
+release-candidate consumer evidence or for an explicit manual run ID. Pull
 request and ordinary manual consumer evidence produce only a skipped monitor
 job. The monitor scans the bounded workflow-log archive for the known
 `actions/download-artifact` `DEP0005 Buffer()` warning. It validates and uploads

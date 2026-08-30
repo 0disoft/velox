@@ -53,8 +53,6 @@ on:
   push:
     tags:
       - "v*-rc.*"
-  schedule:
-    - cron: "23 3 * * 1"
 
 permissions:
   actions: read
@@ -138,7 +136,7 @@ jobs:
       - name: Measure startup lifecycle
         shell: pwsh
         env:
-          VELOX_STARTUP_LIFECYCLE_REPETITIONS: ${{ (github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '10' || '3' }}
+          VELOX_STARTUP_LIFECYCLE_REPETITIONS: ${{ (startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '10' || '3' }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $false
@@ -193,7 +191,7 @@ jobs:
           }
 
       - name: Build startup history
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.include_startup_history)
+        if: github.event_name == 'workflow_dispatch' && inputs.include_startup_history
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -318,7 +316,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sample: ${{ fromJSON((github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '[0,1,2,3,4,5,6,7,8,9]' || '[0]') }}
+        sample: ${{ fromJSON((startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '[0,1,2,3,4,5,6,7,8,9]' || '[0]') }}
     steps:
       - name: Check out measurement contract
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -380,7 +378,7 @@ jobs:
       - name: Summarize results
         shell: pwsh
         env:
-          EXPECTED_SAMPLES: ${{ (github.event_name == 'schedule' || startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '10' || '1' }}
+          EXPECTED_SAMPLES: ${{ (startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '10' || '1' }}
         run: |
           & scripts/summarize-consumer-e2e.ps1 `
             -ResultsRoot '.ci/raw' `
