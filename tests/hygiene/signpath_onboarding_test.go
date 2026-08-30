@@ -77,7 +77,7 @@ func TestPublicProjectOwnershipAndPolicyFilesAreReady(t *testing.T) {
 		"LICENSE":                         {"MIT OR Apache-2.0", "LICENSE-MIT", "LICENSE-APACHE"},
 		"LICENSE-MIT":                     {"MIT License", "Copyright (c) 2026 0disoft"},
 		"LICENSE-APACHE":                  {"Apache License", "Version 2.0, January 2004"},
-		"SECURITY.md":                     {"security/advisories/new", "Do not open a public issue"},
+		"SECURITY.md":                     {"unsigned pre-release developer previews", "Security fixes land on", "immutable alpha releases", "best-effort basis", "security/advisories/new", "Do not open a public issue"},
 		"PRIVACY.md":                      {"do not send telemetry", "SignPath"},
 		".github/CODEOWNERS":              {"* @0disoft", "/.signpath/ @0disoft", "/.github/workflows/ @0disoft"},
 		"docs/ops/signpath-onboarding.md": {"Status: Deferred until an ADR 0011 signing trigger", "SignPath organization ID:", "Never return the API token value", "Private vulnerability reporting | Enabled", "Confirm that you own or can license"},
@@ -86,6 +86,9 @@ func TestPublicProjectOwnershipAndPolicyFilesAreReady(t *testing.T) {
 		data := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
 		if strings.Contains(data, "REPLACE_WITH_OWNER") {
 			t.Fatalf("%s still contains placeholder ownership", relative)
+		}
+		if relative == "SECURITY.md" && strings.Contains(data, "no public release yet") {
+			t.Fatal("SECURITY.md reverted to a pre-publication support statement")
 		}
 		for _, value := range required {
 			if !strings.Contains(data, value) {

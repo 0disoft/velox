@@ -2,8 +2,10 @@
 
 ## Supported Versions
 
-Velox has no public release yet. Development on `main` receives security fixes,
-but no published version currently carries a support or response-time promise.
+Velox publishes unsigned pre-release developer previews. Security fixes land on
+`main`; immutable alpha releases do not receive in-place backports. No preview
+carries a support-lifetime or response-time promise. A fix may be included in a
+later preview after the ordinary release gates pass.
 
 ## Reporting a Vulnerability
 
@@ -18,8 +20,8 @@ without including vulnerability details and request a private transfer channel.
 
 Include the affected commit or artifact digest, operating-system and WebView2
 versions, reproduction boundary, expected impact, and whether public disclosure
-has already occurred. Reports are handled on a best-effort basis until the
-first public alpha establishes a formal support policy.
+has already occurred. Reports are handled on a best-effort basis while Velox
+remains pre-release.
 
 ## Release Security Boundary
 
