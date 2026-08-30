@@ -195,8 +195,9 @@ export failure, or cleanup failure emits no qualifying receipt.
 `run-sandbox` then discovers exactly one root session by staged prompt and trial
 working directory, creates the hash-only binding, validates the DB and receipt,
 writes v2 evidence, and deletes the temporary exported database. A deletion
-failure removes the new binding and attestation so raw session data cannot
-coexist with qualifying evidence. `attest-sandbox` remains available for
+failure attempts to remove the new binding and attestation, reports any evidence
+cleanup failure separately, and leaves the series verifier fail-closed while
+the standard temporary database path exists. `attest-sandbox` remains available for
 recovery and diagnostics, where the operator must delete the temporary database
 after a successful attestation. Raw session data is not retained evidence.
 `verify` requires all three results and attestations, preserves failed and held

@@ -315,7 +315,8 @@ export async function runSandboxEvaluationTrial(
   } catch {
     const bindingPath = resolve(input.seriesRoot, "orchestrator", "bindings", `${plan.trialId}.json`);
     const attestationPath = resolve(input.seriesRoot, "orchestrator", "attestations", `${plan.trialId}.json`);
-    await Promise.allSettled([rm(bindingPath, { force: true }), rm(attestationPath, { force: true })]);
+    const cleanup = await Promise.allSettled([rm(bindingPath, { force: true }), rm(attestationPath, { force: true })]);
+    if (cleanup.some((result) => result.status === "rejected")) fail("SANDBOX_EVIDENCE_CLEANUP_FAILED");
     fail("SANDBOX_STATE_DATABASE_CLEANUP_FAILED");
   }
   return { plan, attestation: result.attestation };
@@ -343,6 +344,10 @@ export async function verifyEvaluationSeries(seriesPath: string, taskPath: strin
 
   const trials: TrialRecord[] = [];
   for (const trial of manifest.trials) {
+    await requireAbsent(
+      resolve(seriesRoot, "orchestrator", "runtime", trial.trialId, "state.db"),
+      "SERIES_TEMPORARY_STATE_RETAINED",
+    );
     const binding = await readBinding(seriesRoot, trial.trialId);
     verifyBinding(binding, manifest, trial);
     const trialRoot = await realDirectory(resolve(seriesRoot, trial.directory), "TRIAL_ROOT_INVALID");

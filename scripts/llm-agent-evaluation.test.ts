@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { lstat, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, resolve } from "node:path";
 import { Database } from "bun:sqlite";
@@ -25,7 +25,7 @@ import {
   type TrialRecord,
 } from "./llm-agent-evaluation.ts";
 
-const fixedDigest = "a".repeat(64);
+const digest = "a".repeat(64);
 const prompt = "public evaluation task\n";
 const taskURL = `https://raw.githubusercontent.com/0disoft/velox/${"a".repeat(40)}/evals/llm-agent/v1/task.md`;
 const alpha2URL = "https://github.com/0disoft/velox/releases/download/v0.5.10-alpha.2/velox-windows-x64.zip";
@@ -316,8 +316,8 @@ test("accepts Hermes completion recorded by a terminal assistant stop message", 
 });
 
 test("prepares three isolated trials and binds a session without storing its raw ID", async () => {
-  const prepared = await createPreparedSeries();
-  expect(prepared.manifest).toMatchObject({
+  const series = await createPreparedSeries();
+  expect(series.manifest).toMatchObject({
     schemaVersion: "velox.llm-agent-orchestrator/v1",
     seriesId: "series-20260730T010203Z-aaaaaaaa",
     task: { version: "velox.llm-agent-task/v1", sha256: sha(Buffer.from(prompt)) },
@@ -327,41 +327,41 @@ test("prepares three isolated trials and binds a session without storing its raw
       { sequence: 3, trialId: "trial-20260730T010203Z-dddddddd" },
     ],
   });
-  for (const trial of prepared.manifest.trials) {
-    expect((await Bun.file(resolve(prepared.seriesRoot, trial.directory)).stat()).isDirectory()).toBe(true);
+  for (const trial of series.manifest.trials) {
+    expect((await Bun.file(resolve(series.seriesRoot, trial.directory)).stat()).isDirectory()).toBe(true);
   }
 
   const rawSessionId = "20260730_010203_private";
-  const binding = await bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: 1, sessionId: rawSessionId });
+  const binding = await bindEvaluationSession({ seriesRoot: series.seriesRoot, sequence: 1, sessionId: rawSessionId });
   const promptBody = await readFile(binding.promptPath, "utf8");
   const bindingBody = await readFile(binding.bindingPath, "utf8");
   expect(promptBody).toContain(`TRIAL_ID=${binding.trial.trialId}`);
   expect(promptBody).toContain(`SESSION_ID_SHA256=${sha(Buffer.from(rawSessionId))}`);
   expect(promptBody).not.toContain(rawSessionId);
   expect(bindingBody).not.toContain(rawSessionId);
-  await expect(bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: 1, sessionId: rawSessionId })).rejects.toThrow("TRIAL_PROMPT_ALREADY_EXISTS");
+  await expect(bindEvaluationSession({ seriesRoot: series.seriesRoot, sequence: 1, sessionId: rawSessionId })).rejects.toThrow("TRIAL_PROMPT_ALREADY_EXISTS");
 });
 
 test("attests and verifies one immutable prepared three-trial series", async () => {
-  const prepared = await createPreparedSeries();
-  for (const trial of prepared.manifest.trials) {
-    const trialRoot = resolve(prepared.seriesRoot, trial.directory);
+  const series = await createPreparedSeries();
+  for (const trial of series.manifest.trials) {
+    const trialRoot = resolve(series.seriesRoot, trial.directory);
     const fixture = await createHermesFixture([], {
       trialRoot,
       model: trial.sequence === 3 ? "fixture-model-b" : "fixture-model-a",
       sessionId: `20260730_01020${trial.sequence}_fixture`,
     });
-    await bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: trial.sequence, sessionId: fixture.sessionId });
+    await bindEvaluationSession({ seriesRoot: series.seriesRoot, sequence: trial.sequence, sessionId: fixture.sessionId });
     const attested = await attestEvaluationTrial({
-      seriesRoot: prepared.seriesRoot,
+      seriesRoot: series.seriesRoot,
       sequence: trial.sequence,
       sessionId: fixture.sessionId,
       stateDatabasePath: fixture.input.stateDatabasePath,
     });
     const record = await createTrial(trialRoot, trial.sequence, attested.attestation.evaluator.model);
     record.trialId = trial.trialId;
-    record.seriesId = prepared.manifest.seriesId;
-    record.promptSha256 = prepared.manifest.task.sha256;
+    record.seriesId = series.manifest.seriesId;
+    record.promptSha256 = series.manifest.task.sha256;
     record.evaluator = { ...attested.attestation.evaluator };
     record.startedAtUtc = attested.attestation.startedAtUtc;
     record.finishedAtUtc = attested.attestation.finishedAtUtc;
@@ -370,9 +370,9 @@ test("attests and verifies one immutable prepared three-trial series", async () 
     await writeFile(resolve(trialRoot, "result.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
   }
 
-  const summary = await verifyEvaluationSeries(prepared.seriesRoot, prepared.taskPath);
+  const summary = await verifyEvaluationSeries(series.seriesRoot, series.taskPath);
   expect(summary).toMatchObject({
-    seriesId: prepared.manifest.seriesId,
+    seriesId: series.manifest.seriesId,
     passedTrials: 3,
     failedTrials: 0,
     heldTrials: 0,
@@ -381,30 +381,30 @@ test("attests and verifies one immutable prepared three-trial series", async () 
     diagnostics: ["SANDBOX_ENFORCEMENT_UNVERIFIED"],
     modelIdentifiers: ["custom/fixture-model-a", "custom/fixture-model-b"],
   });
-  await expect(verifyEvaluationSeries(prepared.seriesRoot, prepared.taskPath)).rejects.toThrow("SERIES_SUMMARY_ALREADY_EXISTS");
+  await expect(verifyEvaluationSeries(series.seriesRoot, series.taskPath)).rejects.toThrow("SERIES_SUMMARY_ALREADY_EXISTS");
 });
 
 test("stages and attests a newly created sandbox session without a pre-known ID", async () => {
-  const prepared = await createPreparedSeries();
-  const staged = await stageSandboxEvaluationTrial({ seriesRoot: prepared.seriesRoot, sequence: 1 });
+  const series = await createPreparedSeries();
+  const staged = await stageSandboxEvaluationTrial({ seriesRoot: series.seriesRoot, sequence: 1 });
   const promptBody = await readFile(staged.promptPath, "utf8");
-  const trialRoot = resolve(prepared.seriesRoot, staged.trial.directory);
+  const trialRoot = resolve(series.seriesRoot, staged.trial.directory);
   const fixture = await createHermesFixture([], {
     trialRoot,
     sessionId: "20260816_010203_sandbox",
     initialPrompt: promptBody,
   });
-  const receiptPath = resolve(prepared.seriesRoot, "orchestrator", "sandbox-receipt.json");
+  const receiptPath = resolve(series.seriesRoot, "orchestrator", "sandbox-receipt.json");
   const receipt = sandboxReceipt({
     trialId: staged.trial.trialId,
-    seriesId: prepared.manifest.seriesId,
+    seriesId: series.manifest.seriesId,
     sequence: 1,
     promptSha256: sha(Buffer.from(promptBody)),
     stateDatabaseSha256: sha(await readFile(fixture.input.stateDatabasePath)),
   });
   await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
   const result = await attestSandboxEvaluationTrial({
-    seriesRoot: prepared.seriesRoot,
+    seriesRoot: series.seriesRoot,
     sequence: 1,
     stateDatabasePath: fixture.input.stateDatabasePath,
     sandboxReceiptPath: receiptPath,
@@ -417,12 +417,12 @@ test("stages and attests a newly created sandbox session without a pre-known ID"
 });
 
 test("builds a secret-free Hermes sandbox execution plan from explicit inputs", async () => {
-  const prepared = await createPreparedSeries();
-  const staged = await stageSandboxEvaluationTrial({ seriesRoot: prepared.seriesRoot, sequence: 2 });
-  const { evaluatorRoot, supervisorPath, evaluatorPath } = await createSandboxTools(prepared.seriesRoot);
+  const series = await createPreparedSeries();
+  const staged = await stageSandboxEvaluationTrial({ seriesRoot: series.seriesRoot, sequence: 2 });
+  const { evaluatorRoot, supervisorPath, evaluatorPath } = await createSandboxTools(series.seriesRoot);
 
   const plan = await buildSandboxTrialExecutionPlan({
-    seriesRoot: prepared.seriesRoot,
+    seriesRoot: series.seriesRoot,
     sequence: 2,
     supervisorPath,
     evaluatorPath,
@@ -435,7 +435,7 @@ test("builds a secret-free Hermes sandbox execution plan from explicit inputs", 
   const promptBody = await readFile(staged.promptPath, "utf8");
   expect(plan).toMatchObject({
     trialId: staged.trial.trialId,
-    seriesId: prepared.manifest.seriesId,
+    seriesId: series.manifest.seriesId,
     sequence: 2,
     promptPath: staged.promptPath,
   });
@@ -450,12 +450,12 @@ test("builds a secret-free Hermes sandbox execution plan from explicit inputs", 
 });
 
 test("runs attestation and removes the temporary Hermes database after supervisor success", async () => {
-  const prepared = await createPreparedSeries();
-  const staged = await stageSandboxEvaluationTrial({ seriesRoot: prepared.seriesRoot, sequence: 1 });
-  const { evaluatorRoot, supervisorPath, evaluatorPath } = await createSandboxTools(prepared.seriesRoot);
+  const series = await createPreparedSeries();
+  const staged = await stageSandboxEvaluationTrial({ seriesRoot: series.seriesRoot, sequence: 1 });
+  const { evaluatorRoot, supervisorPath, evaluatorPath } = await createSandboxTools(series.seriesRoot);
 
   const result = await runSandboxEvaluationTrial({
-    seriesRoot: prepared.seriesRoot,
+    seriesRoot: series.seriesRoot,
     sequence: 1,
     supervisorPath,
     evaluatorPath,
@@ -490,23 +490,26 @@ test("runs attestation and removes the temporary Hermes database after superviso
   });
   await expect(lstat(result.plan.stateDatabasePath)).rejects.toThrow();
   expect(await Bun.file(result.plan.sandboxReceiptPath).exists()).toBe(true);
-  expect(await Bun.file(resolve(prepared.seriesRoot, "orchestrator", "bindings", `${staged.trial.trialId}.json`)).exists()).toBe(true);
-  expect(await Bun.file(resolve(prepared.seriesRoot, "orchestrator", "attestations", `${staged.trial.trialId}.json`)).exists()).toBe(true);
+  expect(await Bun.file(resolve(series.seriesRoot, "orchestrator", "bindings", `${staged.trial.trialId}.json`)).exists()).toBe(true);
+  expect(await Bun.file(resolve(series.seriesRoot, "orchestrator", "attestations", `${staged.trial.trialId}.json`)).exists()).toBe(true);
+  await writeFile(result.plan.stateDatabasePath, "retained state", "utf8");
+  await expect(verifyEvaluationSeries(series.seriesRoot, series.taskPath)).rejects.toThrow("SERIES_TEMPORARY_STATE_RETAINED");
+  await rm(result.plan.stateDatabasePath);
 });
 
 test("rejects a session binding whose immutable trial identity was altered", async () => {
-  const prepared = await createPreparedSeries();
+  const series = await createPreparedSeries();
   const sessionId = "20260730_010203_private";
-  const binding = await bindEvaluationSession({ seriesRoot: prepared.seriesRoot, sequence: 1, sessionId });
+  const binding = await bindEvaluationSession({ seriesRoot: series.seriesRoot, sequence: 1, sessionId });
   const value = JSON.parse(await readFile(binding.bindingPath, "utf8"));
   value.sequence = 2;
   await writeFile(binding.bindingPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 
   await expect(attestEvaluationTrial({
-    seriesRoot: prepared.seriesRoot,
+    seriesRoot: series.seriesRoot,
     sequence: 1,
     sessionId,
-    stateDatabasePath: resolve(prepared.seriesRoot, "outside-state.db"),
+    stateDatabasePath: resolve(series.seriesRoot, "outside-state.db"),
   })).rejects.toThrow("SESSION_BINDING_MANIFEST_MISMATCH");
 });
 
@@ -518,7 +521,7 @@ test("refuses to prepare agent workspaces inside the Velox repository", async ()
     taskURL,
     releaseTag: "v0.5.10-alpha.2",
     releaseURL: alpha2URL,
-    releaseSha256: fixedDigest,
+    releaseSha256: digest,
   })).rejects.toThrow("EVALUATION_ROOT_INSIDE_VELOX_REPOSITORY");
 });
 
@@ -530,7 +533,7 @@ test("refuses mutable task URLs and release URLs bound to another tag", async ()
     taskURL: "https://raw.githubusercontent.com/0disoft/velox/main/evals/llm-agent/v1/task.md",
     releaseTag: "v0.5.10-alpha.2",
     releaseURL: alpha2URL,
-    releaseSha256: fixedDigest,
+    releaseSha256: digest,
   };
   await expect(prepareEvaluationSeries(input)).rejects.toThrow("PUBLIC_TASK_URL_NOT_IMMUTABLE");
   input.taskURL = taskURL;
@@ -538,10 +541,10 @@ test("refuses mutable task URLs and release URLs bound to another tag", async ()
   await expect(prepareEvaluationSeries(input)).rejects.toThrow("RELEASE_URL_TAG_MISMATCH");
 });
 
-type HermesFixtureMessage = ReturnType<typeof message>;
+type Row = ReturnType<typeof message>;
 
 async function createHermesFixture(
-  extraMessages: HermesFixtureMessage[],
+  extraMessages: Row[],
   options: {
     recordedToolCalls?: number; cwd?: string; endedAt?: number | null; stateDatabaseInsideTrial?: boolean;
     trialRoot?: string; model?: string; sessionId?: string; initialPrompt?: string; stateDatabasePath?: string;
@@ -594,11 +597,11 @@ async function createPreparedSeries() {
   const evaluationRoot = await mkdtemp(resolve(tmpdir(), "velox-agent-series-"));
   const taskPath = resolve(evaluationRoot, "task.md");
   await writeFile(taskPath, prompt, "utf8");
-  const prepared = await prepareEvaluationSeries({
+  const series = await prepareEvaluationSeries({
     evaluationRoot, taskPath, taskURL, releaseTag: "v0.5.10-alpha.2", releaseURL: alpha2URL,
-    releaseSha256: fixedDigest, now: new Date("2026-07-30T01:02:03Z"), suffixes: ["aaaaaaaa", "bbbbbbbb", "cccccccc", "dddddddd"],
+    releaseSha256: digest, now: new Date("2026-07-30T01:02:03Z"), suffixes: ["aaaaaaaa", "bbbbbbbb", "cccccccc", "dddddddd"],
   });
-  return { ...prepared, taskPath };
+  return { ...series, taskPath };
 }
 
 async function createSandboxTools(seriesRoot: string) {
@@ -612,25 +615,25 @@ async function createSandboxTools(seriesRoot: string) {
   return { evaluatorRoot, supervisorPath, evaluatorPath };
 }
 
-function userMessage(id: number, content: string): HermesFixtureMessage {
+function userMessage(id: number, content: string): Row {
   return message(id, "user", content);
 }
 
-function toolCallMessage(id: number, callId: string, name: string, args: Record<string, unknown>): HermesFixtureMessage {
+function toolCallMessage(id: number, callId: string, name: string, args: Record<string, unknown>): Row {
   return {
     ...message(id, "assistant", null),
     toolCalls: JSON.stringify([{ id: callId, type: "function", function: { name, arguments: JSON.stringify(args) } }]),
   };
 }
 
-function toolResultMessage(id: number, callId: string, content: Record<string, unknown>): HermesFixtureMessage {
+function toolResultMessage(id: number, callId: string, content: Record<string, unknown>): Row {
   return {
     ...message(id, "tool", JSON.stringify(content)),
     toolCallId: callId,
   };
 }
 
-function message(id: number, role: string, content: string | null): HermesFixtureMessage {
+function message(id: number, role: string, content: string | null): Row {
   return {
     id, role, content, toolCallId: null, toolCalls: null, toolName: null, effectDisposition: null,
     timestamp: 100 + id, finishReason: null, active: 1, compacted: 0, displayKind: null,
@@ -651,8 +654,8 @@ async function createTrial(root: string, sequence: number, model: string): Promi
   const buildResult = Buffer.from(`${JSON.stringify({
     schemaVersion: "velox.build-result/v1", releaseVersion: "0.5.10-alpha.2", target: "windows-x64",
     app: { id: "dev.velox.agent.focusledger", name: "Focus Ledger", version: "0.1.0" },
-    contracts: { manifest: 1, runtime: 1, host: 1, ipc: 1 }, host: { file: "velox-host.exe", bytes: 1, sha256: fixedDigest },
-    assets: { files: 3, bytes: 10, sha256: fixedDigest }, permissions: ["app.info", "window.basic"], outputs: { portableFiles: 6 },
+    contracts: { manifest: 1, runtime: 1, host: 1, ipc: 1 }, host: { file: "velox-host.exe", bytes: 1, sha256: digest },
+    assets: { files: 3, bytes: 10, sha256: digest }, permissions: ["app.info", "window.basic"], outputs: { portableFiles: 6 },
   })}\n`);
   const report = Buffer.from("# Safe trial report\n\nAll observable checks passed.\n");
   await writeFile(resolve(artifacts, "first.zip"), archive);
@@ -669,7 +672,7 @@ async function createTrial(root: string, sequence: number, model: string): Promi
     promptSha256: sha(Buffer.from(prompt)),
     evaluator: { provider: "provider", model, sessionIdSha256: sha(Buffer.from(`session-${sequence}`)), freshSession: true, memoryCarryover: false },
     control: { maintainerOrchestrated: true, externalHuman: false, veloxSourceCheckout: false, unpublishedContext: false, interactiveMaintainerHints: 0 },
-    release: { repository: "0disoft/velox", tag: "v0.5.10-alpha.2", url: "https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.2", expectedSha256: fixedDigest, observedSha256: fixedDigest },
+    release: { repository: "0disoft/velox", tag: "v0.5.10-alpha.2", url: "https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.2", expectedSha256: digest, observedSha256: digest },
     application: { id: "dev.velox.agent.focusledger", name: "Focus Ledger", version: "0.1.0" },
     environment: { windowsVersion: "Windows fixture", webView2Version: "fixture", architecture: "AMD64", workspaceIsolation: "fresh-local-directory" },
     startedAtUtc: `2026-07-22T01:01:0${sequence}Z`,
