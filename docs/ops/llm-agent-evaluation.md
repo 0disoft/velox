@@ -157,21 +157,16 @@ bun scripts/llm-agent-orchestrator.ts stage \
 
 go build -trimpath -o <tool-dir>/velox-eval-sandbox.exe ./cmd/velox-eval-sandbox
 
-<tool-dir>/velox-eval-sandbox.exe \
-  --trial-id <trial-id> --series-id <series-id> --sequence <1|2|3> \
-  --trial-root <absolute-trial-root> \
-  --tool-root <absolute-evaluator-install-root> \
-  --pass-env PATH --pass-env <provider-credential-variable> \
-  --prompt <absolute-staged-prompt> \
-  --state-db-export <absolute-external-temporary-state.db> \
-  --receipt <absolute-external-sandbox-receipt.json> \
-  --timeout 45m -- <absolute-evaluator.exe> <new-session-arguments> <exact-prompt-argument>
-
-bun scripts/llm-agent-orchestrator.ts attest-sandbox \
+bun scripts/llm-agent-orchestrator.ts run-sandbox \
   --series-root <absolute-series-root> \
   --sequence <1|2|3> \
-  --state-db <absolute-external-temporary-state.db> \
-  --sandbox-receipt <absolute-external-sandbox-receipt.json>
+  --supervisor <absolute-velox-eval-sandbox.exe> \
+  --evaluator <absolute-hermes.exe> \
+  --evaluator-root <absolute-hermes-install-root> \
+  --provider <explicit-provider> \
+  --model <explicit-model> \
+  --reasoning <none|minimal|low|medium|high|xhigh|max|ultra> \
+  --pass-env <comma-separated-provider-environment-names>
 
 bun scripts/llm-agent-orchestrator.ts verify \
   --series-root <absolute-series-root> \
@@ -187,16 +182,23 @@ argument. For Hermes, use noninteractive single-query mode, pass the new session
 ID into system context, ignore user rules and configuration, and supply provider
 and model settings explicitly.
 
-After normal exit, the supervisor exports isolated `HERMES_HOME/state.db`,
+`run-sandbox` supplies Hermes oneshot, provider, model, reasoning, session-ID,
+user-config, and rule-isolation arguments from explicit inputs. It forwards
+`PATH` plus only the named existing environment variables; values are never
+written to the command plan or result. After normal exit, the supervisor
+exports isolated `HERMES_HOME/state.db`,
 records its SHA-256 plus prompt, command, environment, supervisor, and grant
 digests, revokes ACLs, deletes the AppContainer profile and private state, and
 only then writes a receipt. Timeout, nonzero exit, uncheckpointed SQLite WAL,
 export failure, or cleanup failure emits no qualifying receipt.
 
-`attest-sandbox` discovers exactly one root session by staged prompt and trial
+`run-sandbox` then discovers exactly one root session by staged prompt and trial
 working directory, creates the hash-only binding, validates the DB and receipt,
-and writes v2 evidence. Delete the temporary exported database after successful
-attestation; raw session data is not retained evidence.
+writes v2 evidence, and deletes the temporary exported database. A deletion
+failure removes the new binding and attestation so raw session data cannot
+coexist with qualifying evidence. `attest-sandbox` remains available for
+recovery and diagnostics, where the operator must delete the temporary database
+after a successful attestation. Raw session data is not retained evidence.
 `verify` requires all three results and attestations, preserves failed and held
 outcomes, and exclusively creates one `summary.json`; it never replaces a
 previous verdict.

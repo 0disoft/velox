@@ -194,6 +194,9 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 		filepath.Join(root, "docs", "ops", "llm-agent-evaluation.md"): {
 			"V2 enforced sandbox path implemented",
 			"beta held pending a qualifying three-trial series",
+			"run-sandbox",
+			"values are never",
+			"deletes the temporary exported database",
 			"Three consecutive trials pass",
 			"At least two distinct model identifiers",
 			"Do not discard a failed trial",

@@ -62,6 +62,28 @@ export interface AttestSandboxTrialInput extends StageTrialInput {
   sandboxReceiptPath: string;
 }
 
+export interface RunSandboxTrialInput extends StageTrialInput {
+  supervisorPath: string;
+  evaluatorPath: string;
+  evaluatorRoot: string;
+  provider: string;
+  model: string;
+  reasoning?: string;
+  passEnvironment: string[];
+  environment?: NodeJS.ProcessEnv;
+}
+
+export interface SandboxTrialExecutionPlan {
+  trialId: string;
+  seriesId: string;
+  sequence: number;
+  trialRoot: string;
+  promptPath: string;
+  stateDatabasePath: string;
+  sandboxReceiptPath: string;
+  supervisorCommand: string[];
+}
+
 export interface AttestTrialInput extends BindSessionInput {
   stateDatabasePath: string;
   sandboxReceiptPath?: string;
@@ -207,6 +229,101 @@ export async function attestSandboxEvaluationTrial(input: AttestSandboxTrialInpu
     await rm(bindingPath, { force: true });
     throw error;
   }
+}
+
+export async function buildSandboxTrialExecutionPlan(input: RunSandboxTrialInput): Promise<SandboxTrialExecutionPlan> {
+  const { seriesRoot, manifest } = await loadSeries(input.seriesRoot);
+  const trial = selectTrial(manifest, input.sequence);
+  const trialRoot = await realDirectory(resolve(seriesRoot, trial.directory), "TRIAL_ROOT_INVALID");
+  const promptPath = await realFile(resolve(seriesRoot, "orchestrator", "prompts", `${trial.trialId}.txt`), "TRIAL_PROMPT_INVALID", 1024 * 1024);
+  const prompt = await readFile(promptPath, "utf8");
+  if (prompt !== renderTrialPrompt(manifest, trial, "DERIVE_FROM_HERMES_SYSTEM_CONTEXT")) fail("SANDBOX_PROMPT_MISMATCH");
+
+  const supervisorPath = await realFile(input.supervisorPath, "SANDBOX_SUPERVISOR_INVALID", 128 * 1024 * 1024);
+  const evaluatorRoot = await realDirectory(input.evaluatorRoot, "SANDBOX_EVALUATOR_ROOT_INVALID");
+  const evaluatorPath = await realFile(input.evaluatorPath, "SANDBOX_EVALUATOR_INVALID", 128 * 1024 * 1024);
+  if (!isContained(evaluatorRoot, evaluatorPath)) fail("SANDBOX_EVALUATOR_OUTSIDE_TOOL_ROOT");
+  const provider = boundedArgument(input.provider, "SANDBOX_PROVIDER_INVALID");
+  const model = boundedArgument(input.model, "SANDBOX_MODEL_INVALID");
+  const reasoning = boundedArgument(input.reasoning ?? "high", "SANDBOX_REASONING_INVALID");
+  if (!new Set(["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]).has(reasoning)) {
+    fail("SANDBOX_REASONING_INVALID");
+  }
+  const passEnvironment = normalizePassEnvironment(input.passEnvironment);
+  for (const name of passEnvironment) requiredEnvironment(input.environment ?? process.env, name);
+
+  const runtimeRoot = resolve(seriesRoot, "orchestrator", "runtime", trial.trialId);
+  await mkdir(runtimeRoot, { recursive: true });
+  const stateDatabasePath = resolve(runtimeRoot, "state.db");
+  const sandboxReceiptPath = resolve(runtimeRoot, "sandbox-receipt.json");
+  await requireAbsent(stateDatabasePath, "SANDBOX_STATE_DATABASE_ALREADY_EXISTS");
+  await requireAbsent(sandboxReceiptPath, "SANDBOX_RECEIPT_ALREADY_EXISTS");
+
+  const supervisorCommand = [
+    supervisorPath,
+    "--trial-id", trial.trialId,
+    "--series-id", manifest.seriesId,
+    "--sequence", String(trial.sequence),
+    "--trial-root", trialRoot,
+    "--tool-root", evaluatorRoot,
+    ...passEnvironment.flatMap((name) => ["--pass-env", name]),
+    "--prompt", promptPath,
+    "--state-db-export", stateDatabasePath,
+    "--receipt", sandboxReceiptPath,
+    "--timeout", "45m",
+    "--json",
+    "--",
+    evaluatorPath,
+    "--oneshot", prompt,
+    "--provider", provider,
+    "--model", model,
+    "--reasoning", reasoning,
+    "--pass-session-id",
+    "--ignore-user-config",
+    "--ignore-rules",
+  ];
+  return {
+    trialId: trial.trialId,
+    seriesId: manifest.seriesId,
+    sequence: trial.sequence,
+    trialRoot,
+    promptPath,
+    stateDatabasePath,
+    sandboxReceiptPath,
+    supervisorCommand,
+  };
+}
+
+export async function runSandboxEvaluationTrial(input: RunSandboxTrialInput) {
+  const plan = await buildSandboxTrialExecutionPlan(input);
+  const processHandle = Bun.spawn(plan.supervisorCommand, {
+    cwd: plan.trialRoot,
+    stdin: "ignore",
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [exitCode] = await Promise.all([
+    processHandle.exited,
+    new Response(processHandle.stdout).text(),
+    new Response(processHandle.stderr).text(),
+  ]);
+  if (exitCode !== 0) fail("SANDBOX_SUPERVISOR_FAILED");
+
+  const result = await attestSandboxEvaluationTrial({
+    seriesRoot: input.seriesRoot,
+    sequence: input.sequence,
+    stateDatabasePath: plan.stateDatabasePath,
+    sandboxReceiptPath: plan.sandboxReceiptPath,
+  });
+  try {
+    await rm(plan.stateDatabasePath);
+  } catch {
+    const bindingPath = resolve(input.seriesRoot, "orchestrator", "bindings", `${plan.trialId}.json`);
+    const attestationPath = resolve(input.seriesRoot, "orchestrator", "attestations", `${plan.trialId}.json`);
+    await Promise.allSettled([rm(bindingPath, { force: true }), rm(attestationPath, { force: true })]);
+    fail("SANDBOX_STATE_DATABASE_CLEANUP_FAILED");
+  }
+  return { plan, attestation: result.attestation };
 }
 
 export async function verifyEvaluationSeries(seriesPath: string, taskPath: string): Promise<SeriesSummary> {
@@ -490,6 +607,22 @@ function requiredEnvironment(environment: NodeJS.ProcessEnv, key: string) {
   return value;
 }
 
+function boundedArgument(value: string, code: string) {
+  const normalized = value.trim();
+  if (!normalized || normalized.length > 256 || /[\0\r\n]/.test(normalized)) fail(code);
+  return normalized;
+}
+
+function normalizePassEnvironment(names: string[]) {
+  const result = names.map((name) => name.trim()).filter(Boolean);
+  if (!result.some((name) => name.toUpperCase() === "PATH")) result.unshift("PATH");
+  if (result.length < 2 || result.length > 8) fail("SANDBOX_PASS_ENVIRONMENT_INVALID");
+  if (result.some((name) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name))) fail("SANDBOX_PASS_ENVIRONMENT_INVALID");
+  const normalized = result.map((name) => name.toUpperCase());
+  if (new Set(normalized).size !== normalized.length) fail("SANDBOX_PASS_ENVIRONMENT_INVALID");
+  return result;
+}
+
 function parseFlags(argv: string[]) {
   const flags = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 2) {
@@ -596,12 +729,34 @@ async function main(argv: string[]) {
     console.log(JSON.stringify({ ok: true, trialId: result.attestation.trialId, schemaVersion: result.attestation.schemaVersion }));
     return;
   }
+  if (command === "run-sandbox") {
+    if (flags.size !== 8 && flags.size !== 9) fail("ORCHESTRATOR_USAGE_INVALID");
+    const result = await runSandboxEvaluationTrial({
+      seriesRoot: flag(flags, "--series-root"),
+      sequence: Number(flag(flags, "--sequence")),
+      supervisorPath: flag(flags, "--supervisor"),
+      evaluatorPath: flag(flags, "--evaluator"),
+      evaluatorRoot: flag(flags, "--evaluator-root"),
+      provider: flag(flags, "--provider"),
+      model: flag(flags, "--model"),
+      reasoning: flags.get("--reasoning"),
+      passEnvironment: flag(flags, "--pass-env").split(","),
+    });
+    console.log(JSON.stringify({
+      ok: true,
+      trialId: result.plan.trialId,
+      sequence: result.plan.sequence,
+      schemaVersion: result.attestation.schemaVersion,
+      temporaryStateRemoved: true,
+    }));
+    return;
+  }
   if (command === "verify") {
     requireFlagCount(flags, 2);
     console.log(JSON.stringify(await verifyEvaluationSeries(flag(flags, "--series-root"), flag(flags, "--task-path"))));
     return;
   }
-  fail("usage: bun scripts/llm-agent-orchestrator.ts <prepare|stage|bind|attest|attest-sandbox|verify|live-diagnose|live-smoke> [flags]");
+  fail("usage: bun scripts/llm-agent-orchestrator.ts <prepare|stage|bind|attest|attest-sandbox|run-sandbox|verify|live-diagnose|live-smoke> [flags]");
 }
 
 if (import.meta.main) await main(process.argv.slice(2));

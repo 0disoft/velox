@@ -9,6 +9,7 @@ import {
   attestSandboxEvaluationTrial,
   attestEvaluationTrial,
   bindEvaluationSession,
+  buildSandboxTrialExecutionPlan,
   prepareEvaluationSeries,
   stageSandboxEvaluationTrial,
   verifyEvaluationSeries,
@@ -568,6 +569,45 @@ describe("LLM agent evaluation", () => {
       evaluator: { sessionIdSha256: sha(Buffer.from(fixture.sessionId)) },
       evidence: { sandboxEnforced: true },
     });
+  });
+
+  test("builds a secret-free Hermes sandbox execution plan from explicit inputs", async () => {
+    const prepared = await createPreparedSeries();
+    const staged = await stageSandboxEvaluationTrial({ seriesRoot: prepared.seriesRoot, sequence: 2 });
+    const toolRoot = resolve(prepared.seriesRoot, "maintainer-tools");
+    const evaluatorRoot = resolve(toolRoot, "hermes-agent");
+    const supervisorPath = resolve(toolRoot, "velox-eval-sandbox.exe");
+    const evaluatorPath = resolve(evaluatorRoot, "venv", "Scripts", "hermes.exe");
+    await mkdir(resolve(evaluatorPath, ".."), { recursive: true });
+    await writeFile(supervisorPath, "supervisor fixture", "utf8");
+    await writeFile(evaluatorPath, "evaluator fixture", "utf8");
+
+    const plan = await buildSandboxTrialExecutionPlan({
+      seriesRoot: prepared.seriesRoot,
+      sequence: 2,
+      supervisorPath,
+      evaluatorPath,
+      evaluatorRoot,
+      provider: "fixture-provider",
+      model: "fixture/model-b",
+      passEnvironment: ["FIXTURE_PROVIDER_KEY"],
+      environment: { PATH: "fixture-path", FIXTURE_PROVIDER_KEY: "never-serialize-this-secret" },
+    });
+    const promptBody = await readFile(staged.promptPath, "utf8");
+    expect(plan).toMatchObject({
+      trialId: staged.trial.trialId,
+      seriesId: prepared.manifest.seriesId,
+      sequence: 2,
+      promptPath: staged.promptPath,
+    });
+    expect(plan.supervisorCommand).toContain(promptBody);
+    expect(plan.supervisorCommand).toContain("fixture-provider");
+    expect(plan.supervisorCommand).toContain("fixture/model-b");
+    expect(plan.supervisorCommand).toContain("FIXTURE_PROVIDER_KEY");
+    expect(plan.supervisorCommand).not.toContain("never-serialize-this-secret");
+    expect(plan.supervisorCommand.slice(-5)).toEqual([
+      "--reasoning", "high", "--pass-session-id", "--ignore-user-config", "--ignore-rules",
+    ]);
   });
 
   test("rejects a session binding whose immutable trial identity was altered", async () => {
