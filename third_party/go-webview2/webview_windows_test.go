@@ -6,10 +6,11 @@ import "testing"
 
 type bindingResponseBrowser struct {
 	evaluated []string
+	destroyed int
 }
 
 func (*bindingResponseBrowser) Embed(uintptr) bool { return true }
-func (*bindingResponseBrowser) Destroy()           {}
+func (b *bindingResponseBrowser) Destroy()         { b.destroyed++ }
 func (*bindingResponseBrowser) BrowserProcessID() (uint32, error) {
 	return 1, nil
 }
@@ -23,6 +24,13 @@ func (*bindingResponseBrowser) Init(string)                              {}
 func (b *bindingResponseBrowser) Eval(script string)                     { b.evaluated = append(b.evaluated, script) }
 func (*bindingResponseBrowser) NotifyParentWindowPositionChanged() error { return nil }
 func (*bindingResponseBrowser) Focus()                                   {}
+
+type destroyRunnerProbe struct {
+	sequence []string
+}
+
+func (p *destroyRunnerProbe) Destroy() { p.sequence = append(p.sequence, "destroy") }
+func (p *destroyRunnerProbe) Run()     { p.sequence = append(p.sequence, "run") }
 
 func TestBindingResponseIsDiscardedAfterCloseBegins(t *testing.T) {
 	browser := &bindingResponseBrowser{}
@@ -62,4 +70,23 @@ func TestBindingResponseIsEvaluatedWhileOpen(t *testing.T) {
 	}
 }
 
+func TestDestroyBeforeReturnPumpsNativeClose(t *testing.T) {
+	probe := &destroyRunnerProbe{}
+	destroyBeforeReturn(probe)
+
+	if len(probe.sequence) != 2 || probe.sequence[0] != "destroy" || probe.sequence[1] != "run" {
+		t.Fatalf("destroyBeforeReturn sequence = %v, want [destroy run]", probe.sequence)
+	}
+}
+
+func TestCleanupFailedEmbedDestroysPartialBrowser(t *testing.T) {
+	browser := &bindingResponseBrowser{}
+	cleanupFailedEmbed(&webview{browser: browser})
+
+	if browser.destroyed != 1 {
+		t.Fatalf("partial browser destroy count = %d, want 1", browser.destroyed)
+	}
+}
+
 var _ browser = (*bindingResponseBrowser)(nil)
+var _ destroyRunner = (*destroyRunnerProbe)(nil)
