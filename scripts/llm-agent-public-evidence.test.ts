@@ -37,7 +37,8 @@ describe("public clean-room evaluation evidence", () => {
 
   for (const [name, error] of rejections) {
     test(`rejects ${name}`, async () => {
-      expect(() => parseAndVerifyPublicEvidence(await fixture(name))).toThrow(error);
+      const raw = await fixture(name);
+      expect(() => parseAndVerifyPublicEvidence(raw)).toThrow(error);
     });
   }
 });
