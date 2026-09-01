@@ -2,7 +2,10 @@
 
 package webview2
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 type bindingResponseBrowser struct {
 	evaluated []string
@@ -31,6 +34,28 @@ type destroyRunnerProbe struct {
 
 func (p *destroyRunnerProbe) Destroy() { p.sequence = append(p.sequence, "destroy") }
 func (p *destroyRunnerProbe) Run()     { p.sequence = append(p.sequence, "run") }
+
+type settingsProbe struct {
+	contextMenuErr error
+	devToolsErr    error
+	calls          []string
+	released       int
+}
+
+func (p *settingsProbe) PutAreDefaultContextMenusEnabled(bool) error {
+	p.calls = append(p.calls, "context-menu")
+	return p.contextMenuErr
+}
+
+func (p *settingsProbe) PutAreDevToolsEnabled(bool) error {
+	p.calls = append(p.calls, "dev-tools")
+	return p.devToolsErr
+}
+
+func (p *settingsProbe) Release() uintptr {
+	p.released++
+	return 0
+}
 
 func TestBindingResponseIsDiscardedAfterCloseBegins(t *testing.T) {
 	browser := &bindingResponseBrowser{}
@@ -88,5 +113,45 @@ func TestCleanupFailedEmbedDestroysPartialBrowser(t *testing.T) {
 	}
 }
 
+func TestConfigureSettingsReleasesReferenceOnSuccess(t *testing.T) {
+	settings := &settingsProbe{}
+	if err := configureSettings(settings, false); err != nil {
+		t.Fatal(err)
+	}
+	if settings.released != 1 {
+		t.Fatalf("settings release count = %d, want 1", settings.released)
+	}
+	if len(settings.calls) != 2 || settings.calls[0] != "context-menu" || settings.calls[1] != "dev-tools" {
+		t.Fatalf("settings calls = %v, want [context-menu dev-tools]", settings.calls)
+	}
+}
+
+func TestConfigureSettingsReleasesReferenceOnFailure(t *testing.T) {
+	cases := []struct {
+		name           string
+		contextMenuErr error
+		devToolsErr    error
+		wantCalls      int
+	}{
+		{name: "context menu", contextMenuErr: errors.New("context menu failed"), wantCalls: 1},
+		{name: "developer tools", devToolsErr: errors.New("developer tools failed"), wantCalls: 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := &settingsProbe{contextMenuErr: tc.contextMenuErr, devToolsErr: tc.devToolsErr}
+			if err := configureSettings(settings, false); err == nil {
+				t.Fatal("configureSettings succeeded, want failure")
+			}
+			if settings.released != 1 {
+				t.Fatalf("settings release count = %d, want 1", settings.released)
+			}
+			if len(settings.calls) != tc.wantCalls {
+				t.Fatalf("settings calls = %v, want %d calls", settings.calls, tc.wantCalls)
+			}
+		})
+	}
+}
+
 var _ browser = (*bindingResponseBrowser)(nil)
+var _ browserSettings = (*settingsProbe)(nil)
 var _ destroyRunner = (*destroyRunnerProbe)(nil)
