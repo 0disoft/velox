@@ -21,7 +21,12 @@ Velox carries only the changes required by its Windows host boundary:
 - expose a phase-only shutdown observer around handler removal, controller
   close, COM release, native window destruction, and message-loop exit;
 - close and release the WebView2 controller, webview, and environment;
+- balance the settings interface `AddRef` and `Release` methods and release each
+  `GetSettings` reference after policy configuration;
 - unregister native event handlers during shutdown;
+- reject a zero native window before registering package-owned context;
+- release a partially constructed browser before destroying a failed embed;
+- process the native close loop before returning from settings-stage failures;
 - discard queued binding responses after native window shutdown begins;
 - fail initialization when mandatory WebMessage or permission policies cannot
   be registered, without terminating the embedding process from the library;
@@ -30,7 +35,9 @@ Velox carries only the changes required by its Windows host boundary:
 
 Do not merge upstream changes mechanically. Review COM ownership, public API
 changes, generated bindings, loader changes, and license notices before
-updating the pinned source revision.
+updating the pinned source revision. The retained native callback objects are
+not yet covered by an explicit `runtime.Pinner` contract, so any Go collector or
+pointer-rule change requires a fresh lifetime review before adoption.
 
 The upstream x86 and ARM64 loader files remain checked in even though the first
 supported target is Windows x64. Removing them saves only about 231 KiB from
