@@ -183,7 +183,7 @@ jobs:
           if ($first.result.archiveSha256 -ne $second.result.archiveSha256) {
             throw 'Two public-preview consumer builds are not deterministic.'
           }
-          $firstArchive = Join-Path $project $first.result.archive
+          $firstArchive = Join-Path (Join-Path $project 'dist-first') $first.result.archive
           Invoke-VeloxJson -Arguments @('inspect', $firstArchive, '--json') | Out-Null
 
           $env:VELOX_BENCH_MODE = '1'
