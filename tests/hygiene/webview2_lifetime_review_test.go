@@ -16,7 +16,7 @@ func TestWebView2LifetimeReviewKeepsOwnersFixesAndResidualRiskVisible(t *testing
 			"COM-002: Settings-stage failures queued close without pumping it",
 			"COM-003: Partial embed failure did not have one unconditional cleanup path",
 			"runtime.Pinner",
-			"live repeated startup and shutdown",
+			"live Windows stress remains required before beta",
 		},
 		filepath.Join(root, "third_party", "go-webview2", "webview.go"): {
 			"cleanupFailedEmbed(w)",
@@ -30,7 +30,7 @@ func TestWebView2LifetimeReviewKeepsOwnersFixesAndResidualRiskVisible(t *testing
 			"uintptr(unsafe.Pointer(i))",
 		},
 		filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"): {
-			"Source-reviewed; monitoring residual risk",
+			"SEC-004 | Medium | Monitoring",
 			"09-webview2-com-lifetime-review.md",
 		},
 		filepath.Join(root, "docs", "product", "03-risk-register.md"): {
