@@ -347,7 +347,6 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 				lpmmi.PtMaxTrackSize = w.maxsz
 			}
 			if w.minsz.X > 0 && w.minsz.Y > 0 {
-				lpmmi.PtMinSize = w.minsz
 				lpmmi.PtMinTrackSize = w.minsz
 			}
 		default:
