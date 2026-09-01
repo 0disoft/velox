@@ -31,10 +31,17 @@ runtime.
 ## Clean-Room Agent Evaluation
 
 ADR 0018 permits maintainer-orchestrated LLM agent trials for beta technical
-readiness. Public evidence may retain provider and model identifiers, a SHA-256
-hash of the session identifier, release and artifact hashes, redacted Windows
-and WebView2 versions, command classes, counts, stable diagnostics, and relative
-artifact paths.
+readiness. Private local trial and attestation evidence may retain provider and
+model identifiers, a SHA-256 hash of the session identifier, release and
+artifact hashes, redacted Windows and WebView2 versions, command classes,
+counts, stable diagnostics, and relative artifact paths.
+
+The durable public packet defined in
+`docs/ops/llm-agent-public-evidence.md` contains only the release and public task
+identities, provider and model identities, trial IDs and sequences, passing
+outcomes, sandbox contract identities, publication identity, and cryptographic
+digests. It does not publish a raw or hashed session identifier, environment
+versions, relative artifact paths, or local verification metadata.
 
 Evaluation evidence must not retain provider credentials, raw session tokens,
 full transcripts, chain of thought, local absolute paths, usernames,
