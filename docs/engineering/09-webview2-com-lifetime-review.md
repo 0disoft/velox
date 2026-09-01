@@ -36,7 +36,7 @@ beta gate.
 
 ### COM-001: Settings references were leaked
 
-`GetSettings` returned an `ICoreWebView2Settings` reference, but the wrapper had
+`GetSettings` returned an `ICoreWebViewSettings` reference, but the wrapper had
 no `Release` method and the initialization path never released it. The binding
 now exposes balanced `AddRef` and `Release` methods, passes the interface pointer
 to both calls, and releases the settings reference exactly once after applying
