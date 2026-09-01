@@ -176,8 +176,8 @@ jobs:
           Invoke-VeloxJson -Arguments @('doctor', '--config', '.ci/project/velox.json', '--out', 'dist-first', '--json') | Out-Null
           $firstBuild = Invoke-VeloxJson -Arguments @('build', '--config', '.ci/project/velox.json', '--out', 'dist-first', '--json')
           $secondBuild = Invoke-VeloxJson -Arguments @('build', '--config', '.ci/project/velox.json', '--out', 'dist-second', '--json')
-          $firstArchive = Join-Path $project $firstBuild.result.archive
-          $secondArchive = Join-Path $project $secondBuild.result.archive
+          $firstArchive = Join-Path (Join-Path $project 'dist-first') $firstBuild.result.archive
+          $secondArchive = Join-Path (Join-Path $project 'dist-second') $secondBuild.result.archive
           if (-not (Test-Path -LiteralPath $firstArchive -PathType Leaf) -or -not (Test-Path -LiteralPath $secondArchive -PathType Leaf)) {
             throw 'Consumer build outputs are incomplete.'
           }
