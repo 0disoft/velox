@@ -24,9 +24,9 @@ func TestWebView2LifetimeReviewKeepsOwnersFixesAndResidualRiskVisible(t *testing
 			"defer settings.Release()",
 			"if w.hwnd == 0",
 		},
-		filepath.Join(root, "third_party", "go-webview2", "pkg", "edge", "ICoreWebView2Settings.go"): {
-			"func (i *ICoreWebView2Settings) AddRef() uintptr",
-			"func (i *ICoreWebView2Settings) Release() uintptr",
+		filepath.Join(root, "third_party", "go-webview2", "pkg", "edge", "ICoreWebViewSettings.go"): {
+			"func (i *ICoreWebViewSettings) AddRef() uintptr",
+			"func (i *ICoreWebViewSettings) Release() uintptr",
 			"uintptr(unsafe.Pointer(i))",
 		},
 		filepath.Join(root, "docs", "engineering", "08-m4-security-review.md"): {
