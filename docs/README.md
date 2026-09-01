@@ -78,6 +78,7 @@ Foundation application and protected-environment handoff steps remain in
 - docs/ops/signpath-onboarding.md
 - docs/ops/external-user-attempt.md
 - docs/ops/llm-agent-evaluation.md
+- docs/ops/llm-agent-public-evidence.md
 - docs/ops/rollback.md
 - docs/QUICKSTART.md
 
