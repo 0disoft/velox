@@ -58,6 +58,8 @@ Summary pages must not silently broaden these sources.
   failure behavior.
 - docs/engineering/08-m4-security-review.md: bounded internal source and trust-
   boundary review for the unsigned preview.
+- docs/engineering/09-webview2-com-lifetime-review.md: bounded ownership,
+  teardown, confirmed-defect, and residual-risk review for the pure-Go host.
 
 ## Operations
 

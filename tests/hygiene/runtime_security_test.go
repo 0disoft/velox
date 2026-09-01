@@ -22,8 +22,10 @@ func TestProductionRuntimeKeepsSecurityControls(t *testing.T) {
 		"ipc.BridgeSource()",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "third_party", "go-webview2", "webview.go"), []string{
-		"settings.PutAreDefaultContextMenusEnabled(options.Debug)",
-		"settings.PutAreDevToolsEnabled(options.Debug)",
+		"configureSettings(settings, options.Debug)",
+		"defer settings.Release()",
+		"settings.PutAreDefaultContextMenusEnabled(debug)",
+		"settings.PutAreDevToolsEnabled(debug)",
 	})
 }
 

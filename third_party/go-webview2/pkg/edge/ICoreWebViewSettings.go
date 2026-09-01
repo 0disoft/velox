@@ -47,7 +47,12 @@ type ICoreWebViewSettings struct {
 }
 
 func (i *ICoreWebViewSettings) AddRef() uintptr {
-	r, _, _ := i.vtbl.AddRef.Call()
+	r, _, _ := i.vtbl.AddRef.Call(uintptr(unsafe.Pointer(i)))
+	return r
+}
+
+func (i *ICoreWebViewSettings) Release() uintptr {
+	r, _, _ := i.vtbl.Release.Call(uintptr(unsafe.Pointer(i)))
 	return r
 }
 

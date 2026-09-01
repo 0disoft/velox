@@ -139,6 +139,17 @@ type WebViewOptions struct {
 	WindowOptions WindowOptions
 }
 
+type browserSettings interface {
+	PutAreDefaultContextMenusEnabled(bool) error
+	PutAreDevToolsEnabled(bool) error
+	Release() uintptr
+}
+
+type destroyRunner interface {
+	Destroy()
+	Run()
+}
+
 // New creates a new webview in a new window.
 func New(debug bool) WebView { return NewWithOptions(WebViewOptions{Debug: debug}) }
 
@@ -189,19 +200,11 @@ func NewWithOptions(options WebViewOptions) WebView {
 
 	settings, err := chromium.GetSettings()
 	if err != nil {
-		w.Destroy()
+		destroyBeforeReturn(w)
 		return nil
 	}
-	// disable context menu
-	err = settings.PutAreDefaultContextMenusEnabled(options.Debug)
-	if err != nil {
-		w.Destroy()
-		return nil
-	}
-	// disable developer tools
-	err = settings.PutAreDevToolsEnabled(options.Debug)
-	if err != nil {
-		w.Destroy()
+	if err := configureSettings(settings, options.Debug); err != nil {
+		destroyBeforeReturn(w)
 		return nil
 	}
 
@@ -431,6 +434,9 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 		uintptr(hinstance),
 		0,
 	)
+	if w.hwnd == 0 {
+		return false
+	}
 	setWindowContext(w.hwnd, w)
 
 	_, _, _ = w32.User32ShowWindow.Call(w.hwnd, w32.SWShow)
@@ -438,11 +444,31 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 	_, _, _ = w32.User32SetFocus.Call(w.hwnd)
 
 	if !w.browser.Embed(w.hwnd) {
-		_, _, _ = w32.User32DestroyWindow.Call(w.hwnd)
+		cleanupFailedEmbed(w)
 		return false
 	}
 	w.browser.Resize()
 	return true
+}
+
+func cleanupFailedEmbed(w *webview) {
+	w.browser.Destroy()
+	if w.hwnd != 0 {
+		_, _, _ = w32.User32DestroyWindow.Call(w.hwnd)
+	}
+}
+
+func configureSettings(settings browserSettings, debug bool) error {
+	defer settings.Release()
+	if err := settings.PutAreDefaultContextMenusEnabled(debug); err != nil {
+		return err
+	}
+	return settings.PutAreDevToolsEnabled(debug)
+}
+
+func destroyBeforeReturn(view destroyRunner) {
+	view.Destroy()
+	view.Run()
 }
 
 func (w *webview) Destroy() {
