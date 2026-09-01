@@ -139,6 +139,12 @@ type WebViewOptions struct {
 	WindowOptions WindowOptions
 }
 
+type browserSettings interface {
+	PutAreDefaultContextMenusEnabled(bool) error
+	PutAreDevToolsEnabled(bool) error
+	Release() uintptr
+}
+
 type destroyRunner interface {
 	Destroy()
 	Run()
@@ -197,15 +203,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 		destroyBeforeReturn(w)
 		return nil
 	}
-	// disable context menu
-	err = settings.PutAreDefaultContextMenusEnabled(options.Debug)
-	if err != nil {
-		destroyBeforeReturn(w)
-		return nil
-	}
-	// disable developer tools
-	err = settings.PutAreDevToolsEnabled(options.Debug)
-	if err != nil {
+	if err := configureSettings(settings, options.Debug); err != nil {
 		destroyBeforeReturn(w)
 		return nil
 	}
@@ -459,6 +457,14 @@ func cleanupFailedEmbed(w *webview) {
 	if w.hwnd != 0 {
 		_, _, _ = w32.User32DestroyWindow.Call(w.hwnd)
 	}
+}
+
+func configureSettings(settings browserSettings, debug bool) error {
+	defer settings.Release()
+	if err := settings.PutAreDefaultContextMenusEnabled(debug); err != nil {
+		return err
+	}
+	return settings.PutAreDevToolsEnabled(debug)
 }
 
 func destroyBeforeReturn(view destroyRunner) {
