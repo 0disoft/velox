@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "velox.llm-agent-public-evidence/v1",
+  "assetName": "velox-llm-agent-evidence-series-20260901T000000Z-a1b2c3d4-90862996910453309710da30fed06080fc806931392cdede1895ee5cfb1ca55e.json",
+  "payloadSha256": "90862996910453309710da30fed06080fc806931392cdede1895ee5cfb1ca55e",
+  "payload": {
+    "publishedAtUtc": "2026-09-01T00:00:00Z",
+    "retention": "permanent",
+    "series": {
+      "seriesId": "series-20260901T000000Z-a1b2c3d4",
+      "outcome": "passed",
+      "betaTechnicalGate": true,
+      "humanAdoptionClaim": false
+    },
+    "release": {
+      "repository": "0disoft/velox",
+      "tag": "v0.5.10-beta.1",
+      "url": "https://github.com/0disoft/velox/releases/tag/v0.5.10-beta.1",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "task": {
+      "schemaVersion": "velox.llm-agent-task/v1",
+      "sourceCommit": "2222222222222222222222222222222222222222",
+      "url": "https://raw.githubusercontent.com/0disoft/velox/2222222222222222222222222222222222222222/evals/llm-agent/v1/task.md",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    "sandbox": {
+      "attestationSchemaVersion": "velox.llm-agent-evaluation-attestation/v2",
+      "receiptSchemaVersion": "velox.eval-sandbox-receipt/v1",
+      "policySchemaVersion": "velox.eval-sandbox-policy/v1",
+      "filesystemBoundary": "appcontainer-explicit-acl",
+      "processBoundary": "job-object-no-breakaway",
+      "networkCapability": "internet-client"
+    },
+    "trials": [
+      {
+        "trialId": "trial-20260901T000001Z-a1b2c3d4",
+        "sequence": 1,
+        "provider": "example-provider-a",
+        "model": "example-model-a",
+        "outcome": "passed",
+        "resultSha256": "4444444444444444444444444444444444444444444444444444444444444444",
+        "attestationSha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "sandboxReceiptSha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      },
+      {
+        "trialId": "trial-20260901T000002Z-b1c2d3e4",
+        "sequence": 2,
+        "provider": "example-provider-a",
+        "model": "example-model-a",
+        "outcome": "passed",
+        "resultSha256": "7777777777777777777777777777777777777777777777777777777777777777",
+        "attestationSha256": "8888888888888888888888888888888888888888888888888888888888888888",
+        "sandboxReceiptSha256": "9999999999999999999999999999999999999999999999999999999999999999"
+      },
+      {
+        "trialId": "trial-20260901T000003Z-c1d2e3f4",
+        "sequence": 3,
+        "provider": "example-provider-b",
+        "model": "example-model-b",
+        "outcome": "passed",
+        "resultSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "attestationSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "sandboxReceiptSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    ]
+  }
+}
