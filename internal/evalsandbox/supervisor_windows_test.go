@@ -42,8 +42,20 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 	if err := os.WriteFile(forbiddenPath, []byte("outside"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	executable, err := os.Executable()
+	testExecutable, err := os.Executable()
 	if err != nil {
+		t.Fatal(err)
+	}
+	toolRoot := filepath.Join(base, "tool")
+	if err := os.MkdirAll(toolRoot, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	executable := filepath.Join(toolRoot, "velox-eval-sandbox-test.exe")
+	executableBody, err := os.ReadFile(testExecutable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(executable, executableBody, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	allowedPath := filepath.Join(trialRoot, "inside.txt")
@@ -62,7 +74,7 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 		SeriesID:                "series-20260816T010203Z-a1b2c3d4",
 		Sequence:                1,
 		TrialRoot:               trialRoot,
-		ToolRoots:               []string{filepath.Dir(executable)},
+		ToolRoots:               []string{toolRoot},
 		PassEnvironment:         []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv},
 		PromptPath:              promptPath,
 		StateDatabaseExportPath: stateDatabaseExportPath,
