@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -134,6 +135,7 @@ func TestSandboxBoundaryProbeProcess(t *testing.T) {
 	}
 	child := exec.Command(os.Args[0], "-test.run=^TestSandboxGrandchildProbeProcess$")
 	child.Env = os.Environ()
+	child.Stdin = strings.NewReader("")
 	if output, err := child.CombinedOutput(); err != nil {
 		t.Fatalf("contained grandchild failed: %v: %s", err, output)
 	}
