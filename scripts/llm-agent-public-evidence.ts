@@ -7,7 +7,8 @@ const trialIDPattern = /^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$/;
 const releaseTagPattern = /^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta)\.[1-9][0-9]*$/;
 const identifierPattern = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
 const isoUtcPattern = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
-const absolutePathPattern = /(?:^|[\s"'(])(?:[A-Za-z]:\\|\\\\[^\\\s]+\\|\/(?:home|Users|tmp|var\/tmp)\/)/m;
+const absolutePathPattern =
+  /(?:^|[\s"'(])(?:[A-Za-z]:[\\/]|(?:\\\\|\/\/)[^\\/\s]+[\\/]|\/(?:home|Users|tmp|var\/tmp|root|opt|etc|usr|srv|mnt|media|Volumes)(?:[\\/]|$))/m;
 const credentialPattern = /(?:github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9]+|Bearer\s+[A-Za-z0-9._~+/=-]+|sk-[A-Za-z0-9_-]{16,})/i;
 const maximumPacketBytes = 256 * 1024;
 
@@ -90,6 +91,7 @@ export interface PublicEvidenceIdentity {
 
 export function parseAndVerifyPublicEvidence(raw: string): PublicEvidenceIdentity {
   if (Buffer.byteLength(raw, "utf8") > maximumPacketBytes) fail("PUBLIC_EVIDENCE_PACKET_TOO_LARGE");
+  rejectPrivateRawMaterial(raw);
   let value: unknown;
   try {
     value = JSON.parse(raw);
@@ -97,6 +99,16 @@ export function parseAndVerifyPublicEvidence(raw: string): PublicEvidenceIdentit
     fail("PUBLIC_EVIDENCE_JSON_INVALID");
   }
   return verifyPublicEvidence(value);
+}
+
+function rejectPrivateRawMaterial(raw: string): void {
+  const jsonStringPattern = /"(?:\\["\\/bfnrt]|\\u[0-9a-fA-F]{4}|[^"\\\u0000-\u001f])*"/g;
+  for (const match of raw.matchAll(jsonStringPattern)) {
+    const decoded = JSON.parse(match[0]) as string;
+    if (absolutePathPattern.test(decoded) || credentialPattern.test(decoded)) {
+      fail("PUBLIC_EVIDENCE_FORBIDDEN_PRIVATE_VALUE:$raw");
+    }
+  }
 }
 
 export function verifyPublicEvidence(value: unknown): PublicEvidenceIdentity {

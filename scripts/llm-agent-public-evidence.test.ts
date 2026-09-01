@@ -27,6 +27,32 @@ describe("public clean-room evaluation evidence", () => {
     );
   });
 
+  test("rejects slash-form Windows paths before payload verification", async () => {
+    const packet = JSON.parse(await fixture("valid.json"));
+    packet.payload.trials[0].provider = "C:/Users/private-agent";
+    expect(() => parseAndVerifyPublicEvidence(JSON.stringify(packet))).toThrow(
+      "PUBLIC_EVIDENCE_FORBIDDEN_PRIVATE_VALUE:$raw",
+    );
+  });
+
+  test("rejects private values hidden behind duplicate JSON keys", async () => {
+    const raw = (await fixture("valid.json")).replace(
+      '"provider": "example-provider-a"',
+      '"provider": "C:\\\\Users\\\\private-agent", "provider": "example-provider-a"',
+    );
+    expect(() => parseAndVerifyPublicEvidence(raw)).toThrow("PUBLIC_EVIDENCE_FORBIDDEN_PRIVATE_VALUE:$raw");
+  });
+
+  test("rejects forbidden fields hidden behind duplicate JSON keys", async () => {
+    const raw = (await fixture("valid.json")).replace(
+      '"provider": "example-provider-a"',
+      '"transcript": "private", "transcript": "redacted", "provider": "example-provider-a"',
+    );
+    expect(() => parseAndVerifyPublicEvidence(raw)).toThrow(
+      "PUBLIC_EVIDENCE_FORBIDDEN_PRIVATE_FIELD:$.payload.trials[0].transcript",
+    );
+  });
+
   const rejections = [
     ["missing.json", "PUBLIC_EVIDENCE_REQUIRED_FIELD_MISSING:payload.task.sha256"],
     ["altered.json", "PUBLIC_EVIDENCE_PAYLOAD_DIGEST_MISMATCH"],
