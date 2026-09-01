@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.0disoft.dev/velox/llm-agent-public-evidence-v1.schema.json",
+  "title": "Velox public clean-room LLM agent evidence packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "assetName", "payloadSha256", "payload"],
+  "properties": {
+    "schemaVersion": {
+      "const": "velox.llm-agent-public-evidence/v1"
+    },
+    "assetName": {
+      "type": "string",
+      "pattern": "^velox-llm-agent-evidence-series-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}-[0-9a-f]{64}\\.json$"
+    },
+    "payloadSha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publishedAtUtc", "retention", "series", "release", "task", "sandbox", "trials"],
+      "properties": {
+        "publishedAtUtc": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "retention": {
+          "const": "permanent"
+        },
+        "series": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seriesId", "outcome", "betaTechnicalGate", "humanAdoptionClaim"],
+          "properties": {
+            "seriesId": {
+              "$ref": "#/$defs/seriesId"
+            },
+            "outcome": {
+              "const": "passed"
+            },
+            "betaTechnicalGate": {
+              "const": true
+            },
+            "humanAdoptionClaim": {
+              "const": false
+            }
+          }
+        },
+        "release": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "tag", "url", "sha256"],
+          "properties": {
+            "repository": {
+              "const": "0disoft/velox"
+            },
+            "tag": {
+              "type": "string",
+              "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+-(alpha|beta)\\.[1-9][0-9]*$"
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https://github\\.com/0disoft/velox/releases/tag/v[0-9]+\\.[0-9]+\\.[0-9]+-(alpha|beta)\\.[1-9][0-9]*$"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        "task": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "sourceCommit", "url", "sha256"],
+          "properties": {
+            "schemaVersion": {
+              "const": "velox.llm-agent-task/v1"
+            },
+            "sourceCommit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https://raw\\.githubusercontent\\.com/0disoft/velox/[0-9a-f]{40}/evals/llm-agent/v1/task\\.md$"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        "sandbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "attestationSchemaVersion",
+            "receiptSchemaVersion",
+            "policySchemaVersion",
+            "filesystemBoundary",
+            "processBoundary",
+            "networkCapability"
+          ],
+          "properties": {
+            "attestationSchemaVersion": {
+              "const": "velox.llm-agent-evaluation-attestation/v2"
+            },
+            "receiptSchemaVersion": {
+              "const": "velox.eval-sandbox-receipt/v1"
+            },
+            "policySchemaVersion": {
+              "const": "velox.eval-sandbox-policy/v1"
+            },
+            "filesystemBoundary": {
+              "const": "appcontainer-explicit-acl"
+            },
+            "processBoundary": {
+              "const": "job-object-no-breakaway"
+            },
+            "networkCapability": {
+              "const": "internet-client"
+            }
+          }
+        },
+        "trials": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "trialId",
+              "sequence",
+              "provider",
+              "model",
+              "outcome",
+              "resultSha256",
+              "attestationSha256",
+              "sandboxReceiptSha256"
+            ],
+            "properties": {
+              "trialId": {
+                "$ref": "#/$defs/trialId"
+              },
+              "sequence": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "provider": {
+                "$ref": "#/$defs/identifier"
+              },
+              "model": {
+                "$ref": "#/$defs/identifier"
+              },
+              "outcome": {
+                "const": "passed"
+              },
+              "resultSha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "attestationSha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "sandboxReceiptSha256": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "seriesId": {
+      "type": "string",
+      "pattern": "^series-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$"
+    },
+    "trialId": {
+      "type": "string",
+      "pattern": "^trial-[0-9]{8}T[0-9]{6}Z-[a-z0-9]{8}$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$"
+    }
+  }
+}
