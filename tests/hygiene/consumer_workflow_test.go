@@ -232,6 +232,17 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 			t.Errorf("checkout-free consumer job does not use the CLI result contract %q", required)
 		}
 	}
+	for _, required := range []string{
+		"Join-Path (Join-Path $project 'dist-first') $firstBuild.result.archive",
+		"Join-Path (Join-Path $project 'dist-second') $secondBuild.result.archive",
+	} {
+		if !strings.Contains(consumer, required) {
+			t.Errorf("checkout-free consumer job does not resolve the CLI archive under its output root %q", required)
+		}
+	}
+	if strings.Contains(consumer, "Join-Path $project $firstBuild.result.archive") || strings.Contains(consumer, "Join-Path $project $secondBuild.result.archive") {
+		t.Fatal("checkout-free consumer job resolves the CLI archive against the project root")
+	}
 	if strings.Contains(consumer, "Get-ChildItem -LiteralPath '.ci/first'") || strings.Contains(consumer, "Get-ChildItem -LiteralPath '.ci/second'") {
 		t.Fatal("checkout-free consumer job must not guess build output directories")
 	}

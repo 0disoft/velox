@@ -17,7 +17,19 @@ const (
 )
 
 func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
-	base := t.TempDir()
+	base, err := os.MkdirTemp(".", ".velox-eval-sandbox-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err = filepath.Abs(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(base); err != nil {
+			t.Errorf("remove sandbox test root: %v", err)
+		}
+	})
 	trialRoot := filepath.Join(base, "trial")
 	forbiddenRoot := filepath.Join(base, "forbidden")
 	receiptRoot := filepath.Join(base, "receipts")

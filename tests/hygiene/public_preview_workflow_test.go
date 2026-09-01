@@ -45,6 +45,7 @@ func TestPublicPreviewWorkflowUsesOnlyPublishedAssetsAndVelox(t *testing.T) {
 		"Invoke-VeloxJson -Arguments @('version', '--json')",
 		"Invoke-VeloxJson -Arguments @('build'",
 		"Invoke-VeloxJson -Arguments @('inspect'",
+		"Join-Path (Join-Path $project 'dist-first') $first.result.archive",
 		"Invoke-VeloxJson -Arguments @('run'",
 		"VELOX_BENCH_MODE",
 		"VELOX_BENCH_EXIT_AFTER_READY",
@@ -62,6 +63,9 @@ func TestPublicPreviewWorkflowUsesOnlyPublishedAssetsAndVelox(t *testing.T) {
 		if !strings.Contains(workflow, required) {
 			t.Errorf("public-preview verification lacks %q", required)
 		}
+	}
+	if strings.Contains(workflow, "Join-Path $project $first.result.archive") {
+		t.Fatal("public-preview verification resolves the CLI archive against the project root")
 	}
 
 	usesPattern := regexp.MustCompile(`(?m)^\s*uses:\s+([^\s#]+)`)
