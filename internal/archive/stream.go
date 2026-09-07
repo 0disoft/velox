@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0disoft/velox/internal/artifactlimits"
 	"github.com/0disoft/velox/internal/buildphase"
 )
 
@@ -22,6 +23,9 @@ type Stream struct {
 	names       map[string]struct{}
 	fileCount   int
 	finished    bool
+	budget      artifactlimits.Budget
+	headers     []*zip.FileHeader
+	failure     error
 }
 
 func NewStream(destination string) (*Stream, error) {
@@ -65,6 +69,9 @@ func (stream *Stream) CreateEntry(name string, mode os.FileMode) (io.Writer, err
 	if _, exists := stream.names[key]; exists {
 		return nil, fmt.Errorf("duplicate archive entry %s", name)
 	}
+	if err := stream.budget.Add(name, 0); err != nil {
+		return nil, err
+	}
 	header := &zip.FileHeader{Name: name, Method: compressionMethod(name), Modified: normalizedTime}
 	header.SetMode(mode)
 	entry, err := stream.writer.CreateHeader(header)
@@ -73,7 +80,35 @@ func (stream *Stream) CreateEntry(name string, mode os.FileMode) (io.Writer, err
 	}
 	stream.names[key] = struct{}{}
 	stream.fileCount++
-	return entry, nil
+	stream.headers = append(stream.headers, header)
+	return &boundedEntry{stream: stream, writer: entry, name: name}, nil
+}
+
+type boundedEntry struct {
+	stream  *Stream
+	writer  io.Writer
+	name    string
+	written uint64
+}
+
+func (entry *boundedEntry) Write(value []byte) (int, error) {
+	if entry.stream.finished {
+		return 0, errors.New("archive stream is closed")
+	}
+	if entry.stream.failure != nil {
+		return 0, entry.stream.failure
+	}
+	if err := entry.stream.budget.Grow(entry.name, entry.written, uint64(len(value))); err != nil {
+		entry.stream.failure = err
+		return 0, err
+	}
+	written, err := entry.writer.Write(value)
+	entry.written += uint64(written)
+	if err == nil && written != len(value) {
+		err = io.ErrShortWrite
+	}
+	entry.stream.failure = err
+	return written, err
 }
 
 func (stream *Stream) Close() (Result, error) {
@@ -84,6 +119,10 @@ func (stream *Stream) CloseObserved(observer buildphase.Observer) (Result, error
 	if stream == nil || stream.finished {
 		return Result{}, errors.New("archive stream is closed")
 	}
+	if stream.failure != nil {
+		stream.Abort()
+		return Result{}, stream.failure
+	}
 	if stream.fileCount == 0 {
 		stream.Abort()
 		return Result{}, errors.New("archive requires at least one input")
@@ -92,6 +131,12 @@ func (stream *Stream) CloseObserved(observer buildphase.Observer) (Result, error
 	if err := stream.writer.Close(); err != nil {
 		stream.Abort()
 		return Result{}, fmt.Errorf("finalize archive: %w", err)
+	}
+	for _, header := range stream.headers {
+		if err := artifactlimits.CheckCompression(header.Name, header.UncompressedSize64, header.CompressedSize64); err != nil {
+			stream.Abort()
+			return Result{}, err
+		}
 	}
 	buildphase.Record(observer, "archive.finalize", finalizeStarted)
 	syncStarted := time.Now()

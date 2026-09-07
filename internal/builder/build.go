@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/0disoft/velox/internal/archive"
+	"github.com/0disoft/velox/internal/artifactlimits"
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildphase"
 	"github.com/0disoft/velox/internal/buildplan"
@@ -39,6 +40,9 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 	totalStarted := time.Now()
 	defer buildphase.Record(observer, "build.total", totalStarted)
 	snapshot := plan.Snapshot()
+	if err := validateInputBudget(snapshot); err != nil {
+		return Result{}, err
+	}
 	if err := os.MkdirAll(snapshot.OutputRoot, 0o755); err != nil {
 		return Result{}, fmt.Errorf("create output root: %w", err)
 	}
@@ -166,6 +170,25 @@ func promote(plan buildplan.Snapshot, stageDirectory, stageArchive string) error
 	return outputpair.Promote(plan.AppDirectory, plan.ArchivePath, stageDirectory, stageArchive)
 }
 
+func validateInputBudget(plan buildplan.Snapshot) error {
+	var budget artifactlimits.Budget
+	if err := budget.Add(plan.ApplicationKey+".exe", uint64(plan.HostSize)); err != nil {
+		return err
+	}
+	// Reserve the two metadata entries; streaming accounts for their final bytes.
+	for _, name := range []string{"velox.runtime.json", "build-result.json"} {
+		if err := budget.Add(name, 0); err != nil {
+			return err
+		}
+	}
+	for _, asset := range plan.Assets.Files {
+		if err := budget.Add(asset.RelativePath, uint64(asset.Size)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func copyVerified(source, destination string, mode os.FileMode, expectedSize, expectedModifiedUnixNano int64, expectedSHA256 string, mirrors ...io.Writer) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return "", err
@@ -211,6 +234,9 @@ func writeJSON(path string, value any, mirrors ...io.Writer) (int64, error) {
 		return 0, fmt.Errorf("encode %s: %w", filepath.Base(path), err)
 	}
 	data = append(data, '\n')
+	if len(data) > artifactlimits.MaxMetadataBytes {
+		return 0, fmt.Errorf("metadata file exceeds %d-byte size limit: %s", artifactlimits.MaxMetadataBytes, filepath.Base(path))
+	}
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return 0, fmt.Errorf("write %s: %w", filepath.Base(path), err)
 	}

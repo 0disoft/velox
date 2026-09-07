@@ -12,8 +12,47 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0disoft/velox/internal/artifactlimits"
+	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildplan"
 )
+
+func TestInputBudgetIncludesHostAndMetadataEntries(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		host    int64
+		assets  []assettree.File
+		allowed bool
+	}{
+		{"entry at limit", artifactlimits.MaxEntryBytes, nil, true},
+		{"host too large", artifactlimits.MaxEntryBytes + 1, nil, false},
+		{"asset too large", 1, []assettree.File{{Size: artifactlimits.MaxEntryBytes + 1}}, false},
+		{"total too large", 1, []assettree.File{{Size: artifactlimits.MaxEntryBytes}, {Size: artifactlimits.MaxEntryBytes}}, false},
+		{"last asset", 1, make([]assettree.File, artifactlimits.MaxFiles-3), true},
+		{"metadata crosses file limit", 1, make([]assettree.File, artifactlimits.MaxFiles-2), false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			plan := buildplan.Snapshot{HostSize: test.host}
+			plan.Assets.Files = test.assets
+			if err := validateInputBudget(plan); (err == nil) != test.allowed {
+				t.Fatalf("validateInputBudget() = %v, allowed=%t", err, test.allowed)
+			}
+		})
+	}
+}
+
+func TestWriteJSONRejectsOversizedMetadataBeforeWriting(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "build-result.json")
+	writeFixture(t, path, []byte("previous"))
+	var mirror bytes.Buffer
+	if _, err := writeJSON(path, strings.Repeat("x", artifactlimits.MaxMetadataBytes), &mirror); err == nil {
+		t.Fatal("accepted oversized metadata")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil || string(data) != "previous" || mirror.Len() != 0 {
+		t.Fatalf("metadata modified: %q, mirror=%d, err=%v", data, mirror.Len(), err)
+	}
+}
 
 func TestBuildIsDeterministicAndKeepsHostUnchanged(t *testing.T) {
 	root, manifestPath, hostPath := fixture(t)

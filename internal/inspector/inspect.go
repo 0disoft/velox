@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/0disoft/velox/internal/artifactlimits"
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/runtimeconfig"
@@ -21,11 +22,10 @@ import (
 )
 
 const (
-	maxArchiveFiles       = 100_000
-	maxMetadataBytes      = 1 << 20
-	maxArchiveEntryBytes  = 512 << 20
-	maxArchiveTotalBytes  = 1 << 30
-	maxArchiveExpandRatio = 1_000
+	maxArchiveFiles       = artifactlimits.MaxFiles
+	maxMetadataBytes      = artifactlimits.MaxMetadataBytes
+	maxArchiveEntryBytes  = artifactlimits.MaxEntryBytes
+	maxArchiveExpandRatio = artifactlimits.MaxExpandRatio
 )
 
 type Result struct {
@@ -231,20 +231,13 @@ func inspectZIP(archivePath string) (Result, error) {
 }
 
 func validateArchiveBudget(files []*zip.File) error {
-	var total uint64
+	var budget artifactlimits.Budget
 	for _, file := range files {
-		if file.UncompressedSize64 > maxArchiveEntryBytes {
-			return fmt.Errorf("ZIP entry exceeds uncompressed size limit: %s", file.Name)
+		if err := budget.Add(file.Name, file.UncompressedSize64); err != nil {
+			return err
 		}
-		if total > maxArchiveTotalBytes-file.UncompressedSize64 {
-			return errors.New("artifact ZIP exceeds total uncompressed size limit")
-		}
-		total += file.UncompressedSize64
-		if file.UncompressedSize64 > 0 && file.CompressedSize64 == 0 {
-			return fmt.Errorf("ZIP entry has an invalid compression size: %s", file.Name)
-		}
-		if file.CompressedSize64 > 0 && file.UncompressedSize64/file.CompressedSize64 > maxArchiveExpandRatio {
-			return fmt.Errorf("ZIP entry exceeds compression ratio limit: %s", file.Name)
+		if err := artifactlimits.CheckCompression(file.Name, file.UncompressedSize64, file.CompressedSize64); err != nil {
+			return err
 		}
 	}
 	return nil

@@ -12,7 +12,47 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0disoft/velox/internal/artifactlimits"
 )
+
+func TestStreamRejectsBudgetOverflowAndRemovesPartialOutput(t *testing.T) {
+	for _, kind := range []string{"entry", "total", "files"} {
+		t.Run(kind, func(t *testing.T) {
+			destination := filepath.Join(t.TempDir(), "limited.zip")
+			stream, err := NewStream(destination)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stream.Abort()
+			entry, err := stream.CreateEntry("app/file.txt", 0o644)
+			if err != nil {
+				t.Fatal(err)
+			}
+			switch kind {
+			case "entry":
+				entry.(*boundedEntry).written = artifactlimits.MaxEntryBytes
+			case "total":
+				stream.budget.Bytes = artifactlimits.MaxTotalBytes
+			case "files":
+				stream.budget.Files = artifactlimits.MaxFiles
+				if _, err := stream.CreateEntry("app/extra.txt", 0o644); err == nil {
+					t.Fatal("accepted excessive file count")
+				}
+				return
+			}
+			if n, err := entry.Write([]byte("x")); n != 0 || err == nil {
+				t.Fatalf("Write() = %d, %v", n, err)
+			}
+			if _, err := stream.Close(); err == nil {
+				t.Fatal("published failed stream")
+			}
+			if _, err := os.Stat(destination); !os.IsNotExist(err) {
+				t.Fatalf("partial output remains: %v", err)
+			}
+		})
+	}
+}
 
 func TestStreamMatchesIndependentCompressors(t *testing.T) {
 	var expected bytes.Buffer
