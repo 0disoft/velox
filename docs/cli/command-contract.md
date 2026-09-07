@@ -102,7 +102,9 @@ and digests without executing it.
 
 Inspection recomputes the host and asset-tree SHA-256 values and validates the
 runtime configuration against the build result. ZIP inspection rejects unsafe,
-duplicate, case-colliding, multi-root, unexpected, or over-limit entries.
+duplicate, case-colliding, multi-root, unexpected, or over-limit entries. Every
+ZIP entry must be a regular file; symbolic links and other special-file types
+are rejected even when their content digests match the report.
 
 ### velox version
 

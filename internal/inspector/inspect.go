@@ -133,7 +133,7 @@ func inspectZIP(archivePath string) (Result, error) {
 	root := ""
 	for _, entry := range reader.File {
 		name := entry.Name
-		if entry.FileInfo().IsDir() || safefs.ValidateArchiveEntry(name) != nil {
+		if !entry.Mode().IsRegular() || safefs.ValidateArchiveEntry(name) != nil {
 			return Result{}, fmt.Errorf("unsafe ZIP entry %q", name)
 		}
 		parts := strings.SplitN(name, "/", 2)

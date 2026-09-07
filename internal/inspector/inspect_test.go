@@ -32,11 +32,36 @@ func TestInspectValidatesDirectoryAndZIP(t *testing.T) {
 
 func TestInspectRejectsTamperedHost(t *testing.T) {
 	build := buildFixture(t)
-	if err := os.WriteFile(filepath.Join(build.DirectoryPath, "inspect.exe"), []byte("tampered"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(build.DirectoryPath, build.Report.Host.File), []byte("HOST"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Inspect(build.DirectoryPath); err == nil {
-		t.Fatal("Inspect() accepted a tampered host")
+	tamperedZIP := rewriteZIP(t, build.ArchivePath, func(header *zip.FileHeader, body []byte) []byte {
+		if header.Name == build.Report.App.ID+"/"+build.Report.Host.File {
+			return []byte("HOST")
+		}
+		return body
+	})
+	for _, input := range []string{build.DirectoryPath, tamperedZIP} {
+		if _, err := Inspect(input); err == nil || !strings.Contains(err.Error(), "host artifact does not match build result") {
+			t.Fatalf("Inspect(%s) = %v, want host digest mismatch", input, err)
+		}
+	}
+}
+
+func TestInspectRejectsNonRegularZIPEntries(t *testing.T) {
+	build := buildFixture(t)
+	for _, mode := range []os.FileMode{os.ModeSymlink, os.ModeNamedPipe, os.ModeDevice, os.ModeSocket} {
+		t.Run(mode.String(), func(t *testing.T) {
+			input := rewriteZIP(t, build.ArchivePath, func(header *zip.FileHeader, body []byte) []byte {
+				if strings.HasSuffix(header.Name, "/web/index.html") {
+					header.SetMode(mode | 0o644)
+				}
+				return body
+			})
+			if _, err := Inspect(input); err == nil || !strings.Contains(err.Error(), "unsafe ZIP entry") {
+				t.Fatalf("Inspect() = %v, want non-regular entry rejection", err)
+			}
+		})
 	}
 }
 
@@ -85,6 +110,18 @@ func TestInspectRejectsApplicationRootThatDisagreesWithReport(t *testing.T) {
 
 func rewriteZIPRoot(t *testing.T, sourcePath, root string) string {
 	t.Helper()
+	return rewriteZIP(t, sourcePath, func(header *zip.FileHeader, body []byte) []byte {
+		parts := strings.SplitN(header.Name, "/", 2)
+		if len(parts) != 2 {
+			t.Fatalf("fixture entry lacks root: %s", header.Name)
+		}
+		header.Name = root + "/" + parts[1]
+		return body
+	})
+}
+
+func rewriteZIP(t *testing.T, sourcePath string, edit func(*zip.FileHeader, []byte) []byte) string {
+	t.Helper()
 	source, err := zip.OpenReader(sourcePath)
 	if err != nil {
 		t.Fatal(err)
@@ -97,24 +134,23 @@ func rewriteZIPRoot(t *testing.T, sourcePath, root string) string {
 	}
 	writer := zip.NewWriter(destination)
 	for _, original := range source.File {
-		parts := strings.SplitN(original.Name, "/", 2)
-		if len(parts) != 2 {
-			t.Fatalf("fixture entry lacks root: %s", original.Name)
-		}
 		header := original.FileHeader
-		header.Name = root + "/" + parts[1]
-		entry, err := writer.CreateHeader(&header)
-		if err != nil {
-			t.Fatal(err)
-		}
 		input, err := original.Open()
 		if err != nil {
 			t.Fatal(err)
 		}
-		_, copyErr := io.Copy(entry, input)
+		body, readErr := io.ReadAll(input)
 		closeErr := input.Close()
-		if copyErr != nil || closeErr != nil {
-			t.Fatalf("copy fixture entry: copy=%v close=%v", copyErr, closeErr)
+		if readErr != nil || closeErr != nil {
+			t.Fatalf("read fixture entry: read=%v close=%v", readErr, closeErr)
+		}
+		body = edit(&header, body)
+		entry, err := writer.CreateHeader(&header)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := entry.Write(body); err != nil {
+			t.Fatal(err)
 		}
 	}
 	if err := writer.Close(); err != nil {
