@@ -35,8 +35,16 @@ func NewStream(destination string) (*Stream, error) {
 		return nil, fmt.Errorf("create archive: %w", err)
 	}
 	writer := zip.NewWriter(output)
+	var compressor *flate.Writer
 	writer.RegisterCompressor(zip.Deflate, func(destination io.Writer) (io.WriteCloser, error) {
-		return flate.NewWriter(destination, flate.BestSpeed)
+		if compressor == nil {
+			var err error
+			compressor, err = flate.NewWriter(destination, flate.BestSpeed)
+			return compressor, err
+		}
+		// zip.Writer closes the previous entry before requesting the next one.
+		compressor.Reset(destination)
+		return compressor, nil
 	})
 	return &Stream{
 		destination: destination,

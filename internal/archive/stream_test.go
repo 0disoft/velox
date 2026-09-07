@@ -2,13 +2,99 @@ package archive
 
 import (
 	"archive/zip"
+	"bytes"
+	"compress/flate"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
+
+func TestStreamMatchesIndependentCompressors(t *testing.T) {
+	var expected bytes.Buffer
+	baseline := zip.NewWriter(&expected)
+	baseline.RegisterCompressor(zip.Deflate, func(writer io.Writer) (io.WriteCloser, error) {
+		return flate.NewWriter(writer, flate.BestSpeed)
+	})
+	destination := filepath.Join(t.TempDir(), "multiple.zip")
+	stream, err := NewStream(destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stream.Abort()
+	for _, fixture := range []struct{ name, content string }{
+		{"first.txt", strings.Repeat("first repeated content", 100)},
+		{"empty.txt", ""},
+		{"stored.png", "already compressed fixture"},
+		{"last.txt", strings.Repeat("different repeated content", 100)},
+	} {
+		name := "app/" + fixture.name
+		header := &zip.FileHeader{Name: name, Method: compressionMethod(name), Modified: normalizedTime}
+		header.SetMode(0o644)
+		reference, err := baseline.CreateHeader(header)
+		if err != nil {
+			t.Fatal(err)
+		}
+		entry, err := stream.CreateEntry(name, 0o644)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, output := range []io.Writer{reference, entry} {
+			if _, err := io.WriteString(output, fixture.content); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if err := baseline.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := stream.Close(); err != nil {
+		t.Fatal(err)
+	}
+	actual, err := os.ReadFile(destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(actual, expected.Bytes()) {
+		t.Fatal("stream bytes differ from independently compressed entries")
+	}
+}
+
+func BenchmarkSmallFileCompression(b *testing.B) {
+	const files = 100
+	payload := bytes.Repeat([]byte("0123456789abcdef"), 64)
+	destination := filepath.Join(b.TempDir(), "small-files.zip")
+	b.ReportAllocs()
+	b.SetBytes(int64(files * len(payload)))
+	b.ResetTimer()
+	for iteration := 0; iteration < b.N; iteration++ {
+		stream, err := NewStream(destination)
+		if err != nil {
+			b.Fatal(err)
+		}
+		for index := 0; index < files; index++ {
+			entry, err := stream.CreateEntry(fmt.Sprintf("app/%03d.txt", index), 0o644)
+			if err != nil {
+				stream.Abort()
+				b.Fatal(err)
+			}
+			if _, err := entry.Write(payload); err != nil {
+				stream.Abort()
+				b.Fatal(err)
+			}
+		}
+		if _, err := stream.Close(); err != nil {
+			b.Fatal(err)
+		}
+		if err := os.Remove(destination); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
 
 func TestStreamWritesVerifiedArchive(t *testing.T) {
 	root := t.TempDir()
