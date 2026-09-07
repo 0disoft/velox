@@ -43,6 +43,12 @@ func Recover(finalDirectory, finalArchive string) error {
 		}
 		return nil
 	}
+	if !backupDirectoryExists && backupArchiveExists && finalDirectoryExists && !finalArchiveExists {
+		if err := os.Rename(backupArchive, finalArchive); err != nil {
+			return fmt.Errorf("restore interrupted archive backup: %w", err)
+		}
+		return nil
+	}
 	if backupDirectoryExists && backupArchiveExists {
 		if err := removeFinals(finalDirectory, finalArchive, finalDirectoryExists, finalArchiveExists); err != nil {
 			return err

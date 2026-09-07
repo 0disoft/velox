@@ -205,6 +205,10 @@ Stable diagnostic codes provide detail within these broad process exit codes.
 - build writes only to an owned staging directory until completion.
 - build removes its staging directory after a handled failure.
 - build preserves the previous successful output.
+- Recovery can resume when directory restoration succeeded but archive restoration
+  was interrupted. Windows file locks may block replacement; retained backups
+  remain available for retry after the lock is released. This is process-interruption
+  recovery, not a power-loss durability guarantee.
 - run returns the child host exit reason and cleans benchmark-only resources.
 - Cancellation follows the same cleanup boundary as failure.
 

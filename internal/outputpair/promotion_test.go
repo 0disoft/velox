@@ -12,6 +12,7 @@ func TestRecoverInterruptedPromotionStates(t *testing.T) {
 		paths []string
 	}{
 		{name: "after directory backup", paths: []string{"app.previous/old.txt", "app.zip"}},
+		{name: "after directory restoration", paths: []string{"app/old.txt", "app.zip.previous"}},
 		{name: "after both backups", paths: []string{"app.previous/old.txt", "app.zip.previous"}},
 		{name: "after directory promotion", paths: []string{"app/new.txt", "app.previous/old.txt", "app.zip.previous"}},
 	}
