@@ -80,7 +80,7 @@ func NewDispatcher(identity Identity, permissions []string, window Window) *Disp
 func (d *Dispatcher) Dispatch(raw json.RawMessage) Response {
 	request, rpcErr := decodeRequest(raw)
 	if rpcErr != nil {
-		return failure(0, rpcErr.Code, rpcErr.Message)
+		return failure(request.ID, rpcErr.Code, rpcErr.Message)
 	}
 	if rpcErr := d.begin(request.ID); rpcErr != nil {
 		return failure(request.ID, rpcErr.Code, rpcErr.Message)
@@ -183,16 +183,16 @@ func decodeRequest(raw json.RawMessage) (Request, *RPCError) {
 		return Request{}, rpcError("INVALID_REQUEST", "The native request is malformed.")
 	}
 	if request.Version != Version {
-		return Request{}, rpcError("UNSUPPORTED_VERSION", "The native protocol version is unsupported.")
+		return request, rpcError("UNSUPPORTED_VERSION", "The native protocol version is unsupported.")
 	}
 	if request.ID == 0 {
 		return Request{}, rpcError("INVALID_REQUEST", "The request identifier must be positive.")
 	}
 	if strings.TrimSpace(request.Method) == "" {
-		return Request{}, rpcError("INVALID_REQUEST", "The native method is required.")
+		return request, rpcError("INVALID_REQUEST", "The native method is required.")
 	}
 	if len(request.Params) == 0 || request.Params[0] != '{' {
-		return Request{}, rpcError("INVALID_PARAMS", "Native method parameters must be an object.")
+		return request, rpcError("INVALID_PARAMS", "Native method parameters must be an object.")
 	}
 	return request, nil
 }

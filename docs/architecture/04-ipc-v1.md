@@ -48,6 +48,12 @@ unsupported versions fail before method dispatch.
 - Duplicate in-flight request identifiers are rejected.
 - New requests are rejected after shutdown begins.
 
+The transport checks the UTF-8 size of the complete serialized message before
+posting it and rejects oversized calls with `PAYLOAD_TOO_LARGE` without retaining
+a pending request. Native size checks remain authoritative. Invalid parameters
+and unsupported versions preserve an unambiguously decoded request identifier;
+malformed or ambiguous envelopes may use identifier zero.
+
 The JavaScript bridge and native dispatcher both enforce the concurrent-request
 limit. Native enforcement remains authoritative when application code calls the
 internal transport binding directly.

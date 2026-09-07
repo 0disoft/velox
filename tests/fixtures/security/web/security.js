@@ -29,7 +29,30 @@ async function verifyIPC() {
     }
   }
 
+  for (const params of [[], null]) {
+    await expectIPCError("INVALID_PARAMS", () => window.velox.invoke("app.getInfo", params));
+  }
+  // More than the slot limit must fail without exhausting the bridge.
+  for (let index = 0; index < 65; index += 1) {
+    await expectIPCError("PAYLOAD_TOO_LARGE", () =>
+      window.velox.invoke("app.getInfo", { value: "x".repeat(65536) }));
+  }
+  await expectIPCError("PAYLOAD_TOO_LARGE", () =>
+    window.velox.invoke("app.getInfo", { value: "\u00e9".repeat(32768) }));
+  if ((await window.velox.invoke("app.getInfo")).id !== info.id) {
+    throw new Error("normal invocation failed after rejected requests");
+  }
   await window.__veloxReady("ipc-ok");
+}
+
+async function expectIPCError(code, operation) {
+  try {
+    await operation();
+  } catch (error) {
+    if (error.code === code) return;
+    throw error;
+  }
+  throw new Error(`Expected ${code}`);
 }
 
 async function exercisePolicies() {

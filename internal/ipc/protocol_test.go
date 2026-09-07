@@ -99,6 +99,22 @@ func TestDispatcherBoundsPayloadAndNesting(t *testing.T) {
 	}
 }
 
+func TestDispatcherPreservesIdentifiableInvalidRequestIDs(t *testing.T) {
+	dispatcher := NewDispatcher(Identity{}, []string{PermissionAppInfo}, &fakeWindow{})
+	for _, raw := range []string{
+		`{"v":1,"id":42,"method":"app.getInfo","params":[]}`,
+		`{"v":1,"id":42,"method":"app.getInfo","params":null}`,
+		`{"v":1,"id":42,"method":"app.getInfo"}`,
+		`{"v":2,"id":42,"method":"app.getInfo","params":{}}`,
+		`{"v":1,"id":42,"method":"","params":{}}`,
+	} {
+		response := dispatcher.Dispatch(json.RawMessage(raw))
+		if response.OK || response.ID != 42 || response.Error == nil {
+			t.Fatalf("Dispatch(%s) = %+v, want correlated failure", raw, response)
+		}
+	}
+}
+
 func TestDispatcherBoundsInflightAndDuplicateIDs(t *testing.T) {
 	release := make(chan struct{})
 	window := &fakeWindow{blockMinimize: release}

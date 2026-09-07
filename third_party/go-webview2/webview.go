@@ -60,17 +60,18 @@ func (w *webview) BrowserProcessID() (uint32, error) {
 }
 
 type webview struct {
-	hwnd          uintptr
-	mainthread    uintptr
-	browser       browser
-	autofocus     bool
-	maxsz         w32.Point
-	minsz         w32.Point
-	m             sync.Mutex
-	bindings      map[string]interface{}
-	dispatchq     []func()
-	closing       bool
-	shutdownPhase func(name string)
+	hwnd               uintptr
+	mainthread         uintptr
+	browser            browser
+	autofocus          bool
+	maxsz              w32.Point
+	minsz              w32.Point
+	m                  sync.Mutex
+	bindings           map[string]interface{}
+	dispatchq          []func()
+	closing            bool
+	shutdownPhase      func(name string)
+	maxWebMessageBytes int
 }
 
 type WindowOptions struct {
@@ -165,6 +166,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 	w := &webview{}
 	w.bindings = map[string]interface{}{}
 	w.autofocus = options.AutoFocus
+	w.maxWebMessageBytes = options.MaxWebMessageBytes
 
 	chromium := edge.NewChromium()
 	chromium.MessageCallback = w.msgcb
@@ -614,22 +616,33 @@ func (w *webview) Bind(name string, f interface{}) error {
 	w.bindings[name] = f
 	w.m.Unlock()
 
-	w.Init("(function() { var name = " + jsString(name) + ";" + `
+	w.Init("(function() { var name = " + jsString(name) + "; var maxMessageBytes = " + strconv.Itoa(w.maxWebMessageBytes) + ";" + `
 		if (window.top !== window) return;
 		var RPC = window._rpc = (window._rpc || {nextSeq: 1});
 		window[name] = function() {
 		  var seq = RPC.nextSeq++;
+		  var message = JSON.stringify({
+			id: seq,
+			method: name,
+			params: Array.prototype.slice.call(arguments),
+		  });
+		  if (maxMessageBytes > 0 && new TextEncoder().encode(message).byteLength > maxMessageBytes) {
+			var error = new Error("The native request payload is outside the allowed size.");
+			error.code = "PAYLOAD_TOO_LARGE";
+			return Promise.reject(error);
+		  }
 		  var promise = new Promise(function(resolve, reject) {
 			RPC[seq] = {
 			  resolve: resolve,
 			  reject: reject,
 			};
 		  });
-		  window.external.invoke(JSON.stringify({
-			id: seq,
-			method: name,
-			params: Array.prototype.slice.call(arguments),
-		  }));
+		  try {
+			window.external.invoke(message);
+		  } catch (error) {
+			RPC[seq].reject(error);
+			delete RPC[seq];
+		  }
 		  return promise;
 		}
 	})()`)
