@@ -1,6 +1,6 @@
 # Pure-Go WebView2 COM Lifetime Review
 
-- Status: Callback retention and partial-initialization regression checks complete; candidate live validation pending
+- Status: Callback retention, partial-initialization regressions, and local Windows startup validated; hosted release evidence pending
 - Reviewed: 2026-09-08
 - Scope: `third_party/go-webview2`, `internal/webview2`, and host shutdown paths
 - Risk links: SEC-004 and R-003
@@ -131,8 +131,23 @@ outside the proof supplied by these tests.
 Thread-affinity, the complete COM interface surface, and the supported WebView2
 runtime matrix are not certified by this change. Record a process leak,
 callback after final release, or unstable shutdown as a reopened SEC-004/R-003
-finding. The candidate still needs a live startup check and hosted evidence
-before a release or beta claim.
+finding. The candidate still needs hosted release evidence before publication;
+beta additionally requires the qualifying clean-room series.
+Separately, live Windows stress remains required before beta on the supported
+hosted Windows runner; the local smoke is not that stress gate.
+
+## Candidate Local Validation: 2026-09-08
+
+Callback implementation commit `5926fba` passed `velox_design_com_test` and a
+fresh `velox_build` followed by `velox_startup_smoke` on Windows amd64. The
+22.40-second smoke completed a fresh-profile launch, immediate same-profile
+relaunch, and security-policy launch. All three exited the host and browser
+processes and released their profiles. This validates the changed callback
+implementation locally, not a public download or a supported-runtime matrix.
+
+`0.5.10-alpha.40` is the release candidate for this implementation. Its version
+metadata is synchronized separately; public bytes and hosted evidence must
+bind the final candidate commit, not this local build's version string.
 
 ## Local Validation: 2026-09-08
 
