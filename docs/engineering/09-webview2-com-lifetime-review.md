@@ -1,6 +1,6 @@
 # Pure-Go WebView2 COM Lifetime Review
 
-- Status: Source review complete; live Windows stress remains required before beta
+- Status: Source review and bounded local Windows lifecycle validation complete; callback pinning risk remains open
 - Reviewed: 2026-09-01
 - Scope: `third_party/go-webview2`, `internal/webview2`, and host shutdown paths
 - Risk links: SEC-004 and R-003
@@ -12,9 +12,9 @@ host. The review found three concrete lifetime defects and fixes them without
 adding native capability or changing the public IPC contract.
 
 The review does not claim general memory safety. Native callbacks still retain
-Go object addresses without an explicit `runtime.Pinner` contract, and live
-repeated startup and shutdown under the supported WebView2 runtime remains a
-beta gate.
+Go object addresses without an explicit `runtime.Pinner` contract. Bounded live
+startup and shutdown validation is recorded below; it does not cover all
+supported runtimes or resolve retained callback ownership.
 
 ## Ownership and Release Map
 
@@ -83,8 +83,30 @@ for tokens whose registration may have failed during partial initialization.
 The source review found no observed failure from that behavior, but it remains a
 candidate for registration-state tracking if live fault injection exposes one.
 
-This change was reviewed without a local Windows desktop or installed WebView2
-runtime. Before beta promotion, run the fork unit tests, root lifecycle tests,
-and repeated startup and shutdown stress on the supported Windows runner. Record
-any process leak, callback after release, thread-affinity violation, or unstable
-shutdown phase as a reopened SEC-004/R-003 finding.
+The original source review did not have a local Windows desktop or installed
+WebView2 runtime. The subsequent local validation below covers repeated normal
+startup and shutdown. Record any process leak, callback after release,
+thread-affinity violation, or unstable shutdown phase as a reopened SEC-004/R-003
+finding. Registration-failure injection and an explicit retained-callback memory
+ownership contract remain separate work before claiming stronger memory safety.
+
+## Local Validation: 2026-09-08
+
+Source revision `02003a0` (`0.5.10-alpha.39`) was checked on Windows amd64 with
+installed WebView2 `152.0.4191.66`:
+
+- The fork's complete unit suite passed through `velox_design_com_test` with
+  dependency downloads disabled. The `pkg/edge` package itself has no unit tests;
+  this pass does not validate every native callback graph.
+- The root Go suite and vet passed, including runtime shutdown ordering and the
+  distinction between accepted and newly dispatched IPC requests during close.
+- A freshly built host passed `velox_design_lifecycle_test`: ten fresh-profile
+  launches and ten immediate same-profile relaunches in 143.85 seconds. Every
+  pair reached ready, exited both host and browser processes, and released the
+  profile within the harness bounds.
+
+The raw `velox.startup-lifecycle/v3` record is retained locally at
+`.cache/design-lifecycle/evidence.json` with outcome `success`, ten successful
+samples, and evidence level `controlled-local-observation`. It has no hosted
+runner or public-release identity and is not a qualifying LLM trial, a supported
+runtime matrix, registration-failure injection, or a general memory-safety proof.
