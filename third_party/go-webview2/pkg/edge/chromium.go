@@ -45,6 +45,7 @@ type Chromium struct {
 	downloadToken            _EventRegistrationToken
 	downloadRegistered       bool
 	initializationError      error
+	destroyed                bool
 
 	environment *ICoreWebView2Environment
 
@@ -111,6 +112,9 @@ func NewChromium() *Chromium {
 }
 
 func (e *Chromium) Embed(hwnd uintptr) bool {
+	if e.destroyed {
+		return false
+	}
 	e.hwnd = hwnd
 
 	dataPath := e.DataPath
@@ -157,11 +161,15 @@ func (e *Chromium) Embed(hwnd uintptr) bool {
 		_, _, _ = w32.User32TranslateMessage.Call(uintptr(unsafe.Pointer(&msg)))
 		_, _, _ = w32.User32DispatchMessageW.Call(uintptr(unsafe.Pointer(&msg)))
 	}
-	e.Init("window.external={invoke:s=>window.chrome.webview.postMessage(s)}")
-	if e.initializationError != nil {
+	return e.finishInitialization()
+}
+
+func (e *Chromium) finishInitialization() bool {
+	if e.destroyed || e.initializationError != nil || e.webview == nil || atomic.LoadUintptr(&e.inited) == 0 {
 		e.Destroy()
 		return false
 	}
+	e.Init("window.external={invoke:s=>window.chrome.webview.postMessage(s)}")
 	return true
 }
 
@@ -186,6 +194,10 @@ func (e *Chromium) SetVirtualHostNameToFolderMapping(hostName, folderPath string
 }
 
 func (e *Chromium) Destroy() {
+	if e.destroyed {
+		return
+	}
+	e.destroyed = true
 	e.markShutdown("chromium-destroy-entered")
 	e.removeEventHandlers()
 	e.markShutdown("event-handlers-removed")
@@ -272,7 +284,10 @@ func (e *Chromium) Release() uintptr {
 }
 
 func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environment) uintptr {
-	if int64(res) < 0 {
+	if e.destroyed {
+		return 0
+	}
+	if hresult(res) != nil || env == nil {
 		e.initializationError = fmt.Errorf("creating environment failed with %08x", res)
 		atomic.StoreUintptr(&e.inited, 1)
 		return 0
@@ -296,7 +311,13 @@ func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environme
 }
 
 func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller *ICoreWebView2Controller) uintptr {
-	if int64(res) < 0 {
+	if e.destroyed {
+		if hresult(res) == nil && controller != nil {
+			_ = controller.Close()
+		}
+		return 0
+	}
+	if hresult(res) != nil || controller == nil {
 		e.initializationError = fmt.Errorf("creating controller failed with %08x", res)
 		atomic.StoreUintptr(&e.inited, 1)
 		return 0
