@@ -1,7 +1,7 @@
 # Pure-Go WebView2 COM Lifetime Review
 
-- Status: Source review and bounded local Windows lifecycle validation complete; callback pinning risk remains open
-- Reviewed: 2026-09-01
+- Status: Callback retention and partial-initialization regression checks complete; candidate live validation pending
+- Reviewed: 2026-09-08
 - Scope: `third_party/go-webview2`, `internal/webview2`, and host shutdown paths
 - Risk links: SEC-004 and R-003
 
@@ -11,10 +11,10 @@ The bounded pure-Go adapter remains viable for the current Windows-only static
 host. The review found three concrete lifetime defects and fixes them without
 adding native capability or changing the public IPC contract.
 
-The review does not claim general memory safety. Native callbacks still retain
-Go object addresses without an explicit `runtime.Pinner` contract. Bounded live
-startup and shutdown validation is recorded below; it does not cover all
-supported runtimes or resolve retained callback ownership.
+The review does not claim general memory safety. Retained callbacks now have
+an explicit pinning and reference-counted reachability contract. The historical
+live validation below predates this change and does not validate the new
+candidate or all supported runtimes.
 
 ## Ownership and Release Map
 
@@ -27,7 +27,7 @@ supported runtimes or resolve retained callback ownership.
 | Core WebView2 interface | `edge.Chromium` | `GetCoreWebView2` returns the retained interface | released and cleared before controller and environment release |
 | Settings interface | `NewWithOptions` configuration step | `GetSettings` returns a COM interface reference | `configureSettings` now defers exactly one `Release` on success and every failure path; the wrapper now supplies balanced `AddRef` and `Release` calls with the interface pointer |
 | Queried versioned interfaces | individual method scope | `GetICoreWebView2_3` and `GetICoreWebView2_4` | released with scoped `defer` or explicit release before return |
-| Native event callbacks | `edge.Chromium` fields | Go callback objects are registered with WebView2 and tokens are retained | registered handlers are removed before WebView2 release; Go fields remain reachable for the Chromium lifetime |
+| Native callbacks | `edge.Chromium` and the callback lifetime registry | all eleven callback objects, their vtables, and the owner are pinned before the loader receives a pointer; native `AddRef` retains the shared lifetime | `Destroy` drops the owner reference after native teardown; only the final native `Release` removes the Go root and unpins the objects |
 | Web resource request | `WebResourceRequested` callback scope | WebView2 returns the request interface | released with `defer` after callback handling |
 | Web resource response and backing stream | `CreateWebResourceResponse` call scope | response and optional `SHCreateMemStream` result | response is released after `PutResponse`; stream is released through `releaseIUnknown` after response creation |
 | Bound Go callbacks and queued responses | `webview.bindings` and `dispatchq` | `Bind` and synchronous WebMessage dispatch | dispatcher closes before native destroy; queued JavaScript responses re-check `closing` and are discarded after close begins |
@@ -69,26 +69,70 @@ turns to drain before destruction. Its existing tests cover repeated close and
 destroy ordering. The fork's existing callback test covers a response queued
 before close and confirms that it is not evaluated after close begins.
 
+## Retained Callback Contract
+
+`callback_lifetime.go` keeps a Go-visible root independently of the native
+pointer. `Embed` pins the owner, all eleven callback allocations, and each
+native-readable vtable before publishing a handler address. Callback fields
+containing Go interfaces and policy state are interpreted only by Go thunks;
+WebView2 reads the vtable and calls its function addresses. Future fields that
+native code traverses must be added to the pin inventory.
+
+Every handler forwards native `AddRef` and `Release` into the same synchronized
+allocation lifetime. One owner reference remains until teardown ends. Closing
+the window is not permission to unpin a callback still held by native code.
+The final release removes the registry entry and calls `Unpin`. A newly created
+but never embedded browser has no registry entry or pins to leak. The local
+fork now requires Go 1.21 for `runtime.Pinner`; Velox already requires Go 1.26.
+
+Each callback's `QueryInterface` returns its own pointer only for `IUnknown`
+or its declared handler IID, and acquires a reference before returning success.
+Unsupported interfaces (including agility) fail with a cleared output pointer.
+The native-entry tests check identity, reference acquisition, unsupported IIDs,
+and missing output pointers for all eleven callbacks. IID values were
+cross-checked against the [published WebView2 binding declarations](https://github.com/zzl/go-webview2/tree/main/wv2).
+
+The design follows the [Go pinning contract](https://pkg.go.dev/runtime#Pinner)
+and [COM reference-counting contract](https://learn.microsoft.com/en-us/windows/win32/com/implementing-reference-counting).
+It deliberately shares lifetime across handlers, which can retain unused
+handlers longer but cannot free a still-referenced handler early.
+
+## Failure-Path Controls
+
+- Failed HRESULTs use the signed 32-bit HRESULT interpretation, including on
+  Windows x64. A successful status with an empty environment/controller is
+  rejected.
+- Initialization checks errors, completion, and the WebView pointer before
+  injecting the bridge. A stopped message loop cannot become a false success.
+- `Destroy` is idempotent and marks the browser closed before native teardown.
+  Late environment callbacks cannot restart initialization; a late borrowed
+  controller is closed without retaining it.
+- All nine event registrations check their result and remember success
+  separately from the token value. Failure can write an out parameter, and zero
+  can be a valid token. Neither case is used as the registration-state signal.
+- Accelerator registration passes the token's address, not a pointer to the
+  local pointer variable, and checks HRESULT rather than Win32 last-error.
+
+The fork suite injects each of the nine registration failures through native
+callback-backed COM vtables, checks that only successful registrations are
+removed, and checks no bridge injection on failure. Separate tests call all
+eleven native AddRef/Release entry points, retain them across `Destroy` and a
+forced GC, and require the final reference to remove the root. These are
+controlled ABI fixtures, not fault injection into a real WebView2 process.
+
 ## Residual Risk and Unverified Paths
 
-The callback objects passed to native code remain Go heap objects whose
-addresses are converted through `unsafe.Pointer`. The current Go collector does
-not move them, but the binding does not explicitly pin them. A future compacting
-collector or changed cgo/syscall pointer rule requires either `runtime.Pinner`
-coverage for every retained callback graph or replacement bindings with an
-explicit native allocation strategy.
+An unbalanced native reference can retain the registry entry indefinitely.
+The binding must not unpin on a timeout to hide that leak. Failed handler
+removal therefore still relies on controller teardown and native Release to
+finish ownership. A native component violating COM reference-count rules is
+outside the proof supplied by these tests.
 
-Event-registration teardown still relies on WebView2 tolerating removal calls
-for tokens whose registration may have failed during partial initialization.
-The source review found no observed failure from that behavior, but it remains a
-candidate for registration-state tracking if live fault injection exposes one.
-
-The original source review did not have a local Windows desktop or installed
-WebView2 runtime. The subsequent local validation below covers repeated normal
-startup and shutdown. Record any process leak, callback after release,
-thread-affinity violation, or unstable shutdown phase as a reopened SEC-004/R-003
-finding. Registration-failure injection and an explicit retained-callback memory
-ownership contract remain separate work before claiming stronger memory safety.
+Thread-affinity, the complete COM interface surface, and the supported WebView2
+runtime matrix are not certified by this change. Record a process leak,
+callback after final release, or unstable shutdown as a reopened SEC-004/R-003
+finding. The candidate still needs a live startup check and hosted evidence
+before a release or beta claim.
 
 ## Local Validation: 2026-09-08
 
@@ -111,7 +155,6 @@ samples, and evidence level `controlled-local-observation`. It has no hosted
 runner or public-release identity and is not a qualifying LLM trial, a supported
 runtime matrix, registration-failure injection, or a general memory-safety proof.
 
-The local observation does not close the release-runner gate: live Windows stress remains required before beta
-on the supported hosted Windows runner. Retain the raw lifecycle results for
-the candidate revision and review the callback-ownership and failure-path risks
-separately before a channel decision.
+This historical observation does not close the candidate's release-runner
+gate. Retain live results for the new candidate revision before a channel
+decision; do not relabel the alpha.39 record as evidence for changed code.

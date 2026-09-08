@@ -57,8 +57,8 @@ type navigationStartingEventHandler struct {
 	frame bool
 }
 
-func navigationStartingQueryInterface(this *navigationStartingEventHandler, _, _ uintptr) uintptr {
-	return this.owner.QueryInterface(0, 0)
+func navigationStartingQueryInterface(this *navigationStartingEventHandler, refiid *GUID, object *unsafe.Pointer) uintptr {
+	return queryCallbackInterface(this.owner, unsafe.Pointer(this), refiid, object, navigationStartingIID)
 }
 
 func navigationStartingAddRef(this *navigationStartingEventHandler) uintptr {
@@ -124,8 +124,8 @@ type newWindowRequestedEventHandler struct {
 	owner *Chromium
 }
 
-func newWindowRequestedQueryInterface(this *newWindowRequestedEventHandler, _, _ uintptr) uintptr {
-	return this.owner.QueryInterface(0, 0)
+func newWindowRequestedQueryInterface(this *newWindowRequestedEventHandler, refiid *GUID, object *unsafe.Pointer) uintptr {
+	return queryCallbackInterface(this.owner, unsafe.Pointer(this), refiid, object, newWindowRequestedIID)
 }
 
 func newWindowRequestedAddRef(this *newWindowRequestedEventHandler) uintptr {
@@ -200,8 +200,8 @@ type downloadStartingEventHandler struct {
 	owner *Chromium
 }
 
-func downloadStartingQueryInterface(this *downloadStartingEventHandler, _, _ uintptr) uintptr {
-	return this.owner.QueryInterface(0, 0)
+func downloadStartingQueryInterface(this *downloadStartingEventHandler, refiid *GUID, object *unsafe.Pointer) uintptr {
+	return queryCallbackInterface(this.owner, unsafe.Pointer(this), refiid, object, downloadStartingIID)
 }
 
 func downloadStartingAddRef(this *downloadStartingEventHandler) uintptr {

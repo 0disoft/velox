@@ -1,5 +1,7 @@
 package edge
 
+import "unsafe"
+
 type _ICoreWebView2WebResourceRequestedEventHandlerVtbl struct {
 	_IUnknownVtbl
 	Invoke ComProc
@@ -10,8 +12,8 @@ type iCoreWebView2WebResourceRequestedEventHandler struct {
 	impl _ICoreWebView2WebResourceRequestedEventHandlerImpl
 }
 
-func _ICoreWebView2WebResourceRequestedEventHandlerIUnknownQueryInterface(this *iCoreWebView2WebResourceRequestedEventHandler, refiid, object uintptr) uintptr {
-	return this.impl.QueryInterface(refiid, object)
+func _ICoreWebView2WebResourceRequestedEventHandlerIUnknownQueryInterface(this *iCoreWebView2WebResourceRequestedEventHandler, refiid *GUID, object *unsafe.Pointer) uintptr {
+	return queryCallbackInterface(this.impl, unsafe.Pointer(this), refiid, object, webResourceRequestedIID)
 }
 
 func _ICoreWebView2WebResourceRequestedEventHandlerIUnknownAddRef(this *iCoreWebView2WebResourceRequestedEventHandler) uintptr {

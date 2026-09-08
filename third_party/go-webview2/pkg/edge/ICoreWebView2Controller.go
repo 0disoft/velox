@@ -83,16 +83,12 @@ func (i *ICoreWebView2Controller) PutBounds(bounds w32.Rect) error {
 }
 
 func (i *ICoreWebView2Controller) AddAcceleratorKeyPressed(eventHandler *ICoreWebView2AcceleratorKeyPressedEventHandler, token *_EventRegistrationToken) error {
-	var err error
-	_, _, err = i.vtbl.AddAcceleratorKeyPressed.Call(
+	result, _, _ := i.vtbl.AddAcceleratorKeyPressed.Call(
 		uintptr(unsafe.Pointer(i)),
 		uintptr(unsafe.Pointer(eventHandler)),
-		uintptr(unsafe.Pointer(&token)),
+		uintptr(unsafe.Pointer(token)),
 	)
-	if err != windows.ERROR_SUCCESS {
-		return err
-	}
-	return nil
+	return hresult(result)
 }
 
 func (i *ICoreWebView2Controller) PutIsVisible(isVisible bool) error {

@@ -34,18 +34,26 @@ type Chromium struct {
 	newWindowRequested    *newWindowRequestedEventHandler
 	downloadStarting      *downloadStartingEventHandler
 
-	webMessageToken          _EventRegistrationToken
-	permissionToken          _EventRegistrationToken
-	webResourceToken         _EventRegistrationToken
-	acceleratorToken         _EventRegistrationToken
-	navigationCompletedToken _EventRegistrationToken
-	navigationStartingToken  _EventRegistrationToken
-	frameNavigationToken     _EventRegistrationToken
-	newWindowToken           _EventRegistrationToken
-	downloadToken            _EventRegistrationToken
-	downloadRegistered       bool
-	initializationError      error
-	destroyed                bool
+	webMessageToken               _EventRegistrationToken
+	permissionToken               _EventRegistrationToken
+	webResourceToken              _EventRegistrationToken
+	acceleratorToken              _EventRegistrationToken
+	navigationCompletedToken      _EventRegistrationToken
+	navigationStartingToken       _EventRegistrationToken
+	frameNavigationToken          _EventRegistrationToken
+	newWindowToken                _EventRegistrationToken
+	downloadToken                 _EventRegistrationToken
+	webMessageRegistered          bool
+	permissionRegistered          bool
+	webResourceRegistered         bool
+	acceleratorRegistered         bool
+	navigationCompletedRegistered bool
+	navigationStartingRegistered  bool
+	frameNavigationRegistered     bool
+	newWindowRegistered           bool
+	downloadRegistered            bool
+	initializationError           error
+	destroyed                     bool
 
 	environment *ICoreWebView2Environment
 
@@ -84,17 +92,7 @@ type WebResourceRequestHandler func(uri string) (WebResourceResponse, bool)
 
 func NewChromium() *Chromium {
 	e := &Chromium{}
-	/*
-	 All these handlers are passed to native code through syscalls with 'uintptr(unsafe.Pointer(handler))' and we know
-	 that a pointer to those will be kept in the native code. Furthermore these handlers als contain pointer to other Go
-	 structs like the vtable.
-	 This violates the unsafe.Pointer rule '(4) Conversion of a Pointer to a uintptr when calling syscall.Syscall.' because
-	 theres no guarantee that Go doesn't move these objects.
-	 AFAIK currently the Go runtime doesn't move HEAP objects, so we should be safe with these handlers. But they don't
-	 guarantee it, because in the future Go might use a compacting GC.
-	 There's a proposal to add a runtime.Pin function, to prevent moving pinned objects, which would allow to easily fix
-	 this issue by just pinning the handlers. The https://go-review.googlesource.com/c/go/+/367296/ should land in Go 1.19.
-	*/
+	// Embed pins the native-visible callback graph before publishing any pointer.
 	e.envCompleted = newICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler(e)
 	e.controllerCompleted = newICoreWebView2CreateCoreWebView2ControllerCompletedHandler(e)
 	e.webMessageReceived = newICoreWebView2WebMessageReceivedEventHandler(e)
@@ -136,12 +134,17 @@ func (e *Chromium) Embed(hwnd uintptr) bool {
 	if e.StartupPhase != nil {
 		e.StartupPhase("environment-create-started")
 	}
+	if !e.retainCallbackOwner() {
+		return false
+	}
 	res, err := createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, windows.StringToUTF16Ptr(dataPath), 0, e.envCompleted)
 	if err != nil {
 		log.Printf("Error calling Webview2Loader: %v", err)
+		e.Destroy()
 		return false
 	} else if res != 0 {
 		log.Printf("Result: %08x", res)
+		e.Destroy()
 		return false
 	}
 	var msg w32.Msg
@@ -198,6 +201,7 @@ func (e *Chromium) Destroy() {
 		return
 	}
 	e.destroyed = true
+	defer e.releaseCallbackOwner()
 	e.markShutdown("chromium-destroy-entered")
 	e.removeEventHandlers()
 	e.markShutdown("event-handlers-removed")
@@ -272,15 +276,9 @@ func (e *Chromium) Hide() error {
 }
 
 func (e *Chromium) QueryInterface(_, _ uintptr) uintptr {
-	return 0
-}
-
-func (e *Chromium) AddRef() uintptr {
-	return 1
-}
-
-func (e *Chromium) Release() uintptr {
-	return 1
+	// Chromium is the Go owner, not a native COM interface. Each callback
+	// supplies its own identity and performs reference acquisition.
+	return 0x80004002
 }
 
 func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environment) uintptr {
@@ -296,6 +294,9 @@ func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environme
 	e.environment = env
 	if e.StartupPhase != nil {
 		e.StartupPhase("environment-created")
+	}
+	if e.destroyed {
+		return 0
 	}
 
 	result, _, _ := env.vtbl.CreateCoreWebView2Controller.Call(
@@ -347,6 +348,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		atomic.StoreUintptr(&e.inited, 1)
 		return 0
 	}
+	e.webMessageRegistered = true
 	result, _, _ = e.webview.vtbl.AddPermissionRequested.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.permissionRequested)),
@@ -357,21 +359,41 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		atomic.StoreUintptr(&e.inited, 1)
 		return 0
 	}
-	_, _, _ = e.webview.vtbl.AddWebResourceRequested.Call(
+	e.permissionRegistered = true
+	result, _, _ = e.webview.vtbl.AddWebResourceRequested.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.webResourceRequested)),
 		uintptr(unsafe.Pointer(&e.webResourceToken)),
 	)
-	_, _, _ = e.webview.vtbl.AddNavigationCompleted.Call(
+	if err := hresult(result); err != nil {
+		e.initializationError = fmt.Errorf("register WebResource handler: %w", err)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
+	}
+	e.webResourceRegistered = true
+	result, _, _ = e.webview.vtbl.AddNavigationCompleted.Call(
 		uintptr(unsafe.Pointer(e.webview)),
 		uintptr(unsafe.Pointer(e.navigationCompleted)),
 		uintptr(unsafe.Pointer(&e.navigationCompletedToken)),
 	)
-
-	_ = e.controller.AddAcceleratorKeyPressed(e.acceleratorKeyPressed, &e.acceleratorToken)
+	if err := hresult(result); err != nil {
+		e.initializationError = fmt.Errorf("register navigation completion: %w", err)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
+	}
+	e.navigationCompletedRegistered = true
+	if err := e.controller.AddAcceleratorKeyPressed(e.acceleratorKeyPressed, &e.acceleratorToken); err != nil {
+		e.initializationError = fmt.Errorf("register accelerator handler: %w", err)
+		atomic.StoreUintptr(&e.inited, 1)
+		return 0
+	}
+	e.acceleratorRegistered = true
 	e.registerSecurityPolicyHandlers()
 	if e.StartupPhase != nil {
 		e.StartupPhase("controller-created")
+	}
+	if e.destroyed {
+		return 0
 	}
 
 	atomic.StoreUintptr(&e.inited, 1)
@@ -553,6 +575,7 @@ func (e *Chromium) registerSecurityPolicyHandlers() {
 			e.initializationError = fmt.Errorf("register navigation policy: %w", err)
 			return
 		}
+		e.navigationStartingRegistered = true
 	}
 	if e.DenyFrames {
 		result, _, _ := e.webview.vtbl.AddFrameNavigationStarting.Call(
@@ -564,6 +587,7 @@ func (e *Chromium) registerSecurityPolicyHandlers() {
 			e.initializationError = fmt.Errorf("register frame policy: %w", err)
 			return
 		}
+		e.frameNavigationRegistered = true
 	}
 	if e.DenyNewWindows {
 		result, _, _ := e.webview.vtbl.AddNewWindowRequested.Call(
@@ -575,6 +599,7 @@ func (e *Chromium) registerSecurityPolicyHandlers() {
 			e.initializationError = fmt.Errorf("register popup policy: %w", err)
 			return
 		}
+		e.newWindowRegistered = true
 	}
 	if e.DenyDownloads {
 		webview4 := e.webview.GetICoreWebView2_4()
@@ -595,17 +620,20 @@ func (e *Chromium) removeEventHandlers() {
 	if e.webview == nil {
 		return
 	}
-	if e.NavigationAllowed != nil {
+	if e.navigationStartingRegistered {
 		_, _, _ = e.webview.vtbl.RemoveNavigationStarting.Call(
 			uintptr(unsafe.Pointer(e.webview)), uintptr(e.navigationStartingToken.Value))
+		e.navigationStartingRegistered = false
 	}
-	if e.DenyFrames {
+	if e.frameNavigationRegistered {
 		_, _, _ = e.webview.vtbl.RemoveFrameNavigationStarting.Call(
 			uintptr(unsafe.Pointer(e.webview)), uintptr(e.frameNavigationToken.Value))
+		e.frameNavigationRegistered = false
 	}
-	if e.DenyNewWindows {
+	if e.newWindowRegistered {
 		_, _, _ = e.webview.vtbl.RemoveNewWindowRequested.Call(
 			uintptr(unsafe.Pointer(e.webview)), uintptr(e.newWindowToken.Value))
+		e.newWindowRegistered = false
 	}
 	if e.downloadRegistered {
 		if webview4 := e.webview.GetICoreWebView2_4(); webview4 != nil {
@@ -614,17 +642,30 @@ func (e *Chromium) removeEventHandlers() {
 		}
 		e.downloadRegistered = false
 	}
-	_, _, _ = e.webview.vtbl.RemoveWebMessageReceived.Call(
-		uintptr(unsafe.Pointer(e.webview)), uintptr(e.webMessageToken.Value))
-	_, _, _ = e.webview.vtbl.RemovePermissionRequested.Call(
-		uintptr(unsafe.Pointer(e.webview)), uintptr(e.permissionToken.Value))
-	_, _, _ = e.webview.vtbl.RemoveWebResourceRequested.Call(
-		uintptr(unsafe.Pointer(e.webview)), uintptr(e.webResourceToken.Value))
-	_, _, _ = e.webview.vtbl.RemoveNavigationCompleted.Call(
-		uintptr(unsafe.Pointer(e.webview)), uintptr(e.navigationCompletedToken.Value))
-	if e.controller != nil {
+	if e.webMessageRegistered {
+		_, _, _ = e.webview.vtbl.RemoveWebMessageReceived.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.webMessageToken.Value))
+		e.webMessageRegistered = false
+	}
+	if e.permissionRegistered {
+		_, _, _ = e.webview.vtbl.RemovePermissionRequested.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.permissionToken.Value))
+		e.permissionRegistered = false
+	}
+	if e.webResourceRegistered {
+		_, _, _ = e.webview.vtbl.RemoveWebResourceRequested.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.webResourceToken.Value))
+		e.webResourceRegistered = false
+	}
+	if e.navigationCompletedRegistered {
+		_, _, _ = e.webview.vtbl.RemoveNavigationCompleted.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.navigationCompletedToken.Value))
+		e.navigationCompletedRegistered = false
+	}
+	if e.controller != nil && e.acceleratorRegistered {
 		_, _, _ = e.controller.vtbl.RemoveAcceleratorKeyPressed.Call(
 			uintptr(unsafe.Pointer(e.controller)), uintptr(e.acceleratorToken.Value))
+		e.acceleratorRegistered = false
 	}
 }
 

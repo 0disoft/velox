@@ -298,8 +298,8 @@ type iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler struct {
 	impl iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerImpl
 }
 
-func _ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerIUnknownQueryInterface(this *iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, refiid, object uintptr) uintptr {
-	return this.impl.QueryInterface(refiid, object)
+func _ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerIUnknownQueryInterface(this *iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, refiid *GUID, object *unsafe.Pointer) uintptr {
+	return queryCallbackInterface(this.impl, unsafe.Pointer(this), refiid, object, environmentCompletedIID)
 }
 
 func _ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerIUnknownAddRef(this *iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler) uintptr {
@@ -347,8 +347,8 @@ type iCoreWebView2WebMessageReceivedEventHandler struct {
 	impl iCoreWebView2WebMessageReceivedEventHandlerImpl
 }
 
-func _ICoreWebView2WebMessageReceivedEventHandlerIUnknownQueryInterface(this *iCoreWebView2WebMessageReceivedEventHandler, refiid, object uintptr) uintptr {
-	return this.impl.QueryInterface(refiid, object)
+func _ICoreWebView2WebMessageReceivedEventHandlerIUnknownQueryInterface(this *iCoreWebView2WebMessageReceivedEventHandler, refiid *GUID, object *unsafe.Pointer) uintptr {
+	return queryCallbackInterface(this.impl, unsafe.Pointer(this), refiid, object, webMessageReceivedIID)
 }
 
 func _ICoreWebView2WebMessageReceivedEventHandlerIUnknownAddRef(this *iCoreWebView2WebMessageReceivedEventHandler) uintptr {
@@ -396,8 +396,8 @@ type iCoreWebView2PermissionRequestedEventHandler struct {
 	impl iCoreWebView2PermissionRequestedEventHandlerImpl
 }
 
-func _ICoreWebView2PermissionRequestedEventHandlerIUnknownQueryInterface(this *iCoreWebView2PermissionRequestedEventHandler, refiid, object uintptr) uintptr {
-	return this.impl.QueryInterface(refiid, object)
+func _ICoreWebView2PermissionRequestedEventHandlerIUnknownQueryInterface(this *iCoreWebView2PermissionRequestedEventHandler, refiid *GUID, object *unsafe.Pointer) uintptr {
+	return queryCallbackInterface(this.impl, unsafe.Pointer(this), refiid, object, permissionRequestedIID)
 }
 
 func _ICoreWebView2PermissionRequestedEventHandlerIUnknownAddRef(this *iCoreWebView2PermissionRequestedEventHandler) uintptr {
