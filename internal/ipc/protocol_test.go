@@ -11,13 +11,17 @@ import (
 )
 
 type fakeWindow struct {
-	state         string
-	operationErr  error
-	blockMinimize <-chan struct{}
+	state           string
+	operationErr    error
+	blockMinimize   <-chan struct{}
+	minimizeStarted chan<- struct{}
 }
 
 func (f *fakeWindow) State() (string, error) { return f.state, f.operationErr }
 func (f *fakeWindow) Minimize() error {
+	if f.minimizeStarted != nil {
+		f.minimizeStarted <- struct{}{}
+	}
 	if f.blockMinimize != nil {
 		<-f.blockMinimize
 	}
@@ -162,6 +166,41 @@ func TestDispatcherRejectsNewRequestsDuringShutdown(t *testing.T) {
 	response := dispatcher.Dispatch(request(1, "app.getInfo", `{}`))
 	if response.Error == nil || response.Error.Code != "SHUTTING_DOWN" {
 		t.Fatalf("Dispatch() = %+v, want SHUTTING_DOWN", response)
+	}
+}
+
+func TestShutdownDoesNotCancelAlreadyStartedNativeCall(t *testing.T) {
+	started, release := make(chan struct{}), make(chan struct{})
+	var releaseOnce sync.Once
+	unblock := func() { releaseOnce.Do(func() { close(release) }) }
+	defer unblock()
+	dispatcher := NewDispatcher(Identity{}, []string{PermissionWindow}, &fakeWindow{
+		blockMinimize: release, minimizeStarted: started,
+	})
+	completed := make(chan Response, 1)
+	go func() { completed <- dispatcher.Dispatch(request(1, "window.minimize", `{}`)) }()
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("native call did not start")
+	}
+	dispatcher.Close()
+	if response := dispatcher.Dispatch(request(2, "window.minimize", `{}`)); response.Error == nil || response.Error.Code != "SHUTTING_DOWN" {
+		t.Fatalf("new call = %+v", response)
+	}
+	unblock()
+	select {
+	case response := <-completed:
+		if !response.OK {
+			t.Fatalf("accepted call = %+v", response)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("accepted call did not finish")
+	}
+	dispatcher.mu.Lock()
+	defer dispatcher.mu.Unlock()
+	if len(dispatcher.inflight) != 0 {
+		t.Fatal("finished call retained inflight state")
 	}
 }
 

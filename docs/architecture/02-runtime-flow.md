@@ -84,7 +84,10 @@ requests above limits fail safely without invoking native behavior.
 
 1. Application or operating-system close begins one idempotent shutdown.
 2. New IPC requests are rejected.
-3. Pending requests complete with a stable shutdown error.
+3. Already-started synchronous native calls may complete normally. The IPC
+   `window.close` path gives its response two dispatch turns before teardown;
+   native window closure does not guarantee delivery of pending JavaScript
+   responses after the document is destroyed.
 4. WebView2 event handlers and callbacks are detached.
 5. Controller and environment references are released on the owning thread.
 6. The native window closes and the process exits.

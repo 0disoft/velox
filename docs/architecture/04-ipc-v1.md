@@ -64,6 +64,14 @@ run Win32 window operations in parallel. The dispatcher still protects its
 shutdown and in-flight bookkeeping so direct tests and any future transport
 adapter must preserve the same ownership invariant.
 
+Shutdown rejects newly dispatched requests with `SHUTTING_DOWN`; it does not
+cancel a native call that already started. `window.close` schedules teardown
+after its successful response, but this is not a guarantee that all outstanding
+JavaScript promises settle before the page closes. Responses queued when native
+window destruction begins are discarded, and no application code runs after its
+document is destroyed. Applications must persist required state before asking
+the window to close, not in a pending native-response continuation.
+
 ## Methods
 
 | Method | Permission | Parameters | Result |
