@@ -110,3 +110,8 @@ The raw `velox.startup-lifecycle/v3` record is retained locally at
 samples, and evidence level `controlled-local-observation`. It has no hosted
 runner or public-release identity and is not a qualifying LLM trial, a supported
 runtime matrix, registration-failure injection, or a general memory-safety proof.
+
+The local observation does not close the release-runner gate: live Windows stress remains required before beta
+on the supported hosted Windows runner. Retain the raw lifecycle results for
+the candidate revision and review the callback-ownership and failure-path risks
+separately before a channel decision.
