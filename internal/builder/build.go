@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -37,6 +38,13 @@ func Build(plan buildplan.Plan) (Result, error) {
 }
 
 func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, error) {
+	return BuildContext(context.Background(), plan, observer)
+}
+
+func BuildContext(ctx context.Context, plan buildplan.Plan, observer buildphase.Observer) (Result, error) {
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
 	totalStarted := time.Now()
 	defer buildphase.Record(observer, "build.total", totalStarted)
 	snapshot := plan.Snapshot()
@@ -89,7 +97,7 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 		return Result{}, err
 	}
 	hostStarted := time.Now()
-	if _, err := copyVerified(snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, 0, snapshot.HostSHA256, observedWriter{writer: hostArchiveEntry, duration: &archiveEntryDuration}); err != nil {
+	if _, err := copyVerifiedContext(ctx, snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, 0, snapshot.HostSHA256, observedWriter{writer: hostArchiveEntry, duration: &archiveEntryDuration}); err != nil {
 		return Result{}, fmt.Errorf("copy host template: %w", err)
 	}
 	buildphase.Record(observer, "host.copy", hostStarted)
@@ -102,7 +110,7 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 		if err != nil {
 			return Result{}, err
 		}
-		digest, err := copyVerified(asset.SourcePath, destination, 0o644, asset.Size, asset.ModifiedUnixNano, asset.SHA256, observedWriter{writer: assetArchiveEntry, duration: &archiveEntryDuration})
+		digest, err := copyVerifiedContext(ctx, asset.SourcePath, destination, 0o644, asset.Size, asset.ModifiedUnixNano, asset.SHA256, observedWriter{writer: assetArchiveEntry, duration: &archiveEntryDuration})
 		if err != nil {
 			return Result{}, fmt.Errorf("copy asset %s: %w", asset.RelativePath, err)
 		}
@@ -154,6 +162,10 @@ func BuildObserved(plan buildplan.Plan, observer buildphase.Observer) (Result, e
 		return Result{}, fmt.Errorf("archive file count %d does not match build report %d", archiveResult.FileCount, report.Outputs.PortableFiles)
 	}
 	promoteStarted := time.Now()
+	// Once paired publication starts, finish its rollback protocol without interruption.
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
 	if err := promote(snapshot, stageDirectory, stageArchive); err != nil {
 		return Result{}, err
 	}
@@ -190,6 +202,13 @@ func validateInputBudget(plan buildplan.Snapshot) error {
 }
 
 func copyVerified(source, destination string, mode os.FileMode, expectedSize, expectedModifiedUnixNano int64, expectedSHA256 string, mirrors ...io.Writer) (string, error) {
+	return copyVerifiedContext(context.Background(), source, destination, mode, expectedSize, expectedModifiedUnixNano, expectedSHA256, mirrors...)
+}
+
+func copyVerifiedContext(ctx context.Context, source, destination string, mode os.FileMode, expectedSize, expectedModifiedUnixNano int64, expectedSHA256 string, mirrors ...io.Writer) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return "", err
 	}
@@ -208,7 +227,7 @@ func copyVerified(source, destination string, mode os.FileMode, expectedSize, ex
 	hash := sha256.New()
 	writers := []io.Writer{output, hash}
 	writers = append(writers, mirrors...)
-	written, err := io.Copy(io.MultiWriter(writers...), input)
+	written, err := io.Copy(io.MultiWriter(writers...), cancelReader{ctx: ctx, reader: input})
 	if err != nil {
 		output.Close()
 		return "", err
@@ -226,6 +245,18 @@ func copyVerified(source, destination string, mode os.FileMode, expectedSize, ex
 		return "", err
 	}
 	return actualSHA256, nil
+}
+
+type cancelReader struct {
+	ctx    context.Context
+	reader io.Reader
+}
+
+func (reader cancelReader) Read(buffer []byte) (int, error) {
+	if err := reader.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return reader.reader.Read(buffer)
 }
 
 func writeJSON(path string, value any, mirrors ...io.Writer) (int64, error) {

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,23 @@ import (
 
 	"github.com/0disoft/velox/internal/doctor"
 )
+
+func TestBuildCancellationUsesPackagingErrorContract(t *testing.T) {
+	root, config, host := cliFixture(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	var stdout bytes.Buffer
+	code := Run([]string{"build", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: io.Discard, HostPath: host, BuildContext: ctx,
+	})
+	var result Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if code != 6 || result.OK || result.Error == nil || result.Error.Code != "PACKAGING_FAILED" {
+		t.Fatalf("cancellation = %d, %+v", code, result)
+	}
+}
 
 func TestValidateJSONContract(t *testing.T) {
 	root, config, host := cliFixture(t)

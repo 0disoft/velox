@@ -29,7 +29,12 @@
 - A later invocation reconciles supported process-interrupted rename states;
   the two public paths are not crash-atomic or power-loss safe.
 - Errors return a stable exit code and structured diagnostic.
-- Cancellation follows the same cleanup path.
+- Ctrl+C during `build` requests cooperative cancellation and follows the same
+  cleanup path, with the existing `PACKAGING_FAILED` diagnostic and exit code 6.
+  Input planning and archive finalization finish their current synchronous work
+  before observing cancellation. Once paired publication starts, its completion
+  or rollback is not interrupted. Forced process termination and power loss do
+  not run this cleanup path.
 
 `run` and `doctor` validate the manifest, complete asset-tree shape, entry
 point, and host compatibility without hashing every static asset. Content

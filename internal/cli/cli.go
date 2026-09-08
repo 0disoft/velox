@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -31,6 +32,7 @@ import (
 )
 
 type Dependencies struct {
+	BuildContext         context.Context
 	Stdout               io.Writer
 	Stderr               io.Writer
 	HostPath             string
@@ -371,7 +373,11 @@ func runBuild(args []string, dependencies Dependencies) int {
 			fmt.Fprintf(dependencies.Stderr, "VELOX_PHASE %s %d\n", name, duration.Microseconds())
 		}
 	}
-	result, err := builder.BuildObserved(plan, observer)
+	ctx := dependencies.BuildContext
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	result, err := builder.BuildContext(ctx, plan, observer)
 	if err != nil {
 		return emitFailure(dependencies, "build", options.json, 6, "PACKAGING_FAILED", "Application packaging failed.", err)
 	}

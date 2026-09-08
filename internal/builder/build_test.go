@@ -3,19 +3,66 @@ package builder
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0disoft/velox/internal/artifactlimits"
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildplan"
 )
+
+func TestBuildCancellationPreservesOutputAndAllowsRetry(t *testing.T) {
+	for _, phase := range []string{"before build", "host.copy", "archive.finalize"} {
+		t.Run(phase, func(t *testing.T) {
+			root, config, host := fixture(t)
+			plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: config, HostPath: host, OutputRoot: filepath.Join(root, "dist")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			before, err := Build(plan)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if phase == "before build" {
+				cancel()
+			}
+			_, err = BuildContext(ctx, plan, func(name string, _ time.Duration) {
+				if name == phase {
+					cancel()
+				}
+			})
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("BuildContext() = %v", err)
+			}
+			archive, err := os.ReadFile(before.ArchivePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if fmt.Sprintf("%x", sha256.Sum256(archive)) != before.ArchiveSHA256 {
+				t.Fatal("prior archive changed")
+			}
+			for _, path := range []string{".com.example.hello.staging", ".com.example.hello.zip.staging"} {
+				if _, err := os.Stat(filepath.Join(root, "dist", path)); !os.IsNotExist(err) {
+					t.Fatalf("staging remains: %v", err)
+				}
+			}
+			if _, err := Build(plan); err != nil {
+				t.Fatalf("retry: %v", err)
+			}
+		})
+	}
+}
 
 func TestInputBudgetIncludesHostAndMetadataEntries(t *testing.T) {
 	for _, test := range []struct {
