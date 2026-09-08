@@ -179,7 +179,7 @@ validated the sidecar evidence, built twice, inspected the output, and reached
 startup-ready without source checkout. This remains historical release
 evidence, not an external-user attempt or authenticated publisher identity.
 
-The current public preview is
+The second public preview was
 [`v0.5.10-alpha.2`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.2)
 from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`. Tag evidence run
 `29894943737`, publication run `29895087658`, and public-download verification
@@ -188,6 +188,21 @@ run `29895490556` passed. The public verifier observed ZIP SHA-256
 validated checksums, SPDX, provenance, deterministic builds, doctor readiness,
 inspection, and startup readiness without checkout. Its evidence level remains
 `same-repository-public-download` with `externalUserAttempt: false`.
+
+The current public preview is
+[`v0.5.10-alpha.40`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.40)
+from commit `d206fe4ef1be9df198d86809742ef480549344b8`. Tag evidence
+[run 34214224962](https://github.com/0disoft/velox/actions/runs/34214224962),
+publication [run 34214445883](https://github.com/0disoft/velox/actions/runs/34214445883),
+and public-download verification
+[run 34215188131](https://github.com/0disoft/velox/actions/runs/34215188131)
+passed. The expected ZIP digest was independently computed from the publication
+producer's retained Actions artifact and matched the public release:
+`771173b6eec2f74d92228e7ac5b52332160b0f9fb4d7baecf01976864a00f8c8`.
+The public verifier checked sidecars, version, deterministic builds, doctor,
+inspection, and startup without checkout. This remains
+`same-repository-public-download` with `externalUserAttempt: false`, not a
+qualifying LLM trial or beta promotion.
 
 The now-archived separate public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)

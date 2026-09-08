@@ -5,7 +5,7 @@
 
 ## Current State
 
-Velox has two published unsigned developer previews and no package registry
+Velox has three published unsigned developer previews and no package registry
 entry, implemented signing workflow, or stable version policy. Maintainer tooling builds the Go CLI and
 host, assembles the deterministic unsigned Windows x64 bundle, verifies
 artifact entries against the release manifest, and emits checksums, a
@@ -51,7 +51,7 @@ attempt or authenticated attestation.
 
 [Tag evidence run 29894943737](https://github.com/0disoft/velox/actions/runs/29894943737)
 and [publication run 29895087658](https://github.com/0disoft/velox/actions/runs/29895087658)
-produced current preview `v0.5.10-alpha.2` from commit
+produced the second preview `v0.5.10-alpha.2` from commit
 `9bbb6bfcc1393058cb80d72c79df601caa970f2f`. Public-download verification
 [run 29895490556](https://github.com/0disoft/velox/actions/runs/29895490556)
 matched ZIP SHA-256
@@ -59,6 +59,19 @@ matched ZIP SHA-256
 and passed checksum, SPDX, provenance, deterministic-build, doctor, inspection,
 and startup gates without checkout. It remains same-repository evidence with
 `externalUserAttempt: false`.
+
+The current preview is
+[`v0.5.10-alpha.40`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.40)
+from commit `d206fe4ef1be9df198d86809742ef480549344b8`. Reproducible tag evidence
+[run 34214224962](https://github.com/0disoft/velox/actions/runs/34214224962),
+publication [run 34214445883](https://github.com/0disoft/velox/actions/runs/34214445883),
+and public-download verification
+[run 34215188131](https://github.com/0disoft/velox/actions/runs/34215188131)
+passed. The publication artifact and public ZIP both have SHA-256
+`771173b6eec2f74d92228e7ac5b52332160b0f9fb4d7baecf01976864a00f8c8`.
+All four required assets are public. The candidate contains the callback
+lifetime and initialization fixes recorded in the COM review. No qualifying
+three-trial LLM series has run against it, so beta remains held.
 
 The now-archived public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
@@ -82,8 +95,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.2` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.2`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.40` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.40`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0018 defines the clean-room LLM agent evidence required
 before beta technical readiness. Actual beta or stable promotion, support
 policy, signing, and publication remain separate maintainer decisions after

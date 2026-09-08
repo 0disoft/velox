@@ -1,6 +1,6 @@
 # Pure-Go WebView2 COM Lifetime Review
 
-- Status: Callback retention, partial-initialization regressions, and local Windows startup validated; hosted release evidence pending
+- Status: Callback retention, partial-initialization regressions, local startup, and alpha.40 hosted distribution validated; beta held
 - Reviewed: 2026-09-08
 - Scope: `third_party/go-webview2`, `internal/webview2`, and host shutdown paths
 - Risk links: SEC-004 and R-003
@@ -8,7 +8,7 @@
 ## Decision
 
 The bounded pure-Go adapter remains viable for the current Windows-only static
-host. The review found three concrete lifetime defects and fixes them without
+host. The initial review found three concrete lifetime defects and fixed them without
 adding native capability or changing the public IPC contract.
 
 The review does not claim general memory safety. Retained callbacks now have
@@ -131,8 +131,8 @@ outside the proof supplied by these tests.
 Thread-affinity, the complete COM interface surface, and the supported WebView2
 runtime matrix are not certified by this change. Record a process leak,
 callback after final release, or unstable shutdown as a reopened SEC-004/R-003
-finding. The candidate still needs hosted release evidence before publication;
-beta additionally requires the qualifying clean-room series.
+finding. Alpha.40 has hosted release evidence; beta still requires the
+qualifying clean-room series.
 Separately, live Windows stress remains required before beta on the supported
 hosted Windows runner; the local smoke is not that stress gate.
 
@@ -148,6 +148,19 @@ implementation locally, not a public download or a supported-runtime matrix.
 `0.5.10-alpha.40` is the release candidate for this implementation. Its version
 metadata is synchronized separately; public bytes and hosted evidence must
 bind the final candidate commit, not this local build's version string.
+
+## Hosted Alpha.40 Evidence
+
+Final candidate `d206fe4ef1be9df198d86809742ef480549344b8` is published as
+`v0.5.10-alpha.40`. Tag evidence run `34214224962` and publication run
+`34214445883` passed reproducible builds and checkout-free consumer gates.
+[Public verification run 34215188131](https://github.com/0disoft/velox/actions/runs/34215188131)
+then downloaded the public assets and passed checksum, deterministic build,
+inspection, and startup checks. Its expected ZIP SHA-256 was computed from
+the publication producer artifact:
+`771173b6eec2f74d92228e7ac5b52332160b0f9fb4d7baecf01976864a00f8c8`.
+This is unsigned same-repository distribution evidence, not hosted Windows
+stress, a qualifying clean-room trial, or general memory-safety certification.
 
 ## Local Validation: 2026-09-08
 
