@@ -1,6 +1,6 @@
 # Beta Preflight: 2026-09-09
 
-- Status: Public lifecycle repetition passed; qualifying LLM series held.
+- Status: Public lifecycle and hosted source-fork cancellation passed; qualifying LLM series held.
 - Release under test: unsigned `v0.5.10-alpha.40`.
 - Scope: bounded native lifecycle evidence and local provider reachability,
   not beta promotion or human adoption evidence.
@@ -210,7 +210,8 @@ a 15-second Embed watchdog and bounded callback/process/profile waits. It logs
 the installed WebView2, Go version and architecture. This is local source-fork
 evidence, not a run against the public alpha ZIP or a hosted Windows runtime
 matrix. The public lifecycle binding's `initializationCancellationTested: false`
-remains unchanged. Hosted cancellation validation remains pending.
+remains unchanged. This local run alone does not establish hosted evidence;
+the subsequent hosted source-fork result is recorded below.
 
 Only native test coverage, this record and local development version fixtures
 changed. Local version is `0.5.10-alpha.43`; public alpha.40, public IPC, DB,
@@ -235,5 +236,42 @@ The binding explicitly records `publicReleaseTested: false` and
 evidence nor the delayed-environment claim is upgraded by this workflow.
 
 Local development advances to `0.5.10-alpha.44`. Existing CI workflows and
-production behavior remain unchanged. Hosted execution is pending at the
+production behavior remain unchanged. Hosted execution was pending at the
 workflow-introduction commit; its result will be recorded separately below.
+
+## Hosted Cancellation Result
+
+[Run 34361207456](https://github.com/0disoft/velox/actions/runs/34361207456)
+passed against source commit `004466220071224c3997d706ea6cb91b10c72f2f`.
+The `windows-2025` runner reported image OS `win25-vs2026`, image version
+`20260824.214.3`, WebView2 `151.0.4129.101`, Go `1.26.7` and architecture
+`amd64`. All six named cases passed; the test took 6.58 seconds, with package
+time 6.625 seconds excluding setup and compilation.
+
+All three controller-pending cases observed a late successful controller
+completion, browser-process exit, zero callback references and profile
+release. All three environment-completion cases canceled before controller
+creation and observed zero callback references and profile release. They do
+not claim a late environment callback or a browser-process exit observation.
+
+[Artifact 10107910000](https://github.com/0disoft/velox/actions/runs/34361207456/artifacts/10107910000)
+contains `run-binding.json`, `result.json`, `go-test.jsonl` and
+`go-test.stderr.txt`. GitHub reports ZIP digest
+`1ba92ab8d5a0355ddc6c73d05fa0f2e1b36cf2b9cffa6e87152856fa5fe0a7fe`.
+Retention is 90 days. The artifact was downloaded and its run ID, measured
+commit, six passing cases and runtime metadata were checked against the
+successful run. The raw events also confirm the cleanup observations above.
+
+This closes the bounded hosted source-fork cancellation check, not public-ZIP
+cancellation coverage or a broad runtime compatibility matrix. The binding
+retains `publicReleaseTested: false` and
+`lateEnvironmentCompletionTested: false`. Public alpha.40 and beta status are
+unchanged. No Hermes execution, model request or normal 100-launch rerun was
+performed.
+
+Before dispatch, workflow YAML and embedded PowerShell parsing, the focused
+workflow contract, related Go version/hygiene checks, all 39 offline evaluation
+tooling tests and scoped Mustflow validation passed. Existing unrelated
+command-lock warnings remain. The full product suite was not repeated for
+this workflow addition. Next is read-only assessment of Codex/opencodex
+evaluation records, not a new evaluator implementation.
