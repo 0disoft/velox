@@ -1,0 +1,95 @@
+name: Native initialization cancellation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-initialization-cancellation
+  cancel-in-progress: false
+
+jobs:
+  cancellation:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - name: Check out source under test
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Test six native cancellation cases and bind evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $root = Join-Path $env:GITHUB_WORKSPACE '.ci/native-cancellation'
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          [ordered]@{
+            schemaVersion = 'velox.native-cancellation-binding/v1'
+            evidenceLevel = 'hosted-source-fork'
+            measurementCommit = $env:GITHUB_SHA
+            githubRunId = $env:GITHUB_RUN_ID
+            githubRunAttempt = $env:GITHUB_RUN_ATTEMPT
+            runnerOS = $env:RUNNER_OS
+            imageOS = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            requestedCases = 6
+            publicReleaseTested = $false
+            lateEnvironmentCompletionTested = $false
+          } | ConvertTo-Json | Set-Content (Join-Path $root 'run-binding.json') -Encoding utf8
+          $eventsPath = Join-Path $root 'go-test.jsonl'
+          $stderrPath = Join-Path $root 'go-test.stderr.txt'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-cancellation'
+          $env:VELOX_NATIVE_CANCELLATION = '1'
+          Push-Location 'third_party/go-webview2'
+          try {
+            go test -mod=readonly -json -count=1 -timeout=180s -run '^TestNativeInitializationCancellation$' ./pkg/edge 1> $eventsPath 2> $stderrPath
+            $testExit = $LASTEXITCODE
+          } finally { Pop-Location }
+          $events = @(Get-Content -LiteralPath $eventsPath | ForEach-Object { $_ | ConvertFrom-Json })
+          $expected = @(foreach ($i in 1..3) {
+            foreach ($phase in @('environment-completion', 'controller-pending')) {
+              "TestNativeInitializationCancellation/$phase/$i"
+            }
+          })
+          $cases = @(foreach ($name in $expected) {
+            $terminal = @($events | Where-Object { $_.Test -ceq $name -and $_.Action -in @('pass', 'fail', 'skip') })
+            $outcome = 'incomplete'
+            if ($terminal.Count -eq 1) { $outcome = $terminal[0].Action }
+            [ordered]@{ name = $name; outcome = $outcome }
+          })
+          $parentPass = @($events | Where-Object { $_.Test -ceq 'TestNativeInitializationCancellation' -and $_.Action -ceq 'pass' })
+          $runtime = [regex]::Matches(($events.Output -join ''), 'source-fork evidence: WebView2=(\S+) Go=(\S+) arch=(\S+)')
+          $passed = $testExit -eq 0 -and $parentPass.Count -eq 1 -and $runtime.Count -eq 1 -and $cases.Count -eq 6 -and @($cases | Where-Object outcome -CNE 'pass').Count -eq 0
+          $runtimeInfo = $null
+          if ($runtime.Count -eq 1) {
+            $runtimeInfo = [ordered]@{ webview2 = $runtime[0].Groups[1].Value; go = $runtime[0].Groups[2].Value; architecture = $runtime[0].Groups[3].Value }
+          }
+          [ordered]@{
+            schemaVersion = 'velox.native-cancellation-result/v1'
+            measurementCommit = $env:GITHUB_SHA
+            githubRunId = $env:GITHUB_RUN_ID
+            outcome = $(if ($passed) { 'pass' } else { 'fail' })
+            testExitCode = $testExit
+            runtime = $runtimeInfo
+            cases = $cases
+          } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $root 'result.json') -Encoding utf8
+          if (-not $passed) { throw 'The complete six-case native cancellation contract did not pass' }
+
+      - name: Preserve success or failure evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-cancellation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci/native-cancellation/
+          retention-days: 90
+          if-no-files-found: warn

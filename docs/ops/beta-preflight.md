@@ -216,3 +216,24 @@ Only native test coverage, this record and local development version fixtures
 changed. Local version is `0.5.10-alpha.43`; public alpha.40, public IPC, DB,
 production runtime behavior and existing CI workflows are unchanged. No release
 or beta promotion was performed.
+
+## Hosted Cancellation Workflow
+
+The manual-only `Native initialization cancellation` workflow runs exactly the
+six existing source-fork cases on `windows-2025`. It has a ten-minute job limit,
+a three-minute Go test limit, read-only repository permissions, no Actions
+cache and no model/evaluator invocation. It does not repeat the normal
+100-launch lifecycle workflow or download/build a public release bundle.
+
+The gate parses Go JSON events and requires one passing terminal event for
+each expected case, a parent-test pass, zero test exit status and exactly one
+runtime-version record. Skipped, missing or duplicate terminal events do not
+qualify. Both passing and failing runs preserve `run-binding.json`, raw Go JSON
+events, stderr and, when parsing completes, `result.json` for 90 days.
+The binding explicitly records `publicReleaseTested: false` and
+`lateEnvironmentCompletionTested: false`; neither historical public-release
+evidence nor the delayed-environment claim is upgraded by this workflow.
+
+Local development advances to `0.5.10-alpha.44`. Existing CI workflows and
+production behavior remain unchanged. Hosted execution is pending at the
+workflow-introduction commit; its result will be recorded separately below.

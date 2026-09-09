@@ -70,7 +70,7 @@ func TestNativeInitializationCancellation(t *testing.T) {
 	if err != nil || version == "" {
 		t.Fatalf("installed WebView2 is required: %v", err)
 	}
-	t.Logf("local-source evidence: WebView2=%s Go=%s arch=%s", version, runtime.Version(), runtime.GOARCH)
+	t.Logf("source-fork evidence: WebView2=%s Go=%s arch=%s", version, runtime.Version(), runtime.GOARCH)
 	for repetition := 1; repetition <= 3; repetition++ {
 		for _, phase := range []string{"environment-completion", "controller-pending"} {
 			t.Run(fmt.Sprintf("%s/%d", phase, repetition), func(t *testing.T) { runNativeCancellation(t, phase) })
