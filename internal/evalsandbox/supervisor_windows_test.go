@@ -3,6 +3,7 @@
 package evalsandbox
 
 import (
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,6 +16,7 @@ const (
 	probeEnabledEnv   = "VELOX_EVAL_SANDBOX_PROBE"
 	probeAllowedEnv   = "VELOX_EVAL_SANDBOX_ALLOWED"
 	probeForbiddenEnv = "VELOX_EVAL_SANDBOX_FORBIDDEN"
+	probeOpencodexEnv = "VELOX_EVAL_SANDBOX_OPENCODEX_PROBE"
 )
 
 func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
@@ -68,6 +70,15 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 	t.Setenv(probeEnabledEnv, "1")
 	t.Setenv(probeAllowedEnv, allowedPath)
 	t.Setenv(probeForbiddenEnv, forbiddenPath)
+	passEnvironment := []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv}
+	if os.Getenv(probeOpencodexEnv) == "1" {
+		connection, err := net.DialTimeout("tcp", "127.0.0.1:10100", 3*time.Second)
+		if err != nil {
+			t.Fatalf("opencodex is unreachable outside AppContainer: %v", err)
+		}
+		_ = connection.Close()
+		passEnvironment = append(passEnvironment, probeOpencodexEnv)
+	}
 	receiptPath := filepath.Join(receiptRoot, "receipt.json")
 	stateDatabaseExportPath := filepath.Join(receiptRoot, "state.db")
 	receipt, err := Run(Config{
@@ -76,7 +87,7 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 		Sequence:                1,
 		TrialRoot:               trialRoot,
 		ToolRoots:               []string{toolRoot},
-		PassEnvironment:         []string{probeEnabledEnv, probeAllowedEnv, probeForbiddenEnv},
+		PassEnvironment:         passEnvironment,
 		PromptPath:              promptPath,
 		StateDatabaseExportPath: stateDatabaseExportPath,
 		ReceiptPath:             receiptPath,
@@ -110,6 +121,16 @@ func TestAppContainerAndJobObjectEnforceEvaluationBoundary(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(trialRoot, ".velox-sandbox")); !os.IsNotExist(err) {
 		t.Fatalf("private sandbox environment was not removed: %v", err)
 	}
+	if os.Getenv(probeOpencodexEnv) == "1" {
+		body, err := os.ReadFile(allowedPath + ".opencodex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("opencodex sandbox connectivity: %s; filesystem/process isolation and cleanup passed", body)
+		if string(body) != "connected" {
+			t.Fatalf("opencodex loopback route is unavailable inside the evaluation sandbox: %s", body)
+		}
+	}
 }
 
 func TestSandboxBoundaryProbeProcess(t *testing.T) {
@@ -125,6 +146,18 @@ func TestSandboxBoundaryProbeProcess(t *testing.T) {
 	}
 	if err := os.WriteFile(os.Getenv(probeAllowedEnv), []byte("inside"), 0o600); err != nil {
 		t.Fatalf("AppContainer could not write inside the trial root: %v", err)
+	}
+	if os.Getenv(probeOpencodexEnv) == "1" {
+		status := "connected"
+		connection, err := net.DialTimeout("tcp", "127.0.0.1:10100", 3*time.Second)
+		if err != nil {
+			status = err.Error()
+		} else {
+			_ = connection.Close()
+		}
+		if err := os.WriteFile(os.Getenv(probeAllowedEnv)+".opencodex", []byte(status), 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
 	hermesHome := os.Getenv("HERMES_HOME")
 	if err := os.MkdirAll(hermesHome, 0o700); err != nil {
