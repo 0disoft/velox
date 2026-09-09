@@ -81,6 +81,12 @@ func runBrokerProbe(t *testing.T, mode string) {
 	if err := os.WriteFile(executable, body, 0o700); err != nil {
 		t.Fatal(err)
 	}
+	var extraEnvironment []string
+	command := []string{executable, "-test.run=^TestBrokerPipeChild$"}
+	if mode == "hermes" {
+		executable, extraEnvironment = stageHermesProbe(t, tool)
+		command = []string{executable, "-I", "-B", filepath.Join(tool, "hermes_pipe_probe.py")}
+	}
 	name, err := randomProfileName()
 	if err != nil {
 		t.Fatal(err)
@@ -132,6 +138,11 @@ func runBrokerProbe(t *testing.T, mode string) {
 	}
 	result := make(chan error, 1)
 	go func() {
+		defer responseWrite.Close()
+		if mode == "hermes" {
+			result <- serveHermesProbe(requestRead, responseWrite, os.Getenv("VELOX_EVAL_BROKER_LIVE") == "1")
+			return
+		}
 		request, err := bufio.NewReader(io.LimitReader(requestRead, 32)).ReadString('\n')
 		if err != nil {
 			result <- err
@@ -164,11 +175,13 @@ func runBrokerProbe(t *testing.T, mode string) {
 	}
 	environment = append(environment,
 		"VELOX_BROKER_MODE="+mode, "VELOX_BROKER_FORBIDDEN="+forbidden,
+		"VELOX_BROKER_RESULT_ROOT="+trial,
 		fmt.Sprintf("VELOX_BROKER_WRITE=%d", handles[0]), fmt.Sprintf("VELOX_BROKER_READ=%d", handles[1]),
 	)
+	environment = append(environment, extraEnvironment...)
 	sort.Slice(environment, func(i, j int) bool { return strings.ToUpper(environment[i]) < strings.ToUpper(environment[j]) })
 	config := preparedConfig{
-		Config:      Config{TrialRoot: trial, Timeout: timeout, Command: []string{executable, "-test.run=^TestBrokerPipeChild$"}},
+		Config:      Config{TrialRoot: trial, Timeout: timeout, Command: command},
 		Executable:  executable,
 		Environment: environment,
 	}
@@ -197,6 +210,22 @@ func runBrokerProbe(t *testing.T, mode string) {
 	}
 	if data, err := os.ReadFile(forbidden); err != nil || string(data) != "outside" {
 		t.Fatal("outside sentinel changed")
+	}
+	if mode == "hermes" {
+		data, err := os.ReadFile(filepath.Join(trial, "hermes-probe.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var report struct {
+			ProviderClient      string `json:"providerClient"`
+			Requests            int    `json:"requests"`
+			SecondRequestDenied bool   `json:"secondRequestDenied"`
+			OutsideFileDenied   bool   `json:"outsideFileDenied"`
+			QualifyingTrial     bool   `json:"qualifyingTrial"`
+		}
+		if json.Unmarshal(data, &report) != nil || report.ProviderClient != "hermes.process_bootstrap.OpenAI" || report.Requests != 1 || !report.SecondRequestDenied || !report.OutsideFileDenied || report.QualifyingTrial {
+			t.Fatal("invalid Hermes provider-client diagnostic")
+		}
 	}
 }
 

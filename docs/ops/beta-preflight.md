@@ -103,9 +103,63 @@ hosted lifecycle run were not repeated for this transport prototype.
 
 ## Earlier Verification Scope
 
+The results below predate the Hermes provider-client follow-up.
+
 The focused workflow contract test, repository hygiene suite, and native sandbox regression passed.
 The explicit loopback diagnostic failed as recorded above. The full product
 suite was not repeated in the first preflight: that change added verification only and changed no
 application binary, public IPC, database, or release version. Existing CI
 workflows remain unchanged; a separate manual lifecycle workflow was added.
 Beta and stable promotion remain held.
+
+## Hermes Provider-Client Pipe Follow-up
+
+The diagnostic now stages the installed Python 3.11 runtime, an explicit SDK
+package list, and the installed Hermes `agent/process_bootstrap.py` and
+`utils.py` helpers inside its temporary tool root. It loads the real helper's
+`OpenAI` factory with an explicit `httpx.BaseTransport` backed by inherited
+pipes. It does not construct `AIAgent`, start the Hermes CLI, or create a Hermes
+session database. This is a provider-client integration probe, not a full
+agent evaluation or a qualifying trial.
+
+The first native attempt used temporary read/execute grants on the installed
+runtime and SDK roots. Python exited before sending a request with Windows
+status `0xc0000022` (access denied); cleanup revoked those grants. The final
+implementation grants access only to the staged tool and private trial roots.
+Copies are bounded to 200 MiB, reject symbolic links and nonregular files, and
+exclude bytecode caches and tests. Python runs with `-I -B`; it does not load
+user site packages or write installation bytecode. The staging path never
+copies personal Hermes configuration, credentials, memories, or state.
+
+The host independently admits exactly one canonical `POST /v1/chat/completions`
+request for the selected Muse model and fixed probe prompt. The transport
+limits request frames to 8 KiB and response frames to 64 KiB. The host owns
+the localhost destination, forbids redirects, supplies no authorization header,
+and bounds provider time to 30 seconds and output to 1,024 tokens. Child-supplied
+headers, tools, other models, paths, prompts, streaming and token limits are
+rejected. A second SDK call must fail locally without another provider request.
+The sandbox has a 60-second process deadline; existing Job Object teardown
+still applies. No listener, loopback exemption or global configuration change
+is introduced.
+
+The staged provider-client test and existing native boundary tests initially
+passed in 17.035 seconds; the final rerun passed in 11.891 seconds. Related Go
+version fixtures and hygiene checks passed, as did all 39 evaluation-tooling
+tests. The full product suite and hosted lifecycle stress were not repeated
+for this diagnostic-only change. Two initial live attempts at the earlier 128-token cap failed
+the exact-output assertion; the second diagnostic identified `finish=length`,
+zero content characters, and no tool calls. Increasing the fixed cap to 1,024
+produced `OK` with `finish=stop` and no tool calls. That live test passed in
+15.911 seconds including staging and cleanup. Three live requests were made
+in this follow-up; none was a qualifying trial. Response content is not logged.
+Response-declared Muse identity is checked, but independent routing and
+no-fallback evidence remain absent.
+
+The dedicated intents are `velox_hermes_pipe_test` (deterministic response, no
+inference) and `velox_hermes_pipe_live` (one live request per invocation).
+The regular Go suite skips the installed-runtime probe unless explicitly opted
+in, while keeping the host request-policy tests active. Local development is
+`0.5.10-alpha.42`; public release bytes remain alpha.40. Public IPC, database
+schemas, normal evaluator execution, receipt schema and CI workflows are
+unchanged. Full Hermes execution, session evidence, route attestation and
+supervisor-crash coverage remain separate gates before the three-trial series.
