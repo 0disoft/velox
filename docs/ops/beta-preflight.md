@@ -57,7 +57,7 @@ credentials, model choice, or an inference response. No loopback exemption,
 firewall change, global Hermes configuration, or provider routing change was
 applied. No qualifying trial was started or replaced.
 
-## Next Gate
+## Earlier Evaluation Gate
 
 Provide an explicitly scoped evaluator-to-opencodex transport while preserving
 filesystem and process containment, and test its teardown and actual model
@@ -163,3 +163,56 @@ in, while keeping the host request-policy tests active. Local development is
 schemas, normal evaluator execution, receipt schema and CI workflows are
 unchanged. Full Hermes execution, session evidence, route attestation and
 supervisor-crash coverage remain separate gates before the three-trial series.
+
+## Current Direction: Native Cancellation Before Evaluator Work
+
+Hermes-specific integration is paused by maintainer direction. Hermes is not
+required to access opencodex models; it was the existing evaluation-record
+adapter, not a model-provider requirement. The earlier pipe probes remain
+historical diagnostics. No Hermes execution or model request was made in this
+native cancellation follow-up. Whether Codex/opencodex records can satisfy the
+existing session, tool-budget and containment evidence contract is not yet
+verified; ordinary Codex execution must not be called a qualifying trial.
+
+`TestNativeInitializationCancellation` uses the real installed WebView2 loader
+and runtime through the repository's fork, a hidden window, and a fresh profile
+for every case. It runs three pairs of:
+
+- Cancellation inside the `environment-created` phase callback, before a
+  controller is scheduled. The browser must remain destroyed, no controller
+  completion may occur, callback roots must reach zero, and the profile must
+  be removable.
+- A queued message-loop exit after the environment callback, while controller
+  creation is pending. A successful native controller completion must arrive
+  after `Destroy`; the browser must not be revived. The test observes that
+  browser process's handle signaling, callback roots reaching zero, and profile
+  removal. It does not substitute a synthetic COM `Invoke`.
+
+Two exploratory runs failed their expected late-environment ordering. Even
+starting the native request directly and destroying before the subsequent
+message pump did not make the environment callback late on this installation.
+The final environment case therefore checks cancellation at actual delivery,
+not a manufactured claim of late native delivery. Late-environment rejection
+continues to have the existing synthetic unit coverage only; a real delayed
+environment completion is not proven by this test.
+
+The final six-case run passed in 2.011 seconds on Windows amd64 with WebView2
+`152.0.4191.66` and Go `1.26.4`. All three controller cases observed browser
+process exit; environment-completion cases do not claim a process-exit
+observation because no controller was created.
+
+The existing fork COM suite, related Go version/hygiene checks and all 39
+offline evaluation-tooling tests passed. The full product suite and hosted
+100-launch lifecycle run were not repeated for this test-only coverage change.
+
+The new test is opt-in via `velox_native_cancellation_test`, with three pairs,
+a 15-second Embed watchdog and bounded callback/process/profile waits. It logs
+the installed WebView2, Go version and architecture. This is local source-fork
+evidence, not a run against the public alpha ZIP or a hosted Windows runtime
+matrix. The public lifecycle binding's `initializationCancellationTested: false`
+remains unchanged. Hosted cancellation validation remains pending.
+
+Only native test coverage, this record and local development version fixtures
+changed. Local version is `0.5.10-alpha.43`; public alpha.40, public IPC, DB,
+production runtime behavior and existing CI workflows are unchanged. No release
+or beta promotion was performed.
