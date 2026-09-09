@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -239,6 +240,20 @@ func updatePathAccess(grant preparedGrant, sid *windows.SID, mode windows.ACCESS
 }
 
 func launchContained(config preparedConfig, appContainerSID *windows.SID, capabilities []windows.SIDAndAttributes) (uint32, bool, error) {
+	return launchContainedWithHandles(config, appContainerSID, capabilities, nil)
+}
+
+// Only the transport probe supplies handles; qualifying evaluations inherit none.
+func launchContainedWithHandles(config preparedConfig, appContainerSID *windows.SID, capabilities []windows.SIDAndAttributes, handles []windows.Handle) (uint32, bool, error) {
+	if len(handles) != 0 && (len(handles) != 2 || handles[0] == handles[1] || handles[0] == 0 || handles[1] == 0 || handles[0] == windows.InvalidHandle || handles[1] == windows.InvalidHandle) {
+		return 0, false, fmt.Errorf("transport requires exactly two distinct pipe handles")
+	}
+	for _, handle := range handles {
+		kind, err := windows.GetFileType(handle)
+		if err != nil || kind != windows.FILE_TYPE_PIPE {
+			return 0, false, fmt.Errorf("transport handle is not a pipe")
+		}
+	}
 	job, err := windows.CreateJobObject(nil, nil)
 	if err != nil {
 		return 0, false, fmt.Errorf("create job object: %w", err)
@@ -250,11 +265,21 @@ func launchContained(config preparedConfig, appContainerSID *windows.SID, capabi
 		return 0, false, fmt.Errorf("configure job object: %w", err)
 	}
 
-	attributeList, err := windows.NewProcThreadAttributeList(1)
+	attributeCount := uint32(1)
+	if len(handles) != 0 {
+		attributeCount++
+	}
+	attributeList, err := windows.NewProcThreadAttributeList(attributeCount)
 	if err != nil {
 		return 0, false, fmt.Errorf("create process attribute list: %w", err)
 	}
 	defer attributeList.Delete()
+	if len(handles) != 0 {
+		const handleListAttribute = 0x00020002 // PROC_THREAD_ATTRIBUTE_HANDLE_LIST
+		if err = attributeList.Update(handleListAttribute, unsafe.Pointer(&handles[0]), uintptr(len(handles))*unsafe.Sizeof(handles[0])); err != nil {
+			return 0, false, fmt.Errorf("configure explicit inherited pipe handles: %w", err)
+		}
+	}
 	security := securityCapabilities{
 		AppContainerSID: appContainerSID,
 		Capabilities:    &capabilities[0],
@@ -285,9 +310,10 @@ func launchContained(config preparedConfig, appContainerSID *windows.SID, capabi
 		return 0, false, err
 	}
 	flags := uint32(windows.CREATE_SUSPENDED | windows.CREATE_UNICODE_ENVIRONMENT | windows.EXTENDED_STARTUPINFO_PRESENT)
-	if err = windows.CreateProcess(application, commandLine, nil, nil, false, flags, &environment[0], workingDirectory, &startup.StartupInfo, &process); err != nil {
+	if err = windows.CreateProcess(application, commandLine, nil, nil, len(handles) != 0, flags, &environment[0], workingDirectory, &startup.StartupInfo, &process); err != nil {
 		return 0, false, fmt.Errorf("create AppContainer process: %w", err)
 	}
+	runtime.KeepAlive(handles)
 	defer windows.CloseHandle(process.Process) //nolint:errcheck -- handle close cannot weaken an already completed run
 	defer windows.CloseHandle(process.Thread)  //nolint:errcheck -- handle close cannot weaken an already completed run
 	if err = windows.AssignProcessToJobObject(job, process.Process); err != nil {

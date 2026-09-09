@@ -65,11 +65,47 @@ identity before starting the three-trial series. Do not expose the shared
 proxy publicly or run an uncontained evaluator and label it qualifying.
 Initialization-cancellation stress remains a separate native test requirement.
 
-## Verification Scope
+## Inherited-Pipe Prototype
+
+The follow-up rejected the Windows loopback-exemption approach. The standard
+API configures a list of AppContainer SIDs, not a single permitted local API
+path or port, and this host process is not elevated. No exemption was applied.
+See [Microsoft's API contract](https://learn.microsoft.com/en-us/windows/win32/api/netfw/nf-netfw-networkisolationsetappcontainerconfig).
+
+A native prototype instead inherits exactly two pipe handles using an explicit
+`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`. Non-pipe handles are rejected. The child
+cannot select a URL, model, headers, or prompt: the probe broker accepts only
+one fixed operation. The host forwards that operation to the existing local
+opencodex endpoint. No credential is supplied to the child and no listener,
+firewall rule, provider configuration, or loopback exemption is created.
+
+Native allowed-request, denied-request, non-pipe rejection, timeout termination,
+pipe closure, outside-file denial, and unchanged default-containment tests
+passed in 1.771 seconds. One live Muse request then passed; the full live probe
+including deny and timeout cases took 4.624 seconds. The response declared a
+Muse Spark 1.3 model and returned `OK`. This is connectivity evidence, not an
+independent upstream routing or no-fallback attestation.
+
+The first prototype run failed before process launch because the test omitted
+the sandbox's normal private environment. Reusing `prepareEnvironment` fixed
+that test setup; it did not change the isolation policy.
+
+Normal `Run` still inherits no handles. The pipe route is not exposed by the
+evaluation CLI and emits no qualifying receipt. Hermes HTTP adaptation,
+bounded general evaluation requests, model-route attestation, and supervisor
+crash coverage remain prerequisites for the three-trial series. Local source
+advances to `0.5.10-alpha.41`; the public release and evaluated application
+bytes remain `v0.5.10-alpha.40`. No new release was published.
+
+After the local version change, the related Go package and hygiene checks
+passed, as did all 39 evaluation-tooling tests. The full product suite and
+hosted lifecycle run were not repeated for this transport prototype.
+
+## Earlier Verification Scope
 
 The focused workflow contract test, repository hygiene suite, and native sandbox regression passed.
 The explicit loopback diagnostic failed as recorded above. The full product
-suite was not repeated: this change adds verification only and changes no
+suite was not repeated in the first preflight: that change added verification only and changed no
 application binary, public IPC, database, or release version. Existing CI
 workflows remain unchanged; a separate manual lifecycle workflow was added.
 Beta and stable promotion remain held.
