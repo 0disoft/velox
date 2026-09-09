@@ -1,0 +1,96 @@
+name: Public alpha lifecycle stress
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-alpha40-lifecycle-stress
+  cancel-in-progress: false
+
+jobs:
+  stress:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - name: Check out measurement code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up measurement toolchain
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Acquire pinned public alpha
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = 'v0.5.10-alpha.40'
+          $expected = '771173b6eec2f74d92228e7ac5b52332160b0f9fb4d7baecf01976864a00f8c8'
+          $url = "https://github.com/0disoft/velox/releases/download/$tag/velox-windows-x64.zip"
+          $archive = Join-Path $env:RUNNER_TEMP 'alpha40.zip'
+          $unpacked = Join-Path $env:RUNNER_TEMP 'alpha40-unpacked'
+          New-Item -ItemType Directory -Path '.ci/stress' -Force | Out-Null
+          Invoke-WebRequest -Uri $url -OutFile $archive -TimeoutSec 60
+          $observed = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($observed -cne $expected) { throw 'Public release digest mismatch' }
+          Expand-Archive -LiteralPath $archive -DestinationPath $unpacked
+          $root = Join-Path $unpacked 'velox-windows-x64'
+          $manifest = Get-Content -LiteralPath (Join-Path $root 'release-manifest.json') -Raw | ConvertFrom-Json
+          if ($manifest.releaseVersion -cne '0.5.10-alpha.40' -or $manifest.target -cne 'windows-x64') {
+            throw 'Public release identity mismatch'
+          }
+          $hostPath = Join-Path $root 'velox-host.exe'
+          if (-not (Test-Path -LiteralPath $hostPath -PathType Leaf)) { throw 'Public host missing' }
+          "VELOX_BUILT_HOST=$hostPath" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          [ordered]@{
+            schemaVersion = 'velox.lifecycle-stress-release/v1'
+            releaseTag = $tag
+            releaseUrl = $url
+            expectedReleaseSha256 = $expected
+            observedReleaseSha256 = $observed
+            hostSha256 = (Get-FileHash -LiteralPath $hostPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            measurementCommit = $env:GITHUB_SHA
+            githubRunId = $env:GITHUB_RUN_ID
+            githubRunAttempt = $env:GITHUB_RUN_ATTEMPT
+            requestedPairs = 50
+            requestedLaunches = 100
+            initializationCancellationTested = $false
+          } | ConvertTo-Json | Set-Content '.ci/stress/release-binding.json' -Encoding utf8
+
+      - name: Exercise fifty fresh and immediate lifecycle pairs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-lifecycle'
+          $env:VELOX_STARTUP_LIFECYCLE_REPETITIONS = '50'
+          $env:VELOX_STARTUP_LIFECYCLE_RESULT = Join-Path $env:GITHUB_WORKSPACE '.ci/stress/lifecycle.json'
+          go test -v -count=1 -timeout=12m -run '^TestStartupLifecycleEvidence$' ./tests/startup
+          $testExit = $LASTEXITCODE
+          if ($testExit -ne 0) { exit $testExit }
+          $raw = Get-Content -LiteralPath $env:VELOX_STARTUP_LIFECYCLE_RESULT -Raw
+          $schema = Get-Content -LiteralPath 'schema/startup-lifecycle-v3.schema.json' -Raw
+          if (-not ($raw | Test-Json -Schema $schema)) { throw 'Invalid lifecycle evidence' }
+          $result = $raw | ConvertFrom-Json
+          if ($result.evidenceLevel -cne 'hosted-runner-evidence' -or $result.outcome -cne 'success' -or
+              $result.repetitions -ne 50 -or $result.samples.Count -ne 50 -or
+              @($result.samples | Where-Object outcome -NE 'success').Count -ne 0 -or
+              $result.environment.githubRunId -cne $env:GITHUB_RUN_ID -or
+              $result.environment.gitCommit -cne $env:GITHUB_SHA) {
+            throw 'Lifecycle stress did not satisfy the complete hosted run contract'
+          }
+
+      - name: Preserve success or failure evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: alpha40-lifecycle-stress-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci/stress/
+          retention-days: 90
+          if-no-files-found: warn
