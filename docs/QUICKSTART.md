@@ -95,6 +95,25 @@ configuration, static web assets, and `build-result.json`. The ZIP is unsigned,
 and directory assets are not protected against a local writer. Windows
 SmartScreen may warn, and managed Windows policy may block execution.
 
+## 6. Edit and reload
+
+For local development, enable the host's development tools explicitly:
+
+```powershell
+& $Velox run --config .\work\hello\velox.json --debug
+```
+
+Edit the files under `work/hello/web`, save them in your editor, then use the
+WebView2 context menu to reload. Development tools are available for inspecting
+errors and disabling the browser cache while editing. This is manual reload,
+not a file watcher or hot module replacement; no development server is started.
+
+The app ID and profile location stay the same, so reload and restart do not
+deliberately clear IndexedDB or other browser storage. Save in-app edits before
+reloading. Close the app before rebuilding its portable output. Without
+`--debug`, development tools and default context menus remain disabled; the
+flag does not change packaged configuration, native permissions, or origin policy.
+
 ## Failure Boundaries
 
 Stop and preserve the first stable diagnostic when:

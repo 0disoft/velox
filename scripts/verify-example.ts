@@ -1,9 +1,9 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const [configRelative, appID, example] = process.argv.slice(2);
-if (!configRelative || !appID || !example || process.argv.length !== 5) {
-  throw new Error("usage: bun scripts/verify-example.ts <config> <app-id> <example>");
+const [configRelative, appID, example, mode] = process.argv.slice(2);
+if (!configRelative || !appID || !example || (process.argv.length !== 5 && !(process.argv.length === 6 && mode === "--debug"))) {
+  throw new Error("usage: bun scripts/verify-example.ts <config> <app-id> <example> [--debug]");
 }
 
 const root = resolve(import.meta.dir, "..");
@@ -80,6 +80,7 @@ const directLaunch = await execute(packagedExecutable, [], {
 
 const run = await invoke([
   "run",
+  ...(mode === "--debug" ? ["--debug"] : []),
   "--config", config,
   "--out", resolve(work, "run"),
   "--json",

@@ -12,7 +12,7 @@ import (
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
-type Launcher func(hostPath, configPath string, stdout, stderr io.Writer) (int, error)
+type Launcher func(hostPath, configPath string, debug bool, stdout, stderr io.Writer) (int, error)
 
 type Result struct {
 	ExitCode int `json:"exitCode"`
@@ -26,7 +26,7 @@ func (err *HostExitError) Error() string {
 	return fmt.Sprintf("host exited with code %d", err.Code)
 }
 
-func Execute(plan buildplan.Plan, launcher Launcher, stdout, stderr io.Writer) (result Result, resultErr error) {
+func Execute(plan buildplan.Plan, debug bool, launcher Launcher, stdout, stderr io.Writer) (result Result, resultErr error) {
 	if launcher == nil {
 		launcher = Launch
 	}
@@ -54,7 +54,7 @@ func Execute(plan buildplan.Plan, launcher Launcher, stdout, stderr io.Writer) (
 		return Result{}, fmt.Errorf("write temporary runtime config: %w", errors.Join(writeErr, closeErr))
 	}
 
-	exitCode, launchErr := launcher(snapshot.HostPath, configPath, stdout, stderr)
+	exitCode, launchErr := launcher(snapshot.HostPath, configPath, debug, stdout, stderr)
 	if launchErr != nil {
 		return Result{ExitCode: exitCode}, launchErr
 	}
@@ -64,8 +64,16 @@ func Execute(plan buildplan.Plan, launcher Launcher, stdout, stderr io.Writer) (
 	return Result{ExitCode: 0}, nil
 }
 
-func Launch(hostPath, configPath string, stdout, stderr io.Writer) (int, error) {
-	command := exec.Command(hostPath, "--config", configPath)
+func hostCommand(hostPath, configPath string, debug bool) *exec.Cmd {
+	args := []string{"--config", configPath}
+	if debug {
+		args = append(args, "--debug")
+	}
+	return exec.Command(hostPath, args...)
+}
+
+func Launch(hostPath, configPath string, debug bool, stdout, stderr io.Writer) (int, error) {
+	command := hostCommand(hostPath, configPath, debug)
 	command.Stdin = nil
 	command.Stdout = stdout
 	command.Stderr = stderr

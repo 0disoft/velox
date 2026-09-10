@@ -16,7 +16,7 @@ import (
 func TestExecuteProvidesValidTemporaryConfigAndRemovesIt(t *testing.T) {
 	plan := runnerPlan(t)
 	var observedPath string
-	result, err := Execute(plan, func(hostPath, configPath string, stdout, stderr io.Writer) (int, error) {
+	result, err := Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		if filepath.Dir(configPath) != plan.Snapshot().Manifest.ProjectRoot {
 			t.Fatalf("config outside project root: %s", configPath)
@@ -44,7 +44,7 @@ func TestExecuteProvidesValidTemporaryConfigAndRemovesIt(t *testing.T) {
 func TestExecutePreservesHostExitCodeAndCleansConfig(t *testing.T) {
 	plan := runnerPlan(t)
 	var observedPath string
-	result, err := Execute(plan, func(hostPath, configPath string, stdout, stderr io.Writer) (int, error) {
+	result, err := Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		return 5, nil
 	}, io.Discard, io.Discard)
@@ -60,7 +60,7 @@ func TestExecutePreservesHostExitCodeAndCleansConfig(t *testing.T) {
 func TestExecuteCleansConfigWhenHostCannotStart(t *testing.T) {
 	plan := runnerPlan(t)
 	var observedPath string
-	result, err := Execute(plan, func(hostPath, configPath string, stdout, stderr io.Writer) (int, error) {
+	result, err := Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		return 6, errors.New("start failed")
 	}, io.Discard, io.Discard)
@@ -81,7 +81,7 @@ func TestExecuteCleansConfigWhenLauncherPanics(t *testing.T) {
 				t.Fatalf("panic = %v, want launcher panic", recovered)
 			}
 		}()
-		_, _ = Execute(plan, func(hostPath, configPath string, stdout, stderr io.Writer) (int, error) {
+		_, _ = Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
 			observedPath = configPath
 			panic("launcher panic")
 		}, io.Discard, io.Discard)
@@ -102,7 +102,7 @@ func runnerPlan(t *testing.T) buildplan.Plan {
 		t.Fatal(err)
 	}
 	digest := sha256.Sum256([]byte("host"))
-	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.47","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest)
+	metadata := fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-alpha.48","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest)
 	if err := os.WriteFile(filepath.Join(filepath.Dir(host), "velox-host.json"), []byte(metadata), 0o644); err != nil {
 		t.Fatal(err)
 	}
