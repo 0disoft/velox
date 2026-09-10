@@ -41,6 +41,9 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		BrowserExecutableFolder: config.BrowserExecutableFolder,
 		AutoFocus:               true,
 		DenyAllPermissions:      true,
+		FileSystemAccessAllowed: func(origin string) bool {
+			return isTrustedDocument(origin, config.AppID)
+		},
 		MessageSourceAllowed: func(source string) bool {
 			return isTrustedDocument(source, config.AppID)
 		},

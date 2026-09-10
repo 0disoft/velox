@@ -37,6 +37,8 @@ const (
 	CoreWebView2PermissionKindNotifications
 	CoreWebView2PermissionKindOtherSensors
 	CoreWebView2PermissionKindClipboardRead
+	CoreWebView2PermissionKindMultipleAutomaticDownloads
+	CoreWebView2PermissionKindFileReadWrite
 )
 
 type CoreWebView2PermissionState uint32

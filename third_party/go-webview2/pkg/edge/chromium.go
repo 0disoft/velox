@@ -73,6 +73,7 @@ type Chromium struct {
 	MessageSourceAllowed         func(source string) bool
 	MaxWebMessageBytes           int
 	NavigationAllowed            func(uri string) bool
+	FileSystemAccessAllowed      func(origin string) bool
 	DenyFrames                   bool
 	DenyNewWindows               bool
 	DenyDownloads                bool
@@ -481,11 +482,14 @@ func (e *Chromium) PermissionRequested(_ *ICoreWebView2, args *iCoreWebView2Perm
 		uintptr(unsafe.Pointer(args)),
 		uintptr(unsafe.Pointer(&kind)),
 	)
+	result := CoreWebView2PermissionStateDeny
 	if err := hresult(resultCode); err != nil {
 		e.setPolicyError(fmt.Errorf("read permission kind: %w", err))
-	}
-	var result CoreWebView2PermissionState
-	if e.globalPermission != nil {
+	} else if kind == CoreWebView2PermissionKindFileReadWrite && e.FileSystemAccessAllowed != nil {
+		if e.fileSystemAccessUsesBrowserConsent(args) {
+			result = CoreWebView2PermissionStateDefault
+		}
+	} else if e.globalPermission != nil {
 		result = *e.globalPermission
 	} else {
 		var ok bool

@@ -132,6 +132,10 @@ Web content is not trusted merely because it is local.
 
 - Remote top-level navigation, popups, downloads, and browser permission
   requests are denied by default.
+- User-initiated File System Access read/write requests from the trusted app
+  origin use WebView2's default consent flow, not an automatic host grant.
+  Missing gestures, untrusted origins, failed permission metadata reads, and
+  all other permission kinds remain denied. This does not add native file IPC.
 - The host accepts messages only from the expected top-level application
   origin.
 - Frames do not receive native capabilities.
