@@ -189,7 +189,7 @@ validated checksums, SPDX, provenance, deterministic builds, doctor readiness,
 inspection, and startup readiness without checkout. Its evidence level remains
 `same-repository-public-download` with `externalUserAttempt: false`.
 
-The current public preview is
+The previous public preview is
 [`v0.5.10-alpha.40`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.40)
 from commit `d206fe4ef1be9df198d86809742ef480549344b8`. Tag evidence
 [run 34214224962](https://github.com/0disoft/velox/actions/runs/34214224962),
@@ -203,6 +203,17 @@ The public verifier checked sidecars, version, deterministic builds, doctor,
 inspection, and startup without checkout. This remains
 `same-repository-public-download` with `externalUserAttempt: false`, not a
 qualifying LLM trial or beta promotion.
+
+The current public preview is `v0.5.10-alpha.49`, source
+`b708cdd64fbc489729fb9ba519629fe72ee9242f`, publication run `34453796476`.
+Its ZIP digest is `236e71ce0fa19bae2b2bb56c44bd1daed1083931d275b64f8a11425d9d1c59fd`.
+Public-download verification run `34454305875` passed every public CLI step;
+its evidence remains `same-repository-public-download` with
+`externalUserAttempt: false`. The initial expected digest referred
+to the separate Go 1.26.7 tag build instead of the Go 1.26.8 publication build.
+The release record preserves that failure and the local startup-smoke failure
+followed by an unchanged passing rerun. No beta or independent-adoption claim
+follows from publication.
 
 The now-archived separate public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)

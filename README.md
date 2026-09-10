@@ -34,7 +34,7 @@ The executables remain unsigned and the provenance remains unauthenticated
 metadata.
 
 [Velox v0.5.10-alpha.40](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.40)
-is the current unsigned developer preview from commit
+is the previous unsigned developer preview from commit
 `d206fe4ef1be9df198d86809742ef480549344b8`. Tag evidence
 [run 34214224962](https://github.com/0disoft/velox/actions/runs/34214224962),
 publication [run 34214445883](https://github.com/0disoft/velox/actions/runs/34214445883),
@@ -48,6 +48,16 @@ Current channel requirements are in [Product Readiness](docs/ops/product-readine
 
 Start with the [Velox Release Quickstart](docs/QUICKSTART.md) to verify and use
 an immutable public release without a source checkout or consumer toolchain.
+
+The current unsigned preview is [v0.5.10-alpha.49](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.49),
+from commit `b708cdd64fbc489729fb9ba519629fe72ee9242f`. It adds
+`velox run --debug`; repository examples include the File Notes save-race fix.
+Publication [run 34453796476](https://github.com/0disoft/velox/actions/runs/34453796476)
+passed. ZIP SHA-256: `236e71ce0fa19bae2b2bb56c44bd1daed1083931d275b64f8a11425d9d1c59fd`.
+Public-download [verification 34454305875](https://github.com/0disoft/velox/actions/runs/34454305875)
+passed. See the [release record](docs/ops/release.md)
+for the initial verification mismatch and local intermittent startup failure.
+Beta remains held under the product workflow checklist.
 
 ## Headline Metrics
 
@@ -172,7 +182,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.40`.
+`0.5.10-alpha.49`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

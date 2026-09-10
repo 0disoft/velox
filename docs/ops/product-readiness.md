@@ -32,7 +32,9 @@ with a mock and label the gate complete.
   startup, inspection and byte-identical repeated builds locally.
 - `velox run --debug` exposes existing host tools without changing app ID,
   profile selection, native permissions or packaged defaults.
-- Public release evidence will be recorded in `docs/ops/release.md`.
+- Alpha.49 publication and verification evidence is recorded in `docs/ops/release.md`.
+- Final local Windows startup smoke failed once, then passed unchanged; its
+  intermittent failure remains unexplained and is retained in the release record.
 - Real native picker actions, interactive reload and durable restart recovery
   are not claimed by the automated tests above.
 

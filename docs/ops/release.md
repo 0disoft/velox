@@ -5,7 +5,7 @@
 
 ## Current State
 
-Velox has three published unsigned developer previews and no package registry
+Velox has four published unsigned developer previews and no package registry
 entry, implemented signing workflow, or stable version policy. Maintainer tooling builds the Go CLI and
 host, assembles the deterministic unsigned Windows x64 bundle, verifies
 artifact entries against the release manifest, and emits checksums, a
@@ -60,7 +60,7 @@ and passed checksum, SPDX, provenance, deterministic-build, doctor, inspection,
 and startup gates without checkout. It remains same-repository evidence with
 `externalUserAttempt: false`.
 
-The current preview is
+The previous preview is
 [`v0.5.10-alpha.40`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.40)
 from commit `d206fe4ef1be9df198d86809742ef480549344b8`. Reproducible tag evidence
 [run 34214224962](https://github.com/0disoft/velox/actions/runs/34214224962),
@@ -84,6 +84,49 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.49 Product Delivery: 2026-09-10
+
+The current preview is
+[`v0.5.10-alpha.49`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.49)
+from commit `b708cdd64fbc489729fb9ba519629fe72ee9242f`.
+[Tag evidence 34453578289](https://github.com/0disoft/velox/actions/runs/34453578289)
+and [publication 34453796476](https://github.com/0disoft/velox/actions/runs/34453796476)
+passed reproducible builds and checkout-free consumption. Publication used
+Go 1.26.8 and published four immutable unsigned assets. The release ZIP is
+3,600,382 bytes with SHA-256
+`236e71ce0fa19bae2b2bb56c44bd1daed1083931d275b64f8a11425d9d1c59fd`.
+
+Changes include File Notes save-snapshot isolation and operation locking,
+`velox run --debug` for source development, corrected Quickstart output paths,
+and ADR 0019 product workflow gates. File Notes remains a repository example;
+the binary release bundle does not newly embed those example sources.
+IPC, database schemas and packaged security defaults are unchanged.
+
+Public-download verification passed in
+[run 34454305875](https://github.com/0disoft/velox/actions/runs/34454305875):
+sidecar and producer-digest checks, version, init, validate, doctor, two
+deterministic builds, inspect and startup all completed without source checkout.
+Evidence artifact `10142809565` has 30-day retention. This remains
+`same-repository-public-download` with `externalUserAttempt: false`.
+The first [verification 34453983275](https://github.com/0disoft/velox/actions/runs/34453983275)
+failed before execution because the expected digest came from the tag producer,
+which used Go 1.26.7, rather than the publication producer, which used Go 1.26.8.
+Both producers passed their own two-build reproducibility checks. The new
+verification uses the publication producer's independently recorded digest;
+no public asset or tag was replaced to hide the mismatch.
+
+Local whole-Go and vet checks passed. File Notes model/application tests passed
+11 cases; normal and debug native sample startup and deterministic builds passed.
+The first final Windows startup smoke failed its 15-second readiness and
+10-second browser-exit bounds. No residual test process was found afterward.
+An unchanged rerun passed: first ready 724 ms, immediate ready 7.161 s, host exit
+55/98 ms, browser exit approximately 6.4 s, profile release 6.446 s. The initial
+intermittent failure remains unexplained; no timeout was relaxed.
+
+This is an unsigned alpha, not beta promotion. Real native picker actions,
+interactive reload, durable draft recovery after restart and broader runtime
+coverage remain unverified under `docs/ops/product-readiness.md`.
+
 ## Proposed Release Unit
 
 During MVP, the CLI, generic host, JavaScript bridge, schemas, and
@@ -95,8 +138,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.40` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.40`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.49` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.49`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, support policy, signing, and publication remain
