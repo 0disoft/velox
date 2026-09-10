@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Diagnostic agent session evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "admission",
+    "sourceFormat",
+    "sourceVersion",
+    "sourceSha256",
+    "sessionIdSha256",
+    "promptSha256",
+    "startedAtUtc",
+    "finishedAtUtc",
+    "state",
+    "observationComplete",
+    "invocations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "velox.agent-session-evidence/v1"
+    },
+    "admission": {
+      "const": "diagnostic-only"
+    },
+    "sourceFormat": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+    },
+    "sourceVersion": {
+      "$ref": "#/$defs/identifier"
+    },
+    "sourceSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sessionIdSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "promptSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "startedAtUtc": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "finishedAtUtc": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "state": {
+      "enum": [
+        "in-progress",
+        "completed",
+        "failed",
+        "aborted"
+      ]
+    },
+    "observationComplete": {
+      "type": "boolean"
+    },
+    "invocations": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "$ref": "#/$defs/invocation"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "in-progress"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "finishedAtUtc": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "finishedAtUtc": {
+            "$ref": "#/$defs/timestamp"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "completed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "invocations": {
+            "items": {
+              "properties": {
+                "status": {
+                  "not": {
+                    "const": "pending"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,79}$"
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "idSha256",
+        "tool",
+        "kind",
+        "inputSha256",
+        "startedAtUtc",
+        "finishedAtUtc",
+        "status",
+        "retryOfSha256"
+      ],
+      "properties": {
+        "idSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "tool": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "enum": [
+            "command",
+            "file-change",
+            "mcp",
+            "web",
+            "browser",
+            "other"
+          ]
+        },
+        "inputSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "startedAtUtc": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "finishedAtUtc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "succeeded",
+            "failed",
+            "cancelled",
+            "denied"
+          ]
+        },
+        "retryOfSha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "pending"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "finishedAtUtc": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "finishedAtUtc": {
+                "$ref": "#/$defs/timestamp"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -17,6 +17,10 @@ or commercial viability.
 
 ## Evaluation Unit
 
+Runner-neutral diagnostic session records are specified separately in
+[Agent Session Evidence](agent-session-evidence.md). They do not replace the
+v1/v2 attestation or satisfy this evaluation's beta gate.
+
 One trial uses:
 
 - one fresh LLM session with no conversation or memory carryover;

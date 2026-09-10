@@ -478,7 +478,7 @@ test("runs attestation and removes the temporary Hermes database after superviso
       sequence: plan.sequence,
       promptSha256: sha(Buffer.from(promptBody)),
       stateDatabaseSha256: sha(await readFile(plan.stateDatabasePath)),
-      supervisorVersion: "0.5.10-alpha.44",
+      supervisorVersion: "0.5.10-alpha.45",
     }), null, 2)}\n`, "utf8");
     return 0;
   });
