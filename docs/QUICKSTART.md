@@ -66,11 +66,16 @@ Create all project and output files under this clean working directory:
 & $Velox version --json
 & $Velox init .\work\hello --json
 & $Velox validate --config .\work\hello\velox.json --json
-& $Velox doctor --config .\work\hello\velox.json --out .\work\doctor --json
-& $Velox build --config .\work\hello\velox.json --out .\work\dist --json
+& $Velox doctor --config .\work\hello\velox.json --out ..\doctor --json
+& $Velox build --config .\work\hello\velox.json --out ..\dist --json
 & $Velox inspect .\work\dist\dev.velox.hello.zip --json
-& $Velox run --config .\work\hello\velox.json --out .\work\run --json
+& $Velox run --config .\work\hello\velox.json --out ..\run --json
 ```
+
+Relative `--config` and `inspect` paths start from your current working
+directory. Relative `--out` paths start from the project directory containing
+`velox.json`. Here, `..\dist` therefore selects `work/dist`, not
+`work/hello/work/dist`. An absolute `--out` path is also supported.
 
 `run` stays attached to the desktop application. Close the application window
 to let the command finish. A visible window alone is not proof of usable
