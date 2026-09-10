@@ -23,6 +23,23 @@
   let pendingAction = null;
   let draftTimer = null;
   let draftWrites = Promise.resolve();
+  let fileActionPending = true;
+
+  function setBusy(busy, freezeEditor = false) {
+    fileActionPending = busy;
+    for (const button of [elements.create, elements.open, elements.save, elements.saveAs]) button.disabled = busy;
+    elements.editor.readOnly = busy && freezeEditor;
+  }
+
+  async function performFileAction(action, freezeEditor = false) {
+    if (fileActionPending) return;
+    setBusy(true, freezeEditor);
+    try {
+      await action();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function render() {
     const dirty = model.isDirty(state);
@@ -79,26 +96,28 @@
     }
   }
 
-  async function writeDocument(handle) {
+  async function writeDocument(handle, snapshot) {
     const permission = await handle.queryPermission({ mode: "readwrite" });
     if (permission !== "granted" && await handle.requestPermission({ mode: "readwrite" }) !== "granted") {
       throw new Error("Write permission was not granted.");
     }
     const writable = await handle.createWritable();
     try {
-      await writable.write(state.text);
+      await writable.write(snapshot.text);
       await writable.close();
     } catch (error) {
       await writable.abort().catch(() => {});
       throw error;
     }
-    state = model.markSaved(state, handle.name, handle, new Date().toISOString());
+    // Editing may continue during a write; only the submitted text reached disk.
+    state = { ...model.markSaved(snapshot, handle.name, handle, new Date().toISOString()), text: state.text };
     render();
     queueDraftSave();
     announce(`${state.name} saved.`);
   }
 
   async function saveAsDocument() {
+    const snapshot = { ...state };
     if (typeof window.showSaveFilePicker !== "function") {
       announce("This WebView2 runtime does not expose the save picker.");
       return;
@@ -108,7 +127,7 @@
         suggestedName: state.name,
         types: [{ description: "Markdown", accept: { "text/markdown": [".md"], "text/plain": [".txt"] } }],
       });
-      await writeDocument(handle);
+      await writeDocument(handle, snapshot);
     } catch (error) {
       announce(error.name === "AbortError" ? "Save canceled." : `Save failed: ${error.message}`);
     }
@@ -120,7 +139,7 @@
       return;
     }
     try {
-      await writeDocument(state.handle);
+      await writeDocument(state.handle, { ...state });
     } catch (error) {
       announce(`Save failed: ${error.message}`);
     }
@@ -136,6 +155,7 @@
   }
 
   function requestDestructiveAction(action) {
+    if (fileActionPending) return;
     if (!model.isDirty(state)) {
       action();
       return;
@@ -149,10 +169,10 @@
     render();
     queueDraftSave();
   });
-  elements.create.addEventListener("click", () => requestDestructiveAction(createDocument));
-  elements.open.addEventListener("click", () => requestDestructiveAction(openDocument));
-  elements.save.addEventListener("click", saveDocument);
-  elements.saveAs.addEventListener("click", saveAsDocument);
+  elements.create.addEventListener("click", () => requestDestructiveAction(() => performFileAction(createDocument)));
+  elements.open.addEventListener("click", () => requestDestructiveAction(() => performFileAction(openDocument, true)));
+  elements.save.addEventListener("click", () => performFileAction(saveDocument));
+  elements.saveAs.addEventListener("click", () => performFileAction(saveAsDocument));
   elements.discardDialog.addEventListener("close", () => {
     const action = pendingAction;
     pendingAction = null;
@@ -182,10 +202,12 @@
   }
 
   function reportReady() {
+    setBusy(false);
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (typeof window.__veloxReady === "function") window.__veloxReady("dom-2raf");
     }));
   }
 
+  setBusy(true, true);
   restore().finally(reportReady);
 })();
