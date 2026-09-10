@@ -182,12 +182,12 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"| R-008 | Full benchmark CI consumes excessive Actions resources | Medium | Medium | Mitigated |",
 		"| R-010 | External WebView2 policy or runtime availability blocks users | Medium | High | Mitigated |",
 		"public-download verifier exercised the supported path",
-		"ADR 0018 permits agent-evaluated beta readiness",
+		"ADR 0019 requires product workflow readiness",
 		"| R-019 | LLM evaluation overfits the maintainer prompt or one model family | High | High | Monitoring |",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "product", "01-roadmap.md"), []string{
 		"maintenance-cost record, internal security review, and public M4 distribution",
-		"evidence gate revised by ADR 0018",
+		"evidence gate revised by ADR 0019",
 		"three consecutive clean-room LLM agent",
 		"No qualifying LLM trial series",
 		"public identity decision is complete under ADR 0015",
@@ -252,13 +252,13 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"independent-user adoption evidence is recorded",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "ops", "00-operational-contract.md"), []string{
-		"Narrow alpha active; beta gated by clean-room LLM agent evaluation",
+		"Narrow alpha active; beta gated by product workflows",
 		"29714173324",
 		"29715002921",
 		"29736140250",
 		"externalUserAttempt: false",
 		"29806946109",
-		"three consecutive clean-room LLM agent trials",
+		"Unverified native picker and recovery checks keep beta held",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0017-continue-as-a-narrow-static-packager.md"), []string{
 		"Status: Accepted",
@@ -270,7 +270,7 @@ func TestM5ReadinessDocumentsStaySynchronized(t *testing.T) {
 		"disabled and skipped",
 	})
 	assertSourceMarkers(t, filepath.Join(root, "docs", "adr", "0018-use-clean-room-llm-agent-evaluation.md"), []string{
-		"Status: Accepted",
+		"Status: Superseded for channel admission by ADR 0019",
 		"Supersedes in part",
 		"Replace the uncontrollable human-attempt requirement",
 		"three consecutive passing trials",

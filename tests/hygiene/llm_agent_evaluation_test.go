@@ -193,7 +193,7 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 		},
 		filepath.Join(root, "docs", "ops", "llm-agent-evaluation.md"): {
 			"V2 enforced sandbox path implemented",
-			"beta held pending a qualifying three-trial series",
+			"optional historical evaluation contract",
 			"run-sandbox",
 			"values are never",
 			"deletes the temporary exported database",
@@ -210,7 +210,7 @@ func TestLLMAgentTaskAndDecisionStayBounded(t *testing.T) {
 			"never replaces a",
 		},
 		filepath.Join(root, "docs", "adr", "0018-use-clean-room-llm-agent-evaluation.md"): {
-			"Status: Accepted",
+			"Status: Superseded for channel admission by ADR 0019",
 			"Supersedes in part",
 			"three consecutive passing trials",
 			"humanAdoptionClaim` to `false",

@@ -1,6 +1,6 @@
 # Velox
 
-- Status: M4 complete; M5 narrow alpha active; beta gated by clean-room LLM agent evaluation with no human adoption claim
+- Status: M4 complete; M5 narrow alpha active; beta gated by product workflows with no human adoption claim
 - Scope: general
 - Repository type: cli-tool
 
@@ -43,8 +43,8 @@ and public-download verification
 passed. The public ZIP SHA-256 is
 `771173b6eec2f74d92228e7ac5b52332160b0f9fb4d7baecf01976864a00f8c8`.
 This candidate includes retained-callback ownership and partial-initialization
-hardening. The qualifying three-trial clean-room series has not run; this
-release is not a beta promotion or human-adoption claim.
+hardening. This release is not a beta promotion or human-adoption claim.
+Current channel requirements are in [Product Readiness](docs/ops/product-readiness.md).
 
 Start with the [Velox Release Quickstart](docs/QUICKSTART.md) to verify and use
 an immutable public release without a source checkout or consumer toolchain.
@@ -168,9 +168,9 @@ separate public clean-room consumer repository.
 Deterministic signing-input, lineage, and
 fail-closed Authenticode verification tooling remain dormant for a future
 signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
-0017 continues the narrow alpha, and ADR 0018 replaces the calendar-dependent
-human beta gate with versioned clean-room LLM agent evaluation. Passing that
-gate will not claim human adoption. Provider-approved signing and authenticated
+0017 continues the narrow alpha, and ADR 0019 replaces mandatory AI evaluation
+with product workflow gates. AI evaluation is optional and cannot authorize
+beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
 `0.5.10-alpha.40`.
 Neither same-repository verification nor the maintainer-controlled consumer

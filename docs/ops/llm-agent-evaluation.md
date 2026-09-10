@@ -1,10 +1,17 @@
 # Clean-Room LLM Agent Evaluation
 
-- Status: V2 enforced sandbox path implemented; beta held pending a qualifying three-trial series
+- Status: V2 enforced sandbox path implemented; optional historical evaluation contract
 - Owner: Project maintainer
 - Decision: ADR 0018
 
 ## Purpose
+
+ADR 0019 supersedes this document's channel-admission role. The evaluation
+rules and legacy `betaTechnicalGate` fields below retain their ADR 0018 meaning,
+but cannot approve current beta readiness. See [Product Readiness](product-readiness.md).
+No additional session adapter or model-routing integration is required.
+
+## Historical Evaluation Purpose
 
 Velox cannot schedule when an unrelated person will volunteer to test an alpha.
 The beta technical-readiness gate therefore uses fresh coding-agent sessions to

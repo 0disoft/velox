@@ -1,6 +1,6 @@
 # Validation
 
-- Status: M4 complete; M5 narrow alpha active; beta gated by clean-room LLM agent evaluation with no human adoption claim
+- Status: M4 complete; M5 narrow alpha active; beta gated by product workflows with no human adoption claim
 
 ## Validation Source of Truth
 
@@ -226,7 +226,13 @@ version, observation boundary, non-claim language, roadmap synchronization,
 and the unsigned-preview security baseline. The security review remains
 internal and does not replace external-user evidence.
 
-ADR 0018 replaces the uncontrollable human-attempt beta gate with three
+ADR 0019 now owns channel admission through `docs/ops/product-readiness.md`.
+The required checks cover public consumption, File Notes behavior, development
+reload, Windows lifecycle, security and data integrity. AI evaluation is
+optional. Real native picker, interactive reload and persistence checks remain
+unverified; unit tests and native startup do not substitute for them.
+
+Historically, ADR 0018 replaced the uncontrollable human-attempt beta gate with three
 consecutive clean-room LLM agent trials across at least two model identifiers.
 The versioned task is `evals/llm-agent/v1/task.md`; each trial must conform to
 `schema/llm-agent-evaluation-v1.schema.json`, preserve failed and held outcomes,

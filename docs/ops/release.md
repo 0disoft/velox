@@ -70,8 +70,8 @@ and public-download verification
 passed. The publication artifact and public ZIP both have SHA-256
 `771173b6eec2f74d92228e7ac5b52332160b0f9fb4d7baecf01976864a00f8c8`.
 All four required assets are public. The candidate contains the callback
-lifetime and initialization fixes recorded in the COM review. No qualifying
-three-trial LLM series has run against it, so beta remains held.
+lifetime and initialization fixes recorded in the COM review. Beta remains
+held under the product workflow checklist in `docs/ops/product-readiness.md`.
 
 The now-archived public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)
@@ -97,10 +97,10 @@ exists.
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
 published preview and `0.5.10-alpha.40` is the current unsigned developer preview
 at immutable tag `v0.5.10-alpha.40`. Public artifacts and executables use the
-Velox identity fixed by ADR 0015. ADR 0018 defines the clean-room LLM agent evidence required
-before beta technical readiness. Actual beta or stable promotion, support
-policy, signing, and publication remain separate maintainer decisions after
-the qualifying trial set exists.
+Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
+required before beta technical readiness. AI evaluation is optional. Actual
+beta or stable promotion, support policy, signing, and publication remain
+separate maintainer decisions after those checks pass.
 
 Nightly distribution is not planned during the initial project stage.
 

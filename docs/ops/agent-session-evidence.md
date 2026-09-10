@@ -6,7 +6,8 @@
 The schema is in `schema/agent-session-evidence-v1.schema.json`; structural and
 cross-record checks are implemented in `scripts/agent-session-evidence.ts`.
 This is not an evaluator, log extractor, or a new attestation admission path.
-Existing v1/v2 evaluation and ADR 0018 qualification requirements are unchanged.
+Existing v1/v2 evaluation validators are unchanged. ADR 0019 makes that
+evaluation optional and moves channel admission to the product workflow gates.
 
 ## Counting Unit
 

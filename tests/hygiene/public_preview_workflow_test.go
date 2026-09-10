@@ -141,8 +141,8 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	}
 
 	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-alpha.48"`) {
-		t.Fatal("local development version is not alpha.48")
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.49"`) {
+		t.Fatal("local development version is not alpha.49")
 	}
 }
 
@@ -178,7 +178,7 @@ func TestExternalAttemptIssueContractRequiresIdentityAndSafeEvidence(t *testing.
 func TestM4CleanRoomEvidenceDoesNotClaimIndependentAdoption(t *testing.T) {
 	checks := map[string][]string{
 		"README.md": {
-			"Status: M4 complete; M5 narrow alpha active; beta gated by clean-room LLM agent evaluation with no human adoption claim",
+			"Status: M4 complete; M5 narrow alpha active; beta gated by product workflows with no human adoption claim",
 			"0disoft/velox-consumer-smoke",
 			"29736140250",
 			"maintainerControlled: true",

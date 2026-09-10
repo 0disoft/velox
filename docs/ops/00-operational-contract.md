@@ -1,6 +1,6 @@
 # Operational Contract
 
-- Status: Narrow alpha active; beta gated by clean-room LLM agent evaluation
+- Status: Narrow alpha active; beta gated by product workflows
 - Primary owner: Project maintainer
 
 ## Product Shape
@@ -96,11 +96,9 @@ passed release reproducibility and checkout-free consumption for commit
 not authorize a Go application backend, broad native APIs, beta, or stable
 distribution.
 
-ADR 0018 removes an unknown human volunteer from the technical beta schedule.
-Beta now requires three consecutive clean-room LLM agent trials across at least
-two model identifiers. Every result remains maintainer-orchestrated and fixes
-the human-adoption claim to false. Voluntary human attempts remain market
-evidence, not a technical release gate.
-The Windows AppContainer and Job Object supervisor and v2 attestation path are
-implemented. No qualifying three-trial series has been recorded, so the active
-channel remains alpha.
+ADR 0019 replaces mandatory model trials with product workflow gates in
+`docs/ops/product-readiness.md`. Public-release consumption, file behavior,
+development reload, native lifecycle and data/security checks own readiness.
+AI evaluation is optional; its old v2 verdict does not approve the channel.
+Unverified native picker and recovery checks keep beta held. Voluntary human
+attempts remain market evidence; maintainer checks do not claim human adoption.

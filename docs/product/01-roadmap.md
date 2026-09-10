@@ -233,9 +233,10 @@ preparation remains fail-closed and dormant.
 
 ## M5: Product Decision
 
-Status: Decision complete under ADR 0017 and evidence gate revised by ADR 0018.
-Continue as a narrow static desktop packager in alpha. Beta now requires
-clean-room LLM agent evaluation; no human adoption claim is recorded.
+Status: Decision complete under ADR 0017 and evidence gate revised by ADR 0019.
+Continue as a narrow static desktop packager in alpha. Beta requires the
+product workflows in `docs/ops/product-readiness.md`; AI evaluation is optional,
+and no human adoption claim is recorded.
 
 Choose one:
 
@@ -251,7 +252,7 @@ counterarguments.
 The Wails cold-build result, two accepted M3 product decisions, bounded
 maintenance-cost record, internal security review, and public M4 distribution
 evidence supplied the M5 inputs. ADR 0017 accepts continued alpha work only
-inside the existing static and browser-owned boundary. ADR 0018 replaces the
+inside the existing static and browser-owned boundary. Historically, ADR 0018 replaced the
 calendar-dependent human gate with three consecutive clean-room LLM agent
 trials across at least two model identifiers. The human-attempt count remains
 zero and remains negative market evidence; an agent pass must not be described
@@ -264,8 +265,8 @@ value.
 No qualifying LLM trial series is recorded yet. The Windows AppContainer and
 Job Object supervisor, isolated Hermes state export, v2 attestation contract,
 and `stage`/`attest-sandbox` path are implemented and locally verified. Beta
-remains held until three consecutive real v2 trials against one immutable
-public release pass across at least two model identifiers. The public task,
+was held under ADR 0018 until three real v2 trials passed. ADR 0019 supersedes
+that channel gate; unverified product workflows now keep beta held. The public task,
 trial result schema, pass, fail, and held semantics, contamination controls,
 and privacy boundary are versioned under `evals/llm-agent/v1`, `schema`, and
 `docs/ops/llm-agent-evaluation.md`.

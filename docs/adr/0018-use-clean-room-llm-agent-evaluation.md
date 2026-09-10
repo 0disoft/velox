@@ -1,6 +1,6 @@
 # ADR 0018: Use clean-room LLM agent evaluation for beta readiness
 
-- Status: Accepted
+- Status: Superseded for channel admission by ADR 0019; evaluation contract retained
 - Date: 2026-07-22
 - Owner: Project maintainer
 - Supersedes in part: the beta and stable admission evidence clause in ADR 0017

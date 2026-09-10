@@ -1,11 +1,15 @@
 # Beta Preflight: 2026-09-09
 
-- Status: Public lifecycle and hosted source-fork cancellation passed; qualifying LLM series held.
+- Status: Historical preflight evidence; current beta checklist is product-readiness.md.
 - Release under test: unsigned `v0.5.10-alpha.40`.
 - Scope: bounded native lifecycle evidence and local provider reachability,
   not beta promotion or human adoption evidence.
 
 ## Public Windows Lifecycle
+
+ADR 0019 supersedes the LLM prerequisites recorded below. Retain these results
+as historical evidence; they do not approve beta or require further provider
+integration. Current gaps are tracked in [Product Readiness](product-readiness.md).
 
 [Hosted run 34324755280](https://github.com/0disoft/velox/actions/runs/34324755280)
 passed on measurement revision `572d8386eaf5978fb8fba0a060f603ec15ce427f`.

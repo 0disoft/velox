@@ -83,10 +83,10 @@ channel work; sidecar metadata alone is not a trust anchor.
 
 ADR 0017 continues alpha development as a narrow static desktop packager. It
 does not approve an application-specific Go backend or a broader native
-capability surface. ADR 0018 makes clean-room LLM agent evaluation the beta
-technical gate while fixing every trial's human-adoption claim to false.
-Passing agent trials do not prove market demand.
-The qualifying evaluation path uses a maintainer-built Windows AppContainer
+capability surface. ADR 0019 makes product workflows the beta technical gate;
+AI evaluation is optional and does not approve a channel. The checklist is
+`docs/ops/product-readiness.md`. Passing checks does not prove market demand.
+The retained historical evaluation path uses a maintainer-built Windows AppContainer
 supervisor and no-breakaway Job Object. This maintainer tool is not shipped in
 the consumer release bundle and does not expand the application runtime API.
 
