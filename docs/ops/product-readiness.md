@@ -145,6 +145,25 @@ input delivery versus application behavior was not isolated. The third session
 also reached its deadline. These timeouts are harness cleanup events, not
 evidence of a runtime crash or graceful lifecycle success.
 
+### Input Delivery Investigation: 2026-09-11
+
+A ninety-second passive DOM probe ran against a copy of the denied-write
+test profile with the same public alpha.51 host. All eighteen CDP samples
+returned successfully, without evaluation exceptions; the document command
+buttons remained enabled. The native automation tool was asked to click
+Save as, but the captured trusted pointer/mouse/click sequence targeted
+`HEADER`, not `save-as-document`. No save-button click was recorded. Focus
+also changed during observation, and a later screenshot was occluded by
+another foreground application; no input was sent to that application.
+
+This isolates the observed attempt to input targeting before the save
+handler, not a reproduced save-handler failure. It does not establish the
+underlying coordinate/focus cause or prove that every earlier attempt failed
+for the same reason. Keyboard and manual-click comparison remain unverified.
+No runtime fix or permission reset was applied. The temporary probe was
+removed after collecting evidence and its process tree was stopped. A real
+post-denial save remains required before completing that readiness check.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
