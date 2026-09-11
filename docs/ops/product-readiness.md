@@ -8,9 +8,9 @@
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | Refresh for the next public candidate |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.51 public verification run 34585168947 passed; exact source and digest are recorded in release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Maintainer confirmed Save, Save as and restart recovery on alpha.51; native cancellation and denied-consent recovery remain separate checks |
-| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | CLI debug forwarding and native debug startup pass; interactive reload remains unverified |
+| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Private-profile CDP normal reload updated HTML, CSS and JS with stable origin; an earlier smoke failure remains unexplained |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | alpha.40 public lifecycle and hosted source-fork cancellation are historical evidence, not proof for a new ZIP |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
@@ -60,7 +60,7 @@ state 2 (DENY) to trusted-origin kind 8 / state 0 (DEFAULT). The user completed
 Save as in the diagnostic app; the UI reported Saved to file and the resulting
 file existed on disk. The original profile Preferences digest was unchanged.
 Diagnostic instrumentation was an uncommitted Go overlay, not release code.
-The public alpha.49 release is unchanged.
+The immutable public alpha.49 release was not modified by this repair.
 
 ### Maintainer Confirmation: 2026-09-11
 
@@ -79,8 +79,31 @@ permissions. Native cancellation and denied-consent recovery are still pending;
 complete real picker and persistence checks remain unverified until those
 remaining paths are covered. Use a disposable profile for a native denial test.
 
-This update changes evidence and tests only. The runtime stays at alpha.51;
-no public release, beta promotion or application/profile change is included.
+That confirmation update changed evidence and tests only. The runtime stayed
+at alpha.51; publication followed separately as recorded below.
+
+### Alpha.51 Delivery and Source Reload: 2026-09-11
+
+The unsigned alpha.51 release pins source
+`f18d7f3958c136b1f673b93255916771db3cde15`. Tag evidence run 34584656621,
+publication run 34584828937 and public download verification run 34585168947
+passed. The published ZIP digest and independent provenance binding are
+recorded in `docs/ops/release.md`. This is same-repository consumer evidence,
+not an external user attempt or beta approval.
+
+A local `velox run --debug` smoke copied File Notes into a disposable project
+and used a private profile. After modifying HTML, CSS and JavaScript, a normal
+CDP Page.reload updated all three rendered probes while preserving origin.
+Hard reload was not needed in that successful run. The smoke did not modify
+the maintainer's open application, original project or profile.
+
+An earlier run failed the combined reload condition before recording its
+rendered state. The diagnostic was improved to retain normal and hard reload
+results, and the next run passed normal reload. The first failure remains
+unexplained; this is one successful browser-driven reload, not proof of
+reliable repeated reload or a manually exercised keyboard shortcut. No
+runtime reload fix was made. Native save cancellation, denied-consent recovery
+and current-artifact lifecycle checks still keep beta held.
 
 ## Optional Evidence
 

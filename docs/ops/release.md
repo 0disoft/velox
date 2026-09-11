@@ -5,7 +5,7 @@
 
 ## Current State
 
-Velox has four published unsigned developer previews and no package registry
+Velox distributes unsigned developer previews and has no package registry
 entry, implemented signing workflow, or stable version policy. Maintainer tooling builds the Go CLI and
 host, assembles the deterministic unsigned Windows x64 bundle, verifies
 artifact entries against the release manifest, and emits checksums, a
@@ -86,7 +86,7 @@ the repository-owned public-preview workflow instead of advancing that pin.
 
 ## Alpha.49 Product Delivery: 2026-09-10
 
-The current preview is
+The previous preview is
 [`v0.5.10-alpha.49`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.49)
 from commit `b708cdd64fbc489729fb9ba519629fe72ee9242f`.
 [Tag evidence 34453578289](https://github.com/0disoft/velox/actions/runs/34453578289)
@@ -127,6 +127,34 @@ This is an unsigned alpha, not beta promotion. Real native picker actions,
 interactive reload, durable draft recovery after restart and broader runtime
 coverage remain unverified under `docs/ops/product-readiness.md`.
 
+## Alpha.51 File Consent Delivery: 2026-09-11
+
+The current preview is
+[`v0.5.10-alpha.51`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.51)
+from source `f18d7f3958c136b1f673b93255916771db3cde15`.
+[Tag evidence 34584656621](https://github.com/0disoft/velox/actions/runs/34584656621)
+and [publication 34584828937](https://github.com/0disoft/velox/actions/runs/34584828937)
+passed independent two-build reproducibility and checkout-free consumption.
+Four unsigned assets were published without replacing an existing release.
+The ZIP is 3,601,844 bytes with SHA-256
+`a2beb179266861be018fea9366eb6be201ede502515a97f0fcacb964ad0dc72a`.
+
+[Public verification 34585168947](https://github.com/0disoft/velox/actions/runs/34585168947)
+downloaded the published assets and passed checksum, sidecar, version, init,
+validate, doctor, deterministic build, inspect and startup checks without a
+source checkout. Its expected digest came from the successful publication
+Actions artifact, whose provenance was checked against the tagged source.
+The separate tag producer was not used as a substitute for those bytes.
+
+The runtime now leaves trusted-origin FileReadWrite requests to browser
+activation checks and consent even while serialized handles are restored.
+It does not automatically grant permission or change the native IPC table.
+The maintainer confirmed saving and restart recovery locally; native negative
+permission and cancellation checks remain distinct. File Notes is still a
+repository example, not a newly bundled application. There is no signing,
+independent-adoption or beta claim. See `docs/ops/product-readiness.md` for
+the remaining product checks and development reload results.
+
 ## Proposed Release Unit
 
 During MVP, the CLI, generic host, JavaScript bridge, schemas, and
@@ -138,8 +166,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.49` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.49`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.51` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.51`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, support policy, signing, and publication remain
