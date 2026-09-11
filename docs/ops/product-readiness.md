@@ -9,7 +9,7 @@
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
 | Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.51 public verification run 34585168947 passed; exact source and digest are recorded in release.md |
-| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Maintainer confirmed Save, Save as and restart recovery on alpha.51; native cancellation and denied-consent recovery remain separate checks |
+| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection and post-denial draft restoration passed; post-denial successful saving remains pending |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Private-profile CDP normal reload updated HTML, CSS and JS with stable origin; an earlier smoke failure remains unexplained |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | alpha.40 public lifecycle and hosted source-fork cancellation are historical evidence, not proof for a new ZIP |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
@@ -104,6 +104,46 @@ unexplained; this is one successful browser-driven reload, not proof of
 reliable repeated reload or a manually exercised keyboard shortcut. No
 runtime reload fix was made. Native save cancellation, denied-consent recovery
 and current-artifact lifecycle checks still keep beta held.
+
+### Native Save Cancellation: 2026-09-11
+
+An isolated session used the checksum-verified public alpha.51 ZIP, the
+repository File Notes example and a fresh private profile. A real Save as
+dialog was canceled with Escape. The editor retained the complete probe,
+showed `Unsaved changes` and `Save canceled.`, and re-enabled its commands.
+The subsequent Save opened another native picker and wrote `retry.md` in the
+disposable test directory. The UI showed `Saved to file`; a separate disk
+read confirmed the exact probe content.
+
+Opening and editing the disposable `input.md` then clicking Save displayed
+the browser's native write-consent prompt. The original file remained
+unchanged while awaiting consent. Permission prompt choices require a human;
+the agent did not grant, deny or reset permissions. At that point, denial and
+later recovery were unverified; subsequent observations follow below.
+
+The initial session hit its six-minute deadline while awaiting the manual
+permission choice and was terminated by the wrapper. This is not a graceful
+shutdown pass. Relaunching the same private profile restored the unsaved
+63-character draft and its filename. Save then displayed the browser's
+restored-file permission prompt; no permission choice is inferred from that
+successful draft restoration.
+
+The maintainer subsequently allowed the restored-file prompt, and `input.md`
+saved successfully. A separate disposable README copy was opened and edited
+to exercise a new write-consent request. The maintainer canceled that request;
+the UI reported `Save failed: Write permission was not granted.` while
+retaining the 783-character dirty draft. The on-disk copy's SHA-256 still
+matched the source example README. This is observed native denied-write
+protection, not an API double.
+
+The second bounded session also reached its deadline. A third launch restored
+the denied-write draft and its probe unchanged. Automated Save and Save as
+clicks did not visibly advance the UI in that session; successful saving after
+denial remains unverified. Automated title-bar and keyboard close attempts
+also produced no visible change, while Windows reported the host responding;
+input delivery versus application behavior was not isolated. The third session
+also reached its deadline. These timeouts are harness cleanup events, not
+evidence of a runtime crash or graceful lifecycle success.
 
 ## Optional Evidence
 
