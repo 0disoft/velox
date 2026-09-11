@@ -75,8 +75,14 @@ test("saving a snapshot never marks edits made during the write as saved", async
   expect(reopened.node("#save-state").textContent).toBe("Unsaved changes");
 });
 
-test("save picker cancellation preserves the draft", async () => {
-  const ui = harness({ save: async () => { throw Object.assign(new Error("cancel"), { name: "AbortError" }); } });
+test("save picker cancellation preserves the draft and permits a later save", async () => {
+  let canceled = true;
+  let written = "";
+  const handle = { name: "retry.md", queryPermission: async () => "granted", createWritable: async () => ({ write: async (text: string) => { written = text; }, close: async () => {} }) };
+  const ui = harness({ save: async () => {
+    if (canceled) throw Object.assign(new Error("cancel"), { name: "AbortError" });
+    return handle;
+  } });
   await ui.ready;
   ui.edit("keep me");
   await ui.click("save-as-document");
@@ -84,17 +90,37 @@ test("save picker cancellation preserves the draft", async () => {
   expect(ui.node("#editor").value).toBe("keep me");
   expect(ui.unload()).toBe(true);
   expect(ui.node("#save-document").disabled).toBe(false);
+  expect((await ui.flushDraft()).text).toBe("keep me");
+  canceled = false;
+  ui.edit("keep me after cancel");
+  await ui.click("save-as-document");
+  expect(written).toBe("keep me after cancel");
+  expect(ui.node("#save-state").textContent).toBe("Saved to file");
+  expect(ui.unload()).toBe(false);
 });
 
-test("denied write permission never opens a writable stream", async () => {
+test("denied write permission preserves edits and permits retry when the browser grants access", async () => {
   let writes = 0;
-  const ui = harness({ save: async () => ({ name: "note.md", queryPermission: async () => "prompt", requestPermission: async () => "denied", createWritable() { writes++; } }) });
+  let permission = "denied";
+  let written = "";
+  const ui = harness({ save: async () => ({ name: "note.md", queryPermission: async () => "prompt", requestPermission: async () => permission, createWritable: async () => { writes++; return { write: async (text: string) => { written = text; }, close: async () => {} }; } }) });
   await ui.ready;
   ui.edit("keep me");
   await ui.click("save-document");
   expect(writes).toBe(0);
   expect(ui.node("#status").textContent).toContain("Write permission was not granted");
   expect(ui.unload()).toBe(true);
+  expect(ui.node("#editor").value).toBe("keep me");
+  expect(ui.node("#save-document").disabled).toBe(false);
+  expect((await ui.flushDraft()).text).toBe("keep me");
+  // Model a later browser grant; the application must not override a denial.
+  permission = "granted";
+  ui.edit("keep me after denial");
+  await ui.click("save-document");
+  expect(writes).toBe(1);
+  expect(written).toBe("keep me after denial");
+  expect(ui.node("#save-state").textContent).toBe("Saved to file");
+  expect(ui.unload()).toBe(false);
 });
 
 test("failed close aborts the stream and retains unsaved text", async () => {

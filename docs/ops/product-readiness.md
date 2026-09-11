@@ -9,7 +9,7 @@
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
 | Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | Refresh for the next public candidate |
-| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | alpha.51 fixes restored-handle permission denial; a copied-profile Save as completed locally, but complete real picker and persistence checks remain unverified |
+| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Maintainer confirmed Save, Save as and restart recovery on alpha.51; native cancellation and denied-consent recovery remain separate checks |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | CLI debug forwarding and native debug startup pass; interactive reload remains unverified |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | alpha.40 public lifecycle and hosted source-fork cancellation are historical evidence, not proof for a new ZIP |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
@@ -60,8 +60,27 @@ state 2 (DENY) to trusted-origin kind 8 / state 0 (DEFAULT). The user completed
 Save as in the diagnostic app; the UI reported Saved to file and the resulting
 file existed on disk. The original profile Preferences digest was unchanged.
 Diagnostic instrumentation was an uncommitted Go overlay, not release code.
-Save-to-existing, cancellation, denied consent and subsequent restart recovery
-still need full manual coverage. The public alpha.49 release is unchanged.
+The public alpha.49 release is unchanged.
+
+### Maintainer Confirmation: 2026-09-11
+
+The maintainer confirmed that saving worked in the normal alpha.51 app, then
+confirmed close/reopen recovery. This records user-reported manual evidence
+for Save, Save as and restart recovery, separately from the copied-profile
+diagnostic and automated tests. Those successful paths do not need another
+repeat solely to update this record.
+
+The existing application tests additionally verify that canceling a save
+picker retains the draft and permits a later save, and that denied permission
+opens no writable stream, preserves edits and permits retry when the browser
+later grants access. These are browser API doubles, not native permission UI
+evidence. The application does not override a browser denial or reset profile
+permissions. Native cancellation and denied-consent recovery are still pending;
+complete real picker and persistence checks remain unverified until those
+remaining paths are covered. Use a disposable profile for a native denial test.
+
+This update changes evidence and tests only. The runtime stays at alpha.51;
+no public release, beta promotion or application/profile change is included.
 
 ## Optional Evidence
 
