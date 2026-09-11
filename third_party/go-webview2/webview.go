@@ -102,8 +102,8 @@ type WebViewOptions struct {
 	// default. Callers should opt out only when they own a narrower policy.
 	DenyAllPermissions bool
 
-	// FileSystemAccessAllowed permits browser-managed consent for user-initiated
-	// file read/write requests from an accepted origin, even with default denial.
+	// FileSystemAccessAllowed preserves browser activation checks and consent for
+	// file read/write requests from an accepted origin, including restored handles.
 	// It never grants permission itself. Nil keeps the default permission policy.
 	FileSystemAccessAllowed func(origin string) bool
 

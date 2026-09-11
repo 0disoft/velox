@@ -11,19 +11,10 @@ import (
 )
 
 func (e *Chromium) fileSystemAccessUsesBrowserConsent(args *iCoreWebView2PermissionRequestedEventArgs) bool {
-	var userInitiated int32
-	result, _, _ := args.vtbl.GetIsUserInitiated.Call(
-		uintptr(unsafe.Pointer(args)), uintptr(unsafe.Pointer(&userInitiated)),
-	)
-	if err := hresult(result); err != nil {
-		e.setPolicyError(fmt.Errorf("read permission user gesture: %w", err))
-		return false
-	}
-	if userInitiated != 1 {
-		return false
-	}
+	// Restoring serialized handles can raise requests without a gesture.
+	// DEFAULT leaves activation checks and consent to the browser; it is not ALLOW.
 	var uri *uint16
-	result, _, _ = args.vtbl.GetURI.Call(
+	result, _, _ := args.vtbl.GetURI.Call(
 		uintptr(unsafe.Pointer(args)), uintptr(unsafe.Pointer(&uri)),
 	)
 	if err := hresult(result); err != nil {

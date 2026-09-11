@@ -9,7 +9,7 @@
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
 | Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | Refresh for the next public candidate |
-| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Manual testing found Save and Save as blocked by host permission denial; alpha.50 corrects the policy, but real picker and persistence checks remain unverified |
+| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | alpha.51 fixes restored-handle permission denial; a copied-profile Save as completed locally, but complete real picker and persistence checks remain unverified |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | CLI debug forwarding and native debug startup pass; interactive reload remains unverified |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | alpha.40 public lifecycle and hosted source-fork cancellation are historical evidence, not proof for a new ZIP |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
@@ -43,15 +43,25 @@ with a mock and label the gate complete.
 Manual testing on 2026-09-10 reported `Write permission was not granted` for
 Save and a platform-denied `showSaveFilePicker` call for Save as. The host's
 global permission denial also denied WebView2 FileReadWrite (kind 8).
-The alpha.50 source candidate delegates only user-initiated requests from the
-trusted app origin to browser consent. It does not automatically grant access,
-change the native IPC method table, or clear persisted profiles.
-COM callback tests cover default consent, foreign/missing origins, missing or
-invalid gestures, failed metadata reads, opt-out, and unrelated permissions.
-Actual picker, existing-profile permission recovery, disk writes, cancellation,
-and close/reopen recovery still require manual verification. Do not overwrite
-or close the user's running editor to install this candidate while edits remain
-unsaved. The public alpha.49 release is unchanged.
+The alpha.50 gesture gate was incomplete: on 2026-09-11 a copied existing
+profile emitted FileReadWrite requests with `IsUserInitiated=FALSE` while
+restoring serialized handles. The host denied them before a picker action.
+Clearing the saved write-guard entry alone did not fix this behavior.
+
+The alpha.51 candidate delegates trusted-origin requests to browser DEFAULT
+without treating that flag as an authorization decision. Browser activation
+checks and consent remain in force; the host never returns ALLOW for these
+requests. COM regressions for restored handles failed before the change and
+pass after it. Foreign/missing origins, failed kind/origin reads, opt-out and
+unrelated permissions remain covered.
+
+With a copy of the affected profile, native diagnostics changed from kind 8 /
+state 2 (DENY) to trusted-origin kind 8 / state 0 (DEFAULT). The user completed
+Save as in the diagnostic app; the UI reported Saved to file and the resulting
+file existed on disk. The original profile Preferences digest was unchanged.
+Diagnostic instrumentation was an uncommitted Go overlay, not release code.
+Save-to-existing, cancellation, denied consent and subsequent restart recovery
+still need full manual coverage. The public alpha.49 release is unchanged.
 
 ## Optional Evidence
 
