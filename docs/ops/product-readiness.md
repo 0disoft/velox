@@ -9,7 +9,7 @@
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
 | Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.51 public verification run 34585168947 passed; exact source and digest are recorded in release.md |
-| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection and post-denial draft restoration passed; post-denial successful saving remains pending |
+| File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Private-profile CDP normal reload updated HTML, CSS and JS with stable origin; an earlier smoke failure remains unexplained |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | alpha.40 public lifecycle and hosted source-fork cancellation are historical evidence, not proof for a new ZIP |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
@@ -163,6 +163,27 @@ for the same reason. Keyboard and manual-click comparison remain unverified.
 No runtime fix or permission reset was applied. The temporary probe was
 removed after collecting evidence and its process tree was stopped. A real
 post-denial save remains required before completing that readiness check.
+
+### Manual Post-Denial Save: 2026-09-11
+
+The maintainer reopened the existing isolated alpha.51 session and confirmed
+saving after being asked to use Save as. The new disposable file
+`recovered-after-denial.md` contained exactly the restored 783-character probe
+including `NATIVE-DENIAL-PROBE`, verified against the source example text with
+the observed insertion and normalized editor line endings. Its 783 bytes had
+SHA-256 `a165087afffcb95c18a73e2bb3b8330dac9e8b4e2c01f69fff739a4d524b850b`.
+The session exited with code 0 before its deadline; it was not killed by the
+wrapper. No automated clicks were used in this session.
+
+The disposable original README also contained the same edited text after
+this manual session. Its exact save interaction was not separately observed,
+so this record claims the verified new-file recovery path, not a particular
+same-file permission regrant sequence. The prior unchanged-original check
+applies to the earlier denial instant, not the later manual save session.
+The tracked example was unchanged. This closes the pending post-denial Save
+as check without claiming the input automation coordinate issue is fixed.
+Current-artifact lifecycle stress and repeated reload evidence remain separate
+beta requirements; no runtime change or new release is included.
 
 ## Optional Evidence
 
