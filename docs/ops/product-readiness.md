@@ -185,6 +185,27 @@ as check without claiming the input automation coordinate issue is fixed.
 Current-artifact lifecycle stress and repeated reload evidence remain separate
 beta requirements; no runtime change or new release is included.
 
+### Public Host DPI Diagnosis: 2026-09-12
+
+A fresh extraction of the checksum-verified public alpha.51 ZIP was launched
+with a disposable File Notes project and profile. Read-only Windows queries
+returned process awareness 0 and window awareness 0 (DPI unaware), window DPI
+96, and monitor scale 125 percent. All queried HRESULTs succeeded. The host
+SHA-256 was `2b1da59f1ba61f5aac554a9ee3dc272a6edf42991f628015ddbb56bd275cd0b9`.
+The probe stopped only its own process tree after collecting the result; no
+display, compatibility or permission setting was changed.
+
+This confirms that the public host is DPI unaware on the tested scaled
+display. Windows can bitmap-scale such windows, making this a supported
+explanation for the reported blurred text, rather than evidence that the
+16px editor font itself is too small. See Microsoft's
+[high-DPI guidance](https://learn.microsoft.com/en-us/windows/win32/hidpi/high-dpi-desktop-application-development-on-windows).
+Per-monitor awareness, window resizing on DPI changes and WebView bounds need
+a separate implementation and verification unit. No font or runtime change
+was made in this diagnostic unit. Visual before/after comparison, mixed-DPI
+monitor transitions and any relationship to the earlier automation coordinate
+mismatch remain unverified; no Tauri/Wails parity claim is made.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
