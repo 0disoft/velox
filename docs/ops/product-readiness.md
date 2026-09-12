@@ -309,6 +309,35 @@ release ZIP, File Notes interaction or development reload. Those artifact and
 workflow checks remain separate. No additional unchanged reruns or runtime
 changes were made; alpha.52 publication and beta remain held.
 
+### Pinned Alpha.52 ZIP Lifecycle: 2026-09-12
+
+Three fresh/immediate same-profile pairs passed using the host extracted into
+a new isolated cache directory from the unchanged local candidate ZIP:
+3,605,419 bytes, SHA-256
+`b2cb6b44152a4da5c38ea4925deb53ce4ec4b016418228062b69a88bfce0957c`.
+The extracted host hash was
+`7529e3d80280dbecda8153a7a2a3aa18896010e9275a6ff0ecc32028e522d227`.
+Release identity and every manifest-listed artifact's size and digest were
+checked before execution; ZIP and host digests were unchanged afterward.
+No host rebuild or public download was used.
+
+Harness source `0fc60070f0f3b63811cd9c98c64c5ea67e8ede0d` used the source
+hello fixture and WebView2 152.0.4191.66 on local Windows amd64. Raw v3
+evidence covers 14:18:03-14:18:47 UTC, SHA-256
+`b2311d4b8b3c804523b7fad01a8345939f8652d409c1efde3110b7a004b4c39c`.
+All six hosts reached ready and exited; both browser exits and profile
+removal were observed for every pair. Fresh startup took 574-638 ms,
+immediate startup 7.07-7.21 seconds, host exit 67-170 ms, and profile release
+6.42-7.09 seconds. Total native test time was 43.93 seconds.
+
+The roughly seven-second immediate-startup delay remains a usability concern;
+passing the bounded lifecycle check does not establish performance parity or
+identify the cause of that delay. Earlier intermittent failures remain in the
+record. This is local extracted-host evidence, not File Notes interaction,
+CLI launch, development reload, hosted stress or public-download evidence.
+No additional retries, runtime edits or publication were performed. Reload,
+visual checks and the release decision remain pending; beta stays held.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
