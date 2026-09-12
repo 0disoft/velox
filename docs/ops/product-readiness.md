@@ -257,9 +257,20 @@ lifecycle gate:
   07:49:38-07:52:07 UTC; no hosted-run claim follows from this local check.
 
 Preserve these failures rather than increasing deadlines or replacing them
-with unchanged passing retries. Next isolate browser-exit delay and retain
-the immediate-launch error before deciding whether runtime, fixture or
-environment changes are needed. Publication of alpha.52 remains held;
+with unchanged passing retries. The diagnostic follow-up now logs each failed
+sample's phase, stable error code and underlying cause in the Go test log;
+the v3 JSON shape remains unchanged. Known workspace, temporary and user-profile
+roots are masked, messages are quoted and limited to 4,096 bytes. Host failure
+messages include the observed exit code (or `unavailable`), and distinguish a
+requested test cleanup kill from a natural nonzero exit. Native cancellation
+logs include browser PID, exit observation, elapsed wait, poll count, final
+Windows wait status/error and callback references before asserting failure.
+Existing timeouts and pass conditions remain unchanged. Focused diagnostics
+tests cover a failed launch, exit code 6, bounded/masked messages and browser
+wait timeout/error/success classification; this does not resolve or supersede
+the observed native failures. Next isolate browser-exit delay and the detailed
+immediate-launch error before deciding whether runtime, fixture or environment
+changes are needed. Publication of alpha.52 remains held;
 repeated reload, visual comparison and mixed-monitor checks were not run in
 this unit. Public alpha.51 and the beta hold are unchanged.
 

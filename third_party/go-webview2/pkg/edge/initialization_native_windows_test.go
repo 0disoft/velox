@@ -24,6 +24,7 @@ type nativeCancellationObserver struct {
 	controllerLate   bool
 	controllerCalls  int
 	browser          windows.Handle
+	browserPID       uint32
 	failure          error
 }
 
@@ -52,6 +53,7 @@ func (o *nativeCancellationObserver) CreateCoreWebView2ControllerCompleted(resul
 			if err != nil {
 				o.failure = err
 			} else {
+				o.browserPID = pid
 				o.browser, err = windows.OpenProcess(windows.SYNCHRONIZE, false, pid)
 				if err != nil {
 					o.failure = err
@@ -164,11 +166,16 @@ func runNativeCancellation(t *testing.T, phase string) {
 	if !e.destroyed || e.environment != nil || e.controller != nil || e.webview != nil || e.inited != 0 {
 		t.Fatal("late callback revived destroyed browser")
 	}
-	if observer.browser != 0 && !pumpNativeCancellationUntil(10*time.Second, func() bool {
-		state, err := windows.WaitForSingleObject(observer.browser, 0)
-		return err == nil && state == windows.WAIT_OBJECT_0
-	}) {
-		t.Fatal("late controller browser did not exit")
+	if observer.browser != 0 {
+		started := time.Now()
+		var probe nativeBrowserExitProbe
+		exited := pumpNativeCancellationUntil(10*time.Second, func() bool {
+			return probe.observe(windows.WaitForSingleObject(observer.browser, 0))
+		})
+		t.Logf("native browser exit phase=%s pid=%d observed=%t elapsed-ms=%d polls=%d wait-state=0x%08x wait-error=%v callback-refs=%d", phase, observer.browserPID, exited, time.Since(started).Milliseconds(), probe.polls, probe.state, probe.err, callbackReferenceCount(e))
+		if !exited {
+			t.Fatal("late controller browser did not exit")
+		}
 	}
 	if !pumpNativeCancellationUntil(10*time.Second, func() bool { return os.RemoveAll(profile) == nil }) {
 		t.Fatal("canceled profile remains locked")
@@ -178,6 +185,32 @@ func runNativeCancellation(t *testing.T, phase string) {
 		t.Fatal("callback owner was retained after cleanup")
 	}
 	t.Logf("native cancellation=%s late-controller=%t callback-refs=0 profile-released=true browser-exit-observed=%t", phase, observer.controllerLate, observer.browser != 0)
+}
+
+type nativeBrowserExitProbe struct {
+	state uint32
+	err   error
+	polls int
+}
+
+func (p *nativeBrowserExitProbe) observe(state uint32, err error) bool {
+	p.state, p.err = state, err
+	p.polls++
+	return err == nil && state == windows.WAIT_OBJECT_0
+}
+
+func TestNativeBrowserExitDiagnostic(t *testing.T) {
+	var probe nativeBrowserExitProbe
+	if probe.observe(uint32(windows.WAIT_TIMEOUT), nil) || probe.state != uint32(windows.WAIT_TIMEOUT) || probe.err != nil {
+		t.Fatal("timeout was lost or counted as exit")
+	}
+	err := fmt.Errorf("wait denied")
+	if probe.observe(windows.WAIT_FAILED, err) || probe.err != err || probe.state != windows.WAIT_FAILED {
+		t.Fatal("wait error was lost or counted as exit")
+	}
+	if !probe.observe(windows.WAIT_OBJECT_0, nil) || probe.err != nil || probe.polls != 3 {
+		t.Fatal("signaled process or poll history was lost")
+	}
 }
 
 func pumpNativeCancellationUntil(timeout time.Duration, done func() bool) bool {

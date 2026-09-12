@@ -244,6 +244,34 @@ func mustRunHost(t *testing.T, host hostAdapter, profile string) hostRun {
 	return run
 }
 
+func hostExitCode(cmd *exec.Cmd) string {
+	if cmd.ProcessState == nil {
+		return "unavailable"
+	}
+	return strconv.Itoa(cmd.ProcessState.ExitCode())
+}
+
+func TestHostExitCodeDiagnostic(t *testing.T) {
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(executable, "-test.run=^TestHostExitCodeDiagnosticHelper$")
+	cmd.Env = append(os.Environ(), "VELOX_TEST_EXIT_DIAGNOSTIC=1")
+	if hostExitCode(cmd) != "unavailable" {
+		t.Fatal("unstarted process reported an exit code")
+	}
+	if err := cmd.Run(); err == nil || hostExitCode(cmd) != "6" {
+		t.Fatalf("exit code not preserved: code=%s error=%v", hostExitCode(cmd), err)
+	}
+}
+
+func TestHostExitCodeDiagnosticHelper(t *testing.T) {
+	if os.Getenv("VELOX_TEST_EXIT_DIAGNOSTIC") == "1" {
+		os.Exit(6)
+	}
+}
+
 func runHost(host hostAdapter, profile string) (hostRun, error) {
 	pipeName := fmt.Sprintf(`\\.\pipe\velox-%d`, time.Now().UnixNano())
 	pipe, err := createPipe(pipeName)
@@ -313,14 +341,14 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	case ready = <-done:
 		if ready.err != nil {
 			_ = cmd.Process.Kill()
-			_, _ = cmd.Process.Wait()
-			return hostRun{}, fmt.Errorf("%s ready marker failed: %w; host output: %s", host.name, ready.err, output.String())
+			_ = cmd.Wait()
+			return hostRun{}, fmt.Errorf("%s ready marker failed: %w; forced-stop-requested=true exit-code=%s; host output: %s", host.name, ready.err, hostExitCode(cmd), output.String())
 		}
 	case <-time.After(15 * time.Second):
 		_ = cmd.Process.Kill()
 		cancelIoEx.Call(uintptr(pipe), 0)
-		_, _ = cmd.Process.Wait()
-		return hostRun{}, fmt.Errorf("%s host did not report ready within 15s; output: %s", host.name, output.String())
+		_ = cmd.Wait()
+		return hostRun{}, fmt.Errorf("%s host did not report ready within 15s; forced-stop-requested=true exit-code=%s; output: %s", host.name, hostExitCode(cmd), output.String())
 	}
 	readyAt := time.Now()
 	readyDuration := readyAt.Sub(started)
@@ -331,12 +359,12 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	select {
 	case err := <-waitDone:
 		if err != nil {
-			return hostRun{}, fmt.Errorf("%s host exit failed: %w; output: %s", host.name, err, output.String())
+			return hostRun{}, fmt.Errorf("%s host exit failed: %w; exit-code=%s; output: %s", host.name, err, hostExitCode(cmd), output.String())
 		}
 	case <-time.After(5 * time.Second):
 		_ = cmd.Process.Kill()
 		<-waitDone
-		return hostRun{}, fmt.Errorf("%s host did not exit within 5s after ready", host.name)
+		return hostRun{}, fmt.Errorf("%s host did not exit within 5s after ready; forced-stop-requested=true exit-code=%s; output: %s", host.name, hostExitCode(cmd), output.String())
 	}
 	hostExitedAt := time.Now()
 	timeline, err := parseStartupTimeline(output.String())

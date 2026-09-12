@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -132,7 +133,7 @@ func TestStartupLifecycleEvidence(t *testing.T) {
 
 	failures := 0
 	for index := 0; index < repetitions; index++ {
-		sample := measureLifecycleSample(repoRoot, host, index)
+		sample := measureLifecycleSample(repoRoot, host, index, t.Logf)
 		if sample.Outcome != "success" {
 			failures++
 			evidence.Outcome = "failure"
@@ -149,21 +150,25 @@ func TestStartupLifecycleEvidence(t *testing.T) {
 	}
 }
 
-func measureLifecycleSample(repoRoot string, host hostAdapter, index int) lifecycleSample {
+func measureLifecycleSample(repoRoot string, host hostAdapter, index int, logf func(string, ...any)) lifecycleSample {
 	sample := lifecycleSample{Index: index, Outcome: "failure"}
+	fail := func(phase, code string, cause error) lifecycleSample {
+		logf("lifecycle failure sample=%d phase=%s code=%s cause=%q", index, phase, code, lifecycleDiagnostic(cause, repoRoot))
+		return failLifecycleSample(sample, phase, code)
+	}
 	profileBase := filepath.Join(repoRoot, ".cache", "profiles")
 	if err := os.MkdirAll(profileBase, 0o755); err != nil {
-		return failLifecycleSample(sample, "profile-create", "PROFILE_CREATE_FAILED")
+		return fail("profile-create", "PROFILE_CREATE_FAILED", err)
 	}
 	profile, err := os.MkdirTemp(profileBase, fmt.Sprintf("velox-lifecycle-%02d-", index))
 	if err != nil {
-		return failLifecycleSample(sample, "profile-create", "PROFILE_CREATE_FAILED")
+		return fail("profile-create", "PROFILE_CREATE_FAILED", err)
 	}
 
 	first, err := runHost(host, profile)
 	if err != nil {
 		_, _ = waitForProfileRelease(profile, 10*time.Second)
-		return failLifecycleSample(sample, "first-launch", "HOST_RUN_FAILED")
+		return fail("first-launch", "HOST_RUN_FAILED", err)
 	}
 	sample.First = launchWithoutBrowserExit(first)
 
@@ -171,7 +176,7 @@ func measureLifecycleSample(repoRoot string, host hostAdapter, index int) lifecy
 	if err != nil {
 		_, _ = awaitBrowserExit(first, 10*time.Second)
 		_, _ = waitForProfileRelease(profile, 10*time.Second)
-		return failLifecycleSample(sample, "immediate-launch", "HOST_RUN_FAILED")
+		return fail("immediate-launch", "HOST_RUN_FAILED", err)
 	}
 	sample.Immediate = launchWithoutBrowserExit(immediate)
 
@@ -180,15 +185,15 @@ func measureLifecycleSample(repoRoot string, host hostAdapter, index int) lifecy
 	firstBrowserExitedAt, firstErr := awaitBrowserExitAt(first, 10*time.Second)
 	immediateBrowserExitedAt, immediateErr := awaitBrowserExitAt(immediate, 10*time.Second)
 	if firstErr != nil {
-		return failLifecycleSample(sample, "first-browser-exit", "BROWSER_EXIT_FAILED")
+		return fail("first-browser-exit", "BROWSER_EXIT_FAILED", firstErr)
 	}
 	sample.First.BrowserExitAfterHostMs = milliseconds(firstBrowserExitedAt.Sub(first.HostExitedAt))
 	if immediateErr != nil {
-		return failLifecycleSample(sample, "immediate-browser-exit", "BROWSER_EXIT_FAILED")
+		return fail("immediate-browser-exit", "BROWSER_EXIT_FAILED", immediateErr)
 	}
 	sample.Immediate.BrowserExitAfterHostMs = milliseconds(immediateBrowserExitedAt.Sub(immediate.HostExitedAt))
 	if profileErr != nil {
-		return failLifecycleSample(sample, "profile-release", "PROFILE_RELEASE_FAILED")
+		return fail("profile-release", "PROFILE_RELEASE_FAILED", profileErr)
 	}
 	profileReleasedAfterHost := profileReleaseStarted.Add(profileRelease).Sub(immediate.HostExitedAt)
 	value := milliseconds(profileReleasedAfterHost)
@@ -214,6 +219,62 @@ func launchWithoutBrowserExit(run hostRun) *lifecycleLaunch {
 func failLifecycleSample(sample lifecycleSample, phase, code string) lifecycleSample {
 	sample.Error = &lifecycleError{Phase: phase, Code: code}
 	return sample
+}
+
+func lifecycleDiagnostic(err error, repoRoot string) string {
+	detail := err.Error()
+	for _, root := range []string{repoRoot, os.TempDir(), os.Getenv("USERPROFILE")} {
+		if root != "" {
+			detail = strings.ReplaceAll(detail, root, "<local-path>")
+			detail = strings.ReplaceAll(detail, filepath.ToSlash(root), "<local-path>")
+		}
+	}
+	const limit = 4096
+	if len(detail) > limit {
+		detail = detail[:limit] + " [truncated]"
+	}
+	return detail
+}
+
+func TestLifecycleFailureDiagnostic(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "workspace")
+	err := fmt.Errorf("immediate host exit failed: exit-code=6; config=%s", filepath.Join(root, "app.json"))
+	detail := lifecycleDiagnostic(err, root)
+	if strings.Contains(detail, root) || !strings.Contains(detail, "exit-code=6") || !strings.Contains(detail, "<local-path>") {
+		t.Fatalf("diagnostic lost cause or exposed root: %q", detail)
+	}
+	if got := lifecycleDiagnostic(fmt.Errorf("%s", strings.Repeat("x", 5000)), root); len(got) != 4096+len(" [truncated]") {
+		t.Fatalf("unbounded diagnostic length: %d", len(got))
+	}
+	sample := failLifecycleSample(lifecycleSample{Index: 0, Outcome: "failure"}, "immediate-launch", "HOST_RUN_FAILED")
+	if sample.Outcome != "failure" || sample.Error.Phase != "immediate-launch" || sample.Error.Code != "HOST_RUN_FAILED" {
+		t.Fatal("failure contract changed")
+	}
+}
+
+func TestLifecycleFailedLaunchDiagnostic(t *testing.T) {
+	root := t.TempDir()
+	host := hostAdapter{
+		name:        "diagnostic",
+		executable:  filepath.Join(root, "missing-host.exe"),
+		arguments:   func(string) []string { return nil },
+		environment: func(string) []string { return nil },
+	}
+	var diagnostic string
+	sample := measureLifecycleSample(root, host, 7, func(format string, args ...any) {
+		diagnostic = fmt.Sprintf(format, args...)
+	})
+	if sample.Outcome != "failure" || sample.Error == nil || sample.Error.Code != "HOST_RUN_FAILED" {
+		t.Fatal("failed launch was not retained")
+	}
+	for _, want := range []string{"sample=7", "phase=first-launch", "start diagnostic host", "missing-host.exe"} {
+		if !strings.Contains(diagnostic, want) {
+			t.Fatalf("missing %q in diagnostic %q", want, diagnostic)
+		}
+	}
+	if strings.Contains(diagnostic, root) || strings.Contains(diagnostic, filepath.ToSlash(root)) {
+		t.Fatalf("diagnostic exposed fixture root: %q", diagnostic)
+	}
 }
 
 func lifecycleRepetitions(t *testing.T) int {
