@@ -229,6 +229,40 @@ mixed-DPI monitor movement, Server 2016 fallback execution and a visual
 before/after comparison remain unverified. The candidate is local only;
 public alpha.51 is unchanged, no release was published, and beta stays held.
 
+### Alpha.52 Lifecycle Recheck: 2026-09-12
+
+Local checks at source `3295d573017e978607472c86c0d2988a87b8b650`, using
+Windows amd64, Go 1.26.4 and WebView2 152.0.4191.66, did not pass the
+lifecycle gate:
+
+- `velox_native_cancellation_test`: four of six source-fork cases passed.
+  Controller-pending repetitions 2 and 3 failed with `late controller browser
+  did not exit` at the ten-second process-exit boundary. Callback references
+  had drained and destroyed-state assertions had passed; those cases never
+  reached the profile-release assertion. The environment-completion cases
+  and controller-pending repetition 1 passed. This test does not run the
+  production host's DPI initialization, so it does not establish a DPI
+  regression. A subsequent process inventory found no matching test browser
+  still running; that does not turn the deadline failures into passes.
+- `velox_build` passed. The rebuilt alpha.52 host SHA-256 was
+  `cc44af54ecf500415e2f7ee7136664b58d802c3eaf29ac133a2937870d7ed24c`.
+  This differs from the earlier local ZIP host above; the following result
+  binds to this source rebuild, not the earlier ZIP or a public download.
+- `velox_design_lifecycle_test`: nine of ten fresh/immediate same-profile
+  pairs passed. Sample 0 failed at `immediate-launch` with `HOST_RUN_FAILED`;
+  its first host reached ready and exited, but no immediate-launch result was
+  retained. The harness drops the underlying run error at this boundary,
+  leaving the specific failure cause unresolved. Successful samples observed
+  both browser exits and profile removal. Raw v3 evidence covers
+  07:49:38-07:52:07 UTC; no hosted-run claim follows from this local check.
+
+Preserve these failures rather than increasing deadlines or replacing them
+with unchanged passing retries. Next isolate browser-exit delay and retain
+the immediate-launch error before deciding whether runtime, fixture or
+environment changes are needed. Publication of alpha.52 remains held;
+repeated reload, visual comparison and mixed-monitor checks were not run in
+this unit. Public alpha.51 and the beta hold are unchanged.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
