@@ -326,6 +326,8 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 			return r
 		case w32.WMSize:
 			w.browser.Resize()
+		case wmDPIChanged:
+			w.applyDPIChange((*w32.Rect)(unsafe.Pointer(lp)))
 		case w32.WMActivate:
 			if wp == w32.WAInactive {
 				break
@@ -351,11 +353,11 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 		case w32.WMGetMinMaxInfo:
 			lpmmi := (*w32.MinMaxInfo)(unsafe.Pointer(lp))
 			if w.maxsz.X > 0 && w.maxsz.Y > 0 {
-				lpmmi.PtMaxSize = w.maxsz
-				lpmmi.PtMaxTrackSize = w.maxsz
+				lpmmi.PtMaxSize = scalePointForDPI(w.maxsz, windowDPI(hwnd))
+				lpmmi.PtMaxTrackSize = lpmmi.PtMaxSize
 			}
 			if w.minsz.X > 0 && w.minsz.Y > 0 {
-				lpmmi.PtMinTrackSize = w.minsz
+				lpmmi.PtMinTrackSize = scalePointForDPI(w.minsz, windowDPI(hwnd))
 			}
 		default:
 			r, _, _ := w32.User32DefWindowProcW.Call(hwnd, msg, wp, lp)
@@ -409,6 +411,9 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 	if windowHeight == 0 {
 		windowHeight = 480
 	}
+	dpi, _, _ := getDPIForSystem.Call()
+	windowWidth = uint(scaleForDPI(int32(windowWidth), uint32(dpi)))
+	windowHeight = uint(scaleForDPI(int32(windowHeight), uint32(dpi)))
 	screenWidth, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CXSCREEN)
 	screenHeight, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CYSCREEN)
 	if screenWidth > 0 && windowWidth > uint(screenWidth) {
@@ -585,9 +590,10 @@ func (w *webview) SetSize(width int, height int, hints Hint) {
 		r := w32.Rect{}
 		r.Left = 0
 		r.Top = 0
-		r.Right = int32(width)
-		r.Bottom = int32(height)
-		_, _, _ = w32.User32AdjustWindowRect.Call(uintptr(unsafe.Pointer(&r)), w32.WSOverlappedWindow, 0)
+		dpi := windowDPI(w.hwnd)
+		r.Right = scaleForDPI(int32(width), dpi)
+		r.Bottom = scaleForDPI(int32(height), dpi)
+		adjustClientRectForDPI(&r, uint32(style), dpi)
 		_, _, _ = w32.User32SetWindowPos.Call(
 			w.hwnd, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top),
 			w32.SWPNoZOrder|w32.SWPNoActivate|w32.SWPNoMove|w32.SWPFrameChanged)

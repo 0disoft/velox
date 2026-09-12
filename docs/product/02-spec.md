@@ -105,6 +105,12 @@ passed with ZIP SHA-256
 - Minimum WebView2 Runtime `92.0.902.49`, required for the download-denial
   interface used by the security baseline.
 - One top-level window.
+- The host opts into per-monitor DPI awareness before creating its window:
+  V2 where supported, with V1 fallback for Windows Server 2016. Existing
+  incompatible DPI overrides fail startup instead of silently bitmap-scaling.
+- Window dimensions use 96-DPI logical units. The initial outer window size
+  and size limits scale for DPI; monitor DPI changes apply the Windows-suggested
+  physical rectangle and refresh WebView bounds. Font sizes remain CSS-owned.
 - A virtual HTTPS origin mapped to the local asset directory.
 - Virtual HTTPS remains the only production asset transport while
   immediate-relaunch recovery is diagnosed under ADR 0007; file URL loading is

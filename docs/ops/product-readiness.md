@@ -206,6 +206,29 @@ was made in this diagnostic unit. Visual before/after comparison, mixed-DPI
 monitor transitions and any relationship to the earlier automation coordinate
 mismatch remain unverified; no Tauri/Wails parity claim is made.
 
+### Per-Monitor DPI Candidate: 2026-09-12
+
+The local alpha.52 candidate configures per-monitor V2 awareness before host
+window creation, falling back to V1 only when the V2 context is unsupported.
+An incompatible preconfigured awareness mode fails explicitly. Logical
+96-DPI window dimensions and size limits are scaled; WM_DPICHANGED applies
+the suggested physical rectangle and refreshes WebView bounds and position.
+The editor font remains unchanged.
+
+On the same 125-percent display, the local candidate reported process and
+window awareness 2 (per-monitor) and window DPI 120, replacing the public
+alpha.51 unaware/96 result. The candidate host SHA-256 was
+`7529e3d80280dbecda8153a7a2a3aa18896010e9275a6ff0ecc32028e522d227`.
+Focused host/CLI/build/inspect/runner/hygiene tests and the fork window/COM
+suite passed, including 100/125/150/200-percent size arithmetic and a native
+window test of suggested DPI-change bounds with a fake browser adapter.
+
+The native window test sends a synthetic DPI-change message; it does not
+prove actual cross-monitor WebView rasterization or visual sharpness. Real
+mixed-DPI monitor movement, Server 2016 fallback execution and a visual
+before/after comparison remain unverified. The candidate is local only;
+public alpha.51 is unchanged, no release was published, and beta stays held.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product

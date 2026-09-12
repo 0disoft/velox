@@ -42,6 +42,10 @@ func run(args []string) int {
 		return 2
 	}
 	timeline.Mark("config-loaded")
+	if err := enablePerMonitorDPI(); err != nil {
+		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+		return 6
+	}
 
 	dataPath := os.Getenv("VELOX_DATA_DIR")
 	if dataPath == "" {
