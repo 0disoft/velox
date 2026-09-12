@@ -291,6 +291,24 @@ run. The separate immediate-relaunch failure is still unresolved; its new
 diagnostics are the next bounded investigation. Publication and beta remain
 held. No runtime or version change follows from this observation.
 
+### Same-Profile Diagnostic Smoke: 2026-09-12
+
+One `velox_startup_smoke` run at diagnostic source
+`577dc1324e013b0999dca2c691d17ddca7076fd1` passed using the unchanged local
+alpha.52 rebuilt host SHA-256
+`cc44af54ecf500415e2f7ee7136664b58d802c3eaf29ac133a2937870d7ed24c`.
+First startup reached ready in 772.8 ms and host exit in 115.4 ms. Immediate
+same-profile startup reached ready in 1,659.5 ms and host exit in 94.0 ms;
+browser exit and profile removal were observed after about 6.65 seconds.
+The included security-policy and missing-runtime checks also passed. The
+complete smoke took 17.73 seconds; no deadlines or pass criteria changed.
+
+The earlier immediate-launch failure was not reproduced, and this one-pair
+pass does not identify or fix its cause. It also does not validate the earlier
+release ZIP, File Notes interaction or development reload. Those artifact and
+workflow checks remain separate. No additional unchanged reruns or runtime
+changes were made; alpha.52 publication and beta remain held.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
