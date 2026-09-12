@@ -274,6 +274,23 @@ changes are needed. Publication of alpha.52 remains held;
 repeated reload, visual comparison and mixed-monitor checks were not run in
 this unit. Public alpha.51 and the beta hold are unchanged.
 
+### Native Cancellation Diagnostic Rerun: 2026-09-12
+
+One six-case run at source `4213851c087e5e81852dd3b810e3ba9357a07934`
+passed with the same WebView2 152.0.4191.66, Go 1.26.4 and Windows amd64.
+The three controller-pending browser waits observed exit after 1,381, 193 and
+194 ms; each ended with wait status `0x00000000`, no wait error and zero
+callback references. All six cases passed profile cleanup. No matching test
+browser remained in the post-run process inventory. Total native test time
+was 3.10 seconds, with the existing ten-second exit deadline unchanged.
+
+The earlier two deadline failures were not reproduced, not fixed or erased.
+This single source-fork rerun does not identify their cause or establish
+production-host or release-ZIP reliability. No further unchanged retries were
+run. The separate immediate-relaunch failure is still unresolved; its new
+diagnostics are the next bounded investigation. Publication and beta remain
+held. No runtime or version change follows from this observation.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
