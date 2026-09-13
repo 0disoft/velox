@@ -365,6 +365,39 @@ Normal development reload is now a confirmed failing workflow for this run;
 earlier successful checks do not supersede it. Alpha.52 publication and beta
 remain held, and visual confirmation remains pending.
 
+### Reload Cache Comparison: 2026-09-13
+
+One bounded comparison used the same hash-verified alpha.52 CLI and host,
+a copied File Notes project and a fresh private profile. Two separate CSS/JS
+pairs changed from equal-length `base0` content to `next1` content: pair A
+kept its original filesystem modification time, while pair B advanced by
+exactly 2,000 ms. No system clock, source example or production setting changed.
+
+After ordinary reload, HTML was current but both pairs still showed old JS
+and CSS. All four resource requests emitted CDP `requestServedFromCache`,
+reported status 200, `fromDiskCache: false` and `fromServiceWorker: false`,
+and retained the original Last-Modified value. Captured cache-related request
+headers contained no validators. A following `ignoreCache: true` reload of
+the same unchanged files updated both pairs; no response was marked as a
+disk/service-worker cache response, and pair B returned the advanced
+Last-Modified value. No Cache-Control or Expires header was present in the
+captured response headers. The virtual origin stayed unchanged.
+
+This comparison localizes the stale-resource behavior to browser cache reuse
+on normal reload, rather than a failure to write or read the edited files.
+Advancing timestamps alone did not prevent it, so same-second modification
+time precision is not a sufficient explanation. The next fix should control
+cache reuse only in explicit development mode while preserving production
+virtual-host serving and origin/security boundaries. The cache-bypassed
+success is diagnostic evidence, not a normal-reload pass or a product fix.
+
+Evidence covers 14:53:56-14:53:58 UTC under the ignored
+`reload-cache-compare-1789311236574` directory; result SHA-256 is
+`14cb4c764b3eabd7022584eb5f64d19f44041e073ac4de964f4190dde85e8b4d`.
+The owned process tree was stopped successfully and the binaries were
+unchanged. No runtime modification or publication occurred. Alpha.52 and
+beta remain held pending the development-mode fix and remaining visual checks.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
