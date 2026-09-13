@@ -215,6 +215,10 @@ func NewWithOptions(options WebViewOptions) WebView {
 		destroyBeforeReturn(w)
 		return nil
 	}
+	if err := chromium.ConfigureDevelopmentCache(options.Debug); err != nil {
+		destroyBeforeReturn(w)
+		return nil
+	}
 
 	return w
 }

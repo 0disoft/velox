@@ -398,6 +398,39 @@ The owned process tree was stopped successfully and the binaries were
 unchanged. No runtime modification or publication occurred. Alpha.52 and
 beta remain held pending the development-mode fix and remaining visual checks.
 
+### Development Cache Fix: 2026-09-14
+
+Local alpha.53 requests `Network.enable` followed by
+`Network.setCacheDisabled` with `cacheDisabled: true` through WebView2's
+in-process protocol API when constructing an explicit development WebView.
+Production mode makes neither call. Virtual-host folder mapping, permission
+and navigation rules, IPC and persistent browser storage are unchanged; this
+policy opens no debugging listener. Dispatch HRESULT failures abort window
+initialization. The commands are asynchronous with no retained completion
+callback; the native regression checks their observed effect, not just dispatch.
+
+The first candidate, which sent only the cache policy without enabling the
+Network domain, still failed the first ordinary reload. That failed result is
+retained under `normal-reload-1789312659928`; it is not counted as a pass.
+After enabling the domain, `scripts/dev-reload-smoke.ts` passed two consecutive
+HTML/CSS/JS edits using only `Page.reload` with `ignoreCache: false`. The script
+does not send a cache-disabling command or perform a hard reload. It verifies
+release manifest hashes, uses a private example/profile, checks the same
+origin and retains the result before stopping its owned process tree.
+
+The successful result covers 2026-09-13 15:20:14-15:20:16 UTC under
+`normal-reload-1789312814831` (2026-09-14 in Korea). The tested host SHA-256 is
+`0ee10fc617554fcf17b1f1c26a047bb7167b479c20e161cdc178e76408de0490`.
+Production startup, same-profile relaunch, missing-runtime handling and
+security-policy smoke also passed. Immediate relaunch still took 6.92 seconds;
+this patch does not claim to fix that delay or historical cancellation failures.
+
+Focused fork/COM, runtime, version-fixture and hygiene checks cover production
+no-op behavior, invalid lifecycle state, exact protocol arguments, and native
+dispatch failure. Version fixtures now use alpha.53; the public alpha.51 release
+is unchanged. No publication or beta promotion occurred. Mixed-DPI visual
+confirmation and the release decision remain pending.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product

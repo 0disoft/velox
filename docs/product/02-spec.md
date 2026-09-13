@@ -105,6 +105,10 @@ passed with ZIP SHA-256
 - Minimum WebView2 Runtime `92.0.902.49`, required for the download-denial
   interface used by the security baseline.
 - One top-level window.
+- Explicit development mode (`velox run --debug`) requests browser cache bypass
+  for that WebView so ordinary reload reads edited assets. Production cache
+  behavior and virtual-host mapping are unchanged; this internal protocol call
+  opens no debugging socket and does not clear cookies, drafts or file handles.
 - The host opts into per-monitor DPI awareness before creating its window:
   V2 where supported, with V1 fallback for Windows Server 2016. Existing
   incompatible DPI overrides fail startup instead of silently bitmap-scaling.
