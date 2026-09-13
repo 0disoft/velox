@@ -338,6 +338,33 @@ CLI launch, development reload, hosted stress or public-download evidence.
 No additional retries, runtime edits or publication were performed. Reload,
 visual checks and the release decision remain pending; beta stays held.
 
+### Alpha.52 Normal Reload Failure: 2026-09-13
+
+A private File Notes copy and fresh profile were launched through the local
+alpha.52 `velox run --debug` CLI. The verified CLI SHA-256 was
+`3b48f3d37d2baf2f476124514c480421266a59ee6f35f25fb7f418a82e1471bf`;
+the host was the same `7529e3d8...522d227` artifact recorded above.
+The probe added separate HTML, CSS and JavaScript markers only to the copy.
+
+The first ordinary CDP `Page.reload` with `ignoreCache: false` failed:
+HTML changed from `before` to `after-one`, while JavaScript stayed `before`
+and computed CSS stayed `rgb(200, 10, 20)` instead of `rgb(10, 120, 30)`.
+The virtual origin remained unchanged. The planned second change was not
+attempted after this failure, and no hard reload or cache-disabling override
+was used to turn it into a pass. The owned process tree was stopped
+successfully. The result covers 06:12:19-06:12:26 UTC and is retained under
+the ignored `reload52-1789279939175` evidence directory.
+
+Source inspection shows `internal/webview2/runtime_windows.go` using virtual
+host folder mapping without a separate debug cache policy. Cache behavior is
+a candidate explanation, not yet a proven root cause; conditional requests,
+file timestamps and development-mode cache handling need a targeted comparison.
+The next implementation decision must preserve production asset serving and
+origin/security boundaries. No runtime edit was made in this diagnostic unit.
+Normal development reload is now a confirmed failing workflow for this run;
+earlier successful checks do not supersede it. Alpha.52 publication and beta
+remain held, and visual confirmation remains pending.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
