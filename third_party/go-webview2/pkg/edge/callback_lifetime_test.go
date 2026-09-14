@@ -23,8 +23,8 @@ func TestNativeCallbackReferencesOutliveDestroy(t *testing.T) {
 		t.Fatal("callback owner must be retained exactly once")
 	}
 	pointers := e.callbackPointers()
-	if len(pointers) != 11 {
-		t.Fatal("expected all eleven native callback objects")
+	if len(pointers) != 12 {
+		t.Fatal("expected all twelve native callback objects")
 	}
 	for i, pointer := range pointers {
 		vtbl := *(**_IUnknownVtbl)(pointer)

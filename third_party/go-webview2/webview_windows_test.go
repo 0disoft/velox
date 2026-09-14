@@ -95,6 +95,26 @@ func TestBindingResponseIsEvaluatedWhileOpen(t *testing.T) {
 	}
 }
 
+func TestUserCloseWaitsForBrowserConsent(t *testing.T) {
+	browser := &bindingResponseBrowser{}
+	view := &webview{browser: browser, closeConsentReady: true}
+	view.requestUserClose()
+	view.requestUserClose()
+	if view.closing || browser.destroyed != 0 || len(browser.evaluated) != 2 {
+		t.Fatal("user close destroyed the document before browser consent")
+	}
+	for _, script := range browser.evaluated {
+		if script != "window.close()" {
+			t.Fatalf("unexpected close request: %s", script)
+		}
+	}
+	view.closing = true
+	view.requestUserClose()
+	if len(browser.evaluated) != 2 {
+		t.Fatal("close request reached an already closing browser")
+	}
+}
+
 func TestDestroyBeforeReturnPumpsNativeClose(t *testing.T) {
 	probe := &destroyRunnerProbe{}
 	destroyBeforeReturn(probe)

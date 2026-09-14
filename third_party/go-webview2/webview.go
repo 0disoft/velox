@@ -23,6 +23,9 @@ var (
 	windowContextSync sync.RWMutex
 )
 
+// Internal teardown must not be blocked by document beforeunload handlers.
+const forceDestroyMessage = w32.WMApp + 1
+
 func getWindowContext(wnd uintptr) interface{} {
 	windowContextSync.RLock()
 	defer windowContextSync.RUnlock()
@@ -70,6 +73,7 @@ type webview struct {
 	bindings           map[string]interface{}
 	dispatchq          []func()
 	closing            bool
+	closeConsentReady  bool
 	shutdownPhase      func(name string)
 	maxWebMessageBytes int
 }
@@ -187,6 +191,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 	chromium.PolicyBlocked = options.PolicyBlocked
 	chromium.StartupPhase = options.StartupPhase
 	chromium.ShutdownPhase = options.ShutdownPhase
+	chromium.WindowCloseRequestedCallback = w.Destroy
 	w.shutdownPhase = options.ShutdownPhase
 	if options.DenyAllPermissions {
 		chromium.SetGlobalPermission(edge.CoreWebView2PermissionStateDeny)
@@ -219,6 +224,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 		destroyBeforeReturn(w)
 		return nil
 	}
+	w.closeConsentReady = true
 
 	return w
 }
@@ -340,6 +346,9 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 				w.browser.Focus()
 			}
 		case w32.WMClose:
+			w.requestUserClose()
+			return 0
+		case forceDestroyMessage:
 			w.m.Lock()
 			if w.closing {
 				w.m.Unlock()
@@ -490,7 +499,23 @@ func destroyBeforeReturn(view destroyRunner) {
 
 func (w *webview) Destroy() {
 	w.markShutdown("destroy-dispatched")
-	_, _, _ = w32.User32PostMessageW.Call(w.hwnd, w32.WMClose, 0, 0)
+	_, _, _ = w32.User32PostMessageW.Call(w.hwnd, forceDestroyMessage, 0, 0)
+}
+
+func (w *webview) requestUserClose() {
+	w.m.Lock()
+	closing := w.closing
+	ready := w.closeConsentReady
+	w.m.Unlock()
+	if !closing {
+		if !ready {
+			w.Destroy()
+			return
+		}
+		// WebView2 runs beforeunload and emits WindowCloseRequested only if
+		// closure is accepted. Destruction is posted outside the COM callback.
+		w.browser.Eval("window.close()")
+	}
 }
 
 func (w *webview) markShutdown(name string) {

@@ -33,6 +33,9 @@ type Chromium struct {
 	frameNavigation       *navigationStartingEventHandler
 	newWindowRequested    *newWindowRequestedEventHandler
 	downloadStarting      *downloadStartingEventHandler
+	windowCloseRequested  *windowCloseRequestedHandler
+	windowCloseToken      _EventRegistrationToken
+	windowCloseRegistered bool
 
 	webMessageToken               _EventRegistrationToken
 	permissionToken               _EventRegistrationToken
@@ -80,6 +83,7 @@ type Chromium struct {
 	PolicyBlocked                func(kind string)
 	StartupPhase                 func(name string)
 	ShutdownPhase                func(name string)
+	WindowCloseRequestedCallback func()
 }
 
 type WebResourceResponse struct {
@@ -105,6 +109,7 @@ func NewChromium() *Chromium {
 	e.frameNavigation = newNavigationStartingEventHandler(e, true)
 	e.newWindowRequested = newNewWindowRequestedEventHandler(e)
 	e.downloadStarting = newDownloadStartingEventHandler(e)
+	e.windowCloseRequested = &windowCloseRequestedHandler{vtbl: &windowCloseRequestedCallbacks, impl: e}
 	e.permissions = make(map[CoreWebView2PermissionKind]CoreWebView2PermissionState)
 
 	return e
@@ -398,6 +403,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 	}
 	e.acceleratorRegistered = true
 	e.registerSecurityPolicyHandlers()
+	e.registerWindowCloseRequested()
 	if e.StartupPhase != nil {
 		e.StartupPhase("controller-created")
 	}
@@ -673,6 +679,11 @@ func (e *Chromium) removeEventHandlers() {
 		_, _, _ = e.webview.vtbl.RemoveNavigationCompleted.Call(
 			uintptr(unsafe.Pointer(e.webview)), uintptr(e.navigationCompletedToken.Value))
 		e.navigationCompletedRegistered = false
+	}
+	if e.windowCloseRegistered {
+		_, _, _ = e.webview.vtbl.RemoveWindowCloseRequested.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.windowCloseToken.Value))
+		e.windowCloseRegistered = false
 	}
 	if e.controller != nil && e.acceleratorRegistered {
 		_, _, _ = e.controller.vtbl.RemoveAcceleratorKeyPressed.Call(

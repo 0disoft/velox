@@ -34,6 +34,7 @@ func (e *Chromium) callbackPointers() []unsafe.Pointer {
 		unsafe.Pointer(e.frameNavigation),
 		unsafe.Pointer(e.newWindowRequested),
 		unsafe.Pointer(e.downloadStarting),
+		unsafe.Pointer(e.windowCloseRequested),
 	}
 }
 

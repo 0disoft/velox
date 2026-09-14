@@ -136,6 +136,19 @@ All listed M1 commands are currently implemented.
 
 The command contract is defined in docs/cli/command-contract.md.
 
+### Window Close
+
+After initialization, title-bar close and Alt+F4 request browser-owned closure.
+WebView2 must be allowed to run `beforeunload` and obtain any required user
+consent before the host destroys the window. Cancellation keeps the document
+alive; unavailable draft storage must not be treated as successful persistence.
+The host posts teardown only after `WindowCloseRequested`, outside the native
+COM callback. Repeated teardown requests must remain idempotent.
+
+Initialization failures and explicit runtime shutdown retain a separate forced
+cleanup path, without document consent. An unresponsive page or failed script
+request does not authorize an automatic discard timeout for ordinary user close.
+
 ## Security Contract
 
 Web content is not trusted merely because it is local.
