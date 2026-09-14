@@ -431,6 +431,54 @@ dispatch failure. Version fixtures now use alpha.53; the public alpha.51 release
 is unchanged. No publication or beta promotion occurred. Mixed-DPI visual
 confirmation and the release decision remain pending.
 
+### Relaunch Profile Comparison: 2026-09-14
+
+Reanalysis of the three retained alpha.52 ZIP lifecycle samples places the
+largest relaunch interval between `environment-created` and
+`controller-created`: 6,684.62-6,917.44 ms. The latter marker follows core
+WebView acquisition and event/security handler setup, so this interval is not
+an isolated measurement of the asynchronous controller creation call.
+Navigation dispatch to DOM plus two animation frames took 165.28-294.21 ms.
+The harness started the second host 7.53-25.54 ms after the first host exited;
+it did not insert a seven-second prelaunch wait. The first browser exited
+6,403.48-6,460.77 ms after the second process started, and readiness followed
+669.68-745.58 ms later. These timings are alpha.52 observations, not alpha.53
+phase measurements. The original evidence SHA-256 remains
+`b2311d4b8b3c804523b7fad01a8345939f8652d409c1efde3110b7a004b4c39c`.
+
+One bounded alpha.53 comparison then used the unchanged host SHA-256 above,
+the `examples/hello` fixture, harness source
+`99fa5e3cd2ad804242a965701c5fec0389681f6e`, and WebView2 `152.0.4191.66`
+on local Windows amd64. `TestStartupProfileComparisonEvidence` ran one
+same-profile trial followed by one fresh-profile trial, four host launches
+in total, with isolated test profiles and no runtime edits.
+
+| Observed boundary | Same profile | Fresh profile |
+| --- | ---: | ---: |
+| Second host start to ready | 6,903.07 ms | 547.15 ms |
+| First browser exit after second host start | 6,380.15 ms | 6,430.17 ms |
+| Second ready after first browser exit | 522.92 ms | -5,883.02 ms |
+
+The fresh-profile host became ready while the previous browser was still
+alive. The observed 6,355.92 ms difference supports a same-profile reuse
+dependency during browser shutdown; it does not establish why WebView2
+retains its browser process for about 6.4 seconds. This is one sequential
+comparison, not an order-balanced benchmark or a population percentile,
+despite the harness summary's P50 field names. Warm-cache and trial-order
+effects remain possible. No user profile was rotated, no browser was
+force-terminated as a remedy, and persistent storage behavior is unchanged.
+
+The test passed in 24.05 seconds. Evidence covers 06:10:50-06:11:14 UTC under
+the ignored `profile53-compare-e73b203ded7e4b519e0a10d8e06352e2` directory;
+result SHA-256 is
+`b028fba33e0e857d75e561b5e55d6f04e68d02f7d1609321f50f56df2345a5c1`.
+The host hash matched before and after execution. Next diagnosis should
+separate controller callback entry from setup completion and inspect the
+native close/release lifecycle before selecting a storage-preserving fix.
+Historical cancellation failures, mixed-DPI visual confirmation and the
+release decision remain open. This record does not publish alpha.53 or
+promote beta; API, DB, runtime and repository hygiene rules are unchanged.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
