@@ -49,11 +49,8 @@ func (i *ICoreWebView2Controller) Release() uintptr {
 }
 
 func (i *ICoreWebView2Controller) Close() error {
-	_, _, err := i.vtbl.Close.Call(uintptr(unsafe.Pointer(i)))
-	if err != windows.ERROR_SUCCESS {
-		return err
-	}
-	return nil
+	result, _, _ := i.vtbl.Close.Call(uintptr(unsafe.Pointer(i)))
+	return hresult(result)
 }
 
 func (i *ICoreWebView2Controller) GetBounds() (*w32.Rect, error) {

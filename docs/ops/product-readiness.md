@@ -591,6 +591,42 @@ This source-host observation does not replace a release-ZIP test, hosted
 verification or the outstanding cancellation and mixed-DPI checks. No
 publication, beta promotion, API, DB, persistent-data or runner change occurred.
 
+### Controller Close Error Handling: 2026-09-14
+
+Local alpha.54 checks the COM HRESULT returned by controller Close rather
+than the unrelated Windows last-error value. Both ordinary Destroy and late
+controller completion report a failure to stderr and emit
+`controller-close-failed` instead of claiming `controller-closed`. Destroy
+still releases the WebView, controller, environment and callback owner after
+a failed Close; it does not retry, change ownership of a borrowed late
+controller, or force browser termination. Public method signatures and the
+successful shutdown timeline are unchanged.
+
+The native startup harness rejects a recorded close failure even when the
+process exits successfully and subsequent reference cleanup completes. Its
+existing lifecycle failure record and diagnostic output retain the failure;
+such a run cannot pass as ordinary lifecycle evidence. The diagnostic overlay
+script's exact source anchor now follows the shared close helper and retains
+the same HRESULT semantics. Its TypeScript bundle check passed, but another
+overlay latency experiment was intentionally not run for this correctness fix.
+
+Fork regressions passed for success, stale last-error, nonzero successful
+HRESULT, failing HRESULTs, cleanup continuation, repeated Destroy and failed
+late borrowed-controller close. Three shutdown-gate cases passed. Related
+version, benchmark-recorder and hygiene tests, all 39 offline evaluation-tool
+tests and the diagnostic tooling build passed. The evaluation fixtures require
+no model calls or live Hermes session. Local version fixtures are synchronized
+to alpha.54; public alpha.51 release records are unchanged.
+
+The rebuilt source host passed fresh/immediate startup, security policy and
+profile release in 23.77 seconds. Immediate readiness was 7.21 seconds, so the
+known relaunch delay remains unresolved and this patch makes no latency claim.
+The native run exercises successful real Close calls; the failing HRESULTs
+are injected unit-test evidence, not a reproduced WebView2 close failure.
+Historical initialization-cancellation and mixed-DPI visual checks were not
+rerun. No release ZIP was assembled, published or promoted to beta. API, DB,
+persistent storage, runner selection and repository hygiene rules are unchanged.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product

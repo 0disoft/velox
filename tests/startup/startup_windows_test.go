@@ -375,6 +375,9 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	if err != nil && host.expectedPhase == "dom-2raf" {
 		return hostRun{}, fmt.Errorf("%s shutdown timeline failed: %w; host output: %s", host.name, err, output.String())
 	}
+	if err := validateShutdownResult(shutdownTimeline); err != nil {
+		return hostRun{}, fmt.Errorf("%s shutdown failed: %w; host output: %s", host.name, err, output.String())
+	}
 	return hostRun{
 		Ready:              readyDuration,
 		Exit:               hostExitedAt.Sub(exitStarted),
@@ -386,6 +389,17 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 		Timeline:           timeline,
 		ShutdownTimeline:   shutdownTimeline,
 	}, nil
+}
+
+func validateShutdownResult(timeline *benchmarker.ShutdownTimeline) error {
+	if timeline != nil {
+		for _, phase := range timeline.Phases {
+			if phase.Name == "controller-close-failed" {
+				return errors.New("controller close failed")
+			}
+		}
+	}
+	return nil
 }
 
 func parseStartupTimeline(output string) (*benchmarker.StartupTimeline, error) {

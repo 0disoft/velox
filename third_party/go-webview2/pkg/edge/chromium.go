@@ -207,8 +207,7 @@ func (e *Chromium) Destroy() {
 	e.removeEventHandlers()
 	e.markShutdown("event-handlers-removed")
 	if e.controller != nil {
-		_ = e.controller.Close()
-		e.markShutdown("controller-closed")
+		e.closeController(e.controller)
 	}
 	if e.webview != nil {
 		e.webview.Release()
@@ -225,6 +224,15 @@ func (e *Chromium) Destroy() {
 		e.environment = nil
 		e.markShutdown("environment-released")
 	}
+}
+
+func (e *Chromium) closeController(controller *ICoreWebView2Controller) {
+	if err := controller.Close(); err != nil {
+		log.Printf("WebView2 controller close failed: %v", err)
+		e.markShutdown("controller-close-failed")
+		return
+	}
+	e.markShutdown("controller-closed")
 }
 
 func (e *Chromium) markShutdown(name string) {
@@ -315,7 +323,7 @@ func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environme
 func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller *ICoreWebView2Controller) uintptr {
 	if e.destroyed {
 		if hresult(res) == nil && controller != nil {
-			_ = controller.Close()
+			e.closeController(controller)
 		}
 		return 0
 	}

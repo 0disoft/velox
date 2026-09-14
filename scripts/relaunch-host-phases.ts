@@ -82,8 +82,9 @@ try {
         callbackLifetimes.Unlock()
         e.markShutdown(fmt.Sprintf("callback-owner-released-refs-%d", refs))
       }()`],
-    ["\t\t_ = e.controller.Close()", `\t\tcloseResult, _, _ := e.controller.vtbl.Close.Call(uintptr(unsafe.Pointer(e.controller)))
-        e.markShutdown(fmt.Sprintf("controller-close-hresult-%08x", closeResult))`],
+    ["\tif err := controller.Close(); err != nil {", `\tcloseResult, _, _ := controller.vtbl.Close.Call(uintptr(unsafe.Pointer(controller)))
+        e.markShutdown(fmt.Sprintf("controller-close-hresult-%08x", closeResult))
+        if err := hresult(closeResult); err != nil {`],
   ]);
   // Extra points belong to diagnostic-only output, never the published lifecycle schema.
   await overlay("internal/benchmarker/timeline.go", [["velox.host-startup-timeline/v1", "velox.host-controller-startup-diagnostic/v1"]]);
