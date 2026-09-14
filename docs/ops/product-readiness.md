@@ -535,6 +535,62 @@ persistent data and repository hygiene rules are unchanged. Full product
 regression, historical cancellation failures and visual DPI checks were not
 rerun in this bounded diagnostic unit.
 
+### Full Host Controller Timing: 2026-09-14
+
+`scripts/relaunch-host-phases.ts` builds a diagnostic-only Go overlay of the
+real host, then runs one fresh/immediate same-profile pair through the existing
+native lifecycle harness. The `examples/hello` navigation, production settings,
+security policy, DOM-plus-two-frames ready boundary, dispatch draining and
+shutdown sequence remain in place. The overlay adds controller callback-entry
+timing, captures the HRESULT of the same controller Close call, and reads the
+callback registry count after owner release. It neither reorders releases nor
+adds another Close call or a browser-termination workaround.
+
+Source files are hash-checked before and after execution. Instrumented startup,
+shutdown and lifecycle records use separate diagnostic schema identifiers;
+they are not submitted as ordinary v3 release evidence. Generated overlay files,
+the host and results remain under one private cache directory. This does not
+modify the production source, public diagnostic schemas or release version.
+
+The delay reproduced on local Windows amd64, Go `go1.26.4`, WebView2
+`152.0.4191.66`, with base source `70f4a7d3b7183664df636bb25653154f75a050d8`:
+
+| Observed interval | First launch | Immediate relaunch |
+| --- | ---: | ---: |
+| Process start to ready | 1,697.16 ms | 6,358.18 ms |
+| Environment marker to controller callback entry | 312.35 ms | 6,127.45 ms |
+| Controller callback entry to setup marker | 2.21 ms | 0.00 ms |
+| Navigation dispatch to DOM plus two frames | 1,296.52 ms | 190.41 ms |
+| Controller Close HRESULT | 0x00000000 | 0x00000000 |
+| Callback references after owner release | 0 | 0 |
+
+The second process started 3.66 ms after the first host exited. The first
+browser exited 5,840.93 ms after that second start, and second readiness
+followed 517.25 ms later. Roughly 96% of second-startup time occurred before
+the controller callback arrived, not in the subsequent settings work or page
+rendering. Zero-valued timing means no difference resolved by this sample.
+
+Decision: retain this as an unresolved same-profile relaunch latency limitation
+while continuing the other readiness work. The evidence does not justify a
+release-order change, profile rotation or forced browser termination. Close
+failure and retained Go callback ownership were not observed in this run;
+the reason for delayed native controller completion is still unproven.
+This is not a finding that WebView2 universally requires six seconds, nor a
+proof that every native reference is released. The separately identified
+Close HRESULT reporting gap remains a worthwhile bounded correctness fix,
+but must not be presented as a latency fix without new evidence.
+
+The lifecycle pair passed in 14.38 seconds. Evidence covers 07:12:47-07:13:06
+UTC under `host-phases-2605147f-b0a8-4ec8-9946-159d63787146`. Diagnostic host
+SHA-256: `fd34b396481ba6755c35754346c7b9b9f19df86a3bc239bd91f543f323b94e35`;
+raw evidence SHA-256:
+`1c690289fa7456e73f4ef665ad9647295c1b28062d7fd3c2a3371d0f15cccf14`;
+result SHA-256:
+`a92a5553ff5e52890ee474e0fabe6f9fd0129eaacb3e258e2cc3e697d2fcd85f`.
+This source-host observation does not replace a release-ZIP test, hosted
+verification or the outstanding cancellation and mixed-DPI checks. No
+publication, beta promotion, API, DB, persistent-data or runner change occurred.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
