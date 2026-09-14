@@ -65,6 +65,10 @@ func Recover(finalDirectory, finalArchive string) error {
 }
 
 func Promote(finalDirectory, finalArchive, stageDirectory, stageArchive string) error {
+	return promote(finalDirectory, finalArchive, stageDirectory, stageArchive, os.RemoveAll)
+}
+
+func promote(finalDirectory, finalArchive, stageDirectory, stageArchive string, removeDirectory func(string) error) error {
 	if err := Recover(finalDirectory, finalArchive); err != nil {
 		return err
 	}
@@ -87,9 +91,14 @@ func Promote(finalDirectory, finalArchive, stageDirectory, stageArchive string) 
 	}
 	rollback := func() error {
 		var result error
-		result = errors.Join(result, wrap("remove partially promoted directory", os.RemoveAll(finalDirectory)))
+		result = errors.Join(result, wrap("remove partially promoted directory", removeDirectory(finalDirectory)))
 		if err := os.Remove(finalArchive); err != nil && !errors.Is(err, os.ErrNotExist) {
 			result = errors.Join(result, fmt.Errorf("remove partially promoted archive: %w", err))
+		}
+		// Keep both backups until partial outputs are gone. Restoring only the
+		// archive would make Recover mistake a mixed pair for a committed build.
+		if result != nil {
+			return result
 		}
 		if finalDirectoryExists {
 			result = errors.Join(result, wrap("restore output directory", os.Rename(backupDirectory, finalDirectory)))
