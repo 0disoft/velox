@@ -30,7 +30,10 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_format` maps to format.
 - `velox_lint` maps to lint.
 - `velox_test` maps to test.
-- `velox_build` maps to the production Go host build.
+- `velox_build` maps to the production Go host build with `-H windowsgui`.
+  Packaged apps do not allocate a console; the separate Velox CLI retains its
+  console subsystem and redirected diagnostics. Native startup smoke checks the
+  built host's PE subsystem as well as startup, shutdown, and failure reporting.
 - `velox_release_bundle` builds the Go CLI and host and assembles the unsigned,
   deterministic Windows x64 release bundle.
 - `velox_alpha_evidence_smoke` verifies the release manifest and emits local

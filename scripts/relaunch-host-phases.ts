@@ -92,7 +92,7 @@ try {
   await overlay("tests/startup/lifecycle_evidence_windows_test.go", [["velox.startup-lifecycle/v3", "velox.startup-controller-diagnostic/v1"]]);
   const overlayPath = join(work, "overlay.json"), host = join(work, "velox-host.exe");
   await writeFile(overlayPath, JSON.stringify({ Replace: overlays }, null, 2));
-  await writeFile(join(work, "build.log"), command("go", ["build", "-mod=readonly", "-overlay=" + overlayPath, "-trimpath", "-ldflags=-s -w", "-o", host, "./cmd/velox-host"]));
+  await writeFile(join(work, "build.log"), command("go", ["build", "-mod=readonly", "-overlay=" + overlayPath, "-trimpath", "-ldflags=-s -w -H windowsgui", "-o", host, "./cmd/velox-host"]));
   result.hostSHA256 = hash(await readFile(host));
   const evidencePath = join(work, "evidence.json");
   await writeFile(join(work, "native.log"), command("go", ["test", "-mod=readonly", "-overlay=" + overlayPath, "-v", "-count=1", "-timeout=60s", "-run=^TestStartupLifecycleEvidence$", "./tests/startup"], 75_000, {

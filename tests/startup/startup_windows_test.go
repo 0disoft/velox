@@ -1,6 +1,7 @@
 package startup_test
 
 import (
+	"debug/pe"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,6 +54,17 @@ type hostRun struct {
 }
 
 func TestBuiltHostStartup(t *testing.T) {
+	t.Run("gui-subsystem", func(t *testing.T) {
+		file, err := pe.Open(requiredExecutable(t, "VELOX_BUILT_HOST"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer file.Close()
+		header, ok := file.OptionalHeader.(*pe.OptionalHeader64)
+		if !ok || header.Subsystem != pe.IMAGE_SUBSYSTEM_WINDOWS_GUI {
+			t.Fatalf("host must be a Windows x64 GUI executable; header=%+v", file.OptionalHeader)
+		}
+	})
 	t.Run("lifecycle", testBuiltHostLifecycle)
 	t.Run("security-policy", testBuiltHostSecurityPolicy)
 }

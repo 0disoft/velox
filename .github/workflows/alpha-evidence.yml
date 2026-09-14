@@ -81,7 +81,7 @@ jobs:
             New-Item -ItemType Directory -Path $input -Force | Out-Null
             go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'velox.exe') ./cmd/velox
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            go build -trimpath -ldflags='-s -w' -o (Join-Path $input 'velox-host.exe') ./cmd/velox-host
+            go build -trimpath -ldflags='-s -w -H windowsgui' -o (Join-Path $input 'velox-host.exe') ./cmd/velox-host
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             $raw = go run ./cmd/velox-release --cli (Join-Path $input 'velox.exe') --host (Join-Path $input 'velox-host.exe') --source-root $env:GITHUB_WORKSPACE --out $output --json
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
