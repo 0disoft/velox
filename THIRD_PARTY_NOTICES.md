@@ -27,7 +27,7 @@ The upstream MIT license is preserved at
 
 ## golang.org/x/sys
 
-- Version: `v0.0.0-20220412211240-33da011f77ad`
+- Version: `v0.48.0`
 - License: BSD-3-Clause
 - Purpose: Windows system-call support used transitively and by the startup test
 

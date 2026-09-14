@@ -35,9 +35,14 @@ Velox carries only the changes required by its Windows host boundary:
 
 Do not merge upstream changes mechanically. Review COM ownership, public API
 changes, generated bindings, loader changes, and license notices before
-updating the pinned source revision. The retained native callback objects are
-not yet covered by an explicit `runtime.Pinner` contract, so any Go collector or
-pointer-rule change requires a fresh lifetime review before adoption.
+updating the pinned source revision. Native callback objects share an explicit
+`runtime.Pinner` and reference-counted owner; Go collector or pointer-rule
+changes still require a fresh lifetime review before adoption.
+
+The maintained fork requires Go 1.26.0 and uses `golang.org/x/sys v0.48.0`,
+aligned with the Velox root module. This dependency refresh preserves the
+upstream source revision and local COM/permission changes. The BSD-3-Clause
+notice for x/sys is recorded in the root `THIRD_PARTY_NOTICES.md`.
 
 The upstream x86 and ARM64 loader files remain checked in even though the first
 supported target is Windows x64. Removing them saves only about 231 KiB from
