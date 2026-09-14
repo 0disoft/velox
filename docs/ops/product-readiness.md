@@ -479,6 +479,62 @@ Historical cancellation failures, mixed-DPI visual confirmation and the
 release decision remain open. This record does not publish alpha.53 or
 promote beta; API, DB, runtime and repository hygiene rules are unchanged.
 
+### Native Callback Phase Isolation: 2026-09-14
+
+The opt-in `TestNativeRelaunchPhases` diagnostic wraps the fork's existing
+controller-completion implementation in test code. It timestamps callback
+entry before forwarding to the unchanged implementation and observes the
+existing `controller-created` marker after setup. Each initialization runs in
+a separate, timeout-bounded test subprocess, using an isolated profile and
+hidden native window. Browser-exit waits occur during cleanup after both
+launches, not as a prerequisite for relaunch. Ordinary fork tests skip this
+native diagnostic. No product callback, lifecycle order or timeline schema
+changed, and no release version bump is needed for this test-only addition.
+
+One same-profile pair followed by one fresh-profile pair passed on local
+Windows amd64 with WebView2 `152.0.4191.66` and Go `go1.26.4`:
+
+| Initialization interval | Same first | Same second | Fresh first | Fresh second |
+| --- | ---: | ---: | ---: | ---: |
+| Environment marker to controller callback | 286.639 ms | 234.121 ms | 330.323 ms | 369.289 ms |
+| Callback entry to setup marker | 0.000 ms | 0.000 ms | 0.590 ms | 0.000 ms |
+| Destroy call duration | 12.972 ms | 9.877 ms | 19.311 ms | 14.496 ms |
+
+Zero-valued intervals mean no difference resolved by this measurement, not
+zero execution cost. All four callbacks reported success exactly once;
+`Destroy` cleared the three owned COM interface fields and the callback
+reference registry count was zero immediately afterward. Recorded shutdown
+order was event removal, controller close, WebView release, controller
+release, then environment release. Explicit close is consistent with
+[Microsoft's controller lifetime guidance](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controller#close),
+but this observation does not verify every native COM reference or the close
+HRESULT: the current close wrapper does not inspect that HRESULT and Destroy
+discards its returned error. There is no evidence here that close failed.
+
+The roughly seven-second release-host delay did not reproduce in this
+initialization-only experiment. This test does not navigate, configure the
+full product security policy, wait for DOM readiness, or use the release
+executable. It also explicitly initializes and uninitializes its test STA,
+unlike the product path's package-initialization lifetime. These differences
+prevent transferring the fast setup timings or zero callback references to
+the failing full-app path. The earlier alpha.53 same-profile result remains
+unresolved; neither a generic COM leak nor an unavoidable WebView2 delay is
+established. The next useful experiment must retain the production navigation,
+settings and shutdown path while observing the same callback boundaries,
+rather than repeat the minimal test or rotate user profiles.
+
+The native comparison passed in 5.82 seconds and fork unit regressions passed.
+Evidence is retained under the ignored
+`native-phase-2c82cc79b3cc4c5891beebddd395c91c` directory, bound to base commit
+`ab69cc70f1f639402d5f563eaa8e973954583f7c` and diagnostic source SHA-256
+`cf54a8633b2bdf202e76c2f9a6cf35e15b9440d1df2e5cfd83c5f652967e6fe0`.
+The native log SHA-256 is
+`3fb22e75047cf00b5315a372c5b8412206107bac2760a4fe03fbfb4cbca4480a`.
+No production binary was rebuilt or published. API, DB, runner selection,
+persistent data and repository hygiene rules are unchanged. Full product
+regression, historical cancellation failures and visual DPI checks were not
+rerun in this bounded diagnostic unit.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
