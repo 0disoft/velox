@@ -23,8 +23,17 @@ obtain a pass. Hosted verification is separate.
 
 ## 2. DPI and Visual Checks
 
-Pending in this follow-up. Unit checks do not substitute for observed
-125%/150% display scaling or movement between differently scaled monitors.
+The focused DPI/host, fork window/COM, version-fixture and hygiene checks
+passed on alpha.54. These cover DPI setup and scaling behavior in tests;
+they do not substitute for observed 125%/150% display scaling, text sharpness
+or movement between differently scaled monitors.
+
+The Windows UI helper could not obtain a targetable Display Settings window
+after a launch attempt and refreshed window inventory. The user was asked to
+open Display Settings. No display scaling was changed, no screenshot-based
+sharpness claim is made, and the physical display matrix remains pending.
+Candidate preparation may continue, but this pending check is retained in
+the release decision rather than converted into a pass.
 
 ## 3. Candidate and Release Decision
 
