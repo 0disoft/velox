@@ -627,6 +627,9 @@ Historical initialization-cancellation and mixed-DPI visual checks were not
 rerun. No release ZIP was assembled, published or promoted to beta. API, DB,
 persistent storage, runner selection and repository hygiene rules are unchanged.
 
+The ordered alpha.54 cancellation, DPI and candidate follow-up is tracked in
+[Alpha.54 readiness](alpha54-readiness.md), with separate evidence levels.
+
 ## Optional Evidence
 
 AI trials and external user feedback can reveal documentation or product
