@@ -58,6 +58,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		StartupPhase:   config.StartupPhase,
 		ShutdownPhase:  config.ShutdownPhase,
 		WindowOptions: webview.WindowOptions{
+			IconId: 1,
 			Title:  config.Title,
 			Width:  config.Width,
 			Height: config.Height,
@@ -67,6 +68,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	if view == nil {
 		return nil, ErrRuntimeUnavailable
 	}
+	setSmallWindowIcon(uintptr(view.Window()))
 
 	runtime := &Runtime{view: view, shutdownPhase: config.ShutdownPhase}
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{

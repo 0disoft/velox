@@ -54,6 +54,7 @@ type hostRun struct {
 }
 
 func TestBuiltHostStartup(t *testing.T) {
+	t.Run("default-icons", testBuiltHostIcons)
 	t.Run("gui-subsystem", func(t *testing.T) {
 		file, err := pe.Open(requiredExecutable(t, "VELOX_BUILT_HOST"))
 		if err != nil {
