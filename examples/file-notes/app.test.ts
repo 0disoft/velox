@@ -108,7 +108,7 @@ test("denied write permission preserves edits and permits retry when the browser
   ui.edit("keep me");
   await ui.click("save-document");
   expect(writes).toBe(0);
-  expect(ui.node("#status").textContent).toContain("Write permission was not granted");
+  expect(ui.node("#status").textContent).toBe("Save blocked: File access was denied. Your text is still in the editor.");
   expect(ui.unload()).toBe(true);
   expect(ui.node("#editor").value).toBe("keep me");
   expect(ui.node("#save-document").disabled).toBe(false);
@@ -121,6 +121,55 @@ test("denied write permission preserves edits and permits retry when the browser
   expect(written).toBe("keep me after denial");
   expect(ui.node("#save-state").textContent).toBe("Saved to file");
   expect(ui.unload()).toBe(false);
+});
+
+test("picker denial does not retry, discard text, or claim a saved profile denial", async () => {
+  let calls = 0;
+  const ui = harness({ save: async () => {
+    calls++;
+    throw Object.assign(new Error("The request is not allowed by the platform"), { name: "NotAllowedError" });
+  } });
+  await ui.ready;
+  ui.edit("unsaved text");
+  await ui.click("save-as-document");
+  expect(calls).toBe(1);
+  expect(ui.node("#status").textContent).toBe("Save blocked: File access was denied. Your text is still in the editor.");
+  expect(ui.node("#save-state").textContent).toBe("Unsaved changes");
+  expect(ui.node("#save-document").disabled).toBe(false);
+  const draft = await ui.flushDraft();
+  const reopened = harness({ draft });
+  await reopened.ready;
+  expect(reopened.node("#editor").value).toBe("unsaved text");
+  expect(reopened.unload()).toBe(true);
+});
+
+test("security-context errors and denied Open are classified without changing the document", async () => {
+  for (const name of ["SecurityError", "NotAllowedError"]) {
+    const ui = harness({ draft: { schemaVersion: 1, text: "original", savedText: "original" }, open: async () => {
+      throw Object.assign(new Error("blocked"), { name });
+    } });
+    await ui.ready;
+    ui.click("open-document");
+    await tick();
+    expect(ui.node("#status").textContent).toContain(name === "SecurityError" ? "unavailable in this context" : "File access was denied");
+    expect(ui.node("#editor").value).toBe("original");
+  }
+});
+
+test("canceled write to an existing handle is not reported as a failure", async () => {
+  let canceled = false;
+  const handle = { name: "note.md", queryPermission: async () => "granted", createWritable: async () => {
+    if (canceled) throw Object.assign(new Error("cancel"), { name: "AbortError" });
+    return { write: async () => {}, close: async () => {} };
+  } };
+  const ui = harness({ save: async () => handle });
+  await ui.ready;
+  await ui.click("save-as-document");
+  ui.edit("new text");
+  canceled = true;
+  await ui.click("save-document");
+  expect(ui.node("#status").textContent).toBe("Save canceled.");
+  expect(ui.unload()).toBe(true);
 });
 
 test("failed close aborts the stream and retains unsaved text", async () => {

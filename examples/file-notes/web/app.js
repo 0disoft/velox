@@ -55,6 +55,18 @@
     elements.status.textContent = message;
   }
 
+  function reportFileError(operation, error) {
+    if (error.name === "AbortError") {
+      announce(`${operation} canceled.`);
+    } else if (error.name === "NotAllowedError") {
+      announce(`${operation} blocked: File access was denied. Your text is still in the editor.`);
+    } else if (error.name === "SecurityError") {
+      announce(`${operation} blocked: File access is unavailable in this context. Your text is still in the editor.`);
+    } else {
+      announce(`${operation} failed: ${error.message}`);
+    }
+  }
+
   function queueDraftSave() {
     clearTimeout(draftTimer);
     draftTimer = setTimeout(() => {
@@ -92,14 +104,14 @@
       queueDraftSave();
       announce(`${selected.file.name} opened.`);
     } catch (error) {
-      announce(error.name === "AbortError" ? "Open canceled." : `Open failed: ${error.message}`);
+      reportFileError("Open", error);
     }
   }
 
   async function writeDocument(handle, snapshot) {
     const permission = await handle.queryPermission({ mode: "readwrite" });
     if (permission !== "granted" && await handle.requestPermission({ mode: "readwrite" }) !== "granted") {
-      throw new Error("Write permission was not granted.");
+      throw Object.assign(new Error("Write permission was not granted."), { name: "NotAllowedError" });
     }
     const writable = await handle.createWritable();
     try {
@@ -129,7 +141,7 @@
       });
       await writeDocument(handle, snapshot);
     } catch (error) {
-      announce(error.name === "AbortError" ? "Save canceled." : `Save failed: ${error.message}`);
+      reportFileError("Save", error);
     }
   }
 
@@ -141,7 +153,7 @@
     try {
       await writeDocument(state.handle, { ...state });
     } catch (error) {
-      announce(`Save failed: ${error.message}`);
+      reportFileError("Save", error);
     }
   }
 
