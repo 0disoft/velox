@@ -82,6 +82,7 @@ Foundation application and protected-environment handoff steps remain in
 - docs/ops/llm-agent-evaluation.md
 - docs/ops/llm-agent-public-evidence.md
 - docs/ops/rollback.md
+- docs/ops/file-permission-recovery.md
 - docs/QUICKSTART.md
 
 ADR 0016 closes the technical M4 distribution milestone with the now-archived,

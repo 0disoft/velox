@@ -18,3 +18,15 @@ Browser support does not guarantee that Windows policy or a particular WebView2
 runtime grants every operation. Unsupported or denied picker operations remain
 visible application states rather than falling back to unrestricted native
 filesystem access.
+
+Save/Open cancellation, denied access, and invalid security context have distinct
+status messages. A NotAllowedError alone does not prove a persisted profile
+denial, and the editor never silently retries or resets a permission.
+
+On hosts with native permission recovery, open the window system menu (Alt+Space
+or the title-bar icon) and select **File access...**. The host reads this app's
+FileReadWrite setting. Only a saved denial offers a Yes/No reset confirmation,
+with No selected by default. Reset removes that one decision; it does not grant
+file access or write files. Retry Save/Save as with a new user gesture afterward.
+Documents, IndexedDB drafts, other origins, and other permission kinds are not
+changed. This is a host maintenance action, not an application IPC permission.

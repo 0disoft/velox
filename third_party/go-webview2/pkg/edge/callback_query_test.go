@@ -14,7 +14,7 @@ func TestNativeCallbackQueryInterfaceOwnsReturnedPointer(t *testing.T) {
 	iids := []*GUID{environmentCompletedIID, controllerCompletedIID, webMessageReceivedIID,
 		permissionRequestedIID, webResourceRequestedIID, acceleratorKeyPressedIID,
 		navigationCompletedIID, navigationStartingIID, navigationStartingIID,
-		newWindowRequestedIID, downloadStartingIID, windowCloseRequestedIID}
+		newWindowRequestedIID, downloadStartingIID, windowCloseRequestedIID, filePermissionReadIID, filePermissionSetIID}
 	for index, pointer := range e.callbackPointers() {
 		vtbl := *(**_IUnknownVtbl)(pointer)
 		for _, iid := range []*GUID{callbackIUnknownIID, iids[index]} {

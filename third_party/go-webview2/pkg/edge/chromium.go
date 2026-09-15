@@ -17,25 +17,27 @@ import (
 )
 
 type Chromium struct {
-	hwnd                  uintptr
-	focusOnInit           bool
-	controller            *ICoreWebView2Controller
-	webview               *ICoreWebView2
-	inited                uintptr
-	envCompleted          *iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
-	controllerCompleted   *iCoreWebView2CreateCoreWebView2ControllerCompletedHandler
-	webMessageReceived    *iCoreWebView2WebMessageReceivedEventHandler
-	permissionRequested   *iCoreWebView2PermissionRequestedEventHandler
-	webResourceRequested  *iCoreWebView2WebResourceRequestedEventHandler
-	acceleratorKeyPressed *ICoreWebView2AcceleratorKeyPressedEventHandler
-	navigationCompleted   *ICoreWebView2NavigationCompletedEventHandler
-	navigationStarting    *navigationStartingEventHandler
-	frameNavigation       *navigationStartingEventHandler
-	newWindowRequested    *newWindowRequestedEventHandler
-	downloadStarting      *downloadStartingEventHandler
-	windowCloseRequested  *windowCloseRequestedHandler
-	windowCloseToken      _EventRegistrationToken
-	windowCloseRegistered bool
+	filePermissionRead, filePermissionSet *filePermissionHandler
+	filePermissionOperation               *filePermissionOperation
+	hwnd                                  uintptr
+	focusOnInit                           bool
+	controller                            *ICoreWebView2Controller
+	webview                               *ICoreWebView2
+	inited                                uintptr
+	envCompleted                          *iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
+	controllerCompleted                   *iCoreWebView2CreateCoreWebView2ControllerCompletedHandler
+	webMessageReceived                    *iCoreWebView2WebMessageReceivedEventHandler
+	permissionRequested                   *iCoreWebView2PermissionRequestedEventHandler
+	webResourceRequested                  *iCoreWebView2WebResourceRequestedEventHandler
+	acceleratorKeyPressed                 *ICoreWebView2AcceleratorKeyPressedEventHandler
+	navigationCompleted                   *ICoreWebView2NavigationCompletedEventHandler
+	navigationStarting                    *navigationStartingEventHandler
+	frameNavigation                       *navigationStartingEventHandler
+	newWindowRequested                    *newWindowRequestedEventHandler
+	downloadStarting                      *downloadStartingEventHandler
+	windowCloseRequested                  *windowCloseRequestedHandler
+	windowCloseToken                      _EventRegistrationToken
+	windowCloseRegistered                 bool
 
 	webMessageToken               _EventRegistrationToken
 	permissionToken               _EventRegistrationToken
@@ -97,6 +99,8 @@ type WebResourceRequestHandler func(uri string) (WebResourceResponse, bool)
 
 func NewChromium() *Chromium {
 	e := &Chromium{}
+	e.filePermissionRead = &filePermissionHandler{&filePermissionReadVtbl, e, filePermissionReadIID}
+	e.filePermissionSet = &filePermissionHandler{&filePermissionSetVtbl, e, filePermissionSetIID}
 	// Embed pins the native-visible callback graph before publishing any pointer.
 	e.envCompleted = newICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler(e)
 	e.controllerCompleted = newICoreWebView2CreateCoreWebView2ControllerCompletedHandler(e)
@@ -207,6 +211,7 @@ func (e *Chromium) Destroy() {
 		return
 	}
 	e.destroyed = true
+	e.finishFilePermission(0, nil, false)
 	defer e.releaseCallbackOwner()
 	e.markShutdown("chromium-destroy-entered")
 	e.removeEventHandlers()

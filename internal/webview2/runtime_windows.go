@@ -69,6 +69,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, ErrRuntimeUnavailable
 	}
 	setSmallWindowIcon(uintptr(view.Window()))
+	if err := installFilePermissionMenu(view, trustedOrigin(config.AppID)); err != nil {
+		destroyBeforeRun(view)
+		return nil, err
+	}
 
 	runtime := &Runtime{view: view, shutdownPhase: config.ShutdownPhase}
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{

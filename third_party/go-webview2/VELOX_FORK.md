@@ -51,3 +51,11 @@ supported target is Windows x64. Removing them saves only about 231 KiB from
 the source checkout, does not reduce the x64 executable because build tags
 already exclude them, and would make upstream review noisier. Revisit only if
 repository or CI transfer measurements make that source-only cost material.
+
+The native-only file-permission maintenance operation reads the current profile
+through ICoreWebView2_13 and ICoreWebView2Profile4. It accepts only an origin
+approved by FileSystemAccessAllowed, never grants access, and resets only an
+existing FileReadWrite denial to Default after native user consent. Both async
+completion handlers participate in the pinned fourteen-handler owner lifetime.
+Destroy cancels the pending operation, releases its profile reference, and
+suppresses late completion delivery. The public JavaScript IPC is unchanged.

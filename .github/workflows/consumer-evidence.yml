@@ -133,6 +133,15 @@ jobs:
           go test -v -count=1 -run 'TestBuiltHostStartup$' ./tests/startup
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Verify native file permission recovery
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GOCACHE = Join-Path $env:RUNNER_TEMP 'go-build-startup'
+          $env:VELOX_NATIVE_FILE_PERMISSION = '1'
+          go -C third_party/go-webview2 test -v -count=1 -timeout=75s -run '^TestNativeFilePermissionRecovery$' ./pkg/edge
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Measure startup lifecycle
         shell: pwsh
         env:
