@@ -6,6 +6,8 @@ The upstream MIT license is preserved in `LICENSE`.
 
 Velox carries only the changes required by its Windows host boundary:
 
+- use only the embedded WebView2 SDK loader, never an ambient DLL from the
+  working directory or PATH, and retain initialization errors across calls;
 - deny all WebView2 permission requests by default;
 - expose virtual-host-to-folder mapping through the public wrapper;
 - expose a synchronous benchmarkable web-resource response hook with balanced

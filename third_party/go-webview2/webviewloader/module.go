@@ -10,11 +10,6 @@ import (
 )
 
 var (
-	nativeModule                                       = windows.NewLazyDLL("WebView2Loader")
-	nativeCreate                                       = nativeModule.NewProc("CreateCoreWebView2EnvironmentWithOptions")
-	nativeCompareBrowserVersions                       = nativeModule.NewProc("CompareBrowserVersions")
-	nativeGetAvailableCoreWebView2BrowserVersionString = nativeModule.NewProc("GetAvailableCoreWebView2BrowserVersionString")
-
 	memOnce                                         sync.Once
 	memModule                                       winloader.Module
 	memCreate                                       winloader.Proc
@@ -39,26 +34,14 @@ func CompareBrowserVersions(v1 string, v2 string) (int, error) {
 		return 0, err
 	}
 
-	nativeErr := nativeModule.Load()
-	if nativeErr == nil {
-		nativeErr = nativeCompareBrowserVersions.Find()
+	if err := loadFromMemory(); err != nil {
+		return 0, err
 	}
 	var result int
-	if nativeErr != nil {
-		err = loadFromMemory(nativeErr)
-		if err != nil {
-			return 0, fmt.Errorf("Unable to load WebView2Loader.dll from disk: %v -- or from memory: %w", nativeErr, memErr)
-		}
-		_, _, err = memCompareBrowserVersions.Call(
-			uint64(uintptr(unsafe.Pointer(_v1))),
-			uint64(uintptr(unsafe.Pointer(_v2))),
-			uint64(uintptr(unsafe.Pointer(&result))))
-	} else {
-		_, _, err = nativeCompareBrowserVersions.Call(
-			uintptr(unsafe.Pointer(_v1)),
-			uintptr(unsafe.Pointer(_v2)),
-			uintptr(unsafe.Pointer(&result)))
-	}
+	_, _, err = memCompareBrowserVersions.Call(
+		uint64(uintptr(unsafe.Pointer(_v1))),
+		uint64(uintptr(unsafe.Pointer(_v2))),
+		uint64(uintptr(unsafe.Pointer(&result))))
 	if err != windows.ERROR_SUCCESS {
 		return result, err
 	}
@@ -76,25 +59,13 @@ func GetInstalledVersion() (string, error) {
 	// HRESULT is return type which means it returns an integer that will be 0 (S_OK) on success,
 	// and finally STDAPICALLTYPE tells us the function uses the stdcall calling convention (what Go assumes for syscalls).
 
-	nativeErr := nativeModule.Load()
-	if nativeErr == nil {
-		nativeErr = nativeGetAvailableCoreWebView2BrowserVersionString.Find()
+	if err := loadFromMemory(); err != nil {
+		return "", err
 	}
-	var hr uintptr
 	var result *uint16
-	if nativeErr != nil {
-		if err := loadFromMemory(nativeErr); err != nil {
-			return "", fmt.Errorf("Unable to load WebView2Loader.dll from disk: %v -- or from memory: %w", nativeErr, memErr)
-		}
-		hr64, _, _ := memGetAvailableCoreWebView2BrowserVersionString.Call(
-			uint64(uintptr(unsafe.Pointer(nil))),
-			uint64(uintptr(unsafe.Pointer(&result))))
-		hr = uintptr(hr64) // The return size of the HRESULT will be whatver native size is (i.e uintptr) and not 64-bits on 32-bit systems.  In both cases it should be interpreted as 32-bits (a LONG).
-	} else {
-		hr, _, _ = nativeGetAvailableCoreWebView2BrowserVersionString.Call(
-			uintptr(unsafe.Pointer(nil)),
-			uintptr(unsafe.Pointer(&result)))
-	}
+	hr64, _, _ := memGetAvailableCoreWebView2BrowserVersionString.Call(
+		0, uint64(uintptr(unsafe.Pointer(&result))))
+	hr := uintptr(hr64)
 	defer windows.CoTaskMemFree(unsafe.Pointer(result)) // Safe even if result is nil
 	if hr != uintptr(windows.S_OK) {
 		if hr&0xFFFF == uintptr(windows.ERROR_FILE_NOT_FOUND) {
@@ -110,44 +81,29 @@ func GetInstalledVersion() (string, error) {
 // CreateCoreWebView2EnvironmentWithOptions tries to load WebviewLoader2 and
 // call the CreateCoreWebView2EnvironmentWithOptions routine.
 func CreateCoreWebView2EnvironmentWithOptions(browserExecutableFolder, userDataFolder *uint16, environmentOptions uintptr, environmentCompletedHandle uintptr) (uintptr, error) {
-	nativeErr := nativeModule.Load()
-	if nativeErr == nil {
-		nativeErr = nativeCreate.Find()
+	if err := loadFromMemory(); err != nil {
+		return 0, err
 	}
-	if nativeErr != nil {
-		err := loadFromMemory(nativeErr)
-		if err != nil {
-			return 0, err
-		}
-		res, _, _ := memCreate.Call(
-			uint64(uintptr(unsafe.Pointer(browserExecutableFolder))),
-			uint64(uintptr(unsafe.Pointer(userDataFolder))),
-			uint64(environmentOptions),
-			uint64(environmentCompletedHandle),
-		)
-		return uintptr(res), nil
-	}
-	res, _, _ := nativeCreate.Call(
-		uintptr(unsafe.Pointer(browserExecutableFolder)),
-		uintptr(unsafe.Pointer(userDataFolder)),
-		environmentOptions,
-		environmentCompletedHandle,
+	res, _, _ := memCreate.Call(
+		uint64(uintptr(unsafe.Pointer(browserExecutableFolder))),
+		uint64(uintptr(unsafe.Pointer(userDataFolder))),
+		uint64(environmentOptions),
+		uint64(environmentCompletedHandle),
 	)
-	return res, nil
+	return uintptr(res), nil
 }
 
-func loadFromMemory(nativeErr error) error {
-	var err error
-	// DLL is not available natively. Try loading embedded copy.
+func loadFromMemory() error {
+	// Use only the bundled SDK loader; ambient DLLs can change browser behavior.
 	memOnce.Do(func() {
 		memModule, memErr = winloader.LoadFromMemory(WebView2Loader)
 		if memErr != nil {
-			err = fmt.Errorf("Unable to load WebView2Loader.dll from disk: %v -- or from memory: %w", nativeErr, memErr)
+			memErr = fmt.Errorf("load embedded WebView2Loader.dll: %w", memErr)
 			return
 		}
 		memCreate = memModule.Proc("CreateCoreWebView2EnvironmentWithOptions")
 		memCompareBrowserVersions = memModule.Proc("CompareBrowserVersions")
 		memGetAvailableCoreWebView2BrowserVersionString = memModule.Proc("GetAvailableCoreWebView2BrowserVersionString")
 	})
-	return err
+	return memErr
 }
