@@ -16,7 +16,7 @@ func TestLifecycleStressWorkflowContract(t *testing.T) {
 	for _, required := range []string{
 		"workflow_dispatch:", "runs-on: windows-2025", "timeout-minutes: 15",
 		"persist-credentials: false", "contents: read", "cancel-in-progress: false",
-		"v0.5.10-alpha.40", "771173b6eec2f74d92228e7ac5b52332160b0f9fb4d7baecf01976864a00f8c8",
+		"v0.5.10-alpha.62", "10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871",
 		"$observed -cne $expected", "hostSha256", "measurementCommit",
 		"initializationCancellationTested = $false", "requestedLaunches = 100",
 		"VELOX_STARTUP_LIFECYCLE_REPETITIONS = '50'", "-timeout=12m",
