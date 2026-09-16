@@ -47,10 +47,40 @@ cases do not claim an observed browser process exit or a delayed environment
 callback after shutdown.
 
 These tests exercised the tag-matching source fork, not cancellation inside
-the downloaded public EXE. Public-binary initialization cancellation and the
-50-pair hosted alpha.61 stress run remain unverified. This bounded run does not
-promote beta or change a runtime/API/database contract.
+the downloaded public EXE. The public early-close probe below is separate
+from these COM-stage tests. The 50-pair hosted alpha.61 stress run remains
+unverified. This bounded run does not promote beta or change a runtime/API/database
+contract.
 
 Local raw evidence is retained under `.cache/public-alpha61-lifecycle-20260916/`:
 `binding.json`, `lifecycle.json`, `lifecycle.log`, `cancellation.log`, and
 `exit-codes.json`. The cache is not a distributed product artifact.
+
+## Public EXE Early Close: Failed Normal-Exit Gate
+
+A subsequent 2026-09-16 probe reused the exact host hash above. It observed the
+owned process's first main window and sent its ordinary close request before
+the benchmark readiness pipe connected. No ready marker arrived for any early
+close. This bounds the observation to pre-readiness window closure; it does
+not identify a specific internal COM initialization stage.
+
+Three corrected-harness repetitions produced the same result:
+
+- Close requests were accepted 46.32-61.72 ms after launch.
+- All hosts exited without forced termination in 88.41-118.48 ms.
+- All returned exit code 5 and `WebView2 Runtime is unavailable or initialization failed`.
+- Immediate same-profile relaunches emitted `ready dom-2raf` and exited 0 in
+  556.75-608.38 ms. All three disposable profiles were subsequently removable.
+
+The normal-exit gate failed: a deliberate pre-ready close is reported as runtime
+unavailability. `internal/webview2/runtime_windows.go` maps a nil constructor
+result to `ErrRuntimeUnavailable`; the host maps that error to exit code 5.
+The next fix must distinguish user cancellation from genuine initialization
+failure, without converting real missing-runtime failures to success.
+
+The initial harness waited for host exit before reading its readiness pipe;
+its relaunches timed out and required cleanup. Concurrent reading removed that
+measurement deadlock. Those timeouts are retained as harness failures, not
+claimed as a reproduced public-host relaunch defect. Raw original and retry
+evidence remains under `.cache/public61-early-close-20260916/`, with the corrected
+run in `retry-3/`. No runtime fix or new release is included in this record.
