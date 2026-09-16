@@ -63,19 +63,20 @@ func (w *webview) BrowserProcessID() (uint32, error) {
 }
 
 type webview struct {
-	hwnd               uintptr
-	mainthread         uintptr
-	browser            browser
-	autofocus          bool
-	maxsz              w32.Point
-	minsz              w32.Point
-	m                  sync.Mutex
-	bindings           map[string]interface{}
-	dispatchq          []func()
-	closing            bool
-	closeConsentReady  bool
-	shutdownPhase      func(name string)
-	maxWebMessageBytes int
+	hwnd                   uintptr
+	mainthread             uintptr
+	browser                browser
+	autofocus              bool
+	maxsz                  w32.Point
+	minsz                  w32.Point
+	m                      sync.Mutex
+	bindings               map[string]interface{}
+	dispatchq              []func()
+	closing                bool
+	closeConsentReady      bool
+	initializationCanceled bool
+	shutdownPhase          func(name string)
+	maxWebMessageBytes     int
 }
 
 type WindowOptions struct {
@@ -172,6 +173,12 @@ func NewWindow(debug bool, window unsafe.Pointer) WebView {
 
 // NewWithOptions creates a new webview using the provided options.
 func NewWithOptions(options WebViewOptions) WebView {
+	view, _ := NewWithOptionsAndError(options)
+	return view
+}
+
+// NewWithOptionsAndError distinguishes an early user close from initialization failure.
+func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 	w := &webview{}
 	w.bindings = map[string]interface{}{}
 	w.autofocus = options.AutoFocus
@@ -205,7 +212,7 @@ func NewWithOptions(options WebViewOptions) WebView {
 		options.StartupPhase("window-create-started")
 	}
 	if !w.CreateWithOptions(options.WindowOptions) {
-		return nil
+		return nil, initializationResultError(w.initializationCanceled, chromium.InitializationError())
 	}
 	if options.StartupPhase != nil {
 		options.StartupPhase("webview-created")
@@ -214,19 +221,19 @@ func NewWithOptions(options WebViewOptions) WebView {
 	settings, err := chromium.GetSettings()
 	if err != nil {
 		destroyBeforeReturn(w)
-		return nil
+		return nil, err
 	}
 	if err := configureSettings(settings, options.Debug); err != nil {
 		destroyBeforeReturn(w)
-		return nil
+		return nil, err
 	}
 	if err := chromium.ConfigureDevelopmentCache(options.Debug); err != nil {
 		destroyBeforeReturn(w)
-		return nil
+		return nil, err
 	}
 	w.closeConsentReady = true
 
-	return w
+	return w, nil
 }
 
 type rpcMessage struct {
@@ -506,6 +513,9 @@ func (w *webview) requestUserClose() {
 	w.m.Lock()
 	closing := w.closing
 	ready := w.closeConsentReady
+	if !closing && !ready {
+		w.initializationCanceled = true
+	}
 	w.m.Unlock()
 	if !closing {
 		if !ready {

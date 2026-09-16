@@ -99,6 +99,9 @@ func run(args []string) int {
 		return nil
 	})
 	if err != nil {
+		if errors.Is(err, webview2.ErrInitializationCanceled) {
+			return 0
+		}
 		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
 		if errors.Is(err, webview2.ErrRuntimeUnavailable) {
 			return 5

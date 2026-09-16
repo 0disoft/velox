@@ -35,7 +35,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, err
 	}
 
-	view := webview.NewWithOptions(webview.WebViewOptions{
+	view, createErr := webview.NewWithOptionsAndError(webview.WebViewOptions{
 		Debug:                   config.Debug,
 		DataPath:                config.DataPath,
 		BrowserExecutableFolder: config.BrowserExecutableFolder,
@@ -66,6 +66,9 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		},
 	})
 	if view == nil {
+		if errors.Is(createErr, webview.ErrInitializationCanceled) {
+			return nil, ErrInitializationCanceled
+		}
 		return nil, ErrRuntimeUnavailable
 	}
 	setSmallWindowIcon(uintptr(view.Window()))

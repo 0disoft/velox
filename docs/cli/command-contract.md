@@ -199,6 +199,12 @@ paths unless no safe relative representation exists.
 
 Stable diagnostic codes provide detail within these broad process exit codes.
 
+From development alpha.62, closing the native host window during initial
+construction is a normal user cancellation (exit 0, no runtime-error message).
+Missing WebView2 or an actual initialization failure is not converted to a
+successful cancellation. This does not bypass document close consent after
+initialization.
+
 ## Failure and Recovery
 
 - validate and doctor do not write project or output files.

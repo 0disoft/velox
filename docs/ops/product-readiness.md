@@ -23,6 +23,12 @@ with a mock and label the gate complete.
 
 ## Desktop Delivery: 2026-09-16
 
+Development alpha.62 fixes the early user-close exit classification. The
+regression fails on the public alpha.61 host and passes on the local candidate,
+including three close/relaunch pairs and the genuine missing-runtime case.
+The public alpha.61 gate in the table remains failed until a new artifact is
+published and checked. See [lifecycle evidence](alpha61-lifecycle.md).
+
 Unsigned alpha.61 is published. Publication run 35063918809 and public-download
 verification run 35064135758 passed. The maintainer separately confirmed
 Explorer-launched Save as, exit, relaunch, and Save for the earlier CI alpha.61

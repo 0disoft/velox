@@ -59,3 +59,11 @@ existing FileReadWrite denial to Default after native user consent. Both async
 completion handlers participate in the pinned fourteen-handler owner lifetime.
 Destroy cancels the pending operation, releases its profile reference, and
 suppresses late completion delivery. The public JavaScript IPC is unchanged.
+
+The native constructor `NewWithOptionsAndError` distinguishes an early user
+window close from initialization failure. `NewWithOptions` remains compatible
+and still returns nil on either unsuccessful construction path. Only the
+ordinary pre-consent user-close path marks cancellation; internal teardown
+does not. A recorded Chromium initialization error takes precedence over that
+marker. The Velox host treats the cancellation sentinel as a quiet exit 0;
+actual initialization failures retain their error behavior.

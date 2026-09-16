@@ -177,6 +177,11 @@ func (e *Chromium) Embed(hwnd uintptr) bool {
 	return e.finishInitialization()
 }
 
+// InitializationError reports a recorded failure without inferring user cancellation.
+func (e *Chromium) InitializationError() error {
+	return e.initializationError
+}
+
 func (e *Chromium) finishInitialization() bool {
 	if e.destroyed || e.initializationError != nil || e.webview == nil || atomic.LoadUintptr(&e.inited) == 0 {
 		e.Destroy()

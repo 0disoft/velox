@@ -10,6 +10,7 @@ import (
 )
 
 var ErrRuntimeUnavailable = errors.New("WebView2 Runtime is unavailable or initialization failed")
+var ErrInitializationCanceled = errors.New("WebView2 initialization canceled by user")
 
 const (
 	PolicyNavigation      = "navigation"

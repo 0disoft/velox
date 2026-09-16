@@ -84,3 +84,24 @@ measurement deadlock. Those timeouts are retained as harness failures, not
 claimed as a reproduced public-host relaunch defect. Raw original and retry
 evidence remains under `.cache/public61-early-close-20260916/`, with the corrected
 run in `retry-3/`. No runtime fix or new release is included in this record.
+
+## Development Alpha.62 Fix
+
+The subsequent source change distinguishes native user cancellation from
+constructor failure and maps only cancellation to a quiet host exit 0.
+Recorded Chromium initialization errors take precedence; internal teardown
+does not mark user cancellation. The old native constructor remains compatible.
+No JavaScript IPC or database contract changes.
+
+The permanent `TestBuiltHostStartup/early-user-close` regression failed against
+the unchanged public alpha.61 executable with exit 5, then passed all three
+early-close/relaunch/profile-release pairs against the local alpha.62 build.
+It now runs in the existing consumer-evidence startup step without an extra
+workflow. The complete native startup suite passed in 43.80 seconds, including
+the missing-runtime error case, icon resources, GUI subsystem, lifecycle, and
+security policies. Focused Go/version/hygiene and maintained-fork tests passed.
+
+This fixes the local candidate, not the already published alpha.61 binary.
+No new release or replacement of the installed File Notes executable occurred.
+The ordinary same-profile relaunch still took 7.03 seconds in this run; the
+shutdown latency and hosted stress gates remain separate.
