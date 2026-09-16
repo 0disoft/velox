@@ -127,3 +127,43 @@ without deleting its historical failure evidence.
 Ordinary immediate relaunch was 6.97 seconds and profile release took about
 6.40 seconds. Extended hosted stress and beta promotion remain separate.
 No installed user app, profile, or document was replaced during verification.
+
+## Hosted Public Alpha.62 Stress: 2026-09-16
+
+[Run 35081507786](https://github.com/0disoft/velox/actions/runs/35081507786),
+attempt 1, passed at measurement commit
+`214217112ae26bc110749cd4efc54aaf42e384b3`. The workflow downloaded the immutable
+public alpha.62 ZIP and verified the ZIP and host hashes recorded above; it
+did not build a substitute host. The runner was Windows 2025 amd64,
+image `win25-vs2026` / `20260907.229.1`, with WebView2 `152.0.4191.66`.
+
+All 50 fresh/immediate same-profile pairs completed successfully (100 launches)
+in 612.109 seconds. Each sampled host exited, both observed main-browser
+process handles signaled exit, and each disposable profile was removable
+within the existing deadlines. The hosted schema and complete-sample gate
+passed. This is not a census of all unrelated WebView2 processes.
+
+| Measurement | Minimum | Maximum | p50 | p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Fresh-profile ready | 497.18 ms | 2744.74 ms | 611.33 ms | 726.74 ms |
+| Immediate same-profile ready | 538.27 ms | 6363.54 ms | 5962.89 ms | 6150.60 ms |
+| Host exit, both launches | 59.15 ms | 86.05 ms | 66.37 ms | 77.92 ms |
+| Browser exit after host, both launches | 111.15 ms | 6017.04 ms | 5658.23 ms | 5922.93 ms |
+| Profile release after immediate host exit | 123.22 ms | 6091.30 ms | 5790.60 ms | 6003.04 ms |
+
+Percentiles use nearest rank over 50 observations, or 100 for combined launch
+rows. Passing shutdown deadlines does not resolve the roughly six-second
+same-profile relaunch and profile-release latency. Initialization cancellation
+was not part of these 50 pairs (`initializationCancellationTested: false`);
+the separate public early-close evidence above remains the applicable check.
+One hosted image/runtime combination does not prove all supported environments
+or authorize beta promotion.
+
+Artifact `alpha62-lifecycle-stress-35081507786-1` retains `release-binding.json`
+and `lifecycle.json` for 90 days. Downloaded raw evidence and the independently
+checked run binding remain under `.cache/alpha62-hosted-stress/35081507786-1/`.
+The raw lifecycle JSON SHA-256 is
+`550a4e2c12e2fa5f0cd003db77310a0bb2df311105cf5b9ed4ec81562cd317e9`.
+The workflow remains manual-only and preserves success or failure artifacts.
+No runtime, public API, DB, release version, user profile or installed EXE was
+changed by this stress task; the existing unsigned alpha.62 release is unchanged.

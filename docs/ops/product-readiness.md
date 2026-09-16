@@ -11,7 +11,7 @@
 | Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.62 public verification run 35079337819 passed; exact source and digest are recorded in release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Private-profile CDP normal reload updated HTML, CSS and JS with stable origin; an earlier smoke failure remains unexplained |
-| Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and native lifecycle checks; quick hosted source CI passed. Extended hosted alpha.62 stress remains unverified and multi-second relaunch delay remains; see [lifecycle record](alpha61-lifecycle.md) |
+| Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
 A visible window or readiness callback does not prove working file pickers,
@@ -28,7 +28,13 @@ fails on the unchanged public alpha.61 host and passes on the local candidate,
 hosted CI, and the newly downloaded public alpha.62 EXE, including three
 close/relaunch pairs and the genuine missing-runtime case. Publication run
 35079091056 and public verification run 35079337819 passed. The installed
-File Notes app was not replaced. See [lifecycle evidence](alpha61-lifecycle.md).
+File Notes app was not replaced during publication verification. It was later
+updated to the verified public alpha.62 host without changing its web assets,
+runtime configuration or user profile. The maintainer confirmed that content
+restoration and saving worked after installation; this is user-reported manual
+evidence, not an automated permission-denial or every-path check.
+Hosted stress run 35081507786 subsequently passed 50 complete fresh/immediate
+pairs against that public host. See [lifecycle evidence](alpha61-lifecycle.md).
 
 The earlier unsigned alpha.61 was published. Publication run 35063918809 and public-download
 verification run 35064135758 passed. The maintainer separately confirmed
