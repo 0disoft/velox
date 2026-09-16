@@ -157,7 +157,7 @@ the remaining product checks and development reload results.
 
 ## Alpha.61 Desktop Delivery: 2026-09-16
 
-The current unsigned preview is
+The historical unsigned preview is
 [`v0.5.10-alpha.61`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.61),
 source `3fbe332e35cd262df47e3865e4b1f4e926c734c4`.
 [Publication 35063918809](https://github.com/0disoft/velox/actions/runs/35063918809)
@@ -185,6 +185,33 @@ artifact identities and the preserved verification-helper timeout.
 This release changes no public IPC or database contract. It remains unsigned,
 does not establish independent adoption, and does not promote beta.
 
+## Alpha.62 Early Close Delivery: 2026-09-16
+
+The current unsigned preview is
+[`v0.5.10-alpha.62`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.62),
+source `02c9acb5035014d9e29a0eb5881a3cf5310f5d6d`.
+[Consumer CI 35076577814](https://github.com/0disoft/velox/actions/runs/35076577814)
+passed the new early-close regression, native startup/security, permission
+recovery, quick lifecycle measurement, and consumer packaging checks.
+[Publication 35079091056](https://github.com/0disoft/velox/actions/runs/35079091056)
+passed independent two-build reproducibility and checkout-free consumption,
+then published four verified unsigned assets. ZIP size: 3,778,397 bytes;
+SHA-256: `10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`.
+
+[Public verification 35079337819](https://github.com/0disoft/velox/actions/runs/35079337819)
+passed public download, checksum, SPDX/provenance, version, build and startup
+checks. The expected digest came from this publication's producer artifact.
+A separate local public-URL download matched it, and its actual EXE passed
+all three early-close/relaunch/profile-release pairs plus icon, GUI subsystem,
+ordinary lifecycle, missing-runtime and security tests in 43.64 seconds.
+Host SHA-256: `651a9d87d16eee5687f4a1072226e3f9209a6ece438c0672e6c30e6680037679`.
+
+Early user closure now exits 0 without a runtime-error diagnostic; genuine
+initialization failure remains an error. The existing public alpha.61 binary
+is not rewritten. The installed File Notes app and user profiles were not
+replaced. Same-profile relaunch still took 6.97 seconds; extended hosted stress,
+signing, and beta promotion remain separate. No JavaScript IPC or DB changes.
+
 ## Proposed Release Unit
 
 During MVP, the CLI, generic host, JavaScript bridge, schemas, and
@@ -196,8 +223,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.61` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.61`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.62` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.62`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, support policy, signing, and publication remain

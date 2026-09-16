@@ -110,10 +110,10 @@ func TestPublicPreviewResultSchemaKeepsSameRepositoryEvidenceNonExternal(t *test
 func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	checks := map[string][]string{
 		"README.md": {
-			"v0.5.10-alpha.61",
-			"35063918809",
-			"35064135758",
-			"c082c90cd15116617fd0a29b0f11cbc5a2080019bd6a5a05103f8fadbac8b4c5",
+			"v0.5.10-alpha.62",
+			"35079091056",
+			"35079337819",
+			"10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871",
 		},
 		"VALIDATION.md": {
 			"The current public preview is",
@@ -122,14 +122,14 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 		},
 		"docs/ops/release.md": {
 			"unsigned developer previews",
-			"v0.5.10-alpha.61",
+			"v0.5.10-alpha.62",
 			"34584656621",
 			"34453983275",
 			"intermittent failure remains unexplained",
 		},
 		"docs/product/03-risk-register.md": {
-			"Public verifier run 35064135758",
-			"current preview `v0.5.10-alpha.61`",
+			"Public verifier run 35079337819",
+			"current preview `v0.5.10-alpha.62`",
 		},
 	}
 	for relative, required := range checks {

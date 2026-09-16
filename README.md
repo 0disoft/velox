@@ -49,13 +49,14 @@ Current channel requirements are in [Product Readiness](docs/ops/product-readine
 Start with the [Velox Release Quickstart](docs/QUICKSTART.md) to verify and use
 an immutable public release without a source checkout or consumer toolchain.
 
-The current unsigned preview is [v0.5.10-alpha.61](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.61),
-from commit `3fbe332e35cd262df47e3865e4b1f4e926c734c4`. It includes
+The current unsigned preview is [v0.5.10-alpha.62](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.62),
+from commit `02c9acb5035014d9e29a0eb5881a3cf5310f5d6d`. It includes
 DPI-aware rendering, a console-free GUI host, the default Velox icon, and
-consent-based native file-permission recovery.
-Publication [run 35063918809](https://github.com/0disoft/velox/actions/runs/35063918809)
-passed. ZIP SHA-256: `c082c90cd15116617fd0a29b0f11cbc5a2080019bd6a5a05103f8fadbac8b4c5`.
-Public-download [verification 35064135758](https://github.com/0disoft/velox/actions/runs/35064135758)
+consent-based native file-permission recovery. Early user closure during host
+initialization now exits normally instead of reporting runtime unavailability.
+Publication [run 35079091056](https://github.com/0disoft/velox/actions/runs/35079091056)
+passed. ZIP SHA-256: `10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`.
+Public-download [verification 35079337819](https://github.com/0disoft/velox/actions/runs/35079337819)
 passed. See the [release record](docs/ops/release.md)
 for current evidence and historical verification and startup failures.
 Beta remains held under the product workflow checklist.
@@ -183,7 +184,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.61`.
+`0.5.10-alpha.62`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

@@ -105,3 +105,25 @@ This fixes the local candidate, not the already published alpha.61 binary.
 No new release or replacement of the installed File Notes executable occurred.
 The ordinary same-profile relaunch still took 7.03 seconds in this run; the
 shutdown latency and hosted stress gates remain separate.
+
+## Published Alpha.62 Verification
+
+Consumer CI run 35076577814 passed at source
+`02c9acb5035014d9e29a0eb5881a3cf5310f5d6d`. Publication run 35079091056
+and public-download verification run 35079337819 then passed for alpha.62.
+A fresh local public-URL download matched the independent publication ZIP
+SHA-256 `10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`.
+Its host SHA-256 was
+`651a9d87d16eee5687f4a1072226e3f9209a6ece438c0672e6c30e6680037679`.
+
+The unchanged regression passed three early-close/relaunch/profile-release
+pairs on this downloaded EXE. The complete native startup suite passed in
+43.64 seconds, including genuine missing-runtime errors, icon resources,
+GUI subsystem, ordinary lifecycle and security policies. Raw output and digest
+binding remain in `.cache/public-alpha62-20260916/`. These public-artifact
+results supersede the alpha.61 early-close failure for the current release,
+without deleting its historical failure evidence.
+
+Ordinary immediate relaunch was 6.97 seconds and profile release took about
+6.40 seconds. Extended hosted stress and beta promotion remain separate.
+No installed user app, profile, or document was replaced during verification.

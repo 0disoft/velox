@@ -8,10 +8,10 @@
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.61 public verification run 35064135758 passed; exact source and digest are recorded in release.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.62 public verification run 35079337819 passed; exact source and digest are recorded in release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Private-profile CDP normal reload updated HTML, CSS and JS with stable origin; an earlier smoke failure remains unexplained |
-| Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.61 passed 10 local fresh/immediate pairs; six source cancellation cases passed separately. Public pre-ready close failed the normal-exit gate in 3/3 cases (exit 5), while subsequent relaunch and profile release passed. Hosted alpha.61 stress remains unverified; see [alpha.61 lifecycle](alpha61-lifecycle.md) |
+| Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and native lifecycle checks; quick hosted source CI passed. Extended hosted alpha.62 stress remains unverified and multi-second relaunch delay remains; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
 A visible window or readiness callback does not prove working file pickers,
@@ -23,13 +23,14 @@ with a mock and label the gate complete.
 
 ## Desktop Delivery: 2026-09-16
 
-Development alpha.62 fixes the early user-close exit classification. The
-regression fails on the public alpha.61 host and passes on the local candidate,
-including three close/relaunch pairs and the genuine missing-runtime case.
-The public alpha.61 gate in the table remains failed until a new artifact is
-published and checked. See [lifecycle evidence](alpha61-lifecycle.md).
+Public alpha.62 fixes the early user-close exit classification. The regression
+fails on the unchanged public alpha.61 host and passes on the local candidate,
+hosted CI, and the newly downloaded public alpha.62 EXE, including three
+close/relaunch pairs and the genuine missing-runtime case. Publication run
+35079091056 and public verification run 35079337819 passed. The installed
+File Notes app was not replaced. See [lifecycle evidence](alpha61-lifecycle.md).
 
-Unsigned alpha.61 is published. Publication run 35063918809 and public-download
+The earlier unsigned alpha.61 was published. Publication run 35063918809 and public-download
 verification run 35064135758 passed. The maintainer separately confirmed
 Explorer-launched Save as, exit, relaunch, and Save for the earlier CI alpha.61
 example. Artifact identities and the native permission menu's human/API test

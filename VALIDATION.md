@@ -218,13 +218,13 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.61`, source
-`3fbe332e35cd262df47e3865e4b1f4e926c734c4`. Publication run `35063918809`
+The current public preview is `v0.5.10-alpha.62`, source
+`02c9acb5035014d9e29a0eb5881a3cf5310f5d6d`. Publication run `35079091056`
 passed reproducible builds and checkout-free consumer checks.
-Public-download verification run `35064135758` passed using
+Public-download verification run `35079337819` passed using
 the digest independently computed from the publication Actions artifact:
-`c082c90cd15116617fd0a29b0f11cbc5a2080019bd6a5a05103f8fadbac8b4c5`
-(3,777,283 bytes). This remains `same-repository-public-download` with
+`10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`
+(3,778,397 bytes). This remains `same-repository-public-download` with
 `externalUserAttempt: false`. Maintainer-confirmed saving and restart recovery
 for the prior CI-built alpha.61 package are recorded in
 `docs/ops/file-permission-recovery.md`. That manual check is not claimed for
