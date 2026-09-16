@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.62 public verification run 35079337819 passed; exact source and digest are recorded in release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
-| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Private-profile CDP normal reload updated HTML, CSS and JS with stable origin; an earlier smoke failure remains unexplained |
+| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | The alpha.53 development cache fix passed two consecutive normal HTML/CSS/JS reloads; alpha.54 repeated this check successfully. Historical failures remain recorded below; these are not new alpha.62 reload measurements |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
@@ -20,6 +20,49 @@ files and a private profile for validation; never overwrite a user's files.
 Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
+
+## Remaining Beta Decision: 2026-09-16
+
+This is the current action list; dated sections below preserve historical
+decisions and do not reopen checks that later evidence completed. ADR 0019
+still requires a separate maintainer channel decision. No beta is authorized
+by this classification, and no missing observation is relabeled as a pass.
+
+### Outstanding Release Checks
+
+| Item | Why it remains open | Completion criterion |
+| --- | --- | --- |
+| Physical DPI and monitor movement | The alpha.54 visual matrix was never observed; DPI arithmetic and native setup tests cannot establish text clarity or hit-target alignment | On the selected candidate, record Windows/WebView2 version and actual 125%/150% scaling; inspect text, clipping and pointer targets, then move between differently scaled monitors and back. Record unavailable hardware as unverified, not passed |
+| File access recovery confirmation and cancellation | The shipped menu's no-change branch, native API reset and ordinary saving passed, but human acceptance/cancellation of its Deny-reset prompt were not observed | Use a disposable app/profile and file. With an explicitly arranged Deny state, cancel the menu prompt and verify Deny, draft and file are unchanged; accept reset on a second attempt, verify only that origin/kind becomes Default, then explicitly Save as and check file content after reopening. Never seed Deny in the user's normal profile or automate consent |
+| Candidate evidence and channel decision | Evidence spans alpha.53/54 development checks and alpha.61/62 file/lifecycle checks; beta support and publication are not automatic | Bind the selected candidate to an immutable source/ZIP/host digest and the completed checks. Review changes affecting each tested path; reuse existing evidence only with an explicit unchanged-path justification, otherwise rerun that affected check. State supported scope, unsigned warnings and remaining limitations before a separate maintainer promotion decision |
+
+Public alpha.62 source-free verification, its 50-pair hosted lifecycle run,
+three public pre-ready close/relaunch pairs, and the maintainer's installed
+save/recovery confirmation are completed evidence, not another repetition
+queue. Native cancellation, denied-write protection and post-denial Save as
+also have recorded evidence; the open menu interaction above is a different
+branch. An automatic new release or full test campaign is not required merely
+to update this checklist.
+
+### Follow-Up Improvements
+
+- Same-profile restart latency is a known performance limitation, not an
+  observed lifecycle deadline failure in alpha.62: hosted p50 5.96 s, maximum
+  6.36 s. Keep it visible in the candidate decision. A crash, missed existing
+  shutdown deadline, residual profile lock or lost draft reopens a blocker;
+  do not force browser termination or rotate user profiles to hide the delay.
+- Broader Windows/WebView2 coverage can follow a deliberately limited beta
+  support scope; untested configurations must not be advertised as verified.
+  The pending physical DPI check above is not waived by this distinction.
+- AI/model evaluations and independent-user feedback are optional evidence,
+  not product dependencies or substitutes for the remaining native checks.
+- Signing and stable-channel support remain separate decisions under ADR 0019.
+  Preserve unsigned warnings; the existing alpha verification is not a signing
+  or stable-readiness claim.
+
+Next execution order: finish the two native manual checks, reconcile candidate
+evidence against exact source changes, then request the channel decision.
+Any newly observed security, data-loss or core-workflow defect takes priority.
 
 ## Desktop Delivery: 2026-09-16
 
