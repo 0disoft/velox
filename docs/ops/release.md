@@ -129,7 +129,7 @@ coverage remain unverified under `docs/ops/product-readiness.md`.
 
 ## Alpha.51 File Consent Delivery: 2026-09-11
 
-The current preview is
+The historical preview is
 [`v0.5.10-alpha.51`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.51)
 from source `f18d7f3958c136b1f673b93255916771db3cde15`.
 [Tag evidence 34584656621](https://github.com/0disoft/velox/actions/runs/34584656621)
@@ -155,6 +155,36 @@ repository example, not a newly bundled application. There is no signing,
 independent-adoption or beta claim. See `docs/ops/product-readiness.md` for
 the remaining product checks and development reload results.
 
+## Alpha.61 Desktop Delivery: 2026-09-16
+
+The current unsigned preview is
+[`v0.5.10-alpha.61`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.61),
+source `3fbe332e35cd262df47e3865e4b1f4e926c734c4`.
+[Publication 35063918809](https://github.com/0disoft/velox/actions/runs/35063918809)
+passed independent two-build reproducibility, checkout-free consumption, and
+publication of the four verified unsigned assets. The ZIP is 3,777,283 bytes:
+`c082c90cd15116617fd0a29b0f11cbc5a2080019bd6a5a05103f8fadbac8b4c5`.
+
+[Public verification 35064135758](https://github.com/0disoft/velox/actions/runs/35064135758)
+passed public downloads, checksums, SPDX/provenance, tag/version binding,
+init, validate, doctor, deterministic build, inspect, and startup without
+checking out source. Its expected digest was independently calculated from
+the successful publication run's producer artifact, not from another build.
+
+The release includes per-monitor DPI rendering, debug reload improvements,
+the GUI-subsystem host, the embedded WebView2 loader, the default Velox icon,
+clearer File Notes save errors, and native consent-based permission recovery.
+The latter resets only a stored Deny for the current app origin to Default
+after confirmation; it never grants Allow or retries saving automatically.
+
+The maintainer confirmed Explorer-launched Save as, exit, relaunch, and Save
+on the earlier CI-built alpha.61 example. This is separate from the later
+publication bytes and from unperformed human Deny-reset confirmation/cancel
+checks. See [file-permission recovery](file-permission-recovery.md) for exact
+artifact identities and the preserved verification-helper timeout.
+This release changes no public IPC or database contract. It remains unsigned,
+does not establish independent adoption, and does not promote beta.
+
 ## Proposed Release Unit
 
 During MVP, the CLI, generic host, JavaScript bridge, schemas, and
@@ -166,8 +196,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.51` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.51`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.61` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.61`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, support policy, signing, and publication remain

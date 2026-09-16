@@ -218,16 +218,18 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.51`, source
-`f18d7f3958c136b1f673b93255916771db3cde15`. Tag evidence run `34584656621`
-and publication run `34584828937` passed reproducible builds and checkout-free
-consumer checks. Public-download verification run `34585168947` passed using
+The current public preview is `v0.5.10-alpha.61`, source
+`3fbe332e35cd262df47e3865e4b1f4e926c734c4`. Publication run `35063918809`
+passed reproducible builds and checkout-free consumer checks.
+Public-download verification run `35064135758` passed using
 the digest independently computed from the publication Actions artifact:
-`a2beb179266861be018fea9366eb6be201ede502515a97f0fcacb964ad0dc72a`
-(3,601,844 bytes). This remains `same-repository-public-download` with
+`c082c90cd15116617fd0a29b0f11cbc5a2080019bd6a5a05103f8fadbac8b4c5`
+(3,777,283 bytes). This remains `same-repository-public-download` with
 `externalUserAttempt: false`. Maintainer-confirmed saving and restart recovery
-are recorded separately from pending native cancellation and denied-consent
-checks in `docs/ops/product-readiness.md`. No beta promotion is claimed.
+for the prior CI-built alpha.61 package are recorded in
+`docs/ops/file-permission-recovery.md`. That manual check is not claimed for
+the later publication bytes, nor as a human Deny-reset prompt test.
+No beta promotion is claimed.
 
 The now-archived separate public
 [`0disoft/velox-consumer-smoke`](https://github.com/0disoft/velox-consumer-smoke)

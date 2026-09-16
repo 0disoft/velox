@@ -49,12 +49,13 @@ Current channel requirements are in [Product Readiness](docs/ops/product-readine
 Start with the [Velox Release Quickstart](docs/QUICKSTART.md) to verify and use
 an immutable public release without a source checkout or consumer toolchain.
 
-The current unsigned preview is [v0.5.10-alpha.51](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.51),
-from commit `f18d7f3958c136b1f673b93255916771db3cde15`. It fixes
-browser-managed file consent when restoring saved file handles.
-Publication [run 34584828937](https://github.com/0disoft/velox/actions/runs/34584828937)
-passed. ZIP SHA-256: `a2beb179266861be018fea9366eb6be201ede502515a97f0fcacb964ad0dc72a`.
-Public-download [verification 34585168947](https://github.com/0disoft/velox/actions/runs/34585168947)
+The current unsigned preview is [v0.5.10-alpha.61](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.61),
+from commit `3fbe332e35cd262df47e3865e4b1f4e926c734c4`. It includes
+DPI-aware rendering, a console-free GUI host, the default Velox icon, and
+consent-based native file-permission recovery.
+Publication [run 35063918809](https://github.com/0disoft/velox/actions/runs/35063918809)
+passed. ZIP SHA-256: `c082c90cd15116617fd0a29b0f11cbc5a2080019bd6a5a05103f8fadbac8b4c5`.
+Public-download [verification 35064135758](https://github.com/0disoft/velox/actions/runs/35064135758)
 passed. See the [release record](docs/ops/release.md)
 for current evidence and historical verification and startup failures.
 Beta remains held under the product workflow checklist.
@@ -182,7 +183,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.51`.
+`0.5.10-alpha.61`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

@@ -110,10 +110,10 @@ func TestPublicPreviewResultSchemaKeepsSameRepositoryEvidenceNonExternal(t *test
 func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	checks := map[string][]string{
 		"README.md": {
-			"v0.5.10-alpha.51",
-			"34584828937",
-			"34585168947",
-			"a2beb179266861be018fea9366eb6be201ede502515a97f0fcacb964ad0dc72a",
+			"v0.5.10-alpha.61",
+			"35063918809",
+			"35064135758",
+			"c082c90cd15116617fd0a29b0f11cbc5a2080019bd6a5a05103f8fadbac8b4c5",
 		},
 		"VALIDATION.md": {
 			"The current public preview is",
@@ -122,14 +122,14 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 		},
 		"docs/ops/release.md": {
 			"unsigned developer previews",
-			"v0.5.10-alpha.51",
+			"v0.5.10-alpha.61",
 			"34584656621",
 			"34453983275",
 			"intermittent failure remains unexplained",
 		},
 		"docs/product/03-risk-register.md": {
-			"Public verifier run 34585168947",
-			"current preview `v0.5.10-alpha.51`",
+			"Public verifier run 35064135758",
+			"current preview `v0.5.10-alpha.61`",
 		},
 	}
 	for relative, required := range checks {
@@ -144,7 +144,7 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 
 	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
 	if !strings.Contains(version, `const Version = "0.5.10-alpha.61"`) {
-		t.Fatal("local development version is not alpha.56")
+		t.Fatal("local development version is not alpha.61")
 	}
 }
 

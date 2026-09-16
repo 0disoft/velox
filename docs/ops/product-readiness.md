@@ -8,7 +8,7 @@
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.51 public verification run 34585168947 passed; exact source and digest are recorded in release.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.61 public verification run 35064135758 passed; exact source and digest are recorded in release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Private-profile CDP normal reload updated HTML, CSS and JS with stable origin; an earlier smoke failure remains unexplained |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | alpha.40 public lifecycle and hosted source-fork cancellation are historical evidence, not proof for a new ZIP |
@@ -20,6 +20,16 @@ files and a private profile for validation; never overwrite a user's files.
 Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
+
+## Desktop Delivery: 2026-09-16
+
+Unsigned alpha.61 is published. Publication run 35063918809 and public-download
+verification run 35064135758 passed. The maintainer separately confirmed
+Explorer-launched Save as, exit, relaunch, and Save for the earlier CI alpha.61
+example. Artifact identities and the native permission menu's human/API test
+boundaries are recorded in [file-permission recovery](file-permission-recovery.md).
+The unchanged beta checks above are not waived by this alpha publication.
+The dated records below describe their original artifacts, not this new ZIP.
 
 ## Delivery Record: 2026-09-10
 
