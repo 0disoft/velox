@@ -100,6 +100,9 @@ pattern passed without changing product source. That timeout is not classified
 as an established product defect.
 
 The test application uses a distinct ID and leaves the installed app and its
-profile untouched. Manual Explorer-launched Save as, restart, and Save checks
-for this CI package are pending. Publication stays held until that check passes;
-the consumer artifact is not itself a public release or publication provenance.
+profile untouched. On 2026-09-16 the user confirmed successful Explorer-launched
+Save as, exit, relaunch, and Save for this CI package. The manual storage gate
+is passed. This does not add a human Deny-reset confirmation/cancellation claim.
+The consumer artifact is not itself a public release or publication provenance;
+publication still requires the separate reproducible producer and public
+download verification workflow.
