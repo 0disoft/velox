@@ -1,13 +1,22 @@
+@font-face {
+font-family: 'Velox Noto Sans KR';
+src: url("fonts/NotoSansKR.ttf") format("truetype");
+font-weight: 100 900;
+font-style: normal;
+font-display: block;
+}
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
 body { margin: 0; background: #fff; color: #222; font-family: system-ui, sans-serif; }
-main { max-width: 960px; margin: 0 auto; padding: 24px 16px 32px; }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 32px; }
 h1 { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
 .meta { font-size: 13px; color: #555; margin: 0 0 16px; }
-.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
-@media (max-width: 640px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 section { min-width: 0; }
 label { display: block; font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+#noto-status { font-size: 12px; font-weight: 400; color: #555; }
 textarea { width: 100%; min-height: 280px; resize: vertical; white-space: pre-wrap; overflow-wrap: break-word; font-size: 16px; font-weight: 400; line-height: 1.7; letter-spacing: 0; color: #111; background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 8px; }
 #left { font-family: 'Cascadia Mono', Consolas, monospace; }
 #right { font-family: 'Malgun Gothic', sans-serif; }
+#noto { font-family: 'Velox Noto Sans KR', sans-serif; }
