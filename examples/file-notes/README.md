@@ -30,3 +30,9 @@ with No selected by default. Reset removes that one decision; it does not grant
 file access or write files. Retry Save/Save as with a new user gesture afterward.
 Documents, IndexedDB drafts, other origins, and other permission kinds are not
 changed. This is a host maintenance action, not an application IPC permission.
+
+## Editor font
+
+The editor area uses the bundled offline font "Velox Noto Sans KR" at 400 1rem/1.7,
+with "Malgun Gothic" fallback. Font: `web/fonts/NotoSansKR.ttf`; license: `web/fonts/OFL.txt`.
+It is a proportional text font, not for code column alignment. No engine font default is changed.

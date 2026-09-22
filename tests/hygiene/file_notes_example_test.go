@@ -34,7 +34,7 @@ func TestFileNotesUsesOnlyBrowserOwnedFileAccess(t *testing.T) {
 		"app.js":     {"showOpenFilePicker", "showSaveFilePicker", "maximumFileBytes", "beforeunload", "restore().finally(reportReady)", "window.__veloxReady(\"dom-2raf\")"},
 		"model.js":   {"savedText", "isDirty", "Object.freeze"},
 		"storage.js": {"indexedDB.open", "DataCloneError", "Object.freeze"},
-		"style.css":  {"minmax(0, 1fr)", "overflow-wrap: anywhere", "@media (max-width: 650px)", ":focus-visible"},
+		"style.css":  {"minmax(0, 1fr)", "overflow-wrap: anywhere", "@media (max-width: 650px)", ":focus-visible", "@font-face", "fonts/NotoSansKR.ttf", "400 1rem/1.7", "font-display: swap"},
 	}
 	for name, markers := range files {
 		data, err := os.ReadFile(filepath.Join(root, "examples", "file-notes", "web", name))
