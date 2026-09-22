@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>폰트 비교 진단</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<main>
+<h1>폰트 비교 진단</h1>
+<p class="meta">devicePixelRatio: <span id="dpr">-</span></p>
+<div class="grid">
+<section>
+<label id="label-left" for="left">현재 폰트</label>
+<textarea id="left" rows="14" aria-labelledby="label-left"></textarea>
+</section>
+<section>
+<label id="label-right" for="right">맑은 고딕</label>
+<textarea id="right" rows="14" aria-labelledby="label-right"></textarea>
+</section>
+</div>
+</main>
+</body>
+</html>

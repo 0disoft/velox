@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "app": {
+    "id": "dev.velox.fontcomparison",
+    "name": "Velox Font Comparison",
+    "version": "0.1.0"
+  },
+  "assets": { "root": "web", "entry": "index.html" },
+  "window": { "width": 1080, "height": 700 },
+  "security": { "permissions": [] }
+}
