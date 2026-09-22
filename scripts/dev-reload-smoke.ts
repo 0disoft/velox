@@ -7,7 +7,7 @@ import { resolve, join } from "node:path";
 type State = { html: string; js: string; css: string; origin: string };
 type Message = { id?: number; error?: { message: string }; result?: { result?: { value?: State } } };
 const root = resolve(import.meta.dir, "..");
-const release = join(root, "dist/release/velox-windows-x64");
+const release = resolve(root, process.env.VELOX_RELOAD_RELEASE_DIR ?? "dist/release/velox-windows-x64");
 const manifest = JSON.parse(await readFile(join(release, "release-manifest.json"), "utf8"));
 const hashes: Record<string, string> = {};
 for (const file of ["velox.exe", "velox-host.exe"]) {
