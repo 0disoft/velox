@@ -32,7 +32,7 @@ by this classification, and no missing observation is relabeled as a pass.
 
 | Item | Why it remains open | Completion criterion |
 | --- | --- | --- |
-| Physical DPI and monitor movement | The alpha.54 visual matrix was never observed; DPI arithmetic and native setup tests cannot establish text clarity or hit-target alignment | On the selected candidate, record Windows/WebView2 version and actual 125%/150% scaling; inspect text, clipping and pointer targets, then move between differently scaled monitors and back. Record unavailable hardware as unverified, not passed |
+| Physical DPI and monitor movement | User-reported 125% Noto 0.1.1 on public alpha62 passed; the alpha.54 visual matrix was otherwise never observed and 150%/mixed-monitor was user-skipped, so it remains unverified, not passed | On the selected candidate, record Windows/WebView2 version and actual 125%/150% scaling; inspect text, clipping and pointer targets, then move between differently scaled monitors and back. Record unavailable hardware as unverified, not passed |
 | File access recovery confirmation and cancellation | The shipped menu's no-change branch, native API reset and ordinary saving passed, but human acceptance/cancellation of its Deny-reset prompt were not observed | Use a disposable app/profile and file. With an explicitly arranged Deny state, cancel the menu prompt and verify Deny, draft and file are unchanged; accept reset on a second attempt, verify only that origin/kind becomes Default, then explicitly Save as and check file content after reopening. Never seed Deny in the user's normal profile or automate consent |
 | Candidate evidence and channel decision | Evidence spans alpha.53/54 development checks and alpha.61/62 file/lifecycle checks; beta support and publication are not automatic | Bind the selected candidate to an immutable source/ZIP/host digest and the completed checks. Review changes affecting each tested path; reuse existing evidence only with an explicit unchanged-path justification, otherwise rerun that affected check. State supported scope, unsigned warnings and remaining limitations before a separate maintainer promotion decision |
 
@@ -78,6 +78,11 @@ restoration and saving worked after installation; this is user-reported manual
 evidence, not an automated permission-denial or every-path check.
 Hosted stress run 35081507786 subsequently passed 50 complete fresh/immediate
 pairs against that public host. See [lifecycle evidence](alpha61-lifecycle.md).
+
+The user separately confirmed installed Noto File Notes 0.1.1 works at 125% on
+the public alpha62 host; 150%/mixed-monitor was user-skipped and remains
+unverified, not passed. This is not a beta approval, and manual
+confirmation/cancellation remain unverified; an isolated fixture is prepared.
 
 The earlier unsigned alpha.61 was published. Publication run 35063918809 and public-download
 verification run 35064135758 passed. The maintainer separately confirmed
