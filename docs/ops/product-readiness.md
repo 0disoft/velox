@@ -33,15 +33,15 @@ by this classification, and no missing observation is relabeled as a pass.
 | Item | Why it remains open | Completion criterion |
 | --- | --- | --- |
 | Physical DPI and monitor movement | User-reported 125% Noto 0.1.1 on public alpha62 passed; the alpha.54 visual matrix was otherwise never observed and 150%/mixed-monitor was user-skipped, so it remains unverified, not passed | On the selected candidate, record Windows/WebView2 version and actual 125%/150% scaling; inspect text, clipping and pointer targets, then move between differently scaled monitors and back. Record unavailable hardware as unverified, not passed |
-| File access recovery confirmation and cancellation | The shipped menu's no-change branch, native API reset and ordinary saving passed, but human acceptance/cancellation of its Deny-reset prompt were not observed | Use a disposable app/profile and file. With an explicitly arranged Deny state, cancel the menu prompt and verify Deny, draft and file are unchanged; accept reset on a second attempt, verify only that origin/kind becomes Default, then explicitly Save as and check file content after reopening. Never seed Deny in the user's normal profile or automate consent |
 | Candidate evidence and channel decision | Evidence spans alpha.53/54 development checks and alpha.61/62 file/lifecycle checks; beta support and publication are not automatic | Bind the selected candidate to an immutable source/ZIP/host digest and the completed checks. Review changes affecting each tested path; reuse existing evidence only with an explicit unchanged-path justification, otherwise rerun that affected check. State supported scope, unsigned warnings and remaining limitations before a separate maintainer promotion decision |
 
 Public alpha.62 source-free verification, its 50-pair hosted lifecycle run,
 three public pre-ready close/relaunch pairs, and the maintainer's installed
 save/recovery confirmation are completed evidence, not another repetition
 queue. Native cancellation, denied-write protection and post-denial Save as
-also have recorded evidence; the open menu interaction above is a different
-branch. An automatic new release or full test campaign is not required merely
+also have recorded evidence. Human menu cancellation and acceptance, followed
+by maintainer-confirmed saving, opening and restart/overwrite, are recorded
+below on 2026-09-22. An automatic new release or full test campaign is not required merely
 to update this checklist.
 
 ### Follow-Up Improvements
@@ -60,8 +60,10 @@ to update this checklist.
   Preserve unsigned warnings; the existing alpha verification is not a signing
   or stable-readiness claim.
 
-Next execution order: finish the two native manual checks, reconcile candidate
-evidence against exact source changes, then request the channel decision.
+Next execution order: reconcile candidate evidence against exact source
+changes, retain the user-skipped DPI coverage as unverified, then request
+the channel decision. Do not repeat the completed permission-menu interaction
+solely to update this record.
 Any newly observed security, data-loss or core-workflow defect takes priority.
 
 ## Desktop Delivery: 2026-09-16
@@ -81,8 +83,8 @@ pairs against that public host. See [lifecycle evidence](alpha61-lifecycle.md).
 
 The user separately confirmed installed Noto File Notes 0.1.1 works at 125% on
 the public alpha62 host; 150%/mixed-monitor was user-skipped and remains
-unverified, not passed. This is not a beta approval, and manual
-confirmation/cancellation remain unverified; an isolated fixture is prepared.
+unverified, not passed. This is not a beta approval. The isolated permission
+fixture's later manual results are recorded below.
 
 The earlier unsigned alpha.61 was published. Publication run 35063918809 and public-download
 verification run 35064135758 passed. The maintainer separately confirmed
@@ -91,6 +93,41 @@ example. Artifact identities and the native permission menu's human/API test
 boundaries are recorded in [file-permission recovery](file-permission-recovery.md).
 The unchanged beta checks above are not waived by this alpha publication.
 The dated records below describe their original artifacts, not this new ZIP.
+
+## Permission Recovery Manual Confirmation: 2026-09-22
+
+The disposable `dev.velox.permissionmenu20260922` app used a private profile
+and the public alpha.62 host, SHA-256
+`651a9d87d16eee5687f4a1072226e3f9209a6ece438c0672e6c30e6680037679`.
+Native setup seeded and read back FileReadWrite Deny for this app's origin;
+the normal File Notes profile was not used. The executable hash was checked
+again when recording these results.
+
+- The maintainer selected No in the File access reset prompt. Reopening the
+  menu showed the same blocked-state confirmation; the 40-character unsaved
+  draft remained visible. This is observed menu behavior, not a new native
+  permission-enumeration test.
+- The maintainer then selected Yes. The observed result reported that the
+  stored file access block was no longer present, no files were written and
+  no automatic access was granted. The unsaved draft remained visible.
+- After the test app was reopened with the same private profile, the
+  maintainer confirmed Save as and file opening worked. After being asked to
+  exit, relaunch, edit and Save, the maintainer confirmed that sequence worked
+  as well. These are user-reported manual results, not automated disk-byte
+  readback or process-exit measurements.
+
+The disposable original input's SHA-256 remained
+`0b7ec9664754aa3c30b33607c239f517848953efd32e19940d1ef7f4c2ff5aa6`.
+That check concerns the original input, not the later saved output. Existing
+native API tests retain responsibility for unrelated-origin/kind isolation;
+this single-app manual check does not repeat them.
+
+The earlier bounded harness timeout and later physical-Escape interruption
+remain incomplete harness runs, not product failures or clean-exit evidence.
+The subsequent maintainer confirmations complete the human menu interaction
+and save/reopen/overwrite check at the evidence levels stated above. No
+runtime, API, DB, version or release changed. Candidate reconciliation,
+unverified user-skipped DPI coverage and the separate beta decision remain.
 
 ## Delivery Record: 2026-09-10
 
