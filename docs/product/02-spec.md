@@ -122,6 +122,21 @@ passed with ZIP SHA-256
 - Direct WebView2 web messaging with no listening socket.
 - Basic application information and window lifecycle methods only.
 
+### Initial Beta Support Scope
+
+The Windows and WebView2 versions above are technical execution floors, not a
+beta support promise. The initial beta support scope, agreed on 2026-09-23,
+is a Windows 11 x64 desktop version still serviced by Microsoft, with an
+installed, updating Evergreen WebView2 Runtime. Display support is limited to
+one physical monitor at 100%, 125%, or 150% Windows scaling, subject to real
+visual checks on the selected beta candidate. Windows 10, Windows Server,
+ARM64, multiple monitors (including mixed-DPI movement), and fixed or absent
+WebView2 runtimes are outside this beta support scope even if a configuration
+can technically launch. An initial beta would use a portable, unsigned ZIP;
+warn about unsigned execution and the known same-profile relaunch delay. This
+scope decision does not authorize beta publication or mark pending checks as
+passed; `docs/ops/product-readiness.md` owns those checks.
+
 ### CLI
 
 - init

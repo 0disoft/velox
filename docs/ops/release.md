@@ -227,8 +227,10 @@ published preview and `0.5.10-alpha.62` is the current unsigned developer previe
 at immutable tag `v0.5.10-alpha.62`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
-beta or stable promotion, support policy, signing, and publication remain
-separate maintainer decisions after those checks pass.
+beta or stable promotion, signing, and publication remain separate maintainer
+decisions after those checks pass. The initial beta support scope is recorded
+in the product spec and product-readiness checklist; it does not change this
+alpha release or authorize beta publication.
 
 Nightly distribution is not planned during the initial project stage.
 
