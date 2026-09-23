@@ -92,11 +92,10 @@ evidence remains explicitly non-external; independent adoption remains market
 evidence rather than a technical release gate.
 
 ADR 0017 closes the M5 product choice by continuing narrow alpha development
-inside the static and browser-owned capability boundary. ADR 0018 replaces the
-uncontrollable human beta gate with replayable clean-room LLM agent evaluation
-while preserving the absence of human adoption as a market risk.
-Its Windows AppContainer and Job Object supervisor is implemented, but no
-qualifying v2 three-trial series has been recorded.
+inside the static and browser-owned capability boundary. ADR 0018's LLM trial
+gate is historical; ADR 0019 supersedes beta admission with the product workflows
+in `docs/ops/product-readiness.md`. AI three-trial evaluation is optional
+diagnostic evidence; no qualifying v2 series or human adoption is recorded.
 
 Service-oriented backup, environment, secret, incident, and observability
 templates are intentionally retired until a real support surface requires them.
