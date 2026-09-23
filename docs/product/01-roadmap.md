@@ -146,13 +146,21 @@ commit `9f10c545b6bde23d2c3dad5bbb12bffdac513712`. Public verifier run
 `29715002921` independently supplied the release digest, downloaded the public
 assets without checkout, and passed build, inspection, and startup-ready gates.
 
-Current preview `v0.5.10-alpha.2` was published from exact commit
+Historical preview `v0.5.10-alpha.2` was published from exact commit
 `9bbb6bfcc1393058cb80d72c79df601caa970f2f` after tag evidence run
 `29894943737` and publication run `29895087658` passed. Public verifier run
 `29895490556` matched ZIP SHA-256
 `abd07aab653db7d67adf822e6a944a6f85f54c9fb0752cce367724fb0ce62fb7`
 and passed the no-checkout consumer gates. This is technical distribution
 evidence and not a human attempt.
+
+The current published unsigned preview is `v0.5.10-alpha.62` from exact source
+`02c9acb5035014d9e29a0eb5881a3cf5310f5d6d` after publication run
+`35079091056` passed. Public verifier run `35079337819` matched ZIP SHA-256
+`10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`
+and passed the public-download gates. Full candidate evidence stays in
+`docs/ops/release.md`; the separate local File Notes 0.1.1 ZIP is not a public
+release.
 
 The now-archived public `0disoft/velox-consumer-smoke` repository consumed the
 pinned public release from a hosted clean runner without Velox source checkout,
@@ -203,7 +211,7 @@ still needs accepted provider output and the approved publisher subject.
 ### Completion evidence
 
 The immutable tag, manual publication, public warnings, and no-checkout public
-verification are complete for the first preview `v0.5.10-alpha.1` and current
+verification are complete for the first preview `v0.5.10-alpha.1` and historical
 preview `v0.5.10-alpha.2`. ADR 0016 replaces the former
 independent-user M4 gate with a separate maintainer-controlled clean-room
 consumer gate. That gate passed, so M4 is complete. This does not create an
