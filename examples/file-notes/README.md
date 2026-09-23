@@ -36,3 +36,16 @@ changed. This is a host maintenance action, not an application IPC permission.
 The editor area uses the bundled offline font "Velox Noto Sans KR" at 400 1rem/1.7,
 with "Malgun Gothic" fallback. Font: `web/fonts/NotoSansKR.ttf`; license: `web/fonts/OFL.txt`.
 It is a proportional text font, not for code column alignment. No engine font default is changed.
+
+## Portable build
+
+The repository build output is `dist/examples/file-notes/dev.velox.filenotes.zip`.
+Extract the archive to a local folder, then run `dev.velox.filenotes.exe` from
+the extracted app folder. No installer is used.
+
+This archive is an unsigned alpha.62 host packaged with the example File Notes
+0.1.1 and the bundled Noto Sans KR font.
+
+User documents must be explicitly selected through the editor open/save
+gestures. The application draft/profile is managed by WebView2 and is not
+bundled in the ZIP.
