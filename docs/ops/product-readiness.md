@@ -145,10 +145,13 @@ The separate local File Notes 0.1.1 Noto ZIP was built from source
 (7,746,360 bytes). Two builds matched; the extracted host matched the public
 alpha.62 host, all eight web assets matched source, and a visible-window
 startup exited 0 with a private profile. The initial hidden-window startup
-timed out and remains an unresolved harness observation. Picker and visual
-checks were not repeated on this exact ZIP. The maintainer separately
-confirmed installed File Notes 0.1.1 at 125% and the save workflow.
-The 150% and mixed-monitor checks were user-skipped and remain unverified.
+timed out and remains an unresolved harness observation. On 2026-09-23,
+the maintainer confirmed the extracted official ZIP's Save as, app restart,
+Open and Save sequence worked with a disposable file. This is a user-reported
+manual result, not independent on-disk byte readback. Other picker paths and
+visual checks were not repeated on this exact ZIP. The maintainer separately
+confirmed installed File Notes 0.1.1 at 125% and the save workflow. The 150%
+and mixed-monitor checks were user-skipped and remain unverified.
 
 Between that packaging source and this review, commit
 `044070fad4bc5b8a132abe37a0de0d86f0759af6` changed only diagnostic
