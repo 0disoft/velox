@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.62 public verification run 35079337819 passed; exact source and digest are recorded in release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
-| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | The alpha.53 development cache fix passed two consecutive normal HTML/CSS/JS reloads; alpha.54 repeated this check successfully. Historical failures remain recorded below; these are not new alpha.62 reload measurements |
+| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | On 2026-09-22, public alpha.62 passed two consecutive normal HTML/CSS/JS reloads via `scripts/dev-reload-smoke.ts` (public CLI `4d41f9c8706c29a5131f9d74da68689a7d9f466aae51182d0103e2e2fc6510b1`, host `651a9d87d16eee5687f4a1072226e3f9209a6ece438c0672e6c30e6680037679`, same origin, private profile, test process cleanup status 0). Historical alpha.53/54 passes and failures remain recorded below |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
@@ -21,7 +21,7 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
-## Remaining Beta Decision: 2026-09-16
+## Remaining Beta Decision: 2026-09-23
 
 This is the current action list; dated sections below preserve historical
 decisions and do not reopen checks that later evidence completed. ADR 0019
@@ -33,7 +33,7 @@ by this classification, and no missing observation is relabeled as a pass.
 | Item | Why it remains open | Completion criterion |
 | --- | --- | --- |
 | Physical DPI and monitor movement | User-reported 125% Noto 0.1.1 on public alpha62 passed; the alpha.54 visual matrix was otherwise never observed and 150%/mixed-monitor was user-skipped, so it remains unverified, not passed | On the selected candidate, record Windows/WebView2 version and actual 125%/150% scaling; inspect text, clipping and pointer targets, then move between differently scaled monitors and back. Record unavailable hardware as unverified, not passed |
-| Candidate evidence and channel decision | Evidence spans alpha.53/54 development checks and alpha.61/62 file/lifecycle checks; beta support and publication are not automatic | Bind the selected candidate to an immutable source/ZIP/host digest and the completed checks. Review changes affecting each tested path; reuse existing evidence only with an explicit unchanged-path justification, otherwise rerun that affected check. State supported scope, unsigned warnings and remaining limitations before a separate maintainer promotion decision |
+| Channel and support decision | Public alpha.62 and the separate File Notes 0.1.1 ZIP are bound to source, ZIP and host digests below; skipped DPI coverage and unsigned support limits remain | Decide the supported Windows/display scope and whether to complete skipped visual checks before a separate maintainer beta decision. Record unsigned warnings and known restart latency; no automatic promotion |
 
 Public alpha.62 source-free verification, its 50-pair hosted lifecycle run,
 three public pre-ready close/relaunch pairs, and the maintainer's installed
@@ -60,10 +60,9 @@ to update this checklist.
   Preserve unsigned warnings; the existing alpha verification is not a signing
   or stable-readiness claim.
 
-Next execution order: reconcile candidate evidence against exact source
-changes, retain the user-skipped DPI coverage as unverified, then request
-the channel decision. Do not repeat the completed permission-menu interaction
-solely to update this record.
+The candidate evidence below binds the public alpha.62 source, ZIP and host
+digests separately from the local File Notes ZIP. Keep 150% and mixed-monitor
+coverage unverified for the later maintainer channel decision.
 Any newly observed security, data-loss or core-workflow defect takes priority.
 
 ## Desktop Delivery: 2026-09-16
@@ -126,8 +125,36 @@ The earlier bounded harness timeout and later physical-Escape interruption
 remain incomplete harness runs, not product failures or clean-exit evidence.
 The subsequent maintainer confirmations complete the human menu interaction
 and save/reopen/overwrite check at the evidence levels stated above. No
-runtime, API, DB, version or release changed. Candidate reconciliation,
-unverified user-skipped DPI coverage and the separate beta decision remain.
+runtime, API, DB, version or release changed. Candidate reconciliation is
+recorded below; user-skipped DPI coverage and the separate beta decision remain.
+
+## Candidate Evidence: 2026-09-22
+
+Public alpha.62 tag source:
+`02c9acb5035014d9e29a0eb5881a3cf5310f5d6d`; public release ZIP
+SHA-256: `10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`.
+Two development reloads, hosted 50-pair stress run 35081507786 and the
+2026-09-22 permission-menu interaction used the public host SHA-256
+`651a9d87d16eee5687f4a1072226e3f9209a6ece438c0672e6c30e6680037679`.
+Earlier native cancellation and file-recovery checks retain their recorded
+version boundaries; they were not all rerun on alpha.62.
+
+The separate local File Notes 0.1.1 Noto ZIP was built from source
+`a6d728dc4d0b634f7361ecf3db64d6ac45929b31`. Its SHA-256 is
+`9658fbbee8f6e3c28029e2f2c48ae4214e1ac391a60903812cc4c4686f7cecee`
+(7,746,360 bytes). Two builds matched; the extracted host matched the public
+alpha.62 host, all eight web assets matched source, and a visible-window
+startup exited 0 with a private profile. The initial hidden-window startup
+timed out and remains an unresolved harness observation. Picker and visual
+checks were not repeated on this exact ZIP. The maintainer separately
+confirmed installed File Notes 0.1.1 at 125% and the save workflow.
+The 150% and mixed-monitor checks were user-skipped and remain unverified.
+
+Between that packaging source and this review, commit
+`044070fad4bc5b8a132abe37a0de0d86f0759af6` changed only diagnostic
+tool path selection. The product runtime is unchanged. Continue the unsigned
+alpha; beta is not approved. Same-profile relaunch p50 was 5.96 s in the
+hosted stress run. A separate maintainer channel decision remains required.
 
 ## Delivery Record: 2026-09-10
 
