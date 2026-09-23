@@ -167,3 +167,48 @@ The raw lifecycle JSON SHA-256 is
 The workflow remains manual-only and preserves success or failure artifacts.
 No runtime, public API, DB, release version, user profile or installed EXE was
 changed by this stress task; the existing unsigned alpha.62 release is unchanged.
+
+## Current-Source User Close Diagnostic: 2026-09-23
+
+A local production-style host built from source at `4cdfb0868166b28b470985e0b58cba150a746ea7`
+with Go `1.26.4` had SHA-256
+`a23f086ef590b75595b09a0376ef4a68d92f9ae7fe1b9a4a6a4deeb5627e30eb`.
+The installed Evergreen WebView2 Runtime was `153.0.4234.48`. This is current
+source with a different Go build from the public alpha.62 host, not a new
+public-artifact verification. Tests used disposable profiles under `.cache`;
+no installed app or user profile was opened.
+
+`velox_design_lifecycle_test` passed ten fresh/immediate same-profile pairs.
+Nearest-rank p50 was 6,927 ms from second-host start to ready, 6,361 ms from
+second-host start to first-browser exit, and 6,707 ms between the second
+environment-created and controller-created markers. All ten second launches
+reached ready after the first browser exited; one pair was much faster than
+the other nine. The first host's shutdown request to run-loop exit had p50
+60 ms. The local JSON SHA-256 is
+`b258ab04935450955f5bd2e5eecff4d19d08905b9c2f01ebed32df2f13d8720b`.
+
+One temporary ready-window close diagnostic exercised the normal `WM_CLOSE`
+path instead of the benchmark's close-immediately-after-ready hook. In one
+completed run, the host exited 153 ms after the close request, the observed
+browser process exited 6,402 ms after host exit, and the disposable profile
+was removable 108 ms later. That full `velox_startup_smoke` pass took 52.39 s.
+An earlier attempt timed out at the intent's 60-second limit before the
+diagnostic finished. On a subsequent repetition, the host close completed but
+the browser-exit observation did not finish within 10 s; the 60-second smoke
+then timed out before its remaining cases completed. No test profile or owned
+host process remained afterward. These are diagnostic and runner failures,
+not evidence that the host failed to close. The temporary subtest was removed
+from the default smoke rather than making that 60-second gate timing-sensitive.
+After removing it, the unchanged startup smoke passed in 47.39 s: first
+browser exit after host exit was 6.412 s, and the immediate same-profile
+launch reached ready in 7.120 s.
+
+The completed run shows that a browser-process delay can occur after ordinary
+ready-window closure, and the repetition shows that a fixed six-second duration
+cannot be assumed. Neither run directly measures a second launch after manual
+close or explains why WebView2 retains the browser process. Microsoft's
+[user-data-folder guidance](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder)
+notes that browser processes can keep profile files in use after the host
+closes; it does not establish a universal six-second duration. No profile
+rotation, forced browser termination, teardown reordering, release, or beta
+promotion follows from this diagnostic.
