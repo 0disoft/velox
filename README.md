@@ -48,6 +48,8 @@ Current channel requirements are in [Product Readiness](docs/ops/product-readine
 
 Start with the [Velox Release Quickstart](docs/QUICKSTART.md) to verify and use
 an immutable public release without a source checkout or consumer toolchain.
+Report ordinary failures with the [bug report template](https://github.com/0disoft/velox/issues/new?template=bug-report.md);
+report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
 The current unsigned preview is [v0.5.10-alpha.62](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.62),
 from commit `02c9acb5035014d9e29a0eb5881a3cf5310f5d6d`. It includes

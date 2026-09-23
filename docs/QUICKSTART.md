@@ -49,6 +49,11 @@ supplied expected digest. Stop before extraction when either comparison fails.
 
 ## 3. Extract the release
 
+Velox is distributed as a portable ZIP, not an installer. Extract the entire
+archive before running it; do not run an executable from inside the ZIP or
+copy an executable out by itself. Keep the files in each extracted directory
+together. No automatic update is provided.
+
 ```powershell
 Expand-Archive -LiteralPath .\velox-windows-x64.zip -DestinationPath .\tool
 $Velox = (Resolve-Path -LiteralPath .\tool\velox-windows-x64\velox.exe).Path
@@ -95,6 +100,20 @@ configuration, static web assets, and `build-result.json`. The ZIP is unsigned,
 and directory assets are not protected against a local writer. Windows
 SmartScreen may warn, and managed Windows policy may block execution.
 
+To use the packaged app directly, keep `dev.velox.hello.exe`,
+`velox.runtime.json`, `build-result.json`, and `web/` together in the portable
+directory. Double-click the EXE there; moving only the EXE can break startup
+or file access. The application ZIP can likewise be extracted into its own
+directory before use.
+
+Verify the exact release URL and digest before deciding whether to run an
+unsigned executable. A matching checksum does not authenticate its publisher.
+Do not disable Windows protection or override a managed-device policy to make
+the preview run. If execution is blocked, record the warning and report it.
+If `doctor` reports a missing WebView2 Runtime, obtain the Evergreen Runtime
+only from [Microsoft's WebView2 download page](https://developer.microsoft.com/en-us/microsoft-edge/webview2/);
+the Velox ZIP does not install it.
+
 ## 6. Edit and reload
 
 For local development, enable the host's development tools explicitly:
@@ -127,3 +146,17 @@ Stop and preserve the first stable diagnostic when:
 
 Do not install another toolchain or substitute local source output to make the
 trial pass. A localized failure is valid evaluation evidence.
+
+## Report a problem
+
+Use the [Velox bug report](https://github.com/0disoft/velox/issues/new?template=bug-report.md)
+for ordinary install, startup, build, or file-access failures. Include the
+release tag and ZIP digest, Windows and WebView2 versions, the last successful
+step, the first failing step and safe error text, and whether any draft or file
+was changed. A policy block is an outcome to report, not a reason to bypass
+the policy. Remove private paths, file contents, credentials, tokens, and
+proprietary assets from public reports.
+
+For a suspected security vulnerability, use the private reporting route in
+[SECURITY.md](../SECURITY.md), not a public issue. Preview support is
+best-effort; there is no response-time or backport promise.
