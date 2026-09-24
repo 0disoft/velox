@@ -35,6 +35,9 @@ func TestPublicPreviewWorkflowUsesOnlyPublishedAssetsAndVelox(t *testing.T) {
 	}
 	for _, required := range []string{
 		"release_tag:",
+		"vX.Y.Z-alpha.N or vX.Y.Z-beta.N release tag",
+		"-(alpha|beta)[.][1-9][0-9]*$",
+		"release_tag must match vX.Y.Z-alpha.N or vX.Y.Z-beta.N.",
 		"expected_release_sha256:",
 		"contents: read",
 		"runs-on: windows-2025",
