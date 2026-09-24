@@ -1,4 +1,4 @@
-name: Alpha release evidence
+name: Unsigned preview evidence
 
 on:
   pull_request:
@@ -29,6 +29,7 @@ on:
   push:
     tags:
       - "v*-alpha.*"
+      - "v*-beta.*"
 
 permissions:
   contents: read
@@ -39,7 +40,7 @@ concurrency:
 
 jobs:
   producer:
-    name: Build reproducible unsigned alpha evidence
+    name: Build reproducible unsigned preview evidence
     runs-on: windows-2025
     timeout-minutes: 15
     outputs:
@@ -216,7 +217,7 @@ jobs:
           if-no-files-found: error
 
   publish-preview:
-    name: Publish unsigned developer preview
+    name: Publish unsigned preview
     if: github.repository == '0disoft/velox' && github.event_name == 'workflow_dispatch' && inputs.publish_preview
     needs: [producer, clean-consumer]
     runs-on: ubuntu-24.04
@@ -235,8 +236,10 @@ jobs:
           if ($env:VELOX_CONFIRMATION -cne 'publish unsigned developer preview') {
             throw 'Unsigned preview publication requires the exact confirmation phrase.'
           }
-          if ($env:VELOX_REF_TYPE -ne 'tag' -or $env:VELOX_REF_NAME -notmatch '^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$') {
-            throw 'Unsigned previews must be dispatched from an existing vX.Y.Z-alpha.N tag.'
+          $alphaTag = $env:VELOX_REF_NAME -match '^v[0-9]+[.][0-9]+[.][0-9]+-alpha[.][0-9]+$'
+          $betaTag = $env:VELOX_REF_NAME -match '^v[0-9]+[.][0-9]+[.][0-9]+-beta[.][0-9]+$'
+          if ($env:VELOX_REF_TYPE -ne 'tag' -or -not ($alphaTag -or $betaTag)) {
+            throw 'Unsigned previews must be dispatched from an existing vX.Y.Z-alpha.N or vX.Y.Z-beta.N tag.'
           }
 
       - name: Download verified preview evidence
@@ -286,8 +289,15 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $false
           $existing = gh release view $env:VELOX_REF_NAME --repo $env:GITHUB_REPOSITORY 2>$null
           if ($LASTEXITCODE -eq 0) { throw 'The release already exists and will not be replaced.' }
+          $isBeta = $env:VELOX_REF_NAME -match '-beta[.][0-9]+$'
+          $channel = if ($isBeta) { 'beta preview' } else { 'developer preview' }
+          $compatibility = if ($isBeta) {
+            'Initial beta support is limited to serviced Windows 11 x64 desktops with an updating Evergreen WebView2 Runtime and one physical monitor. Display scaling is best-effort.'
+          } else {
+            'Compatibility is limited to Windows x64: Windows 10 version 1709 build 16299 or newer clients, Windows Server 2016 build 14393 or newer servers, and Evergreen WebView2 Runtime 92.0.902.49 or newer.'
+          }
           @"
-          ## Unsigned developer preview
+          ## Unsigned $channel
 
           This preview is intended for developers evaluating the compile-free Windows x64 packaging path.
 
@@ -295,7 +305,9 @@ jobs:
 
           The checksum file, SPDX SBOM, and provenance statement describe the files in this release. They do not provide a Windows publisher identity, and the provenance statement is not an authenticated attestation.
 
-          Compatibility is limited to Windows x64: Windows 10 version 1709 build 16299 or newer clients, Windows Server 2016 build 14393 or newer servers, and Evergreen WebView2 Runtime 92.0.902.49 or newer.
+          $compatibility
+
+          Immediate same-profile relaunch can take several seconds while the previous WebView2 browser process exits.
 
           Packaged applications keep HTML, CSS, JavaScript, and velox.runtime.json beside the unchanged generic host. Anyone who can modify the application directory can change application behavior. This preview does not provide sealed assets or local tamper resistance.
 
@@ -306,7 +318,7 @@ jobs:
           $assets = @(Get-ChildItem -LiteralPath '.ci/release' -Recurse -File | Sort-Object Name | ForEach-Object FullName)
           gh release create $env:VELOX_REF_NAME @assets `
             --repo $env:GITHUB_REPOSITORY `
-            --title "Velox $env:VELOX_REF_NAME (unsigned developer preview)" `
+            --title "Velox $env:VELOX_REF_NAME (unsigned $channel)" `
             --notes-file '.ci/release-notes.md' `
             --prerelease `
             --verify-tag
