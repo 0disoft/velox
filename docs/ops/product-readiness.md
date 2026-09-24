@@ -21,23 +21,28 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
-## Initial Beta Support Scope: 2026-09-23
+## Initial Beta Support Scope: revised 2026-09-24
 
 The maintainer selected Windows 11 x64 desktop versions still serviced by
 Microsoft, with an installed, updating Evergreen WebView2 Runtime. The display
-scope is one physical monitor at 100%, 125%, or 150% Windows scaling. An
-initial beta would use a portable, unsigned ZIP, with unsigned-execution
-warnings and the known same-profile relaunch delay disclosed. Windows 10,
+scope is one physical monitor. Display scaling is best-effort in the initial
+beta: 125% was observed with File Notes 0.1.1 on public alpha.62, while 100%
+and 150% remain unverified. The maintainer deferred scale-specific visual
+checks on 2026-09-24; those observations are not beta release gates unless a
+known issue breaks a core workflow. An initial beta would use a portable,
+unsigned ZIP, with unsigned-execution warnings and the known same-profile
+relaunch delay disclosed. Windows 10,
 Windows Server, ARM64, multiple monitors (including mixed-DPI movement), and
 fixed or absent WebView2 runtimes have no initial beta support commitment.
 The older Windows/WebView2 floors in the product spec remain technical
 compatibility checks, not evidence that those environments were validated.
 
 This is a support-policy decision, not a completed DPI check, channel approval,
-or published beta. A configuration outside the scope may run, but must not be
-advertised as tested or supported by the initial beta.
+or published beta. Do not describe unverified scaling as tested. A configuration
+outside the scope may run, but must not be advertised as supported by the
+initial beta.
 
-## Remaining Beta Decision: 2026-09-23
+## Remaining Beta Decision: 2026-09-24
 
 This is the current action list; dated sections below preserve historical
 decisions and do not reopen checks that later evidence completed. ADR 0019
@@ -48,8 +53,7 @@ by this classification, and no missing observation is relabeled as a pass.
 
 | Item | Why it remains open | Completion criterion |
 | --- | --- | --- |
-| Physical DPI on the supported single-monitor scales | User-reported 125% Noto 0.1.1 on public alpha62 passed; 100% was not separately recorded and 150% was user-skipped, so neither is a pass on a selected beta candidate | On the selected candidate, record Windows/WebView2 version and actual 100%/125%/150% scaling; inspect text, clipping and pointer targets at each scale. Record unavailable or skipped scales as unverified, not passed. Mixed-monitor movement remains outside initial beta support and unverified |
-| Channel decision and support disclosure | The beta support scope is now decided; public alpha.62 and the separate File Notes 0.1.1 ZIP are bound to source, ZIP and host digests below. Unsigned support limits and skipped DPI coverage remain | Complete the supported-scale visual check, disclose unsigned warnings and known restart latency, then make a separate maintainer beta channel decision; no automatic promotion |
+| Channel decision and support disclosure | The beta support scope is now decided; public alpha.62 and the separate File Notes 0.1.1 ZIP are bound to source, ZIP and host digests below. Unsigned support limits, known restart latency and unverified display scaling remain | Disclose these limitations, then make a separate maintainer beta channel decision; no automatic promotion |
 
 Public alpha.62 source-free verification, its 50-pair hosted lifecycle run,
 three public pre-ready close/relaunch pairs, and the maintainer's installed
@@ -67,9 +71,10 @@ to update this checklist.
   6.36 s. Keep it visible in the candidate decision. A crash, missed existing
   shutdown deadline, residual profile lock or lost draft reopens a blocker;
   do not force browser termination or rotate user profiles to hide the delay.
-- Broader Windows/WebView2 and mixed-monitor coverage can follow the limited
-  initial beta support scope; untested configurations must not be advertised
-  as verified. The supported single-monitor DPI check above is not waived.
+- Broader Windows/WebView2 and mixed-monitor coverage, plus 100%/150% visual
+  scaling checks, can follow the initial beta. Untested configurations must
+  not be advertised as verified. A reported scaling issue that breaks a core
+  workflow takes priority over cosmetic follow-up.
 - AI/model evaluations and independent-user feedback are optional evidence,
   not product dependencies or substitutes for the remaining native checks.
 - Signing and stable-channel support remain separate decisions under ADR 0019.
@@ -78,8 +83,9 @@ to update this checklist.
 
 The candidate evidence below binds the public alpha.62 source, ZIP and host
 digests separately from the local File Notes ZIP. Keep 100%/150% candidate
-coverage and mixed-monitor movement unverified until actually observed;
-mixed-monitor movement is outside the initial beta support scope.
+coverage and mixed-monitor movement unverified until actually observed; those
+visual checks are not beta blockers by themselves. Mixed-monitor movement is
+outside the initial beta support scope.
 Any newly observed security, data-loss or core-workflow defect takes priority.
 
 ## Desktop Delivery: 2026-09-16

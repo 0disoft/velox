@@ -125,17 +125,19 @@ passed with ZIP SHA-256
 ### Initial Beta Support Scope
 
 The Windows and WebView2 versions above are technical execution floors, not a
-beta support promise. The initial beta support scope, agreed on 2026-09-23,
-is a Windows 11 x64 desktop version still serviced by Microsoft, with an
-installed, updating Evergreen WebView2 Runtime. Display support is limited to
-one physical monitor at 100%, 125%, or 150% Windows scaling, subject to real
-visual checks on the selected beta candidate. Windows 10, Windows Server,
+beta support promise. The initial beta support scope, agreed on 2026-09-23 and
+revised on 2026-09-24, is a Windows 11 x64 desktop version still serviced by
+Microsoft, with an installed, updating Evergreen WebView2 Runtime. Display
+support is limited to one physical monitor; scaling-specific visual checks are
+best-effort follow-ups rather than beta release gates. Only 125% was observed
+with File Notes 0.1.1 on public alpha.62; 100% and 150% remain unverified.
+Windows 10, Windows Server,
 ARM64, multiple monitors (including mixed-DPI movement), and fixed or absent
 WebView2 runtimes are outside this beta support scope even if a configuration
 can technically launch. An initial beta would use a portable, unsigned ZIP;
 warn about unsigned execution and the known same-profile relaunch delay. This
-scope decision does not authorize beta publication or mark pending checks as
-passed; `docs/ops/product-readiness.md` owns those checks.
+scope decision does not authorize beta publication or mark unverified scaling
+as passed; `docs/ops/product-readiness.md` owns the remaining checks.
 
 ### CLI
 
