@@ -129,8 +129,11 @@ beta support promise. The initial beta support scope, agreed on 2026-09-23 and
 revised on 2026-09-24, is a Windows 11 x64 desktop version still serviced by
 Microsoft, with an installed, updating Evergreen WebView2 Runtime. Display
 support is limited to one physical monitor; scaling-specific visual checks are
-best-effort follow-ups rather than beta release gates. Only 125% was observed
-with File Notes 0.1.1 on public alpha.62; 100% and 150% remain unverified.
+best-effort follow-ups rather than beta release gates. File Notes 0.1.1 was
+observed at 125% on public alpha.62; the maintainer later reported sharp,
+unclipped rendering at 100% and 150% on another laptop. That laptop's exact
+Windows/WebView2 versions and copied ZIP hash were not recorded, so this is
+manual visual evidence rather than full configuration or workflow verification.
 Windows 10, Windows Server,
 ARM64, multiple monitors (including mixed-DPI movement), and fixed or absent
 WebView2 runtimes are outside this beta support scope even if a configuration

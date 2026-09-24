@@ -26,10 +26,13 @@ with a mock and label the gate complete.
 The maintainer selected Windows 11 x64 desktop versions still serviced by
 Microsoft, with an installed, updating Evergreen WebView2 Runtime. The display
 scope is one physical monitor. Display scaling is best-effort in the initial
-beta: 125% was observed with File Notes 0.1.1 on public alpha.62, while 100%
-and 150% remain unverified. The maintainer deferred scale-specific visual
-checks on 2026-09-24; those observations are not beta release gates unless a
-known issue breaks a core workflow. An initial beta would use a portable,
+beta: 125% was previously observed with File Notes 0.1.1 on public alpha.62.
+On 2026-09-24, the maintainer reported sharp, unclipped File Notes rendering
+at 100% and 150% on another laptop. Its Windows/WebView2 versions and the
+transferred ZIP's bytes were not independently recorded; this is a manual
+visual report, not a picker/save or full platform verification at each scale.
+Scale-specific visual checks remain nonblocking unless a known issue breaks a
+core workflow. An initial beta would use a portable,
 unsigned ZIP, with unsigned-execution warnings and the known same-profile
 relaunch delay disclosed. Windows 10,
 Windows Server, ARM64, multiple monitors (including mixed-DPI movement), and
@@ -53,7 +56,7 @@ by this classification, and no missing observation is relabeled as a pass.
 
 | Item | Why it remains open | Completion criterion |
 | --- | --- | --- |
-| Channel decision and support disclosure | The beta support scope is now decided; public alpha.62 and the separate File Notes 0.1.1 ZIP are bound to source, ZIP and host digests below. Unsigned support limits, known restart latency and unverified display scaling remain | Disclose these limitations, then make a separate maintainer beta channel decision; no automatic promotion |
+| Channel decision and support disclosure | The beta support scope is now decided; public alpha.62 and the separate File Notes 0.1.1 ZIP are bound to source, ZIP and host digests below. Unsigned support limits, known restart latency and incomplete cross-laptop environment and artifact records remain | Disclose these limitations, then make a separate maintainer beta channel decision; no automatic promotion |
 
 Public alpha.62 source-free verification, its 50-pair hosted lifecycle run,
 three public pre-ready close/relaunch pairs, and the maintainer's installed
@@ -71,10 +74,11 @@ to update this checklist.
   6.36 s. Keep it visible in the candidate decision. A crash, missed existing
   shutdown deadline, residual profile lock or lost draft reopens a blocker;
   do not force browser termination or rotate user profiles to hide the delay.
-- Broader Windows/WebView2 and mixed-monitor coverage, plus 100%/150% visual
-  scaling checks, can follow the initial beta. Untested configurations must
-  not be advertised as verified. A reported scaling issue that breaks a core
-  workflow takes priority over cosmetic follow-up.
+- Broader Windows/WebView2 and mixed-monitor coverage, plus repeatable
+  per-scale checks on a pinned candidate, can follow the initial beta. The
+  manual 100%/150% visual report does not verify every interaction or platform
+  configuration. A scaling issue that breaks a core workflow takes priority
+  over cosmetic follow-up.
 - AI/model evaluations and independent-user feedback are optional evidence,
   not product dependencies or substitutes for the remaining native checks.
 - Signing and stable-channel support remain separate decisions under ADR 0019.
@@ -82,10 +86,11 @@ to update this checklist.
   or stable-readiness claim.
 
 The candidate evidence below binds the public alpha.62 source, ZIP and host
-digests separately from the local File Notes ZIP. Keep 100%/150% candidate
-coverage and mixed-monitor movement unverified until actually observed; those
-visual checks are not beta blockers by themselves. Mixed-monitor movement is
-outside the initial beta support scope.
+digests separately from the local File Notes ZIP. The maintainer's 100%/150%
+visual report adds cross-laptop evidence, but the laptop environment and copied
+artifact hash remain unrecorded. Mixed-monitor movement remains unverified and
+outside the initial beta support scope. Further visual checks are not beta
+blockers by themselves.
 Any newly observed security, data-loss or core-workflow defect takes priority.
 
 ## Desktop Delivery: 2026-09-16
