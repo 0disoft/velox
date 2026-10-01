@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"image/png"
 	"testing"
-	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -22,13 +21,11 @@ func testBuiltHostIcons(t *testing.T) {
 		if entry == 0 {
 			t.Fatalf("missing icon resource kind=%d id=%d", kind, id)
 		}
-		size, _, _ := kernel32.NewProc("SizeofResource").Call(uintptr(module), entry)
-		handle, _, _ := kernel32.NewProc("LoadResource").Call(uintptr(module), entry)
-		address, _, _ := kernel32.NewProc("LockResource").Call(handle)
-		if address == 0 || size == 0 || size > 1<<20 {
-			t.Fatalf("invalid resource size=%d", size)
+		data, err := windows.LoadResourceData(module, windows.Handle(entry))
+		if err != nil || len(data) == 0 || len(data) > 1<<20 {
+			t.Fatalf("invalid resource size=%d: %v", len(data), err)
 		}
-		return bytes.Clone(unsafe.Slice((*byte)(unsafe.Pointer(address)), int(size)))
+		return bytes.Clone(data)
 	}
 	want := []int{16, 20, 24, 32, 40, 48, 64, 128, 256}
 	for _, groupID := range []uintptr{1, 11} {

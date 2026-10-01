@@ -16,7 +16,9 @@ import (
 	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/pebranding"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 const TargetWindowsX64 = "windows-x64"
@@ -62,6 +64,7 @@ type Plan struct {
 	appDirectory   string
 	archivePath    string
 	applicationKey string
+	branding       pebranding.Options
 }
 
 type Snapshot struct {
@@ -76,6 +79,7 @@ type Snapshot struct {
 	AppDirectory   string
 	ArchivePath    string
 	ApplicationKey string
+	Branding       pebranding.Options
 }
 
 func Create(options Options) (Plan, error) {
@@ -101,6 +105,10 @@ func create(options Options, hashAssets bool) (Plan, error) {
 		return Plan{}, fail(ErrorConfig, fmt.Errorf("unsupported target %q", options.Target))
 	}
 	resolved, err := manifest.Load(options.ManifestPath)
+	if err != nil {
+		return Plan{}, fail(ErrorManifest, err)
+	}
+	branding, err := loadBranding(resolved)
 	if err != nil {
 		return Plan{}, fail(ErrorManifest, err)
 	}
@@ -212,6 +220,7 @@ func create(options Options, hashAssets bool) (Plan, error) {
 		appDirectory:   filepath.Join(outputRoot, applicationKey),
 		archivePath:    filepath.Join(outputRoot, applicationKey+".zip"),
 		applicationKey: applicationKey,
+		branding:       branding,
 	}, nil
 }
 
@@ -227,6 +236,12 @@ func (plan Plan) AssetPaths() []string {
 func (plan Plan) Snapshot() Snapshot {
 	resolved := plan.manifest
 	resolved.Security.Permissions = append([]string{}, plan.manifest.Security.Permissions...)
+	if resolved.Branding != nil {
+		b := *resolved.Branding
+		resolved.Branding = &b
+	}
+	branding := plan.branding
+	branding.Icon = append([]byte(nil), branding.Icon...)
 	assets := plan.assets
 	assets.Files = append([]assettree.File(nil), plan.assets.Files...)
 	return Snapshot{
@@ -236,7 +251,32 @@ func (plan Plan) Snapshot() Snapshot {
 		Target:       plan.target, OutputRoot: plan.outputRoot,
 		AppDirectory: plan.appDirectory, ArchivePath: plan.archivePath,
 		ApplicationKey: plan.applicationKey,
+		Branding:       branding,
 	}
+}
+
+func loadBranding(value manifest.Resolved) (pebranding.Options, error) {
+	if value.Branding == nil {
+		return pebranding.Options{}, nil
+	}
+	b := value.Branding
+	options := pebranding.Options{Enabled: true, Name: value.App.Name, Version: value.App.Version, Company: b.Company, Description: b.Description, Copyright: b.Copyright}
+	if b.Icon != "" {
+		path := filepath.Join(value.ProjectRoot, b.Icon)
+		file, info, err := safefs.OpenVerifiedRegular(path)
+		if err != nil {
+			return options, fmt.Errorf("branding.icon: %w", err)
+		}
+		defer file.Close()
+		if info.Size() > pebranding.MaxIconBytes {
+			return options, errors.New("branding.icon exceeds 2 MiB")
+		}
+		options.Icon, err = io.ReadAll(io.LimitReader(file, pebranding.MaxIconBytes+1))
+		if err != nil {
+			return options, err
+		}
+	}
+	return options, pebranding.Validate(options)
 }
 
 func applicationKey(appID string) string {

@@ -20,6 +20,7 @@ import (
 	"github.com/0disoft/velox/internal/buildreport"
 	"github.com/0disoft/velox/internal/ipc"
 	"github.com/0disoft/velox/internal/outputpair"
+	"github.com/0disoft/velox/internal/pebranding"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 	"github.com/0disoft/velox/internal/safefs"
 )
@@ -97,8 +98,36 @@ func BuildContext(ctx context.Context, plan buildplan.Plan, observer buildphase.
 		return Result{}, err
 	}
 	hostStarted := time.Now()
-	if _, err := copyVerifiedContext(ctx, snapshot.HostPath, filepath.Join(stageDirectory, hostName), 0o755, snapshot.HostSize, 0, snapshot.HostSHA256, observedWriter{writer: hostArchiveEntry, duration: &archiveEntryDuration}); err != nil {
+	hostOutput := filepath.Join(stageDirectory, hostName)
+	hostMirrors := []io.Writer{observedWriter{writer: hostArchiveEntry, duration: &archiveEntryDuration}}
+	if snapshot.Branding.Enabled {
+		hostMirrors = nil
+	}
+	if _, err := copyVerifiedContext(ctx, snapshot.HostPath, hostOutput, 0o755, snapshot.HostSize, 0, snapshot.HostSHA256, hostMirrors...); err != nil {
 		return Result{}, fmt.Errorf("copy host template: %w", err)
+	}
+	hostBytes, hostHash := snapshot.HostSize, snapshot.HostSHA256
+	if snapshot.Branding.Enabled {
+		if err := pebranding.Apply(hostOutput, hostName, snapshot.Branding); err != nil {
+			return Result{}, fmt.Errorf("brand host: %w", err)
+		}
+		file, info, err := safefs.OpenVerifiedRegular(hostOutput)
+		if err != nil {
+			return Result{}, err
+		}
+		brandedSnapshot := snapshot
+		brandedSnapshot.HostSize = info.Size()
+		if err := validateInputBudget(brandedSnapshot); err != nil {
+			file.Close()
+			return Result{}, err
+		}
+		digest := sha256.New()
+		hostBytes, err = io.Copy(io.MultiWriter(hostArchiveEntry, digest), cancelReader{ctx: ctx, reader: file})
+		closeErr := file.Close()
+		if err != nil || closeErr != nil {
+			return Result{}, errors.Join(err, closeErr)
+		}
+		hostHash = hex.EncodeToString(digest.Sum(nil))
 	}
 	buildphase.Record(observer, "host.copy", hostStarted)
 	webRoot := filepath.Join(stageDirectory, "web")
@@ -137,7 +166,7 @@ func BuildContext(ctx context.Context, plan buildplan.Plan, observer buildphase.
 		App:            buildreport.App{ID: snapshot.Manifest.App.ID, Name: snapshot.Manifest.App.Name, Version: snapshot.Manifest.App.Version},
 		Target:         snapshot.Target,
 		Contracts:      buildreport.Contracts{Manifest: 1, Runtime: runtimeconfig.Version, Host: snapshot.HostMetadata.Contracts.Host, IPC: ipc.Version},
-		Host:           buildreport.File{File: hostName, Bytes: snapshot.HostSize, SHA256: snapshot.HostSHA256},
+		Host:           buildreport.File{File: hostName, Bytes: hostBytes, SHA256: hostHash},
 		Assets:         buildreport.Assets{Files: len(verifiedAssets.Files), Bytes: verifiedAssets.TotalBytes, SHA256: verifiedAssets.Digest},
 		Permissions:    append([]string{}, snapshot.Manifest.Security.Permissions...),
 		Outputs:        buildreport.OutputCounts{PortableFiles: len(snapshot.Assets.Files) + 3},
@@ -173,7 +202,7 @@ func BuildContext(ctx context.Context, plan buildplan.Plan, observer buildphase.
 	success = true
 	return Result{
 		Report: report, DirectoryPath: snapshot.AppDirectory, ArchivePath: snapshot.ArchivePath,
-		PortableBytes: snapshot.HostSize + verifiedAssets.TotalBytes + runtimeBytes + reportBytes,
+		PortableBytes: hostBytes + verifiedAssets.TotalBytes + runtimeBytes + reportBytes,
 		ArchiveSize:   archiveResult.Size, ArchiveSHA256: archiveResult.SHA256,
 	}, nil
 }

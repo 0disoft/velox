@@ -335,6 +335,16 @@ the five browser-policy denials before emitting `security-ok`.
 Repository hygiene file changes must check line-ending churn, binary diff pollution,
 tracked secret files, ignored build/cache artifacts, and generated-output drift.
 
+## Executable Branding
+
+`velox_test` covers optional branding, ICO validation, signed-template refusal,
+Windows resource loading, executable startup, code-section preservation, and
+two-build archive determinism. Branded builder fixtures must pass directory
+and ZIP inspection using the final executable size and SHA-256. Default builds
+retain the unchanged-host test. `velox_file_notes_build` produces an example
+with application-specific version resources after `velox_release_bundle`.
+The installer remains unimplemented and has no passing validation claim.
+
 ## Scope
 
 general validation routes must stay stack-neutral unless a runner file explicitly defines a command.

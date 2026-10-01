@@ -79,7 +79,8 @@ smaller build and runtime surface.
 - The production host is pure Go with no CGo or C++ shim.
 - The retired C++23 M0 comparison remains available as historical ADR and
   performance evidence, not as an active build target.
-- Consumer builds copy an unchanged host, external configuration, and assets.
+- Consumer builds copy an unchanged host by default, along with external
+  configuration and assets.
 - Consumer builds require no compiler, Node.js, or frontend package manager.
 
 ## Current Product Boundary
@@ -93,14 +94,16 @@ Supported by the MVP design:
 - Minimal versioned JSON IPC for application information and basic window
   lifecycle.
 - Non-interactive CLI operation and machine-readable output.
+- Optional per-application executable branding: an icon and a version
+  resource written into a staged host copy on build; without it the build
+  keeps the release host's own icon and version resources.
 
 Explicitly deferred:
 
 - Native application backends and plugins.
 - Filesystem, shell, process, and sidecar APIs.
 - Frontend bundling, hot reload, and a development server.
-- Installers, automatic updates, per-application executable branding, and code
-  signing automation.
+- Installers, automatic updates, and code signing automation.
 - macOS, Linux, ARM64, and multi-window support.
 
 ## Documentation
@@ -121,6 +124,7 @@ Explicitly deferred:
 - Distribution/adoption boundary: docs/adr/0016-separate-technical-distribution-from-independent-adoption.md
 - M5 product decision: docs/adr/0017-continue-as-a-narrow-static-packager.md
 - Agent-evaluation decision: docs/adr/0018-use-clean-room-llm-agent-evaluation.md
+- Branding decision: docs/adr/0020-optional-compiler-free-executable-branding.md
 - Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
 - External user attempt: docs/ops/external-user-attempt.md
 - Clean-room LLM agent evaluation: docs/ops/llm-agent-evaluation.md
@@ -146,8 +150,13 @@ velox version --json
 
 `build` produces `dist/<app-id>/`, `dist/<app-id>.zip`, and a deterministic
 `build-result.json` inside the portable directory and archive. The host bytes
-are copied unchanged. Output assembly occurs in an owned sibling staging path;
-an occupied staging or recovery path fails closed instead of deleting it.
+are copied unchanged by default. Output assembly occurs in an owned sibling
+staging path; an occupied staging or recovery path fails closed instead of
+deleting it.
+
+With a `branding` object, the build writes the icon and version resource into
+a staged copy of the host and reports the edited host size and SHA-256 in
+`build-result.json`; the released host template is never modified.
 
 See `examples/hello/velox.json` and `schema/velox-v1.schema.json` for the v1
 authoring contract.

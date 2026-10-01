@@ -10,17 +10,27 @@ import (
 	"strings"
 
 	"github.com/0disoft/velox/internal/appidentity"
+	"github.com/0disoft/velox/internal/pebranding"
+	"github.com/0disoft/velox/internal/safefs"
 )
 
 const Version = 1
 
 type Manifest struct {
-	Schema        string   `json:"$schema,omitempty"`
-	SchemaVersion int      `json:"schemaVersion"`
-	App           App      `json:"app"`
-	Assets        Assets   `json:"assets"`
-	Window        Window   `json:"window"`
-	Security      Security `json:"security"`
+	Schema        string    `json:"$schema,omitempty"`
+	SchemaVersion int       `json:"schemaVersion"`
+	App           App       `json:"app"`
+	Assets        Assets    `json:"assets"`
+	Window        Window    `json:"window"`
+	Security      Security  `json:"security"`
+	Branding      *Branding `json:"branding,omitempty"`
+}
+
+type Branding struct {
+	Icon        string `json:"icon,omitempty"`
+	Company     string `json:"company,omitempty"`
+	Description string `json:"description,omitempty"`
+	Copyright   string `json:"copyright,omitempty"`
 }
 
 type App struct {
@@ -127,6 +137,17 @@ func validate(value Manifest) error {
 	}
 	if strings.TrimSpace(value.App.Version) == "" {
 		return errors.New("app.version is required")
+	}
+	if value.Branding != nil {
+		b := value.Branding
+		if b.Icon != "" {
+			if err := safefs.ValidateRelativePath(b.Icon); err != nil {
+				return fmt.Errorf("branding.icon: %w", err)
+			}
+		}
+		if err := pebranding.Validate(pebranding.Options{Enabled: true, Name: value.App.Name, Version: value.App.Version, Company: b.Company, Description: b.Description, Copyright: b.Copyright}); err != nil {
+			return err
+		}
 	}
 	if value.Window.Width < 320 || value.Window.Height < 240 {
 		return errors.New("window dimensions must be at least 320x240")

@@ -58,10 +58,13 @@ build path. It accepts a smaller feature set in exchange.
 - One HTML entry point inside that root.
 - Basic application identity and initial window settings.
 - An explicit, closed set of native permissions.
+- Optional per-application executable branding: an icon and a version
+  resource.
 
 ### Build output
 
-- An unchanged prebuilt host executable.
+- A prebuilt host executable, copied unchanged by default or branded from a
+  staged copy when `branding` is configured.
 - An external runtime configuration file.
 - A copied static asset directory.
 - A machine-readable build report.
@@ -89,6 +92,12 @@ AI evaluation is optional and does not approve a channel. The checklist is
 The retained historical evaluation path uses a maintainer-built Windows AppContainer
 supervisor and no-breakaway Job Object. This maintainer tool is not shipped in
 the consumer release bundle and does not expand the application runtime API.
+
+ADR 0020 amends ADR 0017 for one surface only: optional compiler-free
+executable branding of a staged host copy on the Windows build. The default
+portable output keeps the shared Velox icon and no application-specific
+version metadata. An optional Windows install package remains a proposed,
+unbuilt follow-up.
 
 The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
 developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.

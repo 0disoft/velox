@@ -4,6 +4,7 @@
 - Date: 2026-07-21
 - Owner: Project maintainer
 - Superseded in part by: ADR 0018 replaces the beta and stable admission evidence clause
+- Amended in part by: ADR 0020 approves optional compiler-free executable branding only; the installer stays unapproved
 
 ## Context
 
@@ -56,6 +57,10 @@ This decision does **not** approve an application-specific Go backend, native
 filesystem, shell, process, sidecar, plugin, local-server, updater, installer,
 asset-sealing, new-platform, or broad IPC surface. A request for any of those
 must open a new product and threat-model ADR before implementation.
+
+ADR 0020 subsequently amended this decision for one surface only: optional,
+compiler-free executable branding of a staged host copy. The installer, updater,
+signing, asset-sealing, and backend prohibitions above remain in force.
 
 Beta or stable admission requires either:
 

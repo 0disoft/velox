@@ -9,7 +9,9 @@
    code.
 2. A consumer build does not require Go, Rust, C++, Zig, Node.js, or a frontend
    package manager.
-3. The generic host executable is copied without patching its bytes.
+3. The default consumer build copies the generic host executable without
+   patching its bytes. Optional executable branding under ADR 0020 edits only
+   a staged copy and never the released host template.
 4. The default application model is static HTML, CSS, and JavaScript.
 5. Windows x64 is the only target until the benchmark and security contracts
    are proven.
@@ -26,6 +28,9 @@
 7. Equivalent normalized inputs produce byte-identical unsigned archives.
 8. Paths, links, reparse points, reserved names, and archive entries cannot
    escape their declared roots.
+9. Executable branding is opt-in, edits a staged host copy, refuses a signed
+   host template, and leaves the released host template and the default
+   output byte-identical.
 
 ## Runtime Invariants
 

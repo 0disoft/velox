@@ -24,8 +24,9 @@ the CLI and are visible in inspection output.
 
 Application identifier, display name, and version.
 
-Invariant: identity is data in external configuration during M0 and does not
-patch the generic host executable.
+Invariant: identity remains external configuration. Optional branding under
+ADR 0020 derives executable resources from it on a staged copy, never on the
+released host template.
 
 ### AssetTree
 

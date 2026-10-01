@@ -27,7 +27,13 @@ shape is:
       "app": {
         "id": "com.example.hello",
         "name": "Hello",
-        "version": "0.1.0"
+        "version": "1.2.3"
+      },
+      "branding": {
+        "icon": "app.ico",
+        "company": "Rodisoft",
+        "description": "Hello desktop app",
+        "copyright": "(c) 2026 Rodisoft"
       },
       "assets": {
         "root": "web",
@@ -53,8 +59,36 @@ required versions fail closed.
 
 ### app
 
-Application identifier, display name, and version. In M0 and M1 these values
-remain external configuration and do not patch host executable resources.
+Application identifier, display name, and version. `app.id` names the packaged
+executable (`<app.id>.exe`) and the output directory; `app.name` sets the window
+title; and all three values are recorded in the build report. When `branding`
+is present, `app.name` and `app.version` additionally supply the executable
+version resource.
+
+### branding
+
+Optional. When present on a Windows build, the build always writes a
+`VERSIONINFO` resource (product name from `app.name`, version from
+`app.version`) into a staged copy of the prebuilt host. Omitting `branding`
+entirely leaves the release host resources untouched.
+
+- `icon`: project-relative `.ico` path. The file must stay inside the project
+  root, be at most 2 MiB, and hold one to 32 PNG or BITMAPINFOHEADER images
+  whose dimensions match the ICO directory entry. Omitting `icon` retains the
+  host template's existing icon resources while the version resource is still
+  written.
+- `company`, `description`, and `copyright`: optional text written to the
+  version resource. `description` defaults to `app.name`.
+- Text values are limited to 256 UTF-16 code units and cannot contain control
+  characters.
+- `app.version` must have a numeric core of one to four components, each 0 to
+  65535. A trailing `-` or `+` suffix is kept in the displayed version string.
+- Branding is Windows-only and refuses a signed host template, because editing
+  resources invalidates the signature.
+
+Branding applies to `velox build` only. `velox run` launches the generic
+release host directly, so the development preview does not show the branded
+icon or version.
 
 ### assets
 

@@ -18,6 +18,16 @@
         "version": { "type": "string", "minLength": 1 }
       }
     },
+    "branding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "icon": { "type": "string", "minLength": 1 },
+        "company": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 256 },
+        "copyright": { "type": "string", "maxLength": 256 }
+      }
+    },
     "assets": {
       "type": "object",
       "additionalProperties": false,

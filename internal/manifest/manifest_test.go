@@ -43,6 +43,9 @@ func TestLoadRejectsInvalidContracts(t *testing.T) {
 		{"root escape", `{"schemaVersion":1,"app":{"id":"com.example.app","name":"App","version":"1"},"assets":{"root":".."}}`, "stay inside"},
 		{"unknown permission", `{"schemaVersion":1,"app":{"id":"com.example.app","name":"App","version":"1"},"security":{"permissions":["shell.execute"]}}`, "unsupported permission"},
 		{"duplicate permission", `{"schemaVersion":1,"app":{"id":"com.example.app","name":"App","version":"1"},"security":{"permissions":["app.info","app.info"]}}`, "duplicate permission"},
+		{"branding path escape", `{"schemaVersion":1,"app":{"id":"com.example.app","name":"App","version":"1"},"branding":{"icon":"../app.ico"}}`, "branding.icon"},
+		{"branding ADS", `{"schemaVersion":1,"app":{"id":"com.example.app","name":"App","version":"1"},"branding":{"icon":"app.ico:stream"}}`, "branding.icon"},
+		{"branding version", `{"schemaVersion":1,"app":{"id":"com.example.app","name":"App","version":"text"},"branding":{}}`, "numeric app.version"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
