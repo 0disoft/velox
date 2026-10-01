@@ -119,7 +119,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go build -trimpath -ldflags='-s -w -H windowsgui' -o (Join-Path $inputRoot 'velox-host.exe') ./cmd/velox-host
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $raw = go run ./cmd/velox-release --cli (Join-Path $inputRoot 'velox.exe') --host (Join-Path $inputRoot 'velox-host.exe') --source-root $env:GITHUB_WORKSPACE --out (Join-Path $env:GITHUB_WORKSPACE 'dist/release') --json
+          go build -trimpath -ldflags='-s -w -H windowsgui' -o (Join-Path $inputRoot 'velox-setup.exe') ./cmd/velox-setup
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $raw = go run ./cmd/velox-release --cli (Join-Path $inputRoot 'velox.exe') --host (Join-Path $inputRoot 'velox-host.exe') --setup (Join-Path $inputRoot 'velox-setup.exe') --source-root $env:GITHUB_WORKSPACE --out (Join-Path $env:GITHUB_WORKSPACE 'dist/release') --json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $result = $raw | ConvertFrom-Json
           "release_sha256=$($result.archiveSha256)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8

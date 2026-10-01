@@ -76,6 +76,7 @@ Foundation application and protected-environment handoff steps remain in
 - docs/ops/00-operational-contract.md
 - docs/ops/ci.md
 - docs/ops/release.md
+- docs/ops/windows-installer.md
 - docs/ops/signing.md
 - docs/ops/signpath-onboarding.md
 - docs/ops/external-user-attempt.md

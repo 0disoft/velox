@@ -28,6 +28,7 @@ import (
 	"github.com/0disoft/velox/internal/platformversion"
 	"github.com/0disoft/velox/internal/runner"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/setuppayload"
 	"github.com/0disoft/velox/internal/webview2"
 )
 
@@ -103,6 +104,7 @@ type BuildResult struct {
 	PortableBytes  int64                 `json:"portableBytes"`
 	ArchiveBytes   int64                 `json:"archiveBytes"`
 	ArchiveSHA256  string                `json:"archiveSha256"`
+	Installer      *setuppayload.Result  `json:"installer,omitempty"`
 }
 
 type VersionResult struct {
@@ -352,6 +354,7 @@ func runValidate(args []string, dependencies Dependencies) int {
 
 func runBuild(args []string, dependencies Dependencies) int {
 	flags, options := newFlagSet("build", dependencies.Stderr)
+	withInstaller := flags.Bool("installer", false, "also build a per-user Windows Setup executable")
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
@@ -391,10 +394,29 @@ func runBuild(args []string, dependencies Dependencies) int {
 		PortableFiles: result.Report.Outputs.PortableFiles, PortableBytes: result.PortableBytes,
 		ArchiveBytes: result.ArchiveSize, ArchiveSHA256: result.ArchiveSHA256,
 	}
+	if *withInstaller {
+		self, err := os.Executable()
+		if err != nil {
+			return emitFailure(dependencies, "build", options.json, 6, "PACKAGING_FAILED", "Setup template is unavailable.", err)
+		}
+		template := filepath.Join(filepath.Dir(self), "velox-setup.exe")
+		if err := setuppayload.VerifyTemplate(template); err != nil {
+			return emitFailure(dependencies, "build", options.json, 6, "PACKAGING_FAILED", "Setup template is unavailable or incompatible.", err)
+		}
+		setup, err := setuppayload.Build(template, result.ArchivePath, filepath.Join(snapshot.OutputRoot, snapshot.Manifest.App.ID+"-setup.exe"))
+		if err != nil {
+			return emitFailure(dependencies, "build", options.json, 6, "PACKAGING_FAILED", "Installer packaging failed.", err)
+		}
+		setup.File = safePath(snapshot.OutputRoot, setup.File)
+		presented.Installer = &setup
+	}
 	if options.json {
 		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "build", Result: presented, Diagnostics: []Diagnostic{}})
 	} else if !options.quiet {
 		fmt.Fprintf(dependencies.Stdout, "Built %s\nArchive: %s\nSHA-256: %s\n", presented.AppID, presented.Archive, presented.ArchiveSHA256)
+		if presented.Installer != nil {
+			fmt.Fprintf(dependencies.Stdout, "Installer: %s\nSHA-256: %s\n", presented.Installer.File, presented.Installer.SHA256)
+		}
 	}
 	emitVerbose(options, dependencies.Stderr, "release=%s target=%s archiveBytes=%d", presented.ReleaseVersion, presented.Target, presented.ArchiveBytes)
 	return 0

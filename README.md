@@ -97,13 +97,17 @@ Supported by the MVP design:
 - Optional per-application executable branding: an icon and a version
   resource written into a staged host copy on build; without it the build
   keeps the release host's own icon and version resources.
+- An optional per-user Windows Setup executable from `velox build --installer`
+  for a single Windows account; the portable directory and deterministic ZIP
+  remain the default output and the Setup is an additional, opt-in artifact.
 
 Explicitly deferred:
 
 - Native application backends and plugins.
 - Filesystem, shell, process, and sidecar APIs.
 - Frontend bundling, hot reload, and a development server.
-- Installers, automatic updates, and code signing automation.
+- Automatic updates and repair, machine-wide or elevation-requiring installs,
+  MSI/MSIX packaging, and code signing automation.
 - macOS, Linux, ARM64, and multi-window support.
 
 ## Documentation
@@ -125,6 +129,7 @@ Explicitly deferred:
 - M5 product decision: docs/adr/0017-continue-as-a-narrow-static-packager.md
 - Agent-evaluation decision: docs/adr/0018-use-clean-room-llm-agent-evaluation.md
 - Branding decision: docs/adr/0020-optional-compiler-free-executable-branding.md
+- Windows installer: docs/ops/windows-installer.md
 - Deferred SignPath onboarding: docs/ops/signpath-onboarding.md
 - External user attempt: docs/ops/external-user-attempt.md
 - Clean-room LLM agent evaluation: docs/ops/llm-agent-evaluation.md

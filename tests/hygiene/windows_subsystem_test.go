@@ -14,7 +14,7 @@ func TestReleaseBuildsKeepGUIHostAndConsoleCLI(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			hosts, clis := 0, 0
+			hosts, clis, setups := 0, 0, 0
 			for _, line := range strings.Split(string(data), "\n") {
 				if !strings.Contains(line, "go build ") {
 					continue
@@ -24,6 +24,11 @@ func TestReleaseBuildsKeepGUIHostAndConsoleCLI(t *testing.T) {
 					if !strings.Contains(line, "-H windowsgui") {
 						t.Errorf("host build must not allocate a console: %s", line)
 					}
+				} else if strings.HasSuffix(strings.TrimSpace(line), "./cmd/velox-setup") {
+					setups++
+					if !strings.Contains(line, "-H windowsgui") {
+						t.Errorf("setup build must not allocate a console: %s", line)
+					}
 				} else if strings.HasSuffix(strings.TrimSpace(line), "./cmd/velox") {
 					clis++
 					if strings.Contains(line, "windowsgui") {
@@ -31,8 +36,8 @@ func TestReleaseBuildsKeepGUIHostAndConsoleCLI(t *testing.T) {
 					}
 				}
 			}
-			if hosts == 0 || clis == 0 {
-				t.Fatal("missing host or CLI build coverage")
+			if hosts == 0 || clis == 0 || setups == 0 {
+				t.Fatal("missing host, CLI or setup build coverage")
 			}
 		})
 	}

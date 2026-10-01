@@ -18,6 +18,7 @@ func run(args []string) int {
 	flags.SetOutput(os.Stderr)
 	cliPath := flags.String("cli", "", "path to the prebuilt Velox CLI")
 	hostPath := flags.String("host", "", "path to the prebuilt Velox host")
+	setupPath := flags.String("setup", "", "optional path to the prebuilt Velox setup template")
 	sourceRoot := flags.String("source-root", ".", "repository source root")
 	outputRoot := flags.String("out", "dist/release", "release output root")
 	jsonOutput := flags.Bool("json", false, "emit JSON output")
@@ -28,7 +29,7 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stderr, "velox-release: --cli and --host are required")
 		return 2
 	}
-	result, err := releasebundle.Build(releasebundle.Options{CLIPath: *cliPath, HostPath: *hostPath, SourceRoot: *sourceRoot, OutputRoot: *outputRoot})
+	result, err := releasebundle.Build(releasebundle.Options{CLIPath: *cliPath, HostPath: *hostPath, SetupPath: *setupPath, SourceRoot: *sourceRoot, OutputRoot: *outputRoot})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "velox-release: %v\n", err)
 		return 6

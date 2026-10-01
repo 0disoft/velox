@@ -34,7 +34,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0017 | Accepted; beta evidence clause superseded by 0018; amended in part by 0020 | Continue as a narrow static desktop packager |
 | 0018 | Accepted | Replace the calendar-dependent human beta gate with clean-room LLM agent evaluation without claiming human adoption |
 | 0019 | Accepted | Gate beta on product workflows; AI evaluation becomes optional diagnostic evidence |
-| 0020 | Accepted (branding only); installer follow-up proposed and not implemented | Allow optional compiler-free executable branding of a staged host copy while the default shared-icon output stays unchanged |
+| 0020 | Accepted (branding); per-user installer follow-up accepted, no updater | Allow optional compiler-free executable branding and an optional per-user Windows Setup while the default shared-icon portable output stays unchanged |
 
 ## Lifecycle
 

@@ -4,7 +4,7 @@
 - Date: 2026-07-21
 - Owner: Project maintainer
 - Superseded in part by: ADR 0018 replaces the beta and stable admission evidence clause
-- Amended in part by: ADR 0020 approves optional compiler-free executable branding only; the installer stays unapproved
+- Amended in part by: ADR 0020 approves optional compiler-free executable branding and a narrow per-user installer; the updater and signing stay unapproved
 
 ## Context
 
@@ -58,9 +58,12 @@ filesystem, shell, process, sidecar, plugin, local-server, updater, installer,
 asset-sealing, new-platform, or broad IPC surface. A request for any of those
 must open a new product and threat-model ADR before implementation.
 
-ADR 0020 subsequently amended this decision for one surface only: optional,
-compiler-free executable branding of a staged host copy. The installer, updater,
-signing, asset-sealing, and backend prohibitions above remain in force.
+ADR 0020 subsequently amended this decision in part: it approves optional,
+compiler-free executable branding of a staged host copy and a narrow per-user
+Windows installer. The installer prohibition recorded above is therefore
+superseded in part, not deleted; the updater, signing, asset-sealing, and
+backend prohibitions remain in force. A machine-wide, elevated, or updatable
+installer still requires a new product and threat-model ADR.
 
 Beta or stable admission requires either:
 
@@ -168,6 +171,7 @@ and archive the project without weakening the evidence record.
 - `VALIDATION.md`
 - `docs/README.md`
 - `docs/adr/README.md`
+- `docs/ops/windows-installer.md`
 - `docs/ops/00-operational-contract.md`
 - `docs/product/01-roadmap.md`
 - `docs/product/02-spec.md`

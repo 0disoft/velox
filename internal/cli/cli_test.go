@@ -86,7 +86,7 @@ func TestBuildJSONContractAndOutputs(t *testing.T) {
 	if err := json.Unmarshal(resultData, &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.ReleaseVersion != "0.5.10-beta.2" || result.AppID != "com.example.hello" || result.AppVersion != "1.0.0" || result.Target != "windows-x64" {
+	if result.ReleaseVersion != "0.5.10-beta.3" || result.AppID != "com.example.hello" || result.AppVersion != "1.0.0" || result.Target != "windows-x64" {
 		t.Fatalf("unexpected identity result: %+v", result)
 	}
 	if result.Contracts.Manifest != 1 || result.Contracts.Runtime != 1 || result.Contracts.Host != 1 || result.Contracts.IPC != 1 {
@@ -100,6 +100,24 @@ func TestBuildJSONContractAndOutputs(t *testing.T) {
 	}
 	if result.PortableFiles != result.AssetFiles+3 || result.PortableBytes <= result.AssetBytes || result.ArchiveBytes <= 0 || result.ArchiveSHA256 == "" {
 		t.Fatalf("unexpected result: %+v", result)
+	}
+	if result.Installer != nil {
+		t.Fatal("default build unexpectedly generated an installer")
+	}
+}
+
+func TestBuildInstallerRequiresVerifiedAdjacentTemplate(t *testing.T) {
+	root, config, host := cliFixture(t)
+	var stdout bytes.Buffer
+	exit := Run([]string{"build", "--config", config, "--out", filepath.Join(root, "out"), "--installer", "--json"}, Dependencies{
+		Stdout: &stdout, Stderr: io.Discard, HostPath: host,
+	})
+	var envelope Envelope
+	if err := json.Unmarshal(stdout.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if exit != 6 || envelope.OK || envelope.Error == nil || envelope.Error.Code != "PACKAGING_FAILED" {
+		t.Fatalf("installer = %d %+v", exit, envelope)
 	}
 }
 
@@ -131,7 +149,7 @@ func TestValidateVerboseIsBoundedAndQuietWins(t *testing.T) {
 	if exitCode != 0 || !strings.Contains(stdout.String(), "Valid: com.example.hello") {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", exitCode, stdout.String(), stderr.String())
 	}
-	want := "velox: detail: release=0.5.10-beta.2 target=windows-x64 assets=1 permissions=0\n"
+	want := "velox: detail: release=0.5.10-beta.3 target=windows-x64 assets=1 permissions=0\n"
 	if stderr.String() != want || strings.Contains(stderr.String(), root) {
 		t.Fatalf("verbose stderr = %q, want %q", stderr.String(), want)
 	}
@@ -401,7 +419,7 @@ func cliFixture(t *testing.T) (string, string, string) {
 	host := filepath.Join(root, "release", "velox-host.exe")
 	writeCLIFile(t, host, "host")
 	digest := sha256.Sum256([]byte("host"))
-	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-beta.2","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
+	writeCLIFile(t, filepath.Join(filepath.Dir(host), "velox-host.json"), fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-beta.3","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":4,"sha256":"%x"}}`, digest))
 	writeCLIFile(t, filepath.Join(root, "web", "index.html"), "<title>Hello</title>")
 	writeCLIFile(t, config, `{"schemaVersion":1,"app":{"id":"com.example.hello","name":"Hello","version":"1.0.0"}}`)
 	return root, config, host

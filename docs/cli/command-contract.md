@@ -22,6 +22,10 @@ release bundle must place the unchanged prebuilt `velox-host.exe` and its
 size, and digest agreement; there is intentionally no public flag that
 substitutes an arbitrary host.
 
+An opt-in `build --installer` flag also packages a per-user Windows Setup
+executable. It is a build flag, not a separate command, and the default
+portable output is unchanged.
+
 ## MVP Commands
 
 ### velox init [directory]
@@ -86,6 +90,25 @@ the same leaf identifier from overwriting each other in a shared output root:
     dist/<app-id>/web/**
     dist/<app-id>/build-result.json
     dist/<app-id>.zip
+
+With `--installer`, the build also emits `dist/<app-id>-setup.exe`: the
+verified portable ZIP appended to the prebuilt `velox-setup.exe` template that
+sits beside the CLI. The template is checked against the adjacent
+`release-manifest.json` release version, size, and SHA-256. A missing,
+duplicated, or mismatched template fails the installer step with
+`PACKAGING_FAILED`: the normal portable directory and ZIP are still produced,
+but no Setup executable is published and the command does not report a
+successful installer. The portable directory and ZIP remain the default output.
+See `docs/ops/windows-installer.md`.
+
+The successful `build` result includes an optional `installer` object with
+`file`, `bytes`, and `sha256`. A default build without `--installer` omits the
+`installer` key entirely.
+
+The Setup executable is unsigned, and the current trailing-footer reader does
+not support signing it: an Authenticode signature appends data after the
+footer, so a signed Setup needs a separate future payload design rather than
+signing the produced file as-is.
 
 The ZIP contains one top-level `<app-id>/` directory. File order, timestamps, and
 portable file modes are normalized. The deterministic report contains contract
@@ -233,8 +256,10 @@ initialization.
 
 ## Deferred Commands
 
-The MVP does not define plugin, add, publish, update, sign, installer, generate,
-bind, dev-server, or shell-completion commands.
+The MVP does not define plugin, add, publish, update, sign, generate, bind,
+dev-server, or shell-completion commands. Install packaging is available only
+through the opt-in `build --installer` flag; there is no separate installer,
+updater, or repair command.
 
 ## Review Blockers
 

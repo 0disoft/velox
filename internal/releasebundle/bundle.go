@@ -40,6 +40,7 @@ var releaseSchemaFiles = []string{
 type Options struct {
 	CLIPath    string
 	HostPath   string
+	SetupPath  string
 	SourceRoot string
 	OutputRoot string
 }
@@ -121,6 +122,13 @@ func Build(options Options) (Result, error) {
 	}
 
 	artifacts := []Artifact{cliArtifact, hostArtifact}
+	if options.SetupPath != "" {
+		setup, err := copyArtifact(options.SetupPath, filepath.Join(stageDirectory, "velox-setup.exe"), "velox-setup.exe")
+		if err != nil {
+			return Result{}, fmt.Errorf("package setup template: %w", err)
+		}
+		artifacts = append(artifacts, setup)
+	}
 	schemaRoot := filepath.Join(options.SourceRoot, "schema")
 	for _, schemaFile := range releaseSchemaFiles {
 		relative := filepath.ToSlash(filepath.Join("schema", schemaFile))

@@ -343,7 +343,36 @@ two-build archive determinism. Branded builder fixtures must pass directory
 and ZIP inspection using the final executable size and SHA-256. Default builds
 retain the unchanged-host test. `velox_file_notes_build` produces an example
 with application-specific version resources after `velox_release_bundle`.
-The installer remains unimplemented and has no passing validation claim.
+The installer follow-up is implemented and locally verified for beta.3; see
+Windows Installer below.
+
+## Windows Installer
+
+The opt-in per-user Windows Setup executable is implemented in
+`internal/installer`, `internal/setuppayload`, and `cmd/velox-setup`. The CLI
+exposes `velox build --installer`, and `velox-release --setup` includes the
+unsigned prebuilt `velox-setup.exe` template in the release bundle. Before
+packaging, the CLI re-verifies the template against the adjacent
+`release-manifest.json` release version, size, and SHA-256.
+
+Unit tests cover ownership refusal, changed and unowned file refusal,
+isolated-registry removal, Setup payload tamper refusal, and the
+release-template check. The engine and payload unit tests passed as part of the
+full `velox_test` Go suite plus `go vet`, and an installer-enabled beta.3
+release bundle was built locally.
+
+All four installer intents are locally verified for beta.3: `velox_installer_test`
+(ownership and isolated-registry tests), `velox_installer_bundle` (all three
+executables and an installer-enabled release ZIP), `velox_installer_smoke`
+(unique app ID `dev.velox.installer-smoke-3876`, identical two-build bytes,
+installed tree plus real Start Menu shortcut and registry checks, installed GUI
+startup with the two-render-frame readiness marker, real helper uninstall,
+preserved user test document, and script cleanup), and
+`velox_file_notes_installer` (a distributable File Notes Setup, 12,361,886 bytes)
+all passed locally. Final source passed `go vet` and workflow YAML parsing
+passed; the release CLI smoke verified the source-free consumer compilation
+boundary. This is local harness evidence, not hosted CI, a push, a release, or a
+manual install. Behavior and layout are in `docs/ops/windows-installer.md`.
 
 ## Scope
 

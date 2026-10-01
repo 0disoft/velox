@@ -21,6 +21,28 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Windows Installer: 2026-10-02
+
+The per-user Windows Setup executable is an optional artifact under ADR 0020,
+not a beta gate: the portable unsigned ZIP remains the default output. The
+install/removal engine and the Setup payload format are implemented in
+`internal/installer`, `internal/setuppayload`, and `cmd/velox-setup`, and the
+CLI exposes `velox build --installer`. The setup template commit is `69949da`
+for the engine. The full `velox_test` Go suite plus `go vet` passed, and an
+installer-enabled beta.3 release bundle was built locally.
+
+All four installer intents are locally verified for beta.3:
+`velox_installer_test`, `velox_installer_bundle`, `velox_installer_smoke`
+(unique app ID `dev.velox.installer-smoke-3876`, identical two-build bytes,
+installed tree plus real Start Menu shortcut and registry checks, installed GUI
+startup with the two-render-frame readiness marker, real helper uninstall,
+preserved user test document, and script cleanup), and
+`velox_file_notes_installer` (a distributable File Notes Setup, 12,361,886
+bytes) passed locally. This is local harness evidence, not hosted CI, a push, a
+release, or a manual install, so it does not change the beta gate. Install
+behavior and the residual normal-uninstall `%TEMP%` helper are documented in
+`docs/ops/windows-installer.md`.
+
 ## Initial Beta Support Scope: revised 2026-09-24
 
 The maintainer selected Windows 11 x64 desktop versions still serviced by

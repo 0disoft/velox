@@ -238,6 +238,9 @@ Nightly distribution is not planned during the initial project stage.
 
 - Windows x64 Velox bundle.
 - CLI and unchanged generic host.
+- An optional `velox-setup.exe` template in the bundle and the per-application
+  `<app-id>-setup.exe` produced by `velox build --installer`; both are
+  unsigned, and the default portable output is unchanged.
 - JavaScript bridge and schemas.
 - Release manifest with contract versions and artifact digests.
 - SHA-256 checksums.
@@ -253,6 +256,12 @@ and third-party notices. The release builder uses an explicit schema allowlist
 and fails when a required product schema is missing. Benchmark and other CI
 evidence schemas remain maintainer contracts and are not copied into the
 consumer archive.
+
+The setup template is included only when `velox-release --setup` is passed, and
+its release version, byte size, and SHA-256 are recorded in the release manifest
+and re-verified before any installer is built. The Setup executable is an
+optional additional artifact, not a replacement for the portable ZIP. Install
+and removal behavior is in `docs/ops/windows-installer.md`.
 
 Checksums, SPDX, and provenance are release assets, not contents of the
 consumer ZIP. The provenance statement is deterministic metadata but is not a
@@ -273,6 +282,8 @@ authenticated provenance and Authenticode controls for a later signed channel.
 - Critical risks are mitigated, accepted explicitly, or stop the release.
 - Directory asset tampering, branding, signing, and platform limitations are
   visible.
+- Installer output, when produced, is opt-in, unsigned, and per-user, and adds
+  no updater, elevation, or repair; changed or unowned files block removal.
 - The preview is marked prerelease and prominently identifies both executables
   as unsigned.
 - Publication requires a manual exact-phrase confirmation on an existing alpha
@@ -337,8 +348,10 @@ existing release, and creates an immutable GitHub prerelease with the unsigned
 warning. It also rejects a tag that is not exactly `v<releaseVersion>`. It does
 not sign, attest, rebuild, or replace artifacts. The immutable release notes
 also state the Windows and WebView2 compatibility floor, directory-asset
-tampering boundary, unchanged-host branding limitations, missing installer and
-updater, and the accepted `velox` command and executable-name collision.
+tampering boundary, unchanged-host branding limitations that the optional
+per-user installer does not change, the optional unsigned Setup executable with
+no updater or repair, and the accepted `velox` command and executable-name
+collision.
 
 Promotion to a future signed, beta, or stable channel reuses an already
 verified immutable candidate. It does not relabel unsigned bytes as signed or

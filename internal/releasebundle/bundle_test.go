@@ -95,6 +95,35 @@ func TestBuildReplacesExistingReleaseAtomically(t *testing.T) {
 	}
 }
 
+func TestOptionalSetupIsIncludedInReleaseInventory(t *testing.T) {
+	root := t.TempDir()
+	source := filepath.Join(root, "source")
+	cli, host, setup := filepath.Join(root, "velox.exe"), filepath.Join(root, "host.exe"), filepath.Join(root, "setup.exe")
+	writeReleaseFile(t, cli, []byte("cli"))
+	writeReleaseFile(t, host, []byte("host"))
+	writeReleaseFile(t, setup, []byte("setup"))
+	writeReleaseSchemas(t, source)
+	writeReleaseFile(t, filepath.Join(source, "THIRD_PARTY_NOTICES.md"), []byte("notices"))
+	result, err := Build(Options{CLIPath: cli, HostPath: host, SetupPath: setup, SourceRoot: source, OutputRoot: filepath.Join(root, "out")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(result.Directory, "release-manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range manifest.Artifacts {
+		if file.File == "velox-setup.exe" && file.Bytes == 5 && file.SHA256 != "" {
+			return
+		}
+	}
+	t.Fatal("setup template missing from release inventory")
+}
+
 func TestBuildFailsWhenRequiredReleaseSchemaIsMissing(t *testing.T) {
 	root := t.TempDir()
 	sourceRoot := filepath.Join(root, "source")

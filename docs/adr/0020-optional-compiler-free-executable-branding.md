@@ -1,10 +1,10 @@
 # ADR 0020: Optional compiler-free executable branding
 
-- Status: Accepted (branding only)
+- Status: Accepted (branding and per-user installer)
 - Date: 2026-10-02
 - Owner: Project maintainer
-- Amends: ADR 0017 (narrow approval of the branding surface only)
-- Installer follow-up: Proposed, not implemented
+- Amends: ADR 0017 (narrow branding and per-user installer approval)
+- Installer follow-up: Accepted (per-user, no updater)
 
 ## Context
 
@@ -30,8 +30,10 @@ release host's own icon and version resources. `docs/cli/configuration.md`
 also stated that `app` values "do not patch host executable resources."
 
 This ADR approves optional, compiler-free executable branding for the Windows
-build. It narrowly amends ADR 0017 for branding only. An optional Windows
-install package is recorded as a proposed follow-up and is not implemented.
+build. It narrowly amends ADR 0017 for branding. An optional per-user Windows
+install package was recorded as a proposed follow-up at the original decision
+and is now accepted within the same narrow boundary; it is implemented and its
+verification is tracked in `VALIDATION.md`.
 
 ## Decision
 
@@ -104,35 +106,55 @@ channel.
 - `velox run` launches the prebuilt generic host directly, so the development
   preview keeps the shared Velox icon. Branding applies only to `velox build`.
 
-### Installer follow-up (proposed, not implemented)
+### Installer follow-up (accepted)
 
-An optional Windows install package is in scope for a later decision:
+The original decision recorded an optional Windows install package as proposed
+but unbuilt:
 
 - A per-user install into `%LocalAppData%` that needs no elevation.
 - A Start Menu shortcut and an uninstall entry; a Desktop shortcut is optional.
 - The portable directory and deterministic ZIP remain the default output; the
-  install package would be an additional, optional output.
+  install package is an additional, optional output.
 
-The packaging technology is not chosen. Candidates include MSIX, a WiX/MSI
-bundle, or a small self-contained installer. This ADR marks the installer as
-proposed and unbuilt; it neither selects nor approves an implementation.
+That follow-up is now accepted for one narrow implementation:
+
+- A fresh per-user install under
+  `%LOCALAPPDATA%\Programs\Velox\<app-id>` with `uninstall.exe` and an
+  ownership record, a Start Menu shortcut, and a User-visible Apps uninstall
+  entry under `HKCU`.
+- The packaging technology is a small, repository-built Go Setup executable,
+  not MSIX or a WiX/MSI bundle. No external installer toolchain is required.
+- The Setup is an opt-in `velox build --installer` output; the portable
+  directory and deterministic ZIP stay the default and are unchanged.
+- There is no updater, repair, elevation, machine-wide scope, or runtime
+  download. An update is an uninstall followed by a reinstall.
+- Removal refuses changed or unowned files, requires the application to be
+  closed, and preserves user documents and the WebView2 profile and recovery
+  data, which live outside the install tree.
+
+The behavior, layout, payload format, and remaining limitations are documented
+in `docs/ops/windows-installer.md`.
 
 ### Unchanged boundaries
 
-Branding and the proposed installer do not change:
+Branding and the installer do not change:
 
 - The static-only asset model and the unchanged generic backend.
 - The closed IPC v1 method table in `docs/architecture/04-ipc-v1.md`.
 - The prohibition on application-native compilation during the consumer build.
 
-No new native capability, backend, or IPC method is approved here.
+No new application-runtime native capability, backend, or IPC method is
+approved here. The deployment-only shell-link and registry operations of the
+per-user installer are approved under this ADR and stay outside the application
+runtime.
 
 ### Amendment to ADR 0017
 
 ADR 0017 prohibited per-application branding and required a new product and
 threat-model ADR for branding-adjacent surfaces. This ADR is that review for
-branding only. It permits optional compiler-free resource branding under the
-constraints above and leaves installer, updater, and signing decisions
+branding and the narrow per-user installer follow-up. It permits optional
+compiler-free resource branding under the constraints above and the per-user
+install package described above, and leaves updater and signing decisions
 untouched. Risk R-005 is addressed by the optional branded path.
 
 ## Alternatives
@@ -163,7 +185,7 @@ cost Velox exists to remove.
 ### Ship an installer as the default output now
 
 Rejected. Portable remains the default per ADR 0017 and ADR 0008; an install
-package is an optional addition with an unchosen implementation.
+package is an optional addition, not the default output.
 
 ## Consequences
 
@@ -205,8 +227,11 @@ evidence for the branded path:
   diagnostic and is not modified.
 - Security review of the new resource-edit trust boundary, including staged
   path handling, icon path containment, and failure recovery.
-- Installer validation is out of scope until an implementation is selected;
-  this ADR claims no installer evidence.
+- Installer validation named in `VALIDATION.md` covers ownership refusal,
+  isolated-registry removal, deterministic Setup bytes, and payload tamper
+  refusal. The engine and payload unit tests passed in the full Go suite, and
+  all four installer intents (test, bundle, smoke, and File Notes Setup)
+  passed locally for beta.3.
 
 Record exact commands, versions, artifacts, and any skipped check.
 
@@ -223,8 +248,8 @@ Record exact commands, versions, artifacts, and any skipped check.
 ## Revisit Triggers
 
 - A signing channel is approved, which changes the signed-template refusal.
-- The installer implementation is selected, or a per-user install requires
-  elevation or machine-wide scope.
+- A per-user install would require elevation or machine-wide scope, or an
+  updater, repair, or MSI/MSIX packaging is proposed.
 - Branding needs fields, identity sources, or host resources beyond the named
   categories.
 - Determinism or resource-preservation evidence fails.
@@ -241,5 +266,6 @@ Record exact commands, versions, artifacts, and any skipped check.
   R-021).
 - `docs/engineering/00-project-invariants.md` (staged-copy branding boundary).
 - `README.md` (supported and deferred feature boundary).
-- `VALIDATION.md` for the branded-path validations.
+- `VALIDATION.md` for the branded-path and installer validations.
+- `docs/ops/windows-installer.md` for installer behavior and layout.
 - `assets/branding/README.md` if the default icon generation path changes.

@@ -69,6 +69,8 @@ build path. It accepts a smaller feature set in exchange.
 - A copied static asset directory.
 - A machine-readable build report.
 - A deterministic portable ZIP archive.
+- An optional per-user Windows Setup executable (`<app-id>-setup.exe`) when
+  `velox build --installer` is passed.
 
 The M1 implementation produces these outputs for `windows-x64`. An unsigned,
 deterministic consumer release bundle now carries strict host metadata and the
@@ -93,11 +95,15 @@ The retained historical evaluation path uses a maintainer-built Windows AppConta
 supervisor and no-breakaway Job Object. This maintainer tool is not shipped in
 the consumer release bundle and does not expand the application runtime API.
 
-ADR 0020 amends ADR 0017 for one surface only: optional compiler-free
-executable branding of a staged host copy on the Windows build. The default
-portable output keeps the shared Velox icon and no application-specific
-version metadata. An optional Windows install package remains a proposed,
-unbuilt follow-up.
+ADR 0020 amends ADR 0017 for two narrow surfaces: optional compiler-free
+executable branding of a staged host copy on the Windows build, and an optional
+per-user Windows Setup executable. The default portable output keeps the shared
+Velox icon and no application-specific version metadata, and stays the default
+build output; the Setup is an additional, opt-in artifact. Neither adds an
+application runtime capability: the static-only asset model, the closed IPC v1
+method table, and the no-consumer-compiler boundary are unchanged. Install,
+removal, the isolated Setup payload, and the remaining limitations are
+documented in `docs/ops/windows-installer.md`.
 
 The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
 developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.
@@ -269,7 +275,8 @@ Pause feature development and reassess the product if:
 ## Deferred Decisions
 
 - Package-manager publication and namespace reservation strategy.
-- Asset sealing, installers, code signing, and automatic updates.
+- Asset sealing, machine-wide or elevation-requiring installation, code signing,
+  and automatic updates.
 - macOS and Linux feasibility.
 - Whether any native API beyond basic window control belongs in core.
 
