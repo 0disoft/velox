@@ -36,8 +36,12 @@ Go package suites (buildplan, builder, CLI, inspector, runner and hygiene) passe
 The beta.14 example smoke passed validation, doctor, two byte-identical builds,
 ZIP inspection and packaged/source startup with isolated profiles (exit 0).
 No runtime file API, dependency, schema, DB version or CI workflow was changed.
-Real File Notes native dialog, restart and external-change interaction remain
-unverified for this migration.
+The maintainer reported success after the requested beta.15 Save as, edit,
+connected Save and restart/draft-recovery check. This is user-reported manual
+evidence, not independent byte-for-byte readback or separate conflict/cancel
+confirmation. Source: `d471d87`; app ID: `dev.velox.filenotes`; packaged host
+SHA-256: `3ee5803c74e7f0303a916d991d9b1da11a65d669948f713e30c7fd685f4f82a7`.
+External-change interaction remains separately unverified for File Notes.
 
 ## Native Save Short-Path Follow-Up: 2026-10-03
 
@@ -54,8 +58,10 @@ hard-link rejection remain unchanged. The regression now passes new saving,
 snapshot, connected saving and replacement through the alias, with long-path
 readback. File-open, conflict and rejection tests passed, as did `go test ./...`
 and `go vet ./...`. No permission, IPC, DB or workflow change was made.
-Hosted confirmation is separate; the failed run remains recorded rather than
-being reclassified as a success.
+[Consumer evidence run 37040338144](https://github.com/0disoft/velox/actions/runs/37040338144)
+passed at exact source `d471d87182bfa0f9b93ab82938a798155672dcca`, including
+native file tests, release build, startup/security/permission recovery, lifecycle
+and checkout-free consumer checks. The original failed run remains recorded.
 
 ## Document-Scoped Save Local Checks: 2026-10-03
 
