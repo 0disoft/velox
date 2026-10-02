@@ -237,9 +237,10 @@ func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 }
 
 type rpcMessage struct {
-	ID     int               `json:"id"`
-	Method string            `json:"method"`
-	Params []json.RawMessage `json:"params"`
+	ID      int               `json:"id"`
+	Method  string            `json:"method"`
+	Params  []json.RawMessage `json:"params"`
+	Session string            `json:"session"`
 }
 
 func jsString(v interface{}) string { b, _ := json.Marshal(v); return string(b) }
@@ -251,14 +252,12 @@ func (w *webview) msgcb(msg string) {
 		return
 	}
 
-	id := strconv.Itoa(d.ID)
-	if res, err := w.callbinding(d); err != nil {
-		w.dispatchBindingResponse("try { window._rpc[" + id + "].reject(" + jsString(err.Error()) + ") } finally { delete window._rpc[" + id + "] }")
-	} else if b, err := json.Marshal(res); err != nil {
-		w.dispatchBindingResponse("try { window._rpc[" + id + "].reject(" + jsString(err.Error()) + ") } finally { delete window._rpc[" + id + "] }")
-	} else {
-		w.dispatchBindingResponse("try { window._rpc[" + id + "].resolve(" + string(b) + ") } finally { delete window._rpc[" + id + "] }")
+	res, err := w.callbinding(d)
+	if deferred, ok := res.(*DeferredResult); ok && err == nil {
+		w.startDeferredBinding(d, deferred)
+		return
 	}
+	w.completeBinding(d, res, err)
 }
 
 func (w *webview) dispatchBindingResponse(script string) {
@@ -670,12 +669,17 @@ func (w *webview) Bind(name string, f interface{}) error {
 	w.Init("(function() { var name = " + jsString(name) + "; var maxMessageBytes = " + strconv.Itoa(w.maxWebMessageBytes) + ";" + `
 		if (window.top !== window) return;
 		var RPC = window._rpc = (window._rpc || {nextSeq: 1});
+		if (!RPC.session) {
+		  RPC.session = Array.from(crypto.getRandomValues(new Uint8Array(16)),
+		    value => value.toString(16).padStart(2, "0")).join("");
+		}
 		window[name] = function() {
 		  var seq = RPC.nextSeq++;
 		  var message = JSON.stringify({
 			id: seq,
 			method: name,
 			params: Array.prototype.slice.call(arguments),
+			session: RPC.session,
 		  });
 		  if (maxMessageBytes > 0 && new TextEncoder().encode(message).byteLength > maxMessageBytes) {
 			var error = new Error("The native request payload is outside the allowed size.");
