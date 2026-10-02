@@ -21,6 +21,28 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## System Tray Manual Check: 2026-10-02
+
+The maintainer reported all requested interactions passed in the isolated
+`Velox File Notes - Tray Check` app: Hide window, reopen by clicking the tray
+icon, cancel Quit with unsaved text while retaining the window, then Quit and
+confirm the icon disappears. The maintainer also reported the test window was
+closed. This is user-reported manual evidence, not an automated observation.
+
+The tested beta.8 build came from source commit
+`87396cced4f917ff4b932772cc1a4e345eff3818`, app ID
+`dev.velox.filenotes.traycheck-1003865f`, with executable SHA-256
+`dda781ebb5dc3cf74dec8ef722f5239c859cf86455d33a947ae28656f1a4239c`.
+It used a separate profile; the existing release ZIP, File Notes ZIP, Setup,
+and normal packaged executable were not replaced.
+
+The bounded launcher receipt separately records a timeout with no exit code.
+It does not prove normal process exit and must not be relabeled a successful
+automated run based on the later manual report. Live Explorer-restart recovery,
+hidden duplicate-instance activation, and comparative idle CPU remain
+unverified by this interaction. No performance, hosted CI, publication, or
+beta-approval claim follows from this check. See [ADR 0024](../adr/0024-opt-in-system-tray.md).
+
 ## Windows Installer: 2026-10-02
 
 The per-user Windows Setup executable is an optional artifact under ADR 0020,
