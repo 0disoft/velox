@@ -117,6 +117,9 @@ ADR 0023 permits one additional opt-in IPC method: confirmed HTTPS link opening
 through the OS default handler. It does not permit generic shell execution,
 process arguments, native file access, a backend, or unrestricted protocols.
 
+ADR 0024 adds an opt-in host-owned system tray with a fixed open/hide/quit menu,
+without a new web IPC method or arbitrary native menus.
+
 The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
 developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.
 Publication run `29895087658` and public-download verification run `29895490556`
@@ -166,6 +169,19 @@ passed with ZIP SHA-256
   background process, or web IPC method. A lock or attach failure fails startup
   instead of silently duplicating.
 - A virtual HTTPS origin mapped to the local asset directory.
+- Opt-in system tray (`window.tray: true`, default `false`). The host reuses the
+  current window icon, displays the application name as its tooltip, and handles
+  open/hide/quit through the existing UI thread. Selecting the icon opens the
+  window; Hide window is explicit, and X/Alt+F4/Quit retain normal close and
+  `beforeunload` behavior. A cancelled close keeps the icon. Explorer restart
+  triggers re-registration; failure reveals the window and disables tray hiding
+  until a later successful registration. Normal destruction removes the icon.
+  With the field absent or false, no tray icon, subclass, restart-message
+  registration, polling, or native menu is added. There is no additional process,
+  dependency, timer, notification API, or IPC permission. Hidden content keeps
+  running; reduced resource use is not promised. Single-instance activation also
+  reveals a tray-hidden window. The File Notes source opts in; older packaged
+  outputs are not implicitly updated.
 - Virtual HTTPS remains the only production asset transport while
   immediate-relaunch recovery is diagnosed under ADR 0007; file URL loading is
   a benchmark control only.

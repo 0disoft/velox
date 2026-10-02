@@ -83,6 +83,7 @@ func run(args []string) int {
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
 		RememberState:           cfg.Window.RememberState,
+		Tray:                    cfg.Window.Tray,
 		SingleInstance:          instance,
 		DataPath:                dataPath,
 		BrowserExecutableFolder: benchmark.browserExecutableFolder,

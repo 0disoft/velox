@@ -43,7 +43,8 @@ shape is:
       "window": {
         "width": 960,
         "height": 640,
-        "rememberState": false
+        "rememberState": false,
+        "tray": false
       },
       "security": {
         "permissions": []
@@ -70,7 +71,7 @@ version resource.
 `singleInstance` is an optional boolean, default `false`. When `true`, the
 host acquires one Windows named mutex per application, profile, user, and
 session before opening WebView2. A duplicate launch creates no second window;
-it asks the existing window to restore from minimized and request foreground,
+it asks the existing window to reveal itself, restore from minimized and request foreground,
 then exits `0`. A duplicate during startup is suppressed without activation,
 and foreground focus is best-effort because Windows controls it. The mutex is a
 convenience mechanism, not a security boundary. A lock or attach failure exits
@@ -127,6 +128,19 @@ Initial width and height, plus optional window-state persistence.
   is ignored. A minimized close never restores minimized. When `false` or
   omitted, the host performs no state file I/O and installs no window subclass.
   See ADR 0021.
+
+- `tray`: optional boolean, default `false`. When `true`, the host adds one
+  notification-area icon using the current window icon and application name.
+  Selecting it opens the window; its native context menu offers Open window,
+  Hide window, and Quit. Hiding is explicit: X, Alt+F4, and Quit still use the
+  normal close path, including the page's `beforeunload` handling. Quit reveals
+  the owner first so a confirmation is visible. A cancelled close keeps the icon.
+  Explorer restart re-registers the icon; failure reveals the window and prevents
+  further tray hiding until registration succeeds. The icon is removed on normal
+  destruction. Forced termination can leave a stale shell icon until Windows
+  cleans it up. Foreground focus is best-effort. No timer, polling, extra process,
+  notification API, or public IPC method is added. Hidden WebView content still
+  runs; hiding does not promise lower CPU or memory use. See ADR 0024.
 
 Resizable state, position policy, and background color are not manifest fields
 in v1.

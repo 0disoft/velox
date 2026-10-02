@@ -49,6 +49,7 @@ type Window struct {
 	Width         uint `json:"width"`
 	Height        uint `json:"height"`
 	RememberState bool `json:"rememberState,omitempty"`
+	Tray          bool `json:"tray,omitempty"`
 }
 
 type Security struct {

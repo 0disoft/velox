@@ -151,6 +151,12 @@ func TestSingleInstanceNativeWindowActivationAndCleanup(t *testing.T) {
 	if minimized != 0 {
 		t.Fatal("duplicate activation left window minimized")
 	}
+	showWindow.Call(hwnd, 0) // SW_HIDE, as used by an opt-in tray.
+	user32.NewProc("SendMessageW").Call(hwnd, activationMessage, 0, 0)
+	visible, _, _ := user32.NewProc("IsWindowVisible").Call(hwnd)
+	if visible == 0 {
+		t.Fatal("duplicate activation left window hidden")
+	}
 	destroy.Call(hwnd)
 	owners.Lock()
 	remaining := owners.items[hwnd]

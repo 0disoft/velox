@@ -23,7 +23,7 @@ func TestLoadAppliesDocumentedDefaults(t *testing.T) {
 	if got.Assets.Root != "web" || got.Assets.Entry != "index.html" {
 		t.Fatalf("asset defaults = %+v", got.Assets)
 	}
-	if got.Window.Width != 960 || got.Window.Height != 640 || got.Window.RememberState {
+	if got.Window.Width != 960 || got.Window.Height != 640 || got.Window.RememberState || got.Window.Tray {
 		t.Fatalf("window defaults = %+v", got.Window)
 	}
 	if got.Security.Permissions == nil || len(got.Security.Permissions) != 0 {
@@ -59,6 +59,23 @@ func TestLoadAppSingleInstance(t *testing.T) {
 		got, err := Load(path)
 		if (err != nil) != test.invalid || (!test.invalid && got.App.SingleInstance != test.enabled) {
 			t.Fatalf("field %q: %+v, %v", test.field, got.App, err)
+		}
+	}
+}
+
+func TestLoadWindowTray(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "velox.json")
+	for _, test := range []struct {
+		field            string
+		enabled, invalid bool
+	}{
+		{"", false, false}, {`,"tray":false`, false, false},
+		{`,"tray":true`, true, false}, {`,"tray":"true"`, false, true},
+	} {
+		writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.tray-test","name":"Tray","version":"1"},"window":{"width":640`+test.field+`}}`)
+		got, err := Load(path)
+		if (err != nil) != test.invalid || (!test.invalid && got.Window.Tray != test.enabled) {
+			t.Fatalf("field %q: %+v, %v", test.field, got.Window, err)
 		}
 	}
 }

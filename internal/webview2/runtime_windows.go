@@ -121,6 +121,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 			return nil, err
 		}
 	}
+	if err := installSystemTray(uintptr(view.Window()), config.Title, config.Tray, runtime.dispatcher.IsClosing); err != nil {
+		destroyBeforeRun(view)
+		return nil, err
+	}
 	view.Navigate(entryURL)
 	if config.StartupPhase != nil {
 		config.StartupPhase("navigation-dispatched")

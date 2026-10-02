@@ -18,7 +18,8 @@
   "window": {
     "width": 1080,
     "height": 760,
-    "rememberState": true
+    "rememberState": true,
+    "tray": true
   },
   "security": {
     "permissions": []

@@ -111,6 +111,7 @@ type flashInfo struct {
 
 func windowProc(hwnd, message, wparam, lparam, id, reference uintptr) uintptr {
 	if message == activationMessage && wparam == 0 && lparam == 0 {
+		showWindow.Call(hwnd, 8) // SW_SHOWNA: also reveal a window hidden through its tray.
 		minimized, _, _ := isIconic.Call(hwnd)
 		if minimized != 0 {
 			showWindow.Call(hwnd, 9) // SW_RESTORE

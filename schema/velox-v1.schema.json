@@ -43,7 +43,8 @@
       "properties": {
         "width": { "type": "integer", "minimum": 320, "default": 960 },
         "height": { "type": "integer", "minimum": 240, "default": 640 },
-        "rememberState": { "type": "boolean", "default": false }
+        "rememberState": { "type": "boolean", "default": false },
+        "tray": { "type": "boolean", "default": false }
       }
     },
     "security": {

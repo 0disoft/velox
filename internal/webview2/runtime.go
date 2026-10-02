@@ -31,6 +31,7 @@ type Config struct {
 	Width                   uint
 	Height                  uint
 	RememberState           bool
+	Tray                    bool
 	SingleInstance          *singleinstance.Guard
 	DataPath                string
 	BrowserExecutableFolder string

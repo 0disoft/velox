@@ -40,6 +40,7 @@ type Window struct {
 	Width         uint `json:"width"`
 	Height        uint `json:"height"`
 	RememberState bool `json:"rememberState,omitempty"`
+	Tray          bool `json:"tray,omitempty"`
 }
 
 type Security struct {
@@ -60,7 +61,7 @@ func FromManifest(value manifest.Resolved, assetRoot string) Config {
 			ID: value.App.ID, Name: value.App.Name, Version: value.App.Version, SingleInstance: value.App.SingleInstance,
 		},
 		Assets:   Assets{Root: filepath.ToSlash(assetRoot), Entry: filepath.ToSlash(value.Assets.Entry)},
-		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, RememberState: value.Window.RememberState},
+		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, RememberState: value.Window.RememberState, Tray: value.Window.Tray},
 		Security: Security{Permissions: append([]string{}, value.Security.Permissions...)},
 	}
 }

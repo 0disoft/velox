@@ -51,6 +51,27 @@ func TestAppSingleInstanceManifestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestWindowTrayManifestRoundTrip(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.tray-test", Name: "Tray", Version: "1"},
+			Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600, Tray: enabled}}}
+		body, err := json.Marshal(FromManifest(value, "web"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		parsed, err := Parse(body)
+		if err != nil || parsed.Window.Tray != enabled || strings.Contains(string(body), `"tray"`) != enabled {
+			t.Fatalf("round trip=%+v, %s, %v", parsed.Window, body, err)
+		}
+		if enabled {
+			invalid := strings.Replace(string(body), `"tray":true`, `"tray":"true"`, 1)
+			if _, err := Parse([]byte(invalid)); err == nil {
+				t.Fatal("accepted non-boolean tray")
+			}
+		}
+	}
+}
+
 func TestLoad(t *testing.T) {
 	root := t.TempDir()
 	web := filepath.Join(root, "web")
