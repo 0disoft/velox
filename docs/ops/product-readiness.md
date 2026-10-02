@@ -51,6 +51,10 @@ The ZIP measured 3,130,333 bytes, SHA-256
 `e83c54e8f040009905283d1bac2292545cf8886c17b61742c9203ae53f987c33`.
 No actual native file-click interaction or independent layout screenshot is
 claimed. Manual preview confirmation remains pending; File Notes is unchanged.
+The first separate `dist/examples/folder-browser-beta18` build returned the
+generic `PACKAGING_FAILED` diagnostic without a specific cause. One unchanged
+retry succeeded with the same ZIP digest above. The initial failure's cause
+remains undetermined; it is not erased by the successful retry.
 
 ## Bounded Folder Listing Local Checks: 2026-10-03
 
