@@ -260,21 +260,22 @@ Web content is not trusted merely because it is local.
   local UTF-8 text file up to 2 MiB. No caller path, full-path result, durable
   grant, write, directory, network/device or reparse-point file access is added.
   Native selection is deferred outside WebView callbacks; cancellation reads
-  nothing and document replacement invalidates pending work. File Notes has
-  not migrated to this API.
+  nothing and document replacement invalidates pending work. File Notes 0.2.0
+  uses this read-only API; Open does not connect a future write target.
 - IPC payload size, nesting, and in-flight request counts are bounded.
 - ADR 0027 adds explicit connected Save as/Save under `file.save`: retain only
   one document-scoped target, with no exposed path or restart-persistent grant.
   Verify file identity, size, write time and content digest before reuse;
   reject external changes without overwriting. Revoke on navigation/shutdown
   and explicitly on New. Restored drafts need a new selection. Legacy
-  `saveText` remains per-call selection; File Notes migration is separate.
+  `saveText` remains per-call selection. File Notes 0.2.0 uses connected saving,
+  releases the target on New/successful Open and persists only draft fields.
 - ADR 0026 adds independent opt-in `file.save` and `window.velox.saveText`:
   stage at most 2 MiB of UTF-8 text within unchanged 64 KiB message bounds,
   then save only to a native-dialog selection with overwrite confirmation.
   No caller path, durable grant or save-to-last-path is added. Cancellation
   writes nothing; replacement failures can retain sibling recovery files.
-  File Notes migration remains separate.
+  File Notes 0.2.0 uses ADR 0027's connected helpers over this staging engine.
 - Production mode disables development tools unless explicitly enabled by a
   development-only run path.
 

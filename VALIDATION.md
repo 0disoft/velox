@@ -107,7 +107,10 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_file_notes_model_test` verifies draft restoration, dirty-state
   derivation, selected-file baselines, saved baselines, and Unicode statistics.
 - `velox_file_notes_smoke` validates, diagnoses, reproducibly builds, inspects,
-  directly starts, and source-starts the browser-owned file editor.
+  directly starts, and source-starts the native-file editor.
+- File Notes application/model/storage tests cover session-only target reuse,
+  cancellation, conflict/error buffer preservation, explicit target release,
+  legacy draft restoration and omission of write tokens from IndexedDB.
 - `velox_file_notes_build` leaves a portable File Notes directory and ZIP under
   `dist/examples/file-notes` for manual picker and persistence checks.
 - `velox_llm_agent_evaluation_test` exercises clean-room trial shape checks,

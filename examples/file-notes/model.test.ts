@@ -9,8 +9,8 @@ const model = context.FileNotesModel as {
   createState(): any;
   restoreDraft(candidate: unknown): any;
   replaceText(state: any, text: string, updatedAt: string): any;
-  openDocument(state: any, name: string, text: string, handle: unknown, updatedAt: string): any;
-  markSaved(state: any, name: string, handle: unknown, updatedAt: string): any;
+  openDocument(state: any, name: string, text: string, updatedAt: string): any;
+  markSaved(state: any, name: string, target: unknown, updatedAt: string): any;
   newDocument(): any;
   isDirty(state: any): boolean;
   stats(state: any): { lines: number; characters: number };
@@ -26,9 +26,8 @@ describe("FileNotesModel", () => {
   });
 
   test("opens a selected document as the saved baseline", () => {
-    const handle = { name: "note.md" };
-    const opened = model.openDocument(model.createState(), "note.md", "hello", handle, "2026-07-21T01:00:00.000Z");
-    expect(opened).toMatchObject({ name: "note.md", text: "hello", savedText: "hello", handle });
+    const opened = model.openDocument(model.createState(), "note.md", "hello", "2026-07-21T01:00:00.000Z");
+    expect(opened).toMatchObject({ name: "note.md", text: "hello", savedText: "hello", target: null });
     expect(model.isDirty(opened)).toBe(false);
   });
 
@@ -39,5 +38,12 @@ describe("FileNotesModel", () => {
 
   test("counts Unicode characters and mixed newlines", () => {
     expect(model.stats(model.replaceText(model.createState(), "A😀\r\nB\nC", "2026-07-21T01:00:00.000Z"))).toEqual({ lines: 3, characters: 6 });
+  });
+
+  test("draft restoration never restores a write target or legacy browser handle", () => {
+    const restored = model.restoreDraft({ schemaVersion: 1, name: "note.md", text: "draft", savedText: "saved", target: 42, handle: {} });
+    expect(restored.target).toBeNull();
+    expect(restored.handle).toBeUndefined();
+    expect(model.isDirty(restored)).toBe(true);
   });
 });

@@ -1,7 +1,6 @@
 (function startFileNotes() {
   "use strict";
 
-  const maximumFileBytes = 2 * 1024 * 1024;
   const model = window.FileNotesModel;
   const storage = window.FileNotesStorage;
   const elements = {
@@ -45,7 +44,7 @@
     const dirty = model.isDirty(state);
     const stats = model.stats(state);
     elements.name.textContent = state.name;
-    elements.saveState.textContent = dirty ? "Unsaved changes" : state.handle ? "Saved to file" : "Saved locally";
+    elements.saveState.textContent = dirty ? "Unsaved changes" : state.target ? "Saved to file" : "No save target";
     elements.lines.textContent = `${stats.lines} ${stats.lines === 1 ? "line" : "lines"}`;
     elements.characters.textContent = `${stats.characters} ${stats.characters === 1 ? "character" : "characters"}`;
     document.title = `${dirty ? "• " : ""}${state.name} · Velox File Notes`;
@@ -56,12 +55,16 @@
   }
 
   function reportFileError(operation, error) {
-    if (error.name === "AbortError") {
-      announce(`${operation} canceled.`);
-    } else if (error.name === "NotAllowedError") {
+    if (error.code === "PERMISSION_DENIED") {
       announce(`${operation} blocked: File access was denied. Your text is still in the editor.`);
-    } else if (error.name === "SecurityError") {
-      announce(`${operation} blocked: File access is unavailable in this context. Your text is still in the editor.`);
+    } else if (error.code === "FILE_CHANGED") {
+      announce(`${operation} blocked: The file changed outside this app. Your text is still in the editor.`);
+    } else if (error.code === "SAVE_TARGET_INVALID") {
+      state = { ...state, target: null };
+      render();
+      announce(`${operation} blocked: The save connection expired. Your text is still in the editor.`);
+    } else if (error.code === "SAVE_RECOVERY_REQUIRED") {
+      announce(`${operation} needs recovery: ${error.message} Your text is still in the editor.`);
     } else {
       announce(`${operation} failed: ${error.message}`);
     }
@@ -72,8 +75,8 @@
     draftTimer = setTimeout(() => {
       const snapshot = { ...state };
       draftWrites = draftWrites.then(async () => {
-        const handleStored = await storage.save(snapshot);
-        elements.draftState.textContent = handleStored ? "Draft and file handle saved" : "Draft saved without file handle";
+        await storage.save(snapshot);
+        elements.draftState.textContent = "Draft saved";
       }).catch((error) => {
         elements.draftState.textContent = "Draft recovery unavailable";
         announce(`Draft save failed: ${error.message}`);
@@ -81,48 +84,35 @@
     }, 300);
   }
 
-  async function readSelectedFile(handle) {
-    const file = await handle.getFile();
-    if (file.size > maximumFileBytes) throw new Error("The selected file exceeds 2 MiB.");
-    return { file, text: await file.text() };
+  async function releaseSaveTarget() {
+    if (!state.target) return;
+    await window.velox.invoke("file.releaseSaveTarget", { target: state.target });
+    state = { ...state, target: null };
   }
 
   async function openDocument() {
-    if (typeof window.showOpenFilePicker !== "function") {
-      announce("This WebView2 runtime does not expose the file picker.");
+    if (typeof window.velox?.invoke !== "function") {
+      announce("Native file opening is unavailable.");
       return;
     }
     try {
-      const [handle] = await window.showOpenFilePicker({
-        multiple: false,
-        types: [{ description: "Markdown or text", accept: { "text/plain": [".md", ".markdown", ".txt"] } }],
-      });
-      const selected = await readSelectedFile(handle);
-      state = model.openDocument(state, selected.file.name, selected.text, handle, new Date().toISOString());
+      const selected = await window.velox.invoke("file.openText");
+      if (selected.cancelled) { announce("Open canceled."); return; }
+      await releaseSaveTarget();
+      state = model.openDocument(state, selected.name, selected.text, new Date().toISOString());
       elements.editor.value = state.text;
       render();
       queueDraftSave();
-      announce(`${selected.file.name} opened.`);
+      announce(`${selected.name} opened.`);
     } catch (error) {
       reportFileError("Open", error);
     }
   }
 
-  async function writeDocument(handle, snapshot) {
-    const permission = await handle.queryPermission({ mode: "readwrite" });
-    if (permission !== "granted" && await handle.requestPermission({ mode: "readwrite" }) !== "granted") {
-      throw Object.assign(new Error("Write permission was not granted."), { name: "NotAllowedError" });
-    }
-    const writable = await handle.createWritable();
-    try {
-      await writable.write(snapshot.text);
-      await writable.close();
-    } catch (error) {
-      await writable.abort().catch(() => {});
-      throw error;
-    }
+  function finishSave(result, snapshot) {
+    if (result.cancelled) { announce("Save canceled."); return; }
     // Editing may continue during a write; only the submitted text reached disk.
-    state = { ...model.markSaved(snapshot, handle.name, handle, new Date().toISOString()), text: state.text };
+    state = { ...model.markSaved(snapshot, result.name, result.target, new Date().toISOString()), text: state.text };
     render();
     queueDraftSave();
     announce(`${state.name} saved.`);
@@ -130,34 +120,37 @@
 
   async function saveAsDocument() {
     const snapshot = { ...state };
-    if (typeof window.showSaveFilePicker !== "function") {
-      announce("This WebView2 runtime does not expose the save picker.");
+    if (typeof window.velox?.saveTextAs !== "function") {
+      announce("Native file saving is unavailable.");
       return;
     }
     try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: state.name,
-        types: [{ description: "Markdown", accept: { "text/markdown": [".md"], "text/plain": [".txt"] } }],
-      });
-      await writeDocument(handle, snapshot);
+      finishSave(await window.velox.saveTextAs(snapshot.text, snapshot.name), snapshot);
     } catch (error) {
       reportFileError("Save", error);
     }
   }
 
   async function saveDocument() {
-    if (!state.handle) {
+    if (!state.target) {
       await saveAsDocument();
       return;
     }
     try {
-      await writeDocument(state.handle, { ...state });
+      const snapshot = { ...state };
+      finishSave(await window.velox.saveTextTo(snapshot.text, snapshot.target), snapshot);
     } catch (error) {
       reportFileError("Save", error);
     }
   }
 
-  function createDocument() {
+  async function createDocument() {
+    try {
+      await releaseSaveTarget();
+    } catch (error) {
+      reportFileError("New", error);
+      return;
+    }
     state = model.newDocument();
     elements.editor.value = "";
     render();
@@ -181,7 +174,7 @@
     render();
     queueDraftSave();
   });
-  elements.create.addEventListener("click", () => requestDestructiveAction(() => performFileAction(createDocument)));
+  elements.create.addEventListener("click", () => requestDestructiveAction(() => performFileAction(createDocument, true)));
   elements.open.addEventListener("click", () => requestDestructiveAction(() => performFileAction(openDocument, true)));
   elements.save.addEventListener("click", () => performFileAction(saveDocument));
   elements.saveAs.addEventListener("click", () => performFileAction(saveAsDocument));

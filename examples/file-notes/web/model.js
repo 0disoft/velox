@@ -5,7 +5,7 @@
   const defaultName = "Untitled.md";
 
   function createState() {
-    return { schemaVersion, name: defaultName, text: "", savedText: "", handle: null, updatedAt: null };
+    return { schemaVersion, name: defaultName, text: "", savedText: "", target: null, updatedAt: null };
   }
 
   function restoreDraft(candidate) {
@@ -15,7 +15,7 @@
       name: validName(candidate.name),
       text: candidate.text,
       savedText: typeof candidate.savedText === "string" ? candidate.savedText : "",
-      handle: candidate.handle || null,
+      target: null,
       updatedAt: validDate(candidate.updatedAt) ? candidate.updatedAt : null,
     };
   }
@@ -24,12 +24,12 @@
     return { ...state, text: String(text), updatedAt };
   }
 
-  function openDocument(state, name, text, handle, updatedAt) {
-    return { ...state, name: validName(name), text, savedText: text, handle: handle || null, updatedAt };
+  function openDocument(state, name, text, updatedAt) {
+    return { ...state, name: validName(name), text, savedText: text, target: null, updatedAt };
   }
 
-  function markSaved(state, name, handle, updatedAt) {
-    return { ...state, name: validName(name), savedText: state.text, handle: handle || state.handle, updatedAt };
+  function markSaved(state, name, target, updatedAt) {
+    return { ...state, name: validName(name), savedText: state.text, target, updatedAt };
   }
 
   function newDocument() {

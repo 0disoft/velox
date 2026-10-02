@@ -37,16 +37,8 @@
   }
 
   async function save(state) {
-    try {
-      await run("readwrite", (store) => store.put(state, currentKey));
-      return true;
-    } catch (error) {
-      if (state.handle && error.name === "DataCloneError") {
-        await run("readwrite", (store) => store.put({ ...state, handle: null }, currentKey));
-        return false;
-      }
-      throw error;
-    }
+    const { schemaVersion, name, text, savedText, updatedAt } = state;
+    await run("readwrite", (store) => store.put({ schemaVersion, name, text, savedText, updatedAt }, currentKey));
   }
 
   function clear() {

@@ -4,7 +4,7 @@
   "app": {
     "id": "dev.velox.filenotes",
     "name": "Velox File Notes",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "singleInstance": true
   },
   "branding": {
@@ -22,6 +22,6 @@
     "tray": true
   },
   "security": {
-    "permissions": []
+    "permissions": ["file.open", "file.save"]
   }
 }

@@ -21,6 +21,24 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## File Notes Native File Migration: 2026-10-03
+
+File Notes 0.2.0 uses `file.openText`, `saveTextAs` and `saveTextTo` under only
+`file.open` and `file.save`. New and successful Open release the prior target;
+canceled Open/Save as preserve it. Open remains read-only, so the first Save
+after Open or draft restoration requires a fresh native selection. Schema-v1
+draft text and saved baselines remain readable; legacy browser handles are
+ignored and new draft writes exclude handles, paths and native target tokens.
+External-change conflicts, expired targets and save failures preserve editor
+contents without automatic retry or overwrite. Nineteen File Notes model,
+application and draft-storage tests plus four bridge tests passed. Six related
+Go package suites (buildplan, builder, CLI, inspector, runner and hygiene) passed.
+The beta.14 example smoke passed validation, doctor, two byte-identical builds,
+ZIP inspection and packaged/source startup with isolated profiles (exit 0).
+No runtime file API, dependency, schema, DB version or CI workflow was changed.
+Real File Notes native dialog, restart and external-change interaction remain
+unverified for this migration.
+
 ## Document-Scoped Save Local Checks: 2026-10-03
 
 Local beta.13 adds ADR 0027's explicit connected Save as/Save. The full Go suite,

@@ -179,9 +179,11 @@ clipboard, drag-and-drop, and permission surfaces are exposed by the current
 WebView2 environment. It keeps every operation user-initiated and does not add
 or imply a Velox native capability.
 
-`examples/file-notes` uses those browser-owned surfaces in a file-backed
-Markdown editor with explicit open and save gestures, IndexedDB draft recovery,
-unsaved-change protection, and no Velox native permission.
+`examples/file-notes` is a UTF-8 Markdown editor using bounded native dialogs
+under only `file.open` and `file.save`, with session-only connected saving,
+external-change conflict protection, IndexedDB draft recovery and unsaved-change
+protection. Restored drafts require fresh save selection; no file path or write
+grant is persisted.
 
 ## Development State
 
