@@ -1,0 +1,8 @@
+{
+  "$schema": "../../schema/velox-v1.schema.json",
+  "schemaVersion": 1,
+  "app": {"id": "dev.velox.folderbrowser", "name": "Velox Folder Browser", "version": "0.1.0"},
+  "assets": {"root": "web", "entry": "index.html"},
+  "window": {"width": 900, "height": 650},
+  "security": {"permissions": ["folder.read"]}
+}

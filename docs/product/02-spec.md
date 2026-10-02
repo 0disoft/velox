@@ -267,6 +267,8 @@ Web content is not trusted merely because it is local.
   UI and retain a revocable document-scoped token, never a caller path or
   persisted grant. Selection is read-only and excludes linked/remote/offline
   locations. It does not authorize file contents, recursive traversal or watching.
+  `folder.list` identity-checks that directory and returns immediate names/kinds
+  under 128-entry/32-KiB limits, with explicit truncation and exclusion counts.
 - ADR 0027 adds explicit connected Save as/Save under `file.save`: retain only
   one document-scoped target, with no exposed path or restart-persistent grant.
   Verify file identity, size, write time and content digest before reuse;

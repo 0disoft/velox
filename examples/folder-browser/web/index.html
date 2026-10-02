@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Velox Folder Browser</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header><img src="velox.png" width="32" height="32" alt=""><h1>Folder Browser</h1><span id="folder-name">No folder selected</span></header>
+  <nav aria-label="Folder actions">
+    <button id="select" type="button">Select folder</button>
+    <button id="refresh" type="button" title="Refresh list" aria-label="Refresh list">&#8635;</button>
+    <button id="release" type="button" title="Release folder" aria-label="Release folder">&#10005;</button>
+    <span id="count">0 items</span>
+  </nav>
+  <main><table><thead><tr><th scope="col">Name</th><th scope="col">Kind</th></tr></thead><tbody id="entries"></tbody></table></main>
+  <footer id="status" role="status">Ready.</footer>
+</body>
+</html>

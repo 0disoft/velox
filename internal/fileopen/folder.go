@@ -38,6 +38,7 @@ type Folder struct {
 	Generation func() uint64
 	Choose     func() (string, error)
 	Inspect    func(string) (FolderSnapshot, error)
+	Read       func(string, DirectoryID) (FolderListing, error)
 	pending    atomic.Bool
 	mu         sync.Mutex
 	serial     uint32

@@ -185,6 +185,10 @@ external-change conflict protection, IndexedDB draft recovery and unsaved-change
 protection. Restored drafts require fresh save selection; no file path or write
 grant is persisted.
 
+`examples/folder-browser` uses only opt-in `folder.read` for native folder
+selection and bounded immediate-entry listing. It exposes no full paths or file
+contents and adds no directory watcher, recursive scan or persisted grant.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging

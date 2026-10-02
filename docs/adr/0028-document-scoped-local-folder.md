@@ -29,14 +29,26 @@ Navigation, reload and shutdown clear it. Queued operations are generation and
 revocation checked. No grant is persisted; restart requires new selection.
 No file handle stays open between operations.
 
-## Follow-Up Boundary
+## Bounded Listing Increment
 
 Selection alone does not return entries, authorize file contents, child-folder
 navigation, filesystem writes, recursive traversal or directory watching.
-Bounded immediate-entry listing is a separate implementation increment under
-this permission. It must revalidate folder identity, read from that checked
-directory handle and bound both scanned entries and serialized result bytes.
-No path or child-entry identifier may become an implicit file-read/write grant.
+Beta.17 adds `folder.list({target})` under this permission, deferred outside
+WebView callbacks. Reopen/validate the stored directory path and verify its
+volume/file identity. Enumerate from that checked handle with the existing
+Go Windows `File.ReadDir` implementation; do not resolve or open child paths.
+Materialize at most 129 immediate entries, using the extra one only to detect
+truncation; consider the first 128. Return names and file/directory kinds only.
+Exclude reparse, offline and encrypted entries without following them, and
+report examined exclusions as `skipped`. Ordinary hard-linked names can appear
+but confer no content or write capability.
+
+Cap the JSON result at 32 KiB including escaped names. `truncated` reports the
+entry/byte bound; there is no pagination, recursive scan, total-count, sorted
+order or stable-snapshot claim. Changes can occur during enumeration. Deleted
+or replaced directories return `FOLDER_TARGET_INVALID`; queued release,
+navigation and shutdown invalidate operations before and after reading.
+No path or child-entry identifier becomes an implicit file-read/write grant.
 
 ## Cost and Evidence
 
@@ -49,6 +61,9 @@ built executable rather than claiming zero size increase.
 Tests cover default denial, unknown/path parameters, cancellation, replacement,
 release, generation mismatch, queued revocation, shutdown, token exhaustion,
 actual dialog configuration, local/short-path identity, and unsupported paths.
+Listing tests cover empty/Unicode folders, immediate entries, entry/escaped-byte
+limits, child reparse/offline exclusion, identity replacement/deletion, queued
+revocation and no retry. Folder Browser is a dependency-free reference consumer.
 Actual native user selection is separate manual evidence. This does not change
 the release-channel admission decision.
 

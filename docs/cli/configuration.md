@@ -178,9 +178,10 @@ Navigation or shutdown clears the connection. Apps must revoke it on New using
 original `saveText` still requires a picker per save. See
 [document-scoped save](../architecture/04-ipc-v1.md#document-scoped-save).
 
-`folder.read` independently allows native `folder.select` and `folder.release`.
+`folder.read` independently allows native `folder.select`, `folder.list` and `folder.release`.
 The application receives a basename and a session-only token for one validated
-local folder, not a path or persisted grant. It does not enable file contents,
+local folder, not a path or persisted grant. Listing returns up to 128 immediate
+names/kinds within 32 KiB, with truncation/exclusion indicators. It does not enable file contents,
 writes, recursive access or watching. Defaults remain empty. See
 [selected folders](../architecture/04-ipc-v1.md#selected-local-folders).
 

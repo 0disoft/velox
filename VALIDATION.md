@@ -377,6 +377,17 @@ passed; the release CLI smoke verified the source-free consumer compilation
 boundary. This is local harness evidence, not hosted CI, a push, a release, or a
 manual install. Behavior and layout are in `docs/ops/windows-installer.md`.
 
+## Local Folder Access
+
+Folder engine/IPC/Windows tests cover selected-directory tokens, explicit
+permission/parameter denial, cancellation/replacement/revocation, document
+generation and shutdown cleanup, real native dialog options and path rejection.
+Listing tests exercise local disk identity, entry and escaped-JSON limits,
+empty/Unicode folders, immediate-only enumeration and excluded reparse/offline
+entries. The dependency-free `examples/folder-browser` additionally tests
+token-only routing, text-safe rendering, cancellation, invalid-target handling
+and busy controls. Packaging/startup do not replace real picker interaction.
+
 ## Scope
 
 general validation routes must stay stack-neutral unless a runner file explicitly defines a command.

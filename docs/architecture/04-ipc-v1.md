@@ -94,6 +94,7 @@ the window to close, not in a pending native-response continuation.
 | `file.releaseSaveTarget` | `file.save` | `{target}` | `null`; revoke that target without file access |
 | `folder.select` | `folder.read` | `{}` | native folder selection, basename and document-scoped target; cancellation keeps the prior target |
 | `folder.release` | `folder.read` | `{target}` | `null`; revoke that exact folder target |
+| `folder.list` | `folder.read` | `{target}` | bounded immediate names/kinds, truncation and examined exclusion counts |
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
@@ -141,7 +142,18 @@ Selecting another folder replaces the target; cancellation/failure preserves it.
 It is not persisted and grants no file-content access or write capability.
 Selection is deferred to native UI dispatch, with no watcher or background work.
 `UNSUPPORTED_FOLDER` indicates a rejected location; `FOLDER_TARGET_INVALID`
-indicates a stale/released connection. Listing is a separate follow-up increment.
+indicates a stale/released connection.
+
+`folder.list` returns `{entries: [{name, kind}], truncated, skipped}`. It accepts
+only the active positive target token, revalidates directory identity and reads
+from that handle without opening child paths. At most 129 entries are materialized
+(one look-ahead), and the first 128 are considered. Reparse/offline/encrypted
+entries are excluded; `skipped` counts exclusions in the examined portion.
+The JSON result is bounded to 32 KiB after escaping; `truncated` indicates that
+the entry or byte limit cut the result short. Filesystem enumeration order is
+unsorted and not a stable snapshot. There is no pagination, total count, recursive
+traversal, file-content access or write grant. Deletion/replacement invalidates
+the target. No handle remains open between operations. See `examples/folder-browser`.
 
 ### Selected Local Text Files
 

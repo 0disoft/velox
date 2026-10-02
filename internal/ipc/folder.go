@@ -11,6 +11,7 @@ const PermissionFolderRead = "folder.read"
 
 type FolderAccess interface {
 	Select(func(fileopen.FolderResult, error)) error
+	List(uint32, func(fileopen.FolderListing, error)) error
 	ReleaseTarget(uint32) error
 	ClearTarget()
 }
@@ -95,5 +96,34 @@ func (d *Dispatcher) selectFolder(request Request, finish func(Response)) {
 	}
 	if err := access.Select(respond); err != nil {
 		respond(fileopen.FolderResult{}, err)
+	}
+}
+
+func (d *Dispatcher) listFolder(request Request, finish func(Response)) {
+	if _, granted := d.permissions[PermissionFolderRead]; !granted {
+		finish(failure(request.ID, "PERMISSION_DENIED", "The native method permission is not granted."))
+		return
+	}
+	target, err := folderTargetParam(request.Params)
+	if err != nil {
+		finish(failure(request.ID, "INVALID_PARAMS", err.Error()))
+		return
+	}
+	d.mu.Lock()
+	access := d.folders
+	d.mu.Unlock()
+	if access == nil {
+		finish(folderFailure(request.ID, errors.New("unavailable")))
+		return
+	}
+	respond := func(result fileopen.FolderListing, err error) {
+		if err != nil {
+			finish(folderFailure(request.ID, err))
+			return
+		}
+		finish(Response{Version: Version, ID: request.ID, OK: true, Result: result})
+	}
+	if err := access.List(target, respond); err != nil {
+		respond(fileopen.FolderListing{}, err)
 	}
 }

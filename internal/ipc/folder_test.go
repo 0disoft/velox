@@ -10,12 +10,19 @@ type fakeFolderAccess struct {
 	calls, clears int
 	released      uint32
 	done          func(fileopen.FolderResult, error)
+	listed        uint32
+	listDone      func(fileopen.FolderListing, error)
 	err           error
 }
 
 func (f *fakeFolderAccess) Select(done func(fileopen.FolderResult, error)) error {
 	f.calls++
 	f.done = done
+	return f.err
+}
+
+func (f *fakeFolderAccess) List(target uint32, done func(fileopen.FolderListing, error)) error {
+	f.listed, f.listDone = target, done
 	return f.err
 }
 func (f *fakeFolderAccess) ReleaseTarget(target uint32) error { f.released = target; return f.err }
@@ -109,4 +116,61 @@ func TestFolderErrorsAndCloseWhileSelectionPending(t *testing.T) {
 	})
 	d.Close()
 	f.done(fileopen.FolderResult{}, nil)
+}
+
+func TestFolderListPermissionTokensDeferredCompletionAndRevocation(t *testing.T) {
+	for _, tc := range []struct {
+		permissions  []string
+		params, code string
+	}{
+		{nil, `{"target":1}`, "PERMISSION_DENIED"},
+		{[]string{PermissionFileOpen}, `{"target":1}`, "PERMISSION_DENIED"},
+		{[]string{PermissionFolderRead}, `{"target":1,"path":"private"}`, "INVALID_PARAMS"},
+		{[]string{PermissionFolderRead}, `{"target":1,"recursive":true}`, "INVALID_PARAMS"},
+		{[]string{PermissionFolderRead}, `{"target":0}`, "INVALID_PARAMS"},
+		{[]string{PermissionFolderRead}, `{"target":null}`, "INVALID_PARAMS"},
+	} {
+		d := NewDispatcher(Identity{}, tc.permissions, &fakeWindow{})
+		f := &fakeFolderAccess{}
+		d.SetFolderAccess(f)
+		d.DispatchAsync(request(1, "folder.list", tc.params), func(r Response) {
+			if r.Error == nil || r.Error.Code != tc.code {
+				t.Fatal(r)
+			}
+		})
+		if f.listed != 0 {
+			t.Fatal("invalid request listed folder")
+		}
+	}
+	d := NewDispatcher(Identity{}, []string{PermissionFolderRead}, &fakeWindow{})
+	f := &fakeFolderAccess{}
+	d.SetFolderAccess(f)
+	raw := request(1, "folder.list", `{"target":7}`)
+	if !RequiresDeferred(raw) {
+		t.Fatal("list not deferred")
+	}
+	responses := 0
+	d.DispatchAsync(raw, func(r Response) {
+		responses++
+		if !r.OK {
+			t.Fatal(r)
+		}
+	})
+	if f.listed != 7 {
+		t.Fatal("wrong target")
+	}
+	if r := d.Dispatch(raw); r.Error == nil || r.Error.Code != "DUPLICATE_REQUEST_ID" {
+		t.Fatal(r)
+	}
+	f.listDone(fileopen.FolderListing{Entries: []fileopen.FolderEntry{}}, nil)
+	f.listDone(fileopen.FolderListing{}, nil)
+	if responses != 1 {
+		t.Fatal("duplicate completion")
+	}
+	d.DispatchAsync(request(2, "folder.list", `{"target":7}`), func(r Response) {
+		if r.Error == nil || r.Error.Code != "FOLDER_TARGET_INVALID" {
+			t.Fatal(r)
+		}
+	})
+	f.listDone(fileopen.FolderListing{}, fileopen.ErrFolderTarget)
 }

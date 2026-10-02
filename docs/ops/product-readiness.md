@@ -21,6 +21,30 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Bounded Folder Listing Local Checks: 2026-10-03
+
+Beta.17 adds `folder.list` and Folder Browser 0.1.0 under only `folder.read`.
+It checks the selected directory's identity, enumerates its handle, considers
+128 immediate entries plus one look-ahead, and bounds serialized results to
+32 KiB. Entry names/kinds, truncation and examined exclusions are returned;
+no child path, content, recursive scan, total count or persisted grant is added.
+Reparse/offline/encrypted entries are skipped without following them.
+
+`go test ./...` and `go vet ./...` passed, as did 27 related Bun tests.
+The built-host GUI subsystem, lifecycle and security-policy smoke passed.
+First ready was 693 ms and immediate same-profile relaunch 7.37 seconds in that
+single local sample; this is not a latency improvement or broad benchmark claim.
+Folder Browser passed validate/doctor, two identical ZIP builds, inspect and
+packaged/source startup with private profiles. Its ZIP measured 3,124,209 bytes.
+The locally built source host measured 4,596,224 bytes: +45,056 bytes (44 KiB,
+about 0.99%) versus beta.15, including selection and listing. No new dependency,
+background polling, watcher, worker, database or CI workflow was added.
+
+Actual native folder selection/cancellation and UI appearance remain manually
+unverified. In-app browser screenshot inspection was unavailable because local
+file URLs are blocked; no alternate browser path was used to bypass that policy.
+No new hosted CI, push, installation, signing or public release is claimed.
+
 ## Local Folder Selection: 2026-10-03
 
 Beta.16 adds opt-in `folder.read`, native `folder.select` and explicit

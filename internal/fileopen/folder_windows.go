@@ -15,7 +15,7 @@ func NewWindowsFolder(hwnd uintptr, dispatch func(func()), active func() bool, g
 		return window != 0 && active()
 	}
 	return &Folder{Dispatch: dispatch, Active: valid, Generation: generation,
-		Choose: func() (string, error) { return selectDialog(hwnd, newFolderDialog) }, Inspect: inspectSelectedFolder}
+		Choose: func() (string, error) { return selectDialog(hwnd, newFolderDialog) }, Inspect: inspectSelectedFolder, Read: listSelectedFolder}
 }
 
 func newFolderDialog() (*dialogObject, error) {
