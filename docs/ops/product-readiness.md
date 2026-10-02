@@ -39,6 +39,24 @@ No runtime file API, dependency, schema, DB version or CI workflow was changed.
 Real File Notes native dialog, restart and external-change interaction remain
 unverified for this migration.
 
+## Native Save Short-Path Follow-Up: 2026-10-03
+
+[Consumer evidence run 37039373327](https://github.com/0disoft/velox/actions/runs/37039373327)
+failed the Windows native-save tests at source `c3ab0a5`: existing-file saving
+and post-save snapshots returned `UNSUPPORTED_FILE`. The same failure was
+reproduced locally by saving through a real DOS short-name directory alias.
+The handle's normalized long path differed from the input spelling.
+
+Beta.15 retains the final-path equality check, expanding the input with
+[GetLongPathNameW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlongpathnamew)
+only when direct case-insensitive equality fails. Link, drive, attribute and
+hard-link rejection remain unchanged. The regression now passes new saving,
+snapshot, connected saving and replacement through the alias, with long-path
+readback. File-open, conflict and rejection tests passed, as did `go test ./...`
+and `go vet ./...`. No permission, IPC, DB or workflow change was made.
+Hosted confirmation is separate; the failed run remains recorded rather than
+being reclassified as a success.
+
 ## Document-Scoped Save Local Checks: 2026-10-03
 
 Local beta.13 adds ADR 0027's explicit connected Save as/Save. The full Go suite,

@@ -142,3 +142,38 @@ func TestSavePreservesRestrictedDACL(t *testing.T) {
 		t.Fatal("replacement changed DACL", before.String(), after, err)
 	}
 }
+
+func TestSaveThroughShortPathAlias(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "long directory name for saving")
+	if err := os.Mkdir(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	name, _ := windows.UTF16PtrFromString(root)
+	var buffer [32768]uint16
+	n, err := windows.GetShortPathName(name, &buffer[0], uint32(len(buffer)))
+	if err != nil || n == 0 || n >= uint32(len(buffer)) {
+		t.Fatal("short path lookup failed", err)
+	}
+	shortRoot := windows.UTF16ToString(buffer[:n])
+	if strings.EqualFold(shortRoot, root) {
+		t.Skip("volume does not generate short path aliases")
+	}
+	path := filepath.Join(shortRoot, "notes.txt")
+	if _, err := writeSelected(path, "first"); err != nil {
+		t.Fatal("new save through short alias", err)
+	}
+	version, err := snapshotSelected(path)
+	if err != nil {
+		t.Fatal("snapshot through short alias", err)
+	}
+	if _, err := writeConnected(path, "second", version); err != nil {
+		t.Fatal("connected save through short alias", err)
+	}
+	if _, err := writeSelected(path, "third"); err != nil {
+		t.Fatal("replacement through short alias", err)
+	}
+	data, err := os.ReadFile(filepath.Join(root, "notes.txt"))
+	if err != nil || string(data) != "third" {
+		t.Fatal("long path readback differs", err)
+	}
+}
