@@ -84,3 +84,21 @@ func TestReadRejectsFinalSymlink(t *testing.T) {
 		t.Fatal("symlink was read")
 	}
 }
+
+func TestReadRejectsLinkedParent(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "target")
+	link := filepath.Join(root, "alias")
+	if err := os.Mkdir(target, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(target, "file.txt"), []byte("private"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, link); err != nil {
+		t.Skip("directory symlink unavailable")
+	}
+	if _, err := readSelected(filepath.Join(link, "file.txt")); !errors.Is(err, ErrUnsupported) {
+		t.Fatal("read traversed linked parent")
+	}
+}

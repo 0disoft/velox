@@ -12,7 +12,7 @@ velox build --config examples/file-reader/velox.json --out ../../dist/examples/f
 
 Only one local regular UTF-8 file up to 2 MiB is accepted. UTF-8 BOM is removed
 from displayed text. Invalid UTF-8, NUL bytes, network/device/stream paths,
-reparse-point files and offline placeholders are refused. No full path, file
+reparse points in any path component and offline placeholders are refused. No full path, file
 handle, or durable read grant is returned. There is no save or profile storage.
 
 For a manual check, open a disposable UTF-8 document, then cancel a second

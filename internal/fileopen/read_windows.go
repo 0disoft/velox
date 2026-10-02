@@ -10,6 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/0disoft/velox/internal/safefs"
 	"golang.org/x/sys/windows"
 )
 
@@ -27,6 +28,15 @@ func localPath(path string) bool {
 
 func readSelected(path string) (Result, error) {
 	if !localPath(path) {
+		return Result{}, ErrUnsupported
+	}
+	root, _ := windows.UTF16PtrFromString(filepath.VolumeName(path) + `\`)
+	switch windows.GetDriveType(root) {
+	case windows.DRIVE_FIXED, windows.DRIVE_REMOVABLE, windows.DRIVE_CDROM, windows.DRIVE_RAMDISK:
+	default:
+		return Result{}, ErrUnsupported
+	}
+	if err := safefs.RejectLinkedComponents(path); err != nil {
 		return Result{}, ErrUnsupported
 	}
 	name, err := windows.UTF16PtrFromString(path)

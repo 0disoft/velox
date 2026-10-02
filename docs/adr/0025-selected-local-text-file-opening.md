@@ -16,9 +16,10 @@ filesystem enumeration, write, process, reusable token, or persisted grant.
 Read one selected local disk file, at most 2 MiB. Keep one read-only native file
 handle for validation and bounded reading, then close it before returning only
 `cancelled`, `name`, `text` and `bytes`. Refuse UNC/device/ADS paths, directories,
-final-component reparse points, offline files, invalid UTF-8 and NUL bytes.
+reparse points in any component, offline files, invalid UTF-8 and NUL bytes.
 Check the opened handle's final path so a directory junction cannot redirect
-reading to a network share. Local parent junctions and hard links are allowed;
+reading to a network share. Reject mapped network drives and linked components
+before opening; local parent junctions are also refused. Hard links are allowed;
 this is explicit file selection, not directory sandboxing. A same-user actor
 that can replace the selected path before it is opened remains outside the
 host's protection claim. A UTF-8 BOM is stripped only from returned text.
@@ -35,10 +36,11 @@ and manifest permission checks remain authoritative. Shutdown discards responses
 Request limits remain 64 KiB; selected text responses can be larger, bounded
 by the 2 MiB file limit (JSON escaping can expand text up to about 12 MiB).
 Reading is synchronous and bounded, on demand, on the existing UI thread.
-There is no worker, timer, background reader, new dependency, network request,
+There is no worker, timer, background reader, new dependency, network client,
 or change to the browser File System Access API. Lazy COM/DLL objects are used
 only for opted-in calls. Binary size still grows and must be measured; no idle
-CPU or latency improvement is claimed.
+CPU or latency improvement is claimed. The Windows shell dialog may browse
+locations under OS policy; this is not a network-isolation sandbox.
 
 ## Validation and Rollback
 

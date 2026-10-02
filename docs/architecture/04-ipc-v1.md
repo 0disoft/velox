@@ -140,7 +140,8 @@ with `TOO_MANY_REQUESTS`. Each new read requires another native selection.
 Only local disk UTF-8 files up to 2 MiB are accepted. A BOM is stripped from text;
 `bytes` includes it. Network/device/ADS paths, directories, final-component
 reparse points, offline placeholders, invalid UTF-8 and NUL bytes fail closed.
-Oversize returns `PAYLOAD_TOO_LARGE`; unsupported files return `UNSUPPORTED_FILE`.
+Mapped network drives and reparse points in parent components are also refused
+before file opening. Oversize returns `PAYLOAD_TOO_LARGE`; unsupported files return `UNSUPPORTED_FILE`.
 Other read failures are generic and never reveal the full path. Text is returned
 as data; applications must not render it as untrusted HTML.
 
