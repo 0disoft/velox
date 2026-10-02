@@ -107,6 +107,16 @@ ADR 0025 additionally permits one explicitly selected local text read through
 `file.openText` and `file.open`. It accepts no application path and grants no
 write, directory, retained-handle, or network-file access.
 
+ADR 0026 independently adds `file.save`: bounded text staging plus a deferred
+native Save as dialog, with overwrite confirmation and no caller-supplied path.
+One upload or save may be pending; navigation/shutdown discard staged text.
+New targets cannot overwrite an existing entry; replacements use flushed sibling
+temporary files, the original DACL and a recovery backup. Linked/remote/offline,
+readonly/encrypted and multiply-linked targets are rejected. Replacement or
+cleanup failures preserve recovery evidence and must not be reported as success.
+Same-user path replacement races and power-loss-proof transactions remain outside
+the claim; File Notes still uses its existing browser API.
+
 Adding one requires a threat-model update, ADR, permission contract, negative
 tests, and performance impact evidence.
 

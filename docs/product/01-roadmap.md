@@ -287,12 +287,14 @@ restoration, ADR 0022 for single-instance activation, ADR 0023 for confirmed
 external HTTPS links, and ADR 0024 for a fixed host-owned tray menu. These
 narrow opt-in capabilities are implemented; they do not authorize the broader
 features below. ADR 0025 further permits one selected local text-file read,
-not unrestricted filesystem access or native saving.
+and ADR 0026 adds selected UTF-8 text saving with a bounded upload and native
+overwrite confirmation. Neither grants unrestricted filesystem access,
+persistent file grants or save-to-last-path behavior.
 
 - Automatic updates.
 - Application code signing automation.
 - Sealed or embedded assets.
-- Native filesystem, arbitrary shell, process, plugin, or sidecar APIs.
+- Unrestricted filesystem, arbitrary shell, process, plugin, or sidecar APIs.
 - Frontend bundling, hot reload, and development server.
 - macOS, Linux, ARM64, multi-window, app-defined tray/menu APIs, and global shortcuts.
 

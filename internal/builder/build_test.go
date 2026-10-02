@@ -67,7 +67,7 @@ func TestBuildCancellationPreservesOutputAndAllowsRetry(t *testing.T) {
 }
 
 func TestBuildPreservesOptInPermissions(t *testing.T) {
-	for _, permission := range []string{"external.open", "file.open"} {
+	for _, permission := range []string{"external.open", "file.open", "file.save"} {
 		t.Run(permission, func(t *testing.T) {
 			root, path, host := fixture(t)
 			value, err := manifest.Load(path)
@@ -386,7 +386,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-beta.10","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-beta.11","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {

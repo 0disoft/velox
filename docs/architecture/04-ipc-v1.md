@@ -85,6 +85,10 @@ the window to close, not in a pending native-response continuation.
 | `window.close` | `window.basic` | `{}` | `null` before deferred shutdown |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
 | `file.openText` | `file.open` | `{}` | selected UTF-8 text or a cancellation result after the native dialog |
+| `file.beginSave` | `file.save` | `{name, bytes}` | `{token}` for one bounded text upload |
+| `file.appendSave` | `file.save` | `{token, offset, text}` | `{bytes}` received so far; byte offset must match |
+| `file.commitSave` | `file.save` | `{token}` | `{cancelled, name, bytes}` after native save selection and disk commit |
+| `file.cancelSave` | `file.save` | `{token}` | `null`; discard staged text without file access |
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
@@ -153,6 +157,43 @@ pending operation without replacing its contents. Shutdown discards responses.
 The 64 KiB bound applies to requests, not this response: text is capped at 2 MiB,
 with JSON escaping expanding the encoded response to about 12 MiB at worst.
 
+### Selected Local Text Saving
+
+ADR 0026 adds an independent `file.save` permission. Use the frozen helper:
+
+```js
+const saved = await window.velox.saveText(editor.value, "notes.md");
+if (!saved.cancelled) status.textContent = `${saved.name} saved.`;
+```
+
+Every call shows a native Save as dialog with overwrite confirmation. Cancel
+returns `{cancelled: true, name: "", bytes: 0}` and writes nothing. The suggested
+name must be a nonempty base filename (at most 240 UTF-8 bytes); paths, reserved
+names, controls and trailing dots/spaces are invalid. Successful results contain
+only the selected base name and UTF-8 byte count. No BOM or newline conversion
+is added. No persistent grant or save-to-last-path is provided.
+
+The helper stages at most 2 MiB through the four wire methods above, using
+surrogate-safe chunks of at most 4,096 UTF-16 code units. Both the existing
+64 KiB request bound and WebView message bound remain unchanged. `bytes` is the
+complete expected UTF-8 byte count; `offset` is the current received byte count.
+Tokens are positive uint32 values, host-lifetime unique, and identify text only.
+One upload or save may be pending. Invalid chunks do not advance it; incomplete
+commits fail without consuming it. Cancel an abandoned upload with its token.
+Accepted navigation and shutdown discard staged text. All four methods require
+`file.save` before any staging or dialog interaction.
+
+Commit consumes a complete upload and defers selection outside the WebView
+callback; its ID remains reserved through completion. Navigation before writing
+invalidates selection. New files cannot overwrite a target appearing during
+commit. Existing files are written via flushed sibling temporary files and
+ReplaceFileW with a backup, preserving the selected file's DACL. Linked,
+remote, offline, readonly, encrypted and multiply-linked targets are refused.
+Errors never contain a full path. `SAVE_RECOVERY_REQUIRED` means replacement or
+backup cleanup failed: keep editor text and inspect recovery files in the chosen
+folder. The target may already contain the new text. Crash or power-loss
+atomicity and same-user adversarial path replacement are not guaranteed.
+
 ## Stable Error Codes
 
 - `INVALID_REQUEST`
@@ -166,6 +207,7 @@ with JSON escaping expanding the encoded response to about 12 MiB at worst.
 - `SHUTTING_DOWN`
 - `NATIVE_OPERATION_FAILED`
 - `UNSUPPORTED_FILE`
+- `SAVE_RECOVERY_REQUIRED`
 - `INVALID_RESPONSE` (JavaScript bridge validation)
 
 Native failures return a stable message and do not expose paths, stack traces,

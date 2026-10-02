@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Velox Text Writer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header><img src="velox.png" width="32" height="32" alt=""><h1>Text Writer</h1><span id="filename">Untitled.txt</span></header>
+  <nav><button id="save" type="button">Save as</button><span id="size"></span></nav>
+  <main><textarea id="text" aria-label="Document text" spellcheck="false"></textarea></main>
+  <footer id="status" role="status">Ready.</footer>
+</body>
+</html>

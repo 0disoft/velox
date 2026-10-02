@@ -28,6 +28,31 @@
       }, {
         "if": { "properties": { "method": { "const": "file.openText" } } },
         "then": { "properties": { "params": { "type": "object", "maxProperties": 0 } } }
+      }, {
+        "if": { "properties": { "method": { "const": "file.beginSave" } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["name", "bytes"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "maxLength": 240 },
+            "bytes": { "type": "integer", "minimum": 0, "maximum": 2097152 }
+          }
+        } } }
+      }, {
+        "if": { "properties": { "method": { "const": "file.appendSave" } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["token", "offset", "text"],
+          "properties": {
+            "token": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+            "offset": { "type": "integer", "minimum": 0, "maximum": 2097152 },
+            "text": { "type": "string" }
+          }
+        } } }
+      }, {
+        "if": { "properties": { "method": { "enum": ["file.commitSave", "file.cancelSave"] } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["token"],
+          "properties": { "token": { "type": "integer", "minimum": 1, "maximum": 4294967295 } }
+        } } }
       }]
     },
     "response": {

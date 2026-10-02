@@ -163,6 +163,13 @@ to 2 MiB, read-only. The method accepts no path and returns no full path or
 reusable grant. It does not authorize writes or directory access. See
 [selected text files](../architecture/04-ipc-v1.md#selected-local-text-files).
 
+`file.save` independently opts into `window.velox.saveText(text, name)` and its
+bounded upload methods: write at most 2 MiB of UTF-8 text to one native-dialog
+selection, with overwrite confirmation. No application path or persisted grant
+is accepted. Every save requires a new selection. See
+[selected text saving](../architecture/04-ipc-v1.md#selected-local-text-saving)
+for cancellation, staging and replacement-failure recovery.
+
 ## Path Rules
 
 - Relative paths resolve from the manifest's project root.

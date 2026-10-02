@@ -60,11 +60,15 @@ type RPCError struct {
 }
 
 type Dispatcher struct {
-	identity    Identity
-	permissions map[string]struct{}
-	window      Window
-	external    ExternalOpener
-	files       FileOpener
+	identity     Identity
+	permissions  map[string]struct{}
+	window       Window
+	external     ExternalOpener
+	files        FileOpener
+	saver        FileSaver
+	upload       *saveUpload
+	uploadSerial uint32
+	savePending  bool
 
 	mu       sync.Mutex
 	closing  bool
@@ -100,6 +104,7 @@ func (d *Dispatcher) Dispatch(raw json.RawMessage) Response {
 func (d *Dispatcher) Close() {
 	d.mu.Lock()
 	d.closing = true
+	d.upload = nil
 	d.mu.Unlock()
 }
 
@@ -148,6 +153,9 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	if request.Method == "external.open" {
 		return d.openExternal(request)
 	}
+	if permission == PermissionFileSave {
+		return d.prepareSave(request)
+	}
 	if err := requireEmptyParams(request.Params); err != nil {
 		return failure(request.ID, "INVALID_PARAMS", err.Error())
 	}
@@ -189,6 +197,8 @@ func methodPermission(method string) (string, bool) {
 		return PermissionExternal, true
 	case "file.openText":
 		return PermissionFileOpen, true
+	case "file.beginSave", "file.appendSave", "file.commitSave", "file.cancelSave":
+		return PermissionFileSave, true
 	case "window.getState", "window.minimize", "window.maximize", "window.restore", "window.close":
 		return PermissionWindow, true
 	default:

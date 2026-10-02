@@ -61,8 +61,40 @@
     }
   }
 
+  async function saveText(text, name = "Untitled.txt") {
+    if (typeof text !== "string" || !text.isWellFormed() || text.includes("\0")) {
+      throw createError("INVALID_PARAMS", "Save text must be valid UTF-8 without NUL characters.");
+    }
+    if (text.length > 2 * 1024 * 1024) {
+      throw createError("PAYLOAD_TOO_LARGE", "The text exceeds 2 MiB.");
+    }
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text).length;
+    if (bytes > 2 * 1024 * 1024) {
+      throw createError("PAYLOAD_TOO_LARGE", "The text exceeds 2 MiB.");
+    }
+    const { token } = await invoke("file.beginSave", { name, bytes });
+    try {
+      let offset = 0;
+      for (let start = 0; start < text.length;) {
+        let end = Math.min(start + 4096, text.length);
+        const last = text.charCodeAt(end - 1);
+        if (end < text.length && last >= 0xd800 && last <= 0xdbff) end -= 1;
+        const chunk = text.slice(start, end);
+        await invoke("file.appendSave", { token, offset, text: chunk });
+        offset += encoder.encode(chunk).length;
+        start = end;
+      }
+      // Commit consumes the upload even when selection is cancelled or writing fails.
+      return await invoke("file.commitSave", { token });
+    } finally {
+      // A consumed token no longer exists; cleanup errors must not mask the save result.
+      await invoke("file.cancelSave", { token }).catch(() => {});
+    }
+  }
+
   Object.defineProperty(window, "velox", {
-    value: Object.freeze({ invoke: Object.freeze(invoke) }),
+    value: Object.freeze({ invoke: Object.freeze(invoke), saveText: Object.freeze(saveText) }),
     configurable: false,
     enumerable: true,
     writable: false,

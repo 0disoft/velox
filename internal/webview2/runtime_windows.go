@@ -40,6 +40,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	}
 
 	var documentGeneration atomic.Uint64
+	var runtime *Runtime
 	view, createErr := webview.NewWithOptionsAndError(webview.WebViewOptions{
 		Debug:                   config.Debug,
 		DataPath:                config.DataPath,
@@ -57,6 +58,9 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 			allowed := isTrustedDocument(uri, config.AppID)
 			if allowed {
 				documentGeneration.Add(1)
+				if runtime != nil {
+					runtime.dispatcher.DropPreparedText()
+				}
 			}
 			return allowed
 		},
@@ -86,12 +90,16 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime := &Runtime{view: view, shutdownPhase: config.ShutdownPhase}
+	runtime = &Runtime{view: view, shutdownPhase: config.ShutdownPhase}
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
 		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
 	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
 	if slices.Contains(config.Permissions, ipc.PermissionFileOpen) {
 		runtime.dispatcher.SetFileOpener(fileopen.NewWindows(uintptr(view.Window()), view.Dispatch,
+			func() bool { return !runtime.dispatcher.IsClosing() }, documentGeneration.Load))
+	}
+	if slices.Contains(config.Permissions, ipc.PermissionFileSave) {
+		runtime.dispatcher.SetFileSaver(fileopen.NewWindowsSaver(uintptr(view.Window()), view.Dispatch,
 			func() bool { return !runtime.dispatcher.IsClosing() }, documentGeneration.Load))
 	}
 	if slices.Contains(config.Permissions, ipc.PermissionExternal) {

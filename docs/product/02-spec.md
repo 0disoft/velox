@@ -263,12 +263,19 @@ Web content is not trusted merely because it is local.
   nothing and document replacement invalidates pending work. File Notes has
   not migrated to this API.
 - IPC payload size, nesting, and in-flight request counts are bounded.
+- ADR 0026 adds independent opt-in `file.save` and `window.velox.saveText`:
+  stage at most 2 MiB of UTF-8 text within unchanged 64 KiB message bounds,
+  then save only to a native-dialog selection with overwrite confirmation.
+  No caller path, durable grant or save-to-last-path is added. Cancellation
+  writes nothing; replacement failures can retain sibling recovery files.
+  File Notes migration remains separate.
 - Production mode disables development tools unless explicitly enabled by a
   development-only run path.
 
 The M2 implementation exposes a frozen `window.velox.invoke()` bridge. IPC v1
 uses a closed method table for application information and basic window
-lifecycle, ADR 0023's confirmed HTTPS opener, and ADR 0025's selected-text reader. It validates
+lifecycle, ADR 0023's confirmed HTTPS opener, ADR 0025's selected-text reader,
+and ADR 0026's selected-text saver. It validates
 permissions before dispatch and bounds payload size,
 JSON nesting, request identifiers, duplicate identifiers, and concurrent
 requests. The wire and method contract is defined in

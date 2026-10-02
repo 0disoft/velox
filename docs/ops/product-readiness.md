@@ -21,6 +21,26 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Native Text Save Local Checks: 2026-10-03
+
+Local beta.11 implements ADR 0026's `file.save` and the frozen `saveText` helper.
+The full Go suite, `go vet ./...`, three Bun helper tests and the rebuilt host's
+`TestBuiltHostStartup` passed. Disk tests cover new-file and existing-file
+readback, empty/Unicode/exact 2 MiB text, restricted DACL preservation and
+rejections without damaging the original. The helper tests cover 2 MiB staging,
+Unicode/escaping boundaries, unchanged 64 KiB message limits and upload cleanup.
+The Text Writer package's directory and ZIP both passed public CLI inspection
+with only `file.save`. Initial inspection used the wrong relative output
+location and failed; rebuilding to an absolute output path resolved that error.
+
+The measured source-host build is 4,521,472 bytes, 48,640 bytes (about 1.09%)
+above the recorded beta.10 host. No idle CPU or latency improvement is claimed;
+staging and disk I/O are bounded, on-demand costs. Existing same-profile
+immediate relaunch latency remains (7.05 seconds in the passing startup check).
+The real native Save as, cancel and overwrite-confirmation interaction is still
+manually unverified. File Notes has not migrated; save-to-last-path, hosted CI,
+publication, signing and beta-channel approval are not claimed.
+
 ## Native Text File Open Manual Check: 2026-10-03
 
 The maintainer confirmed the requested real file-selection and cancellation
