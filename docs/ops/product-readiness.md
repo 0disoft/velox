@@ -40,9 +40,14 @@ The locally built source host measured 4,596,224 bytes: +45,056 bytes (44 KiB,
 about 0.99%) versus beta.15, including selection and listing. No new dependency,
 background polling, watcher, worker, database or CI workflow was added.
 
-Actual native folder selection/cancellation and UI appearance remain manually
-unverified. In-app browser screenshot inspection was unavailable because local
-file URLs are blocked; no alternate browser path was used to bypass that policy.
+The maintainer reported success after the requested Folder Browser selection,
+refresh, reselection cancellation and explicit release sequence. This is
+user-reported manual evidence for beta.17 at `fcc4e63`, not an independent
+screenshot review or confirmation of every exclusion and truncation case.
+The tested ZIP SHA-256 is
+`0d249c33275b9285f87e53e4c616c1b92cad65bd3523f0521b3502054135eff8`.
+In-app browser screenshot inspection was unavailable because local file URLs
+are blocked; no alternate browser path was used to bypass that policy.
 No new hosted CI, push, installation, signing or public release is claimed.
 
 ## Local Folder Selection: 2026-10-03
