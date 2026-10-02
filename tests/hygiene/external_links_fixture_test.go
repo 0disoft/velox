@@ -11,6 +11,13 @@ import (
 
 func TestExternalLinksFixtureKeepsPermissionAndManualBoundaries(t *testing.T) {
 	root := repositoryRoot(t)
+	launcher, err := os.ReadFile(filepath.Join(root, "scripts", "external-links-manual.mjs"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(launcher), "windowsHide: false,") {
+		t.Fatal("manual fixture window must remain visible")
+	}
 	fixture := filepath.Join(root, "tests", "fixtures", "external-links")
 	for _, mode := range []string{"allowed", "denied"} {
 		cfg, err := runtimeconfig.Load(filepath.Join(fixture, mode+".runtime.json"))

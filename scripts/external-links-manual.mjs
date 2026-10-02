@@ -32,7 +32,7 @@ fs.writeFileSync(path.join(owned, "receipt.json"), `${JSON.stringify(receipt, nu
 const child = spawn(host, ["--config", config], {
   cwd: owned,
   env: { ...process.env, VELOX_DATA_DIR: receipt.profile },
-  windowsHide: true,
+  windowsHide: false,
   stdio: ["ignore", "ignore", "pipe"],
 });
 let timedOut = false;
