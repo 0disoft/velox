@@ -60,6 +60,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 				documentGeneration.Add(1)
 				if runtime != nil {
 					runtime.dispatcher.DropPreparedText()
+					runtime.dispatcher.DropFolderTarget()
 				}
 			}
 			return allowed
@@ -110,6 +111,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 			Opener:        externalurl.NewWindows(uintptr(view.Window()), runtime.dispatcher.IsClosing),
 			NotifyFailure: func() { externalurl.NotifyWindowsFailure(uintptr(view.Window())) },
 		})
+	}
+	if slices.Contains(config.Permissions, ipc.PermissionFolderRead) {
+		runtime.dispatcher.SetFolderAccess(fileopen.NewWindowsFolder(uintptr(view.Window()), view.Dispatch,
+			func() bool { return !runtime.dispatcher.IsClosing() }, documentGeneration.Load))
 	}
 	if err := view.SetVirtualHostNameToFolderMapping(trustedHost(config.AppID), config.AssetRoot); err != nil {
 		destroyBeforeRun(view)

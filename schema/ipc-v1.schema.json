@@ -26,7 +26,7 @@
           "properties": { "url": { "type": "string", "minLength": 9, "maxLength": 2048 } }
         } } }
       }, {
-        "if": { "properties": { "method": { "const": "file.openText" } } },
+        "if": { "properties": { "method": { "enum": ["file.openText", "folder.select"] } } },
         "then": { "properties": { "params": { "type": "object", "maxProperties": 0 } } }
       }, {
         "if": { "properties": { "method": { "const": "file.beginSave" } } },
@@ -63,7 +63,7 @@
           }
         } } }
       }, {
-        "if": { "properties": { "method": { "const": "file.releaseSaveTarget" } } },
+        "if": { "properties": { "method": { "enum": ["file.releaseSaveTarget", "folder.release"] } } },
         "then": { "properties": { "params": {
           "type": "object", "additionalProperties": false, "required": ["target"],
           "properties": { "target": { "type": "integer", "minimum": 1, "maximum": 4294967295 } }

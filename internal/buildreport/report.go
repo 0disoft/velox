@@ -98,7 +98,7 @@ func (report Report) Validate() error {
 	}
 	seen := make(map[string]struct{}, len(report.Permissions))
 	for _, permission := range report.Permissions {
-		if permission != "app.info" && permission != "window.basic" && permission != "external.open" && permission != "file.open" && permission != "file.save" {
+		if permission != "app.info" && permission != "window.basic" && permission != "external.open" && permission != "file.open" && permission != "file.save" && permission != "folder.read" {
 			return fmt.Errorf("unsupported build result permission %q", permission)
 		}
 		if _, exists := seen[permission]; exists {

@@ -1,0 +1,99 @@
+package ipc
+
+import (
+	"encoding/json"
+	"errors"
+
+	"github.com/0disoft/velox/internal/fileopen"
+)
+
+const PermissionFolderRead = "folder.read"
+
+type FolderAccess interface {
+	Select(func(fileopen.FolderResult, error)) error
+	ReleaseTarget(uint32) error
+	ClearTarget()
+}
+
+func (d *Dispatcher) SetFolderAccess(access FolderAccess) {
+	d.mu.Lock()
+	d.folders = access
+	d.mu.Unlock()
+}
+
+func (d *Dispatcher) DropFolderTarget() {
+	d.mu.Lock()
+	access := d.folders
+	d.mu.Unlock()
+	if access != nil {
+		access.ClearTarget()
+	}
+}
+
+func folderFailure(id uint32, err error) Response {
+	code, message := "NATIVE_OPERATION_FAILED", "The folder operation failed."
+	switch {
+	case errors.Is(err, fileopen.ErrBusy):
+		code, message = "TOO_MANY_REQUESTS", fileopen.ErrBusy.Error()
+	case errors.Is(err, fileopen.ErrFolderUnsupported):
+		code, message = "UNSUPPORTED_FOLDER", fileopen.ErrFolderUnsupported.Error()
+	case errors.Is(err, fileopen.ErrFolderTarget):
+		code, message = "FOLDER_TARGET_INVALID", fileopen.ErrFolderTarget.Error()
+	}
+	return failure(id, code, message)
+}
+
+func folderTargetParam(raw json.RawMessage) (uint32, error) {
+	var p struct {
+		Target *uint32 `json:"target"`
+	}
+	if decodeSaveParams(raw, &p) != nil || p.Target == nil || *p.Target == 0 {
+		return 0, errors.New("Folder parameters must contain only a positive target token.")
+	}
+	return *p.Target, nil
+}
+
+func (d *Dispatcher) releaseFolder(request Request) Response {
+	target, err := folderTargetParam(request.Params)
+	if err != nil {
+		return failure(request.ID, "INVALID_PARAMS", err.Error())
+	}
+	d.mu.Lock()
+	access := d.folders
+	d.mu.Unlock()
+	if access == nil {
+		return folderFailure(request.ID, errors.New("unavailable"))
+	}
+	if err := access.ReleaseTarget(target); err != nil {
+		return folderFailure(request.ID, err)
+	}
+	return Response{Version: Version, ID: request.ID, OK: true, Result: json.RawMessage("null")}
+}
+
+func (d *Dispatcher) selectFolder(request Request, finish func(Response)) {
+	if _, granted := d.permissions[PermissionFolderRead]; !granted {
+		finish(failure(request.ID, "PERMISSION_DENIED", "The native method permission is not granted."))
+		return
+	}
+	if err := requireEmptyParams(request.Params); err != nil {
+		finish(failure(request.ID, "INVALID_PARAMS", err.Error()))
+		return
+	}
+	d.mu.Lock()
+	access := d.folders
+	d.mu.Unlock()
+	if access == nil {
+		finish(folderFailure(request.ID, errors.New("unavailable")))
+		return
+	}
+	respond := func(result fileopen.FolderResult, err error) {
+		if err != nil {
+			finish(folderFailure(request.ID, err))
+			return
+		}
+		finish(Response{Version: Version, ID: request.ID, OK: true, Result: result})
+	}
+	if err := access.Select(respond); err != nil {
+		respond(fileopen.FolderResult{}, err)
+	}
+}

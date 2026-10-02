@@ -66,6 +66,7 @@ type Dispatcher struct {
 	external     ExternalOpener
 	files        FileOpener
 	saver        FileSaver
+	folders      FolderAccess
 	upload       *saveUpload
 	uploadSerial uint32
 	savePending  bool
@@ -107,6 +108,7 @@ func (d *Dispatcher) Close() {
 	d.upload = nil
 	d.mu.Unlock()
 	d.DropPreparedText()
+	d.DropFolderTarget()
 }
 
 func (d *Dispatcher) SetExternalOpener(opener ExternalOpener) {
@@ -157,6 +159,9 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	if permission == PermissionFileSave {
 		return d.prepareSave(request)
 	}
+	if request.Method == "folder.release" {
+		return d.releaseFolder(request)
+	}
 	if err := requireEmptyParams(request.Params); err != nil {
 		return failure(request.ID, "INVALID_PARAMS", err.Error())
 	}
@@ -168,6 +173,8 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	switch request.Method {
 	case "file.openText":
 		return failure(request.ID, "NATIVE_OPERATION_FAILED", "File selection requires asynchronous dispatch.")
+	case "folder.select":
+		return failure(request.ID, "NATIVE_OPERATION_FAILED", "Folder selection requires asynchronous dispatch.")
 	case "app.getInfo":
 		result = d.identity
 	case "window.getState":
@@ -198,6 +205,8 @@ func methodPermission(method string) (string, bool) {
 		return PermissionExternal, true
 	case "file.openText":
 		return PermissionFileOpen, true
+	case "folder.select", "folder.release":
+		return PermissionFolderRead, true
 	case "file.beginSave", "file.appendSave", "file.commitSave", "file.cancelSave", "file.commitSaveAs", "file.commitSaveTo", "file.releaseSaveTarget":
 		return PermissionFileSave, true
 	case "window.getState", "window.minimize", "window.maximize", "window.restore", "window.close":

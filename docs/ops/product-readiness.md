@@ -21,6 +21,21 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Local Folder Selection: 2026-10-03
+
+Beta.16 adds opt-in `folder.read`, native `folder.select` and explicit
+`folder.release` under ADR 0028. Related file/folder, IPC, manifest/runtime,
+build/inspect/runner, WebView and hygiene suites passed; related Go vet passed.
+Real Windows tests covered dialog options, folder identity, DOS short names,
+offline/file/remote/link rejection. Engine/IPC tests covered cancellation,
+replacement, generation/revocation, busy/exhausted tokens, permission/parameter
+denial and shutdown. These do not claim actual manual folder selection.
+
+The source host measured 4,574,208 bytes, 23,040 bytes (about 0.51%) above the
+beta.15 source host's 4,551,168 bytes. No dependency, persisted grant, watcher,
+timer, idle worker, DB or workflow was added. Listing is a separate follow-up;
+no public release or new hosted check is claimed by this local evidence.
+
 ## File Notes Native File Migration: 2026-10-03
 
 File Notes 0.2.0 uses `file.openText`, `saveTextAs` and `saveTextTo` under only

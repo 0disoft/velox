@@ -16,7 +16,7 @@ type FileOpener interface {
 
 func RequiresDeferred(raw json.RawMessage) bool {
 	request, err := decodeRequest(raw)
-	return err == nil && (request.Method == "file.openText" || isSaveCommit(request.Method))
+	return err == nil && (request.Method == "file.openText" || request.Method == "folder.select" || isSaveCommit(request.Method))
 }
 
 func (d *Dispatcher) SetFileOpener(opener FileOpener) { d.mu.Lock(); d.files = opener; d.mu.Unlock() }
@@ -44,6 +44,10 @@ func (d *Dispatcher) DispatchAsync(raw json.RawMessage, reply func(Response)) {
 	}
 	if isSaveCommit(request.Method) {
 		d.commitSave(request, finish)
+		return
+	}
+	if request.Method == "folder.select" {
+		d.selectFolder(request, finish)
 		return
 	}
 	if request.Method != "file.openText" {

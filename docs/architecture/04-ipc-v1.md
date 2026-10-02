@@ -92,6 +92,8 @@ the window to close, not in a pending native-response continuation.
 | `file.commitSaveAs` | `file.save` | `{token}` | native selection/save result with a document-scoped `target` on success |
 | `file.commitSaveTo` | `file.save` | `{token, target}` | save result after validating and reusing the connected target |
 | `file.releaseSaveTarget` | `file.save` | `{target}` | `null`; revoke that target without file access |
+| `folder.select` | `folder.read` | `{}` | native folder selection, basename and document-scoped target; cancellation keeps the prior target |
+| `folder.release` | `folder.read` | `{target}` | `null`; revoke that exact folder target |
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
@@ -126,6 +128,20 @@ site is safe. The OS handler registration remains a user-controlled boundary.
 The existing IPC does not attest browser user activation. The native prompt,
 not a JavaScript gesture claim, supplies per-request human approval. Ordinary
 navigation and popup policies remain denied; this is an explicit method only.
+
+### Selected Local Folders
+
+ADR 0028 adds separate `folder.read`. `folder.select` opens a native folder
+dialog and returns `{cancelled, name, target}`; `target` is positive only after
+successful validation. It accepts no path. Only one local regular directory
+is connected; network/device/stream paths, linked components, offline and
+encrypted folders are rejected. Names are basenames, never full paths.
+Selecting another folder replaces the target; cancellation/failure preserves it.
+`folder.release({target})`, navigation, reload and shutdown revoke the connection.
+It is not persisted and grants no file-content access or write capability.
+Selection is deferred to native UI dispatch, with no watcher or background work.
+`UNSUPPORTED_FOLDER` indicates a rejected location; `FOLDER_TARGET_INVALID`
+indicates a stale/released connection. Listing is a separate follow-up increment.
 
 ### Selected Local Text Files
 
@@ -247,6 +263,8 @@ path races and power-loss atomicity retain ADR 0026's limitations.
 - `SAVE_RECOVERY_REQUIRED`
 - `FILE_CHANGED`
 - `SAVE_TARGET_INVALID`
+- `UNSUPPORTED_FOLDER`
+- `FOLDER_TARGET_INVALID`
 - `INVALID_RESPONSE` (JavaScript bridge validation)
 
 Native failures return a stable message and do not expose paths, stack traces,

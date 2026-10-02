@@ -31,6 +31,15 @@ func TestLoadAppliesDocumentedDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadFolderPermissionIsExplicit(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "velox.json")
+	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.folder-test","name":"Folder test","version":"1"},"security":{"permissions":["folder.read"]}}`)
+	got, err := Load(path)
+	if err != nil || strings.Join(got.Security.Permissions, ",") != "folder.read" {
+		t.Fatal(got, err)
+	}
+}
+
 func TestLoadWindowRememberState(t *testing.T) {
 	root := t.TempDir()
 	writeTestFile(t, filepath.Join(root, "web", "index.html"), "ok")
