@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Velox Text Viewer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header><img src="velox.png" width="32" height="32" alt=""><h1>Text Viewer</h1><span id="filename">No file selected</span></header>
+  <nav><button id="open" type="button">Open</button><span id="size"></span></nav>
+  <main><textarea id="text" readonly aria-label="File contents" spellcheck="false"></textarea></main>
+  <footer id="status" role="status">Ready.</footer>
+</body>
+</html>

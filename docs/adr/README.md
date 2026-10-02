@@ -39,6 +39,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0022 | Accepted | Allow opt-in single-instance host coordination as a narrow lifecycle amendment to 0017 |
 | 0023 | Accepted | Allow opt-in, host-confirmed HTTPS link opening without generic shell execution |
 | 0024 | Accepted | Allow an opt-in host-owned system tray with fixed lifecycle commands |
+| 0025 | Accepted | Read one explicitly selected local UTF-8 text file without a reusable grant |
 
 ## Lifecycle
 

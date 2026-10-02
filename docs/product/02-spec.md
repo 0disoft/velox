@@ -251,18 +251,24 @@ Web content is not trusted merely because it is local.
   origin.
 - Frames do not receive native capabilities.
 - The native method table is closed and permission checked.
-- Filesystem, generic shell/process execution, and arbitrary network proxy
-  methods are absent. `external.open` alone permits a validated HTTPS URI,
+- Arbitrary filesystem, generic shell/process execution, and network proxy
+  methods are absent. `external.open` permits a validated HTTPS URI,
   with manifest permission and a host-owned per-request confirmation. Work is
   bounded to one pending confirmation per host and dispatched outside WebView
   callbacks; no timer, background worker, or new dependency is added.
+- ADR 0025 adds opt-in `file.openText` (`file.open`): read one host-selected
+  local UTF-8 text file up to 2 MiB. No caller path, full-path result, durable
+  grant, write, directory, network/device or reparse-point file access is added.
+  Native selection is deferred outside WebView callbacks; cancellation reads
+  nothing and document replacement invalidates pending work. File Notes has
+  not migrated to this API.
 - IPC payload size, nesting, and in-flight request counts are bounded.
 - Production mode disables development tools unless explicitly enabled by a
   development-only run path.
 
 The M2 implementation exposes a frozen `window.velox.invoke()` bridge. IPC v1
 uses a closed method table for application information and basic window
-lifecycle, plus ADR 0023's optional confirmed HTTPS opener. It validates
+lifecycle, ADR 0023's confirmed HTTPS opener, and ADR 0025's selected-text reader. It validates
 permissions before dispatch and bounds payload size,
 JSON nesting, request identifiers, duplicate identifiers, and concurrent
 requests. The wire and method contract is defined in

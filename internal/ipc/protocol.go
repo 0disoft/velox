@@ -64,6 +64,7 @@ type Dispatcher struct {
 	permissions map[string]struct{}
 	window      Window
 	external    ExternalOpener
+	files       FileOpener
 
 	mu       sync.Mutex
 	closing  bool
@@ -156,6 +157,8 @@ func (d *Dispatcher) dispatch(request Request) Response {
 		err    error
 	)
 	switch request.Method {
+	case "file.openText":
+		return failure(request.ID, "NATIVE_OPERATION_FAILED", "File selection requires asynchronous dispatch.")
 	case "app.getInfo":
 		result = d.identity
 	case "window.getState":
@@ -184,6 +187,8 @@ func methodPermission(method string) (string, bool) {
 		return PermissionAppInfo, true
 	case "external.open":
 		return PermissionExternal, true
+	case "file.openText":
+		return PermissionFileOpen, true
 	case "window.getState", "window.minimize", "window.maximize", "window.restore", "window.close":
 		return PermissionWindow, true
 	default:

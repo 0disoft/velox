@@ -286,7 +286,8 @@ Windows installers and per-app executable branding, ADR 0021 for window-state
 restoration, ADR 0022 for single-instance activation, ADR 0023 for confirmed
 external HTTPS links, and ADR 0024 for a fixed host-owned tray menu. These
 narrow opt-in capabilities are implemented; they do not authorize the broader
-features below.
+features below. ADR 0025 further permits one selected local text-file read,
+not unrestricted filesystem access or native saving.
 
 - Automatic updates.
 - Application code signing automation.

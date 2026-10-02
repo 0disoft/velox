@@ -58,8 +58,9 @@ The JavaScript bridge and native dispatcher both enforce the concurrent-request
 limit. Native enforcement remains authoritative when application code calls the
 internal transport binding directly.
 
-The Windows transport invokes each native binding synchronously on WebView2's
-UI/COM event thread. Multiple unresolved JavaScript promises therefore do not
+Except for the deferred selected-text reader below, the Windows transport
+invokes native bindings synchronously on WebView2's UI/COM event thread.
+Multiple unresolved JavaScript promises therefore do not
 run Win32 window operations in parallel. The dispatcher still protects its
 shutdown and in-flight bookkeeping so direct tests and any future transport
 adapter must preserve the same ownership invariant.
@@ -83,6 +84,7 @@ the window to close, not in a pending native-response continuation.
 | `window.restore` | `window.basic` | `{}` | `null` |
 | `window.close` | `window.basic` | `{}` | `null` before deferred shutdown |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
+| `file.openText` | `file.open` | `{}` | selected UTF-8 text or a cancellation result after the native dialog |
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
@@ -118,6 +120,38 @@ The existing IPC does not attest browser user activation. The native prompt,
 not a JavaScript gesture claim, supplies per-request human approval. Ordinary
 navigation and popup policies remain denied; this is an explicit method only.
 
+### Selected Local Text Files
+
+ADR 0025 adds a read-only method. Declare `file.open` and invoke:
+
+```js
+const file = await window.velox.invoke("file.openText");
+if (!file.cancelled) {
+  editor.value = file.text;
+}
+```
+
+The result is `{cancelled, name, text, bytes}`. Cancel returns `cancelled: true`
+with empty name/text and zero bytes. Successful selection returns only the base
+filename, not its path or a reusable handle. No parameters, including a path,
+are accepted. One pending dialog is allowed; further selection requests fail
+with `TOO_MANY_REQUESTS`. Each new read requires another native selection.
+
+Only local disk UTF-8 files up to 2 MiB are accepted. A BOM is stripped from text;
+`bytes` includes it. Network/device/ADS paths, directories, final-component
+reparse points, offline placeholders, invalid UTF-8 and NUL bytes fail closed.
+Oversize returns `PAYLOAD_TOO_LARGE`; unsupported files return `UNSUPPORTED_FILE`.
+Other read failures are generic and never reveal the full path. Text is returned
+as data; applications must not render it as untrusted HTML.
+
+This one method is deferred to the UI queue after the WebView callback returns.
+Its request ID remains in flight until completion. Navigation before reading
+invalidates the selection; per-document transport correlation prevents response
+delivery to a replacement document. Same-document navigation can reject the
+pending operation without replacing its contents. Shutdown discards responses.
+The 64 KiB bound applies to requests, not this response: text is capped at 2 MiB,
+with JSON escaping expanding the encoded response to about 12 MiB at worst.
+
 ## Stable Error Codes
 
 - `INVALID_REQUEST`
@@ -130,6 +164,7 @@ navigation and popup policies remain denied; this is an explicit method only.
 - `UNSUPPORTED_VERSION`
 - `SHUTTING_DOWN`
 - `NATIVE_OPERATION_FAILED`
+- `UNSUPPORTED_FILE`
 - `INVALID_RESPONSE` (JavaScript bridge validation)
 
 Native failures return a stable message and do not expose paths, stack traces,

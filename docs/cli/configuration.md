@@ -158,6 +158,11 @@ protocol, or unrestricted process launch is permitted. See
 [IPC v1](../architecture/04-ipc-v1.md#external-https-links) for URL limits and
 the queued-response contract.
 
+`file.open` opts into `file.openText`: one host-selected local UTF-8 file, up
+to 2 MiB, read-only. The method accepts no path and returns no full path or
+reusable grant. It does not authorize writes or directory access. See
+[selected text files](../architecture/04-ipc-v1.md#selected-local-text-files).
+
 ## Path Rules
 
 - Relative paths resolve from the manifest's project root.

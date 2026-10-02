@@ -103,6 +103,10 @@ activation, confirmed `external.open` HTTPS requests, and a fixed host-owned
 tray menu. None grants arbitrary shell execution or application-defined native
 menus; their scoped threat models and permission boundaries still apply.
 
+ADR 0025 additionally permits one explicitly selected local text read through
+`file.openText` and `file.open`. It accepts no application path and grants no
+write, directory, retained-handle, or network-file access.
+
 Adding one requires a threat-model update, ADR, permission contract, negative
 tests, and performance impact evidence.
 

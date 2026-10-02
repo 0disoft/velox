@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+	"sync/atomic"
 
 	"github.com/0disoft/velox/internal/externalurl"
+	"github.com/0disoft/velox/internal/fileopen"
 	"github.com/0disoft/velox/internal/ipc"
 	webview "github.com/jchv/go-webview2"
 )
@@ -37,6 +39,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, err
 	}
 
+	var documentGeneration atomic.Uint64
 	view, createErr := webview.NewWithOptionsAndError(webview.WebViewOptions{
 		Debug:                   config.Debug,
 		DataPath:                config.DataPath,
@@ -51,7 +54,11 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		},
 		MaxWebMessageBytes: maxWebMessageBytes,
 		NavigationAllowed: func(uri string) bool {
-			return isTrustedDocument(uri, config.AppID)
+			allowed := isTrustedDocument(uri, config.AppID)
+			if allowed {
+				documentGeneration.Add(1)
+			}
+			return allowed
 		},
 		DenyFrames:     true,
 		DenyNewWindows: true,
@@ -83,6 +90,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
 		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
 	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
+	if slices.Contains(config.Permissions, ipc.PermissionFileOpen) {
+		runtime.dispatcher.SetFileOpener(fileopen.NewWindows(uintptr(view.Window()), view.Dispatch,
+			func() bool { return !runtime.dispatcher.IsClosing() }, documentGeneration.Load))
+	}
 	if slices.Contains(config.Permissions, ipc.PermissionExternal) {
 		runtime.dispatcher.SetExternalOpener(&externalurl.Scheduler{
 			// Let the binding's queued response run before modal confirmation.
@@ -98,7 +109,19 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	}
 	// The WebView2 message callback invokes this binding synchronously on the
 	// UI/COM thread. Keep native window dispatch here and do not move it to a goroutine.
-	if err := view.Bind("__veloxInvoke", func(request json.RawMessage) ipc.Response {
+	if err := view.Bind("__veloxInvoke", func(request json.RawMessage) any {
+		if ipc.RequiresDeferred(request) {
+			generation := documentGeneration.Load()
+			return &webview.DeferredResult{Start: func(complete func(any, error)) {
+				if generation != documentGeneration.Load() || runtime.dispatcher.IsClosing() {
+					complete(runtime.dispatcher.Dispatch(request), nil)
+					return
+				}
+				runtime.dispatcher.DispatchAsync(request, func(response ipc.Response) {
+					complete(response, nil)
+				})
+			}}
+		}
 		return runtime.dispatcher.Dispatch(request)
 	}); err != nil {
 		destroyBeforeRun(view)

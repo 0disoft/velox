@@ -1,0 +1,8 @@
+{
+  "$schema": "../../schema/velox-v1.schema.json",
+  "schemaVersion": 1,
+  "app": {"id": "dev.velox.filereader", "name": "Velox Text Viewer", "version": "0.1.0"},
+  "assets": {"root": "web", "entry": "index.html"},
+  "window": {"width": 1000, "height": 720},
+  "security": {"permissions": ["file.open"]}
+}
