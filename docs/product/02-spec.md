@@ -113,6 +113,10 @@ ADR 0022 adds a narrow, opt-in single-instance host amendment to ADR 0017. A
 duplicate launch activates the existing window and exits without a second
 WebView, and it does not widen the application runtime API.
 
+ADR 0023 permits one additional opt-in IPC method: confirmed HTTPS link opening
+through the OS default handler. It does not permit generic shell execution,
+process arguments, native file access, a backend, or unrestricted protocols.
+
 The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
 developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.
 Publication run `29895087658` and public-download verification run `29895490556`
@@ -231,14 +235,19 @@ Web content is not trusted merely because it is local.
   origin.
 - Frames do not receive native capabilities.
 - The native method table is closed and permission checked.
-- Filesystem, shell, process, and arbitrary network proxy methods are absent.
+- Filesystem, generic shell/process execution, and arbitrary network proxy
+  methods are absent. `external.open` alone permits a validated HTTPS URI,
+  with manifest permission and a host-owned per-request confirmation. Work is
+  bounded to one pending confirmation per host and dispatched outside WebView
+  callbacks; no timer, background worker, or new dependency is added.
 - IPC payload size, nesting, and in-flight request counts are bounded.
 - Production mode disables development tools unless explicitly enabled by a
   development-only run path.
 
 The M2 implementation exposes a frozen `window.velox.invoke()` bridge. IPC v1
 uses a closed method table for application information and basic window
-lifecycle only, validates permissions before dispatch, and bounds payload size,
+lifecycle, plus ADR 0023's optional confirmed HTTPS opener. It validates
+permissions before dispatch and bounds payload size,
 JSON nesting, request identifiers, duplicate identifiers, and concurrent
 requests. The wire and method contract is defined in
 `docs/architecture/04-ipc-v1.md`.

@@ -151,7 +151,7 @@ func validate(cfg Config) error {
 	}
 	seen := make(map[string]struct{}, len(cfg.Security.Permissions))
 	for _, permission := range cfg.Security.Permissions {
-		if permission != "app.info" && permission != "window.basic" {
+		if permission != "app.info" && permission != "window.basic" && permission != "external.open" {
 			return fmt.Errorf("unsupported permission %q", permission)
 		}
 		if _, exists := seen[permission]; exists {

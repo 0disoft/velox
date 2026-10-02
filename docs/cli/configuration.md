@@ -136,6 +136,14 @@ in v1.
 A closed permission list and production browser settings. Unknown permissions
 are errors, not warnings.
 
+`app.info` allows application information, `window.basic` allows basic window
+operations, and `external.open` opts into confirmed HTTPS link opening in the
+default Windows browser handler. The default list remains empty. Each external
+link requires a host-owned confirmation; no file, shell command, custom
+protocol, or unrestricted process launch is permitted. See
+[IPC v1](../architecture/04-ipc-v1.md#external-https-links) for URL limits and
+the queued-response contract.
+
 ## Path Rules
 
 - Relative paths resolve from the manifest's project root.

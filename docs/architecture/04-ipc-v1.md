@@ -82,9 +82,41 @@ the window to close, not in a pending native-response continuation.
 | `window.maximize` | `window.basic` | `{}` | `null` |
 | `window.restore` | `window.basic` | `{}` | `null` |
 | `window.close` | `window.basic` | `{}` | `null` before deferred shutdown |
+| `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
+
+### External HTTPS Links
+
+ADR 0023 permits this one opt-in capability. Add `external.open` to the
+manifest's `security.permissions` and invoke it from an application action:
+
+```js
+const result = await window.velox.invoke("external.open", {
+  url: new URL("https://github.com/0disoft/velox").href,
+});
+```
+
+`queued: true` acknowledges a scheduled native confirmation, not an opened
+browser or loaded page. The UI queue shows a host-owned Yes/No prompt after
+the WebView event returns, with No selected by default. Only Yes dispatches the
+validated URI to the registered Windows HTTPS handler. Cancellation opens
+nothing; a later native failure shows a generic host-owned error dialog. No
+completion event is sent to the application. Shutdown drops pending work.
+
+Only one confirmation may be queued or open per host; further requests fail
+with `TOO_MANY_REQUESTS`. URLs are capped at 2,048 ASCII bytes. Use punycode
+for international host names and percent-encoded UTF-8 for paths and queries.
+Credentials, invalid hosts or ports, backslashes, whitespace, control characters
+(including percent-encoded controls), and all non-HTTPS schemes are rejected.
+No URL or query is logged. The host makes no network request, follows no
+redirect, and cannot guarantee that the handler opens a browser or that a remote
+site is safe. The OS handler registration remains a user-controlled boundary.
+
+The existing IPC does not attest browser user activation. The native prompt,
+not a JavaScript gesture claim, supplies per-request human approval. Ordinary
+navigation and popup policies remain denied; this is an explicit method only.
 
 ## Stable Error Codes
 

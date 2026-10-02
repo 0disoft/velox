@@ -44,7 +44,7 @@
     "permissions": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "enum": ["app.info", "window.basic"] }
+      "items": { "enum": ["app.info", "window.basic", "external.open"] }
     },
     "outputs": {
       "type": "object",

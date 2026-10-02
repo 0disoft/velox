@@ -8,15 +8,18 @@ import (
 	"io"
 	"strings"
 	"sync"
+
+	"github.com/0disoft/velox/internal/externalurl"
 )
 
 const (
-	Version           = 1
-	MaxRequestBytes   = 64 << 10
-	MaxNestingDepth   = 16
-	MaxInflight       = 64
-	PermissionAppInfo = "app.info"
-	PermissionWindow  = "window.basic"
+	Version            = 1
+	MaxRequestBytes    = 64 << 10
+	MaxNestingDepth    = 16
+	MaxInflight        = 64
+	PermissionAppInfo  = "app.info"
+	PermissionWindow   = "window.basic"
+	PermissionExternal = "external.open"
 )
 
 type Identity struct {
@@ -33,6 +36,8 @@ type Window interface {
 	Restore() error
 	Close() error
 }
+
+type ExternalOpener interface{ Open(string) error }
 
 type Request struct {
 	Version uint32          `json:"v"`
@@ -58,6 +63,7 @@ type Dispatcher struct {
 	identity    Identity
 	permissions map[string]struct{}
 	window      Window
+	external    ExternalOpener
 
 	mu       sync.Mutex
 	closing  bool
@@ -96,6 +102,18 @@ func (d *Dispatcher) Close() {
 	d.mu.Unlock()
 }
 
+func (d *Dispatcher) SetExternalOpener(opener ExternalOpener) {
+	d.mu.Lock()
+	d.external = opener
+	d.mu.Unlock()
+}
+
+func (d *Dispatcher) IsClosing() bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.closing
+}
+
 func (d *Dispatcher) begin(id uint32) *RPCError {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -125,6 +143,9 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	}
 	if _, granted := d.permissions[permission]; !granted {
 		return failure(request.ID, "PERMISSION_DENIED", "The native method permission is not granted.")
+	}
+	if request.Method == "external.open" {
+		return d.openExternal(request)
 	}
 	if err := requireEmptyParams(request.Params); err != nil {
 		return failure(request.ID, "INVALID_PARAMS", err.Error())
@@ -161,11 +182,44 @@ func methodPermission(method string) (string, bool) {
 	switch method {
 	case "app.getInfo":
 		return PermissionAppInfo, true
+	case "external.open":
+		return PermissionExternal, true
 	case "window.getState", "window.minimize", "window.maximize", "window.restore", "window.close":
 		return PermissionWindow, true
 	default:
 		return "", false
 	}
+}
+
+func (d *Dispatcher) openExternal(request Request) Response {
+	var params map[string]json.RawMessage
+	if err := json.Unmarshal(request.Params, &params); err != nil || len(params) != 1 || params["url"] == nil {
+		return failure(request.ID, "INVALID_PARAMS", "External-link parameters must contain only a URL string.")
+	}
+	var rawURL string
+	if err := json.Unmarshal(params["url"], &rawURL); err != nil {
+		return failure(request.ID, "INVALID_PARAMS", "External-link parameters must contain only a URL string.")
+	}
+	target, err := externalurl.Validate(rawURL)
+	if err != nil {
+		return failure(request.ID, "INVALID_PARAMS", externalurl.ErrInvalidURL.Error())
+	}
+	d.mu.Lock()
+	opener := d.external
+	d.mu.Unlock()
+	if opener == nil {
+		return failure(request.ID, "NATIVE_OPERATION_FAILED", "The native operation failed.")
+	}
+	err = opener.Open(target)
+	if errors.Is(err, externalurl.ErrBusy) {
+		return failure(request.ID, "TOO_MANY_REQUESTS", externalurl.ErrBusy.Error())
+	}
+	if err != nil {
+		return failure(request.ID, "NATIVE_OPERATION_FAILED", "The native operation failed.")
+	}
+	return Response{Version: Version, ID: request.ID, OK: true, Result: struct {
+		Queued bool `json:"queued"`
+	}{true}}
 }
 
 func decodeRequest(raw json.RawMessage) (Request, *RPCError) {

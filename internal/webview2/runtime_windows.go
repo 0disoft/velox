@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
+	"github.com/0disoft/velox/internal/externalurl"
 	"github.com/0disoft/velox/internal/ipc"
 	webview "github.com/jchv/go-webview2"
 )
@@ -81,6 +83,15 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
 		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
 	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
+	if slices.Contains(config.Permissions, ipc.PermissionExternal) {
+		runtime.dispatcher.SetExternalOpener(&externalurl.Scheduler{
+			// Let the binding's queued response run before modal confirmation.
+			Dispatch:      func(fn func()) { view.Dispatch(func() { view.Dispatch(fn) }) },
+			IsClosing:     runtime.dispatcher.IsClosing,
+			Opener:        externalurl.NewWindows(uintptr(view.Window()), runtime.dispatcher.IsClosing),
+			NotifyFailure: func() { externalurl.NotifyWindowsFailure(uintptr(view.Window())) },
+		})
+	}
 	if err := view.SetVirtualHostNameToFolderMapping(trustedHost(config.AppID), config.AssetRoot); err != nil {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("map virtual asset host: %w", err)

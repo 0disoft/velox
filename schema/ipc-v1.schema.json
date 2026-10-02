@@ -16,7 +16,16 @@
         "id": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
         "method": { "type": "string", "minLength": 1 },
         "params": { "type": "object" }
-      }
+      },
+      "allOf": [{
+        "if": { "properties": { "method": { "const": "external.open" } } },
+        "then": { "properties": { "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url"],
+          "properties": { "url": { "type": "string", "minLength": 9, "maxLength": 2048 } }
+        } } }
+      }]
     },
     "response": {
       "type": "object",

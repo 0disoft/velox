@@ -18,6 +18,8 @@ import (
 	"github.com/0disoft/velox/internal/artifactlimits"
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildplan"
+	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
 func TestBuildCancellationPreservesOutputAndAllowsRetry(t *testing.T) {
@@ -61,6 +63,35 @@ func TestBuildCancellationPreservesOutputAndAllowsRetry(t *testing.T) {
 				t.Fatalf("retry: %v", err)
 			}
 		})
+	}
+}
+
+func TestBuildPreservesOptInExternalPermission(t *testing.T) {
+	root, path, host := fixture(t)
+	value, err := manifest.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	value.Security.Permissions = []string{"external.open"}
+	body, err := json.Marshal(value.Manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeFixture(t, path, body)
+	plan, err := buildplan.CreateBuild(buildplan.Options{ManifestPath: path, HostPath: host, OutputRoot: filepath.Join(root, "dist")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := Build(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := result.Report.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := runtimeconfig.Load(filepath.Join(result.DirectoryPath, "velox.runtime.json"))
+	if err != nil || strings.Join(cfg.Security.Permissions, ",") != "external.open" || strings.Join(result.Report.Permissions, ",") != "external.open" {
+		t.Fatalf("permission round trip: %+v, %+v, %v", cfg.Security, result.Report.Permissions, err)
 	}
 }
 
@@ -351,7 +382,7 @@ func fixture(t *testing.T) (string, string, string) {
 
 func hostMetadata(host []byte) []byte {
 	digest := sha256.Sum256(host)
-	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-beta.5","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
+	return []byte(fmt.Sprintf(`{"schemaVersion":"velox.host/v1","releaseVersion":"0.5.10-beta.6","target":"windows-x64","contracts":{"host":1,"runtime":1,"ipc":1},"host":{"file":"velox-host.exe","bytes":%d,"sha256":"%x"}}`, len(host), digest))
 }
 
 func writeFixture(t *testing.T, path string, value []byte) {
