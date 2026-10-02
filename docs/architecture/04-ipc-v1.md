@@ -89,6 +89,9 @@ the window to close, not in a pending native-response continuation.
 | `file.appendSave` | `file.save` | `{token, offset, text}` | `{bytes}` received so far; byte offset must match |
 | `file.commitSave` | `file.save` | `{token}` | `{cancelled, name, bytes}` after native save selection and disk commit |
 | `file.cancelSave` | `file.save` | `{token}` | `null`; discard staged text without file access |
+| `file.commitSaveAs` | `file.save` | `{token}` | native selection/save result with a document-scoped `target` on success |
+| `file.commitSaveTo` | `file.save` | `{token, target}` | save result after validating and reusing the connected target |
+| `file.releaseSaveTarget` | `file.save` | `{target}` | `null`; revoke that target without file access |
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
@@ -196,6 +199,38 @@ backup cleanup failed: keep editor text and inspect recovery files in the chosen
 folder. The target may already contain the new text. Crash or power-loss
 atomicity and same-user adversarial path replacement are not guaranteed.
 
+### Document-Scoped Save
+
+ADR 0027 provides an explicit alternative to per-call selection:
+
+```js
+let saved = await window.velox.saveTextAs(editor.value, "notes.md");
+if (!saved.cancelled) {
+  saved = await window.velox.saveTextTo(editor.value, saved.target);
+  // Before New or a different editor document in the same page:
+  await window.velox.invoke("file.releaseSaveTarget", { target: saved.target });
+}
+```
+
+The upload methods and limits are unchanged. `file.commitSaveAs` and
+`file.commitSaveTo` are deferred, with IDs reserved through completion.
+`target` is a positive uint32 in its own namespace, never an upload token or
+caller path. Only one target is retained; successful connected Save as replaces
+it and cancel keeps it. Navigation/reload/shutdown clear it. Do not persist it
+or treat restored drafts as authorized to save. `saveText` still shows a picker
+every time and does not return a target; `file.openText` remains read-only.
+
+Before Save, compare the file's ID, size, last-write time and SHA-256 with its
+last successful baseline. `FILE_CHANGED` rejects deleted/replaced/modified
+targets without overwriting them, including same-size edits with restored
+timestamps. `SAVE_TARGET_INVALID` rejects revoked or stale tokens. Keep editor
+contents on errors; there is no force-overwrite flag. Native Save as supplies
+explicit selection and overwrite confirmation when a conflict must be resolved.
+Successful writes refresh the baseline only after verifying disk contents.
+Verification/replacement failures can occur after writing, so retain buffers.
+No file handle, watcher, timer or background worker is retained. Same-user
+path races and power-loss atomicity retain ADR 0026's limitations.
+
 ## Stable Error Codes
 
 - `INVALID_REQUEST`
@@ -210,6 +245,8 @@ atomicity and same-user adversarial path replacement are not guaranteed.
 - `NATIVE_OPERATION_FAILED`
 - `UNSUPPORTED_FILE`
 - `SAVE_RECOVERY_REQUIRED`
+- `FILE_CHANGED`
+- `SAVE_TARGET_INVALID`
 - `INVALID_RESPONSE` (JavaScript bridge validation)
 
 Native failures return a stable message and do not expose paths, stack traces,

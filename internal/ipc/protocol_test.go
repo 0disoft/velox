@@ -208,7 +208,7 @@ func TestBridgeIsFrozenAndUsesBoundedProtocol(t *testing.T) {
 	source := BridgeSource()
 	for _, required := range []string{
 		`Object.defineProperty(window, "velox"`,
-		`Object.freeze({ invoke: Object.freeze(invoke), saveText: Object.freeze(saveText) })`,
+		`saveText: Object.freeze(saveText), saveTextAs: Object.freeze(saveTextAs), saveTextTo: Object.freeze(saveTextTo)`,
 		`pending.size >= 64`,
 		`{ v: 1, id, method, params }`,
 		`configurable: false`,

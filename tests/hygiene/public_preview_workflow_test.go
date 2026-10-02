@@ -146,7 +146,7 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	}
 
 	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-beta.12"`) {
+	if !strings.Contains(version, `const Version = "0.5.10-beta.13"`) {
 		t.Fatal("local candidate version is not beta.2")
 	}
 }

@@ -289,7 +289,8 @@ narrow opt-in capabilities are implemented; they do not authorize the broader
 features below. ADR 0025 further permits one selected local text-file read,
 and ADR 0026 adds selected UTF-8 text saving with a bounded upload and native
 overwrite confirmation. Neither grants unrestricted filesystem access,
-persistent file grants or save-to-last-path behavior.
+persistent file grants. ADR 0027 adds explicit document-scoped save-target
+reuse with content/identity conflict checks, not a restart-persistent grant.
 
 - Automatic updates.
 - Application code signing automation.

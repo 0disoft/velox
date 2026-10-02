@@ -21,6 +21,24 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Document-Scoped Save Local Checks: 2026-10-03
+
+Local beta.13 adds ADR 0027's explicit connected Save as/Save. The full Go suite,
+`go vet ./...` and four Bun bridge tests passed. Real disk tests verified repeated
+save/readback and rejected external edits, same-size edits with restored write
+time, replacement and deletion without damaging external contents or recreating
+the deleted file. Engine and IPC tests cover cancellation retaining the previous
+target, revocation of queued writes, document-generation mismatch, navigation
+and shutdown cleanup, changed post-write readback, permission denial and strict
+parameter routing. Existing picker-per-call saving and read-only opening remain
+unchanged. No watcher, worker, timer or new dependency was added.
+
+The Text Writer 0.2.0 example now provides New, Save and Save as with session-only
+target reuse and error-buffer preservation. Real connected Save, native prompt
+interaction and external-change conflict UI are still manually unverified.
+File Notes migration, draft/file reconnection after restart, hosted CI, push,
+publication and beta-channel approval are not claimed by these local checks.
+
 ## Native Text Save Manual Check: 2026-10-03
 
 The maintainer confirmed saving, overwriting and opening the saved text in

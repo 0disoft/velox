@@ -106,6 +106,7 @@ func (d *Dispatcher) Close() {
 	d.closing = true
 	d.upload = nil
 	d.mu.Unlock()
+	d.DropPreparedText()
 }
 
 func (d *Dispatcher) SetExternalOpener(opener ExternalOpener) {
@@ -197,7 +198,7 @@ func methodPermission(method string) (string, bool) {
 		return PermissionExternal, true
 	case "file.openText":
 		return PermissionFileOpen, true
-	case "file.beginSave", "file.appendSave", "file.commitSave", "file.cancelSave":
+	case "file.beginSave", "file.appendSave", "file.commitSave", "file.cancelSave", "file.commitSaveAs", "file.commitSaveTo", "file.releaseSaveTarget":
 		return PermissionFileSave, true
 	case "window.getState", "window.minimize", "window.maximize", "window.restore", "window.close":
 		return PermissionWindow, true

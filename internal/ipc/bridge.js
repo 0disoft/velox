@@ -61,7 +61,7 @@
     }
   }
 
-  async function saveText(text, name = "Untitled.txt") {
+  async function uploadText(text, name, commit, extra = {}) {
     if (typeof text !== "string" || !text.isWellFormed() || text.includes("\0")) {
       throw createError("INVALID_PARAMS", "Save text must be valid UTF-8 without NUL characters.");
     }
@@ -86,15 +86,30 @@
         start = end;
       }
       // Commit consumes the upload even when selection is cancelled or writing fails.
-      return await invoke("file.commitSave", { token });
+      return await invoke(commit, { token, ...extra });
     } finally {
       // A consumed token no longer exists; cleanup errors must not mask the save result.
       await invoke("file.cancelSave", { token }).catch(() => {});
     }
   }
 
+  function saveText(text, name = "Untitled.txt") {
+    return uploadText(text, name, "file.commitSave");
+  }
+
+  function saveTextAs(text, name = "Untitled.txt") {
+    return uploadText(text, name, "file.commitSaveAs");
+  }
+
+  async function saveTextTo(text, target) {
+    if (!Number.isInteger(target) || target <= 0 || target > 0xffffffff) {
+      throw createError("INVALID_PARAMS", "A connected save target is required.");
+    }
+    return uploadText(text, "Untitled.txt", "file.commitSaveTo", { target });
+  }
+
   Object.defineProperty(window, "velox", {
-    value: Object.freeze({ invoke: Object.freeze(invoke), saveText: Object.freeze(saveText) }),
+    value: Object.freeze({ invoke: Object.freeze(invoke), saveText: Object.freeze(saveText), saveTextAs: Object.freeze(saveTextAs), saveTextTo: Object.freeze(saveTextTo) }),
     configurable: false,
     enumerable: true,
     writable: false,

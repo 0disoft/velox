@@ -5,6 +5,8 @@ header { display: flex; align-items: center; gap: 12px; padding: 16px 24px; back
 h1 { font-size: 20px; margin: 0; font-weight: 600; }
 #filename { margin-left: auto; overflow-wrap: anywhere; max-width: 100%; }
 nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; background: white; border-bottom: 1px solid #d6dcd8; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+nav { flex-wrap: wrap; }
 button { font: inherit; font-weight: 600; min-height: 40px; padding: 8px 24px; border: 1px solid #478c66; border-radius: 4px; background: white; color: #24633f; cursor: pointer; }
 button:hover { background: #eaf4ef; }
 button:disabled { opacity: .55; cursor: wait; }

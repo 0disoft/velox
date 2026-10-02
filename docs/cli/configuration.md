@@ -166,9 +166,17 @@ reusable grant. It does not authorize writes or directory access. See
 `file.save` independently opts into `window.velox.saveText(text, name)` and its
 bounded upload methods: write at most 2 MiB of UTF-8 text to one native-dialog
 selection, with overwrite confirmation. No application path or persisted grant
-is accepted. Every save requires a new selection. See
+is accepted. The original `saveText` helper requires a new selection each time. See
 [selected text saving](../architecture/04-ipc-v1.md#selected-local-text-saving)
 for cancellation, staging and replacement-failure recovery.
+
+ADR 0027 additionally provides `saveTextAs` and `saveTextTo` under `file.save`.
+The first explicitly selects and writes a file, returning a session-only target;
+the second saves to that one file after ID/metadata/content conflict checks.
+Navigation or shutdown clears the connection. Apps must revoke it on New using
+`file.releaseSaveTarget`; draft restoration does not restore this grant. The
+original `saveText` still requires a picker per save. See
+[document-scoped save](../architecture/04-ipc-v1.md#document-scoped-save).
 
 ## Path Rules
 

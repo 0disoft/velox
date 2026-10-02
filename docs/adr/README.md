@@ -41,6 +41,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0024 | Accepted | Allow an opt-in host-owned system tray with fixed lifecycle commands |
 | 0025 | Accepted | Read one explicitly selected local UTF-8 text file without a reusable grant |
 | 0026 | Accepted | Save bounded UTF-8 text through native selection and overwrite confirmation without a reusable grant |
+| 0027 | Accepted | Reuse one document-scoped save target with file identity and content conflict checks |
 
 ## Lifecycle
 

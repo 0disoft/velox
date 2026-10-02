@@ -48,10 +48,25 @@
           }
         } } }
       }, {
-        "if": { "properties": { "method": { "enum": ["file.commitSave", "file.cancelSave"] } } },
+        "if": { "properties": { "method": { "enum": ["file.commitSave", "file.cancelSave", "file.commitSaveAs"] } } },
         "then": { "properties": { "params": {
           "type": "object", "additionalProperties": false, "required": ["token"],
           "properties": { "token": { "type": "integer", "minimum": 1, "maximum": 4294967295 } }
+        } } }
+      }, {
+        "if": { "properties": { "method": { "const": "file.commitSaveTo" } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["token", "target"],
+          "properties": {
+            "token": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+            "target": { "type": "integer", "minimum": 1, "maximum": 4294967295 }
+          }
+        } } }
+      }, {
+        "if": { "properties": { "method": { "const": "file.releaseSaveTarget" } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["target"],
+          "properties": { "target": { "type": "integer", "minimum": 1, "maximum": 4294967295 } }
         } } }
       }]
     },

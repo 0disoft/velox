@@ -117,6 +117,14 @@ cleanup failures preserve recovery evidence and must not be reported as success.
 Same-user path replacement races and power-loss-proof transactions remain outside
 the claim; File Notes still uses its existing browser API.
 
+ADR 0027 adds explicit session-only target reuse under `file.save`, created only
+after native selection, successful write and verified readback. A private path
+and bounded baseline stay in host memory, with no idle open handle or persistent
+grant. Save compares file ID/size/write time/SHA-256 and rejects external changes,
+deletion or replacement. Navigation/shutdown or explicit document replacement
+revokes the token. Legacy picker-per-call saving and read-only opening remain
+unchanged. No force-overwrite, arbitrary path, watcher or background poll is added.
+
 Adding one requires a threat-model update, ADR, permission contract, negative
 tests, and performance impact evidence.
 

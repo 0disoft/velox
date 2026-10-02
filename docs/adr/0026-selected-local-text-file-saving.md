@@ -14,6 +14,8 @@ is enabled. Applications supply only UTF-8 text and a suggested base filename;
 they cannot supply a path. Return `{cancelled, name, bytes}`, never a path or
 reusable filesystem grant. Cancellation writes nothing and consumes the upload.
 No save-to-last-path or persisted grant is added. File Notes migration is separate.
+ADR 0027 adds separate, explicit connected-save methods; this original per-call
+selection contract remains unchanged for `saveText` and `file.commitSave`.
 The dialog offers Text documents (`*.txt;*.text`), Markdown (`*.md;*.markdown`)
 and All files (`*.*`). Choose the initial filter from the suggested extension;
 names without an extension default to text. Windows updates the default extension

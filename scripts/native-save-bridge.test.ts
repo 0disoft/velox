@@ -14,7 +14,7 @@ function bridge(failAppend = false) {
     expect(new TextEncoder().encode(JSON.stringify({ id: 1, method: "__veloxInvoke", params: [request], session: "document" })).length).toBeLessThanOrEqual(65536);
     let result: any;
     switch (request.method) {
-      case "file.beginSave": result = { token: 1 }; break;
+      case "file.beginSave": offset = 0; result = { token: 1 }; break;
       case "file.appendSave":
         if (failAppend) return { v: 1, id: request.id, ok: false, error: { code: "INVALID_PARAMS", message: "bad chunk" } };
         expect(request.params.offset).toBe(offset);
@@ -23,6 +23,10 @@ function bridge(failAppend = false) {
         offset += new TextEncoder().encode(request.params.text).length;
         result = { bytes: offset }; break;
       case "file.commitSave": result = { cancelled: false, name: "notes.txt", bytes: offset }; break;
+      case "file.commitSaveAs": result = { cancelled: false, name: "notes.txt", bytes: offset, target: 7 }; break;
+      case "file.commitSaveTo":
+        expect(request.params.target).toBe(7);
+        result = { cancelled: false, name: "notes.txt", bytes: offset, target: 7 }; break;
       case "file.cancelSave": result = null; break;
       default: throw new Error(request.method);
     }
@@ -41,6 +45,22 @@ test("save helper sends 2 MiB without enlarging transport limits", async () => {
   expect(result.bytes).toBe(text.length);
   expect(requests.at(-2).method).toBe("file.commitSave");
   expect(Object.isFrozen(api)).toBe(true);
+});
+
+test("connected helpers reuse only a native target token", async () => {
+  const { api, requests } = bridge();
+  const connected = await api.saveTextAs("first", "notes.txt");
+  expect(connected.target).toBe(7);
+  const saved = await api.saveTextTo("second", connected.target);
+  expect(saved.bytes).toBe(6);
+  const commits = requests.filter((r) => r.method.startsWith("file.commit"));
+  expect(commits.map((r) => r.method)).toEqual(["file.commitSaveAs", "file.commitSaveTo"]);
+  expect(commits[1].params).toEqual({ token: 1, target: 7 });
+  for (const target of [0, -1, 1.5, 4294967296, "C:/private.txt", null]) {
+    const denied = bridge();
+    await expect(denied.api.saveTextTo("text", target)).rejects.toThrow();
+    expect(denied.requests).toHaveLength(0);
+  }
 });
 
 test("save chunks preserve Korean, emoji boundaries and escaped controls", async () => {

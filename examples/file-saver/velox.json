@@ -1,7 +1,7 @@
 {
   "$schema": "../../schema/velox-v1.schema.json",
   "schemaVersion": 1,
-  "app": {"id": "dev.velox.filesaver", "name": "Velox Text Writer", "version": "0.1.0"},
+  "app": {"id": "dev.velox.filesaver", "name": "Velox Text Writer", "version": "0.2.0"},
   "assets": {"root": "web", "entry": "index.html"},
   "window": {"width": 1000, "height": 720},
   "security": {"permissions": ["file.save"]}
