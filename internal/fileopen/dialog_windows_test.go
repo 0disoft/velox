@@ -29,3 +29,25 @@ func TestNativeDialogConfiguration(t *testing.T) {
 		t.Fatalf("unexpected dialog options: %x", options)
 	}
 }
+
+func TestNativeSaveDialogConfiguration(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	hr, _, _ := dialogOle32.NewProc("CoInitializeEx").Call(0, 2)
+	if int32(hr) < 0 {
+		t.Fatal("STA initialization failed")
+	}
+	defer dialogOle32.NewProc("CoUninitialize").Call()
+	dialog, err := newSaveDialog("notes.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dialog.call(2)
+	var options uint32
+	if int32(dialog.call(10, uintptr(unsafe.Pointer(&options)))) < 0 {
+		t.Fatal("GetOptions failed")
+	}
+	if options&0x0211884a != 0x0211884a || options&(0x200|0x1000) != 0 {
+		t.Fatalf("unexpected options: %x", options)
+	}
+}
