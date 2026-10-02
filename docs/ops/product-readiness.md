@@ -21,6 +21,23 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Native Text File Open Manual Check: 2026-10-03
+
+The maintainer confirmed the requested real file-selection and cancellation
+checks worked in the read-only Text Viewer example. This is user-reported
+manual evidence, not an automated dialog observation or an independently
+recorded byte-for-byte comparison of the selected file.
+
+The local beta.10 example package was built from source commit
+`b12753134e263dd38eb216626b8b566919971724`, app ID `dev.velox.filereader`.
+Its host executable SHA-256, rechecked when recording this confirmation, is
+`b6c0db6d8942975bd958771821051079d7867ac2452037fac55ad941b728aef3`.
+The example requests only `file.open`; it does not write files or retain a
+native file-access grant. See [ADR 0025](../adr/0025-selected-local-text-file-opening.md).
+
+Native saving and File Notes migration remain separate work. This confirmation
+does not imply a hosted CI pass, publication, signing, or beta-channel approval.
+
 ## External HTTPS Manual Check: 2026-10-02
 
 The maintainer confirmed the allowed fixture behaved as requested: cancelling
