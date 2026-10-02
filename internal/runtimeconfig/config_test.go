@@ -1,12 +1,34 @@
 package runtimeconfig
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/0disoft/velox/internal/manifest"
 )
+
+func TestWindowRememberStateManifestRoundTrip(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.state-test", Name: "State test", Version: "1"},
+			Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600, RememberState: enabled}}}
+		cfg := FromManifest(value, "web")
+		body, err := json.Marshal(cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		parsed, err := Parse(body)
+		if err != nil || parsed.Window.RememberState != enabled {
+			t.Fatalf("round trip = %+v, %v", parsed.Window, err)
+		}
+		if strings.Contains(string(body), `"rememberState"`) != enabled {
+			t.Fatalf("optional field output = %s", body)
+		}
+	}
+}
 
 func TestLoad(t *testing.T) {
 	root := t.TempDir()

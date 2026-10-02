@@ -105,6 +105,10 @@ method table, and the no-consumer-compiler boundary are unchanged. Install,
 removal, the isolated Setup payload, and the remaining limitations are
 documented in `docs/ops/windows-installer.md`.
 
+ADR 0021 adds a narrow, opt-in window-state persistence amendment to ADR 0017.
+It restores one top-level window's placement from a bounded host-owned state
+file and does not widen the application runtime API.
+
 The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
 developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.
 Publication run `29895087658` and public-download verification run `29895490556`
@@ -130,6 +134,19 @@ passed with ZIP SHA-256
 - Window dimensions use 96-DPI logical units. The initial outer window size
   and size limits scale for DPI; monitor DPI changes apply the Windows-suggested
   physical rectangle and refresh WebView bounds. Font sizes remain CSS-owned.
+- Opt-in window-state persistence. With `window.rememberState: true`, the host
+  saves the raw physical screen normal rectangle, monitor work area, DPI,
+  maximized state, and a state-format version in `velox-window-state.json`
+  under the application profile, and restores it after the window is created
+  but before entry navigation. The restore scales for the current DPI, clamps
+  into the current display work area, and keeps a minimum normal size of 320 by
+  240 logical units. The state-format version is independent of `app.version`,
+  so application updates keep the placement. A minimized close never restores
+  minimized. The record is written once on a normal window destroy; a cancelled
+  close does not write and forced termination is not guaranteed to save. When
+  the field is absent or `false`, no state file is read or written and no
+  window subclass is installed. This adds no IPC method, native permission, or
+  background process.
 - A virtual HTTPS origin mapped to the local asset directory.
 - Virtual HTTPS remains the only production asset transport while
   immediate-relaunch recovery is diagnosed under ADR 0007; file URL loading is
@@ -242,6 +259,9 @@ who can modify the installed asset directory.
   `%LOCALAPPDATA%\Velox\profiles\<app-id>` on Windows. Velox does not delete it
   automatically. Benchmarks and controlled runs may override the location with
   `VELOX_DATA_DIR`.
+- When `window.rememberState` is true, the host keeps one bounded window-state
+  record (`velox-window-state.json`) in that profile directory. It is
+  host-owned operational data and is not exposed to web content.
 
 ## Success Criteria
 

@@ -98,6 +98,12 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("bind ready marker: %w", err)
 	}
+	if config.RememberState {
+		if err := installWindowState(uintptr(view.Window()), config.DataPath, config.AppID); err != nil {
+			destroyBeforeRun(view)
+			return nil, err
+		}
+	}
 	view.Navigate(entryURL)
 	if config.StartupPhase != nil {
 		config.StartupPhase("navigation-dispatched")

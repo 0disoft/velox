@@ -41,7 +41,8 @@ shape is:
       },
       "window": {
         "width": 960,
-        "height": 640
+        "height": 640,
+        "rememberState": false
       },
       "security": {
         "permissions": []
@@ -97,9 +98,28 @@ the canonical project root after validation.
 
 ### window
 
-Initial width and height. Zero or omitted values resolve to 960 by 640. Widths
-below 320 and heights below 240 are rejected. Resizable state, position policy,
-and background color are not manifest fields in v1.
+Initial width and height, plus optional window-state persistence.
+
+- `width`, `height`: initial outer size in 96-DPI logical units. Zero or
+  omitted values resolve to 960 by 640. Widths below 320 and heights below 240
+  are rejected.
+- `rememberState`: optional boolean, default `false`. When `true`, the host
+  saves the raw physical screen normal rectangle, the monitor work area, the
+  DPI, the maximized state, and a state-format version (currently `1`) to
+  `velox-window-state.json` in the application profile directory
+  (`VELOX_DATA_DIR` when set, otherwise
+  `%LOCALAPPDATA%\Velox\profiles\<app-id>`), and restores it after the window
+  is created but before entry navigation. The restore scales for the current
+  DPI, clamps into the current work area, and keeps a minimum normal size of
+  320 by 240 logical units. The state-format version is independent of
+  `app.version`, so application updates keep the placement. A missing,
+  malformed, oversized, wrong-application, or wrong-state-format-version record
+  is ignored. A minimized close never restores minimized. When `false` or
+  omitted, the host performs no state file I/O and installs no window subclass.
+  See ADR 0021.
+
+Resizable state, position policy, and background color are not manifest fields
+in v1.
 
 ### security
 

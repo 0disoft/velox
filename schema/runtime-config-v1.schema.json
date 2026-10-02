@@ -35,7 +35,8 @@
       "required": ["width", "height"],
       "properties": {
         "width": { "type": "integer", "minimum": 320 },
-        "height": { "type": "integer", "minimum": 240 }
+        "height": { "type": "integer", "minimum": 240 },
+        "rememberState": { "type": "boolean", "default": false }
       }
     },
     "security": {

@@ -45,8 +45,9 @@ type Assets struct {
 }
 
 type Window struct {
-	Width  uint `json:"width"`
-	Height uint `json:"height"`
+	Width         uint `json:"width"`
+	Height        uint `json:"height"`
+	RememberState bool `json:"rememberState,omitempty"`
 }
 
 type Security struct {

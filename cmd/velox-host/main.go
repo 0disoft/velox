@@ -66,6 +66,7 @@ func run(args []string) int {
 		Permissions:             cfg.Security.Permissions,
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
+		RememberState:           cfg.Window.RememberState,
 		DataPath:                dataPath,
 		BrowserExecutableFolder: benchmark.browserExecutableFolder,
 		AssetRoot:               cfg.AssetRoot,

@@ -23,11 +23,26 @@ func TestLoadAppliesDocumentedDefaults(t *testing.T) {
 	if got.Assets.Root != "web" || got.Assets.Entry != "index.html" {
 		t.Fatalf("asset defaults = %+v", got.Assets)
 	}
-	if got.Window.Width != 960 || got.Window.Height != 640 {
+	if got.Window.Width != 960 || got.Window.Height != 640 || got.Window.RememberState {
 		t.Fatalf("window defaults = %+v", got.Window)
 	}
 	if got.Security.Permissions == nil || len(got.Security.Permissions) != 0 {
 		t.Fatalf("permission defaults = %#v", got.Security.Permissions)
+	}
+}
+
+func TestLoadWindowRememberState(t *testing.T) {
+	root := t.TempDir()
+	writeTestFile(t, filepath.Join(root, "web", "index.html"), "ok")
+	path := filepath.Join(root, "velox.json")
+	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.state-test","name":"State test","version":"1"},"window":{"rememberState":true}}`)
+	got, err := Load(path)
+	if err != nil || !got.Window.RememberState {
+		t.Fatalf("rememberState = %+v, %v", got.Window, err)
+	}
+	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.state-test","name":"State test","version":"1"},"window":{"rememberState":"true"}}`)
+	if _, err := Load(path); err == nil {
+		t.Fatal("accepted non-boolean rememberState")
 	}
 }
 

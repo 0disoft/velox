@@ -28,6 +28,7 @@ type Config struct {
 	Permissions             []string
 	Width                   uint
 	Height                  uint
+	RememberState           bool
 	DataPath                string
 	BrowserExecutableFolder string
 	AssetRoot               string
