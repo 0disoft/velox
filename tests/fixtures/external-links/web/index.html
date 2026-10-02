@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+    <title>Velox External Links</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <img src="velox.png" width="36" height="36" alt="Velox">
+      <h1>External Links</h1>
+      <span id="bridge-status" role="status">Starting</span>
+    </header>
+    <main>
+      <div class="request-row">
+        <label for="https-url">HTTPS</label>
+        <input id="https-url" type="text" value="https://github.com/0disoft/velox" readonly>
+        <button type="button" data-field="https-url" title="Open HTTPS link" aria-label="Open HTTPS link">&#8599;</button>
+        <output id="https-url-result">Not requested</output>
+      </div>
+      <div class="request-row">
+        <label for="http-url">HTTP</label>
+        <input id="http-url" type="text" value="http://example.com/" readonly>
+        <button type="button" data-field="http-url" title="Request HTTP link" aria-label="Request HTTP link">&#8599;</button>
+        <output id="http-url-result">Not requested</output>
+      </div>
+      <div class="request-row">
+        <label for="file-url">File</label>
+        <input id="file-url" type="text" value="file:///C:/velox-external-check.txt" readonly>
+        <button type="button" data-field="file-url" title="Request file URI" aria-label="Request file URI">&#8599;</button>
+        <output id="file-url-result">Not requested</output>
+      </div>
+      <pre id="last-response" aria-live="polite">Ready</pre>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "runtimeVersion": 1,
+  "app": { "id": "dev.velox.external-check-denied", "name": "Velox External Links - Denied", "version": "0.1.0" },
+  "assets": { "root": "web", "entry": "index.html" },
+  "window": { "width": 880, "height": 560 },
+  "security": { "permissions": [] }
+}
