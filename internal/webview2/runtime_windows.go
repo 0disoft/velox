@@ -104,6 +104,12 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 			return nil, err
 		}
 	}
+	if config.SingleInstance != nil {
+		if err := config.SingleInstance.Attach(uintptr(view.Window())); err != nil {
+			destroyBeforeRun(view)
+			return nil, err
+		}
+	}
 	view.Navigate(entryURL)
 	if config.StartupPhase != nil {
 		config.StartupPhase("navigation-dispatched")

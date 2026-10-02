@@ -12,6 +12,7 @@ import (
 
 	"github.com/0disoft/velox/internal/benchmarker"
 	"github.com/0disoft/velox/internal/runtimeconfig"
+	"github.com/0disoft/velox/internal/singleinstance"
 	"github.com/0disoft/velox/internal/webview2"
 )
 
@@ -56,6 +57,21 @@ func run(args []string) int {
 		}
 	}
 
+	var instance *singleinstance.Guard
+	if cfg.App.SingleInstance {
+		var primary bool
+		instance, primary, err = singleinstance.Acquire(cfg.App.ID, dataPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
+			return 6
+		}
+		defer instance.Close()
+		if !primary {
+			instance.Activate()
+			return 0
+		}
+	}
+
 	var runtime *webview2.Runtime
 	audit := newPolicyAudit(benchmark.policyAudit)
 	timeline.Mark("runtime-open-started")
@@ -67,6 +83,7 @@ func run(args []string) int {
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
 		RememberState:           cfg.Window.RememberState,
+		SingleInstance:          instance,
 		DataPath:                dataPath,
 		BrowserExecutableFolder: benchmark.browserExecutableFolder,
 		AssetRoot:               cfg.AssetRoot,

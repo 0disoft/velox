@@ -27,7 +27,8 @@ shape is:
       "app": {
         "id": "com.example.hello",
         "name": "Hello",
-        "version": "1.2.3"
+        "version": "1.2.3",
+        "singleInstance": false
       },
       "branding": {
         "icon": "app.ico",
@@ -65,6 +66,15 @@ executable (`<app.id>.exe`) and the output directory; `app.name` sets the window
 title; and all three values are recorded in the build report. When `branding`
 is present, `app.name` and `app.version` additionally supply the executable
 version resource.
+
+`singleInstance` is an optional boolean, default `false`. When `true`, the
+host acquires one Windows named mutex per application, profile, user, and
+session before opening WebView2. A duplicate launch creates no second window;
+it asks the existing window to restore from minimized and request foreground,
+then exits `0`. A duplicate during startup is suppressed without activation,
+and foreground focus is best-effort because Windows controls it. The mutex is a
+convenience mechanism, not a security boundary. A lock or attach failure exits
+`6` rather than silently launching a duplicate. See ADR 0022.
 
 ### branding
 

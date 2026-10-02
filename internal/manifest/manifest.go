@@ -34,9 +34,10 @@ type Branding struct {
 }
 
 type App struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Version        string `json:"version"`
+	SingleInstance bool   `json:"singleInstance,omitempty"`
 }
 
 type Assets struct {

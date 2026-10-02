@@ -25,9 +25,10 @@ type Config struct {
 }
 
 type App struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Version string `json:"version,omitempty"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Version        string `json:"version,omitempty"`
+	SingleInstance bool   `json:"singleInstance,omitempty"`
 }
 
 type Assets struct {
@@ -56,7 +57,7 @@ func FromManifest(value manifest.Resolved, assetRoot string) Config {
 	return Config{
 		RuntimeVersion: Version,
 		App: App{
-			ID: value.App.ID, Name: value.App.Name, Version: value.App.Version,
+			ID: value.App.ID, Name: value.App.Name, Version: value.App.Version, SingleInstance: value.App.SingleInstance,
 		},
 		Assets:   Assets{Root: filepath.ToSlash(assetRoot), Entry: filepath.ToSlash(value.Assets.Entry)},
 		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, RememberState: value.Window.RememberState},

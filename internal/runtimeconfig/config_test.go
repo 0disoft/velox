@@ -30,6 +30,27 @@ func TestWindowRememberStateManifestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestAppSingleInstanceManifestRoundTrip(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.instance-test", Name: "Test", Version: "1", SingleInstance: enabled},
+			Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600}}}
+		body, err := json.Marshal(FromManifest(value, "web"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		parsed, err := Parse(body)
+		if err != nil || parsed.App.SingleInstance != enabled || strings.Contains(string(body), `"singleInstance"`) != enabled {
+			t.Fatalf("round trip=%+v, %s, %v", parsed.App, body, err)
+		}
+		if enabled {
+			invalid := strings.Replace(string(body), `"singleInstance":true`, `"singleInstance":"true"`, 1)
+			if _, err := Parse([]byte(invalid)); err == nil {
+				t.Fatal("accepted non-boolean singleInstance")
+			}
+		}
+	}
+}
+
 func TestLoad(t *testing.T) {
 	root := t.TempDir()
 	web := filepath.Join(root, "web")

@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"github.com/0disoft/velox/internal/singleinstance"
 )
 
 var ErrRuntimeUnavailable = errors.New("WebView2 Runtime is unavailable or initialization failed")
@@ -29,6 +31,7 @@ type Config struct {
 	Width                   uint
 	Height                  uint
 	RememberState           bool
+	SingleInstance          *singleinstance.Guard
 	DataPath                string
 	BrowserExecutableFolder string
 	AssetRoot               string

@@ -46,6 +46,23 @@ func TestLoadWindowRememberState(t *testing.T) {
 	}
 }
 
+func TestLoadAppSingleInstance(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "velox.json")
+	for _, test := range []struct {
+		field            string
+		enabled, invalid bool
+	}{
+		{"", false, false}, {`,"singleInstance":false`, false, false},
+		{`,"singleInstance":true`, true, false}, {`,"singleInstance":"true"`, false, true},
+	} {
+		writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.instance-test","name":"Instance test","version":"1"`+test.field+`}}`)
+		got, err := Load(path)
+		if (err != nil) != test.invalid || (!test.invalid && got.App.SingleInstance != test.enabled) {
+			t.Fatalf("field %q: %+v, %v", test.field, got.App, err)
+		}
+	}
+}
+
 func TestLoadRejectsInvalidContracts(t *testing.T) {
 	tests := []struct {
 		name    string

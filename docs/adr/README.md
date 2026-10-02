@@ -31,11 +31,12 @@ choice inside that scope and cannot silently add a product capability.
 | 0014 | Superseded by 0015 | Adopt Actutum as the public product, command, module, schema, and release identity |
 | 0015 | Accepted | Retain Velox as the maintainer-approved product, command, module, schema, and release identity |
 | 0016 | Accepted | Complete M4 with maintainer-controlled clean-room distribution evidence and keep independent adoption as an M5 input |
-| 0017 | Accepted; beta evidence clause superseded by 0018; amended in part by 0020 and 0021 | Continue as a narrow static desktop packager |
+| 0017 | Accepted; beta evidence clause superseded by 0018; amended in part by 0020, 0021, and 0022 | Continue as a narrow static desktop packager |
 | 0018 | Accepted | Replace the calendar-dependent human beta gate with clean-room LLM agent evaluation without claiming human adoption |
 | 0019 | Accepted | Gate beta on product workflows; AI evaluation becomes optional diagnostic evidence |
 | 0020 | Accepted (branding); per-user installer follow-up accepted, no updater | Allow optional compiler-free executable branding and an optional per-user Windows Setup while the default shared-icon portable output stays unchanged |
 | 0021 | Accepted | Allow opt-in window state persistence as a narrow lifecycle amendment to 0017 |
+| 0022 | Accepted | Allow opt-in single-instance host coordination as a narrow lifecycle amendment to 0017 |
 
 ## Lifecycle
 

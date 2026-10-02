@@ -109,6 +109,10 @@ ADR 0021 adds a narrow, opt-in window-state persistence amendment to ADR 0017.
 It restores one top-level window's placement from a bounded host-owned state
 file and does not widen the application runtime API.
 
+ADR 0022 adds a narrow, opt-in single-instance host amendment to ADR 0017. A
+duplicate launch activates the existing window and exits without a second
+WebView, and it does not widen the application runtime API.
+
 The current public artifact is the explicitly unsigned `0.5.10-alpha.2`
 developer preview from commit `9bbb6bfcc1393058cb80d72c79df601caa970f2f`.
 Publication run `29895087658` and public-download verification run `29895490556`
@@ -147,6 +151,16 @@ passed with ZIP SHA-256
   the field is absent or `false`, no state file is read or written and no
   window subclass is installed. This adds no IPC method, native permission, or
   background process.
+- Opt-in single-instance launch. With `app.singleInstance: true`, the host
+  acquires one per-identity Windows named mutex before opening WebView2, where
+  the identity is the user SID, local session, `app.id`, and canonical profile
+  path. A duplicate launch creates no additional WebView or window, asks the
+  existing window to restore from minimized and request foreground, and exits
+  `0`; a duplicate during startup is suppressed without activation. Foreground
+  focus is best-effort. This is a convenience mechanism, not a security
+  boundary, and it adds no sockets, named-pipe server, argument delivery,
+  background process, or web IPC method. A lock or attach failure fails startup
+  instead of silently duplicating.
 - A virtual HTTPS origin mapped to the local asset directory.
 - Virtual HTTPS remains the only production asset transport while
   immediate-relaunch recovery is diagnosed under ADR 0007; file URL loading is
