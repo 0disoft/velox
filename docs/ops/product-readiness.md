@@ -21,6 +21,26 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Native Text Save Manual Check: 2026-10-03
+
+The maintainer confirmed saving, overwriting and opening the saved text in
+Notepad worked in the beta.11 Text Writer. These are user-reported observations,
+not independent byte-for-byte readback. The supplied screenshot also showed an
+empty file-type selector: the native dialog had no registered file-type list.
+Save-as cancellation and overwrite-prompt cancellation were not explicitly
+confirmed in this report.
+
+The tested package is associated with source
+`61448ab720b0788d8326b07f7c4ec8b5614f9030`, app ID `dev.velox.filesaver`.
+The currently packaged host SHA-256 was rechecked when recording the report:
+`9d143a6217dfedf27f54e2510d84279e0bdb60e3a990c0c32f5a1f8bdea020a7`.
+This does not certify later rebuilt bytes or claim File Notes migration.
+
+The beta.12 follow-up registers Text documents, Markdown and All files filters,
+selects the initial filter from the suggested name, and enables automatic
+default-extension handling. This changes filename selection, not UTF-8 encoding
+or document conversion. Filter selection remains manually unverified.
+
 ## Native Text Save Local Checks: 2026-10-03
 
 Local beta.11 implements ADR 0026's `file.save` and the frozen `saveText` helper.
@@ -37,8 +57,9 @@ The measured source-host build is 4,521,472 bytes, 48,640 bytes (about 1.09%)
 above the recorded beta.10 host. No idle CPU or latency improvement is claimed;
 staging and disk I/O are bounded, on-demand costs. Existing same-profile
 immediate relaunch latency remains (7.05 seconds in the passing startup check).
-The real native Save as, cancel and overwrite-confirmation interaction is still
-manually unverified. File Notes has not migrated; save-to-last-path, hosted CI,
+At that stage, native Save as, cancel and overwrite-confirmation interaction
+was manually unverified; the follow-up report above records later observations.
+File Notes has not migrated; save-to-last-path, hosted CI,
 publication, signing and beta-channel approval are not claimed.
 
 ## Native Text File Open Manual Check: 2026-10-03

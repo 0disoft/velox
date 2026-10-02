@@ -4,7 +4,9 @@ package fileopen
 
 import (
 	"errors"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"unsafe"
 
@@ -19,6 +21,7 @@ var fileSaveClass = windows.GUID{Data1: 0xc0b4e2f3, Data2: 0xba21, Data3: 0x4773
 var fileSaveInterface = windows.GUID{Data1: 0x84bccd23, Data2: 0x5fde, Data3: 0x4cdb, Data4: [8]byte{0xae, 0xa4, 0xaf, 0x64, 0xb8, 0x3d, 0x78, 0xab}}
 
 type dialogObject struct{ table *[29]uintptr }
+type dialogFilterSpec struct{ name, pattern *uint16 }
 
 //go:uintptrescapes
 func (object *dialogObject) call(index int, args ...uintptr) uint32 {
@@ -89,7 +92,57 @@ func newSaveDialog(name string) (*dialogObject, error) {
 		return nil, err
 	}
 	// Overwrite confirmation, existing parent, no readonly return or test-file creation.
-	return createTextDialog(&fileSaveClass, &fileSaveInterface, 0x0211884a, "Save text file (UTF-8, 2 MiB maximum)", name)
+	dialog, err := createTextDialog(&fileSaveClass, &fileSaveInterface, 0x0211884a, "Save text file (UTF-8, 2 MiB maximum)", name)
+	if err != nil {
+		return nil, err
+	}
+	if err := configureSaveFileTypes(dialog, name); err != nil {
+		dialog.call(2)
+		return nil, err
+	}
+	return dialog, nil
+}
+
+func configureSaveFileTypes(dialog *dialogObject, name string) error {
+	definitions := [3][2]string{
+		{"Text documents (*.txt;*.text)", "*.txt;*.text"},
+		{"Markdown (*.md;*.markdown)", "*.md;*.markdown"},
+		{"All files (*.*)", "*.*"},
+	}
+	var filters [3]dialogFilterSpec
+	for i, definition := range definitions {
+		filters[i].name, _ = windows.UTF16PtrFromString(definition[0])
+		filters[i].pattern, _ = windows.UTF16PtrFromString(definition[1])
+	}
+	if int32(dialog.call(4, uintptr(len(filters)), uintptr(unsafe.Pointer(&filters[0])))) < 0 {
+		return ErrUnsupported
+	}
+	runtime.KeepAlive(filters)
+	index, extension := saveFileType(name)
+	if int32(dialog.call(5, uintptr(index))) < 0 {
+		return ErrUnsupported
+	}
+	value, _ := windows.UTF16PtrFromString(extension)
+	if int32(dialog.call(22, uintptr(unsafe.Pointer(value)))) < 0 {
+		return ErrUnsupported
+	}
+	runtime.KeepAlive(value)
+	return nil
+}
+
+func saveFileType(name string) (uint32, string) {
+	extension := strings.TrimPrefix(strings.ToLower(filepath.Ext(name)), ".")
+	switch extension {
+	case "", "txt", "text":
+		if extension == "" {
+			extension = "txt"
+		}
+		return 1, extension
+	case "md", "markdown":
+		return 2, extension
+	default:
+		return 3, ""
+	}
 }
 
 func createTextDialog(class, iface *windows.GUID, options uint32, caption, suggested string) (*dialogObject, error) {

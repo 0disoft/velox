@@ -171,7 +171,9 @@ returns `{cancelled: true, name: "", bytes: 0}` and writes nothing. The suggeste
 name must be a nonempty base filename (at most 240 UTF-8 bytes); paths, reserved
 names, controls and trailing dots/spaces are invalid. Successful results contain
 only the selected base name and UTF-8 byte count. No BOM or newline conversion
-is added. No persistent grant or save-to-last-path is provided.
+is added. No persistent grant or save-to-last-path is provided. The save dialog
+offers Text documents, Markdown and All files; selection controls the default
+filename extension, not the body encoding or document format.
 
 The helper stages at most 2 MiB through the four wire methods above, using
 surrogate-safe chunks of at most 4,096 UTF-16 code units. Both the existing
