@@ -1,7 +1,7 @@
 :root { font-family: "Segoe UI", "Malgun Gothic", sans-serif; font-size: 16px; color: #202621; background: #f3f5f4; }
 * { box-sizing: border-box; }
 body { margin: 0; height: 100vh; display: grid; grid-template-rows: auto auto 1fr auto; }
-header { display: flex; align-items: center; gap: 12px; padding: 16px 24px; background: #17221d; color: white; flex-wrap: wrap; }
+.app-header { display: flex; align-items: center; gap: 12px; padding: 16px 24px; background: #17221d; color: white; flex-wrap: wrap; }
 h1 { font-size: 20px; margin: 0; font-weight: 600; }
 #folder-name { margin-left: auto; overflow-wrap: anywhere; max-width: 100%; }
 nav { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 24px; background: white; border-bottom: 1px solid #d6dcd8; }
@@ -11,10 +11,19 @@ button:hover { background: #eaf4ef; }
 button:disabled { opacity: .55; cursor: default; }
 button:focus-visible { outline: 2px solid #246eac; outline-offset: 2px; }
 #count { margin-left: auto; }
-main { min-height: 0; overflow: auto; padding: 16px 24px; }
+main { min-height: 0; display: grid; grid-template-columns: minmax(220px, 2fr) minmax(0, 3fr); gap: 16px; padding: 16px 24px; }
+.listing { min-height: 0; min-width: 0; overflow: auto; }
 table { width: 100%; table-layout: fixed; border-collapse: collapse; background: white; }
 th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #d6dcd8; overflow-wrap: anywhere; }
 th:last-child { width: 110px; }
 th { color: #43535f; background: #edf1f4; }
+.file-name { display: block; width: 100%; min-height: 24px; padding: 0; text-align: left; border: 0; border-radius: 0; background: transparent; color: #205c92; overflow-wrap: anywhere; }
+.file-name:hover { background: transparent; text-decoration: underline; }
+.preview-pane { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.preview-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 0 0 12px; }
+h2 { margin: 0; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+#file-bytes { margin-left: auto; font-size: 14px; color: #43535f; white-space: nowrap; }
+#preview { display: block; min-height: 0; width: 100%; height: 100%; resize: none; border: 1px solid #c8d1cc; border-radius: 4px; padding: 12px; font: inherit; line-height: 1.65; letter-spacing: 0; color: #202621; background: white; tab-size: 4; }
 footer { padding: 10px 24px; font-size: 14px; border-top: 1px solid #d6dcd8; overflow-wrap: anywhere; }
-@media (max-width: 480px) { header, nav, footer { padding-left: 12px; padding-right: 12px; } main { padding: 12px; } #folder-name { margin-left: 0; width: 100%; } }
+@media (max-width: 720px) { main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 480px) { .app-header, nav, footer { padding-left: 12px; padding-right: 12px; } main { padding: 12px; } #folder-name { margin-left: 0; width: 100%; } }

@@ -42,6 +42,16 @@ This intermittent result is retained, not claimed as a fixed lifecycle defect
 or a uniformly passing initial smoke. No hosted CI, push or public release is
 claimed for beta.18. Actual Folder Browser text preview is separate manual evidence.
 
+Folder Browser 0.2.0 now declares both permissions and reads only on a file-name
+click. Its eight Bun application tests passed, including literal rendering,
+cancellation, stale-row suppression, busy-state serialization, unsupported-file
+handling and connection-expiry cleanup. Validate/doctor, two identical ZIP
+builds, inspection and packaged/source startup passed with private profiles.
+The ZIP measured 3,130,333 bytes, SHA-256
+`e83c54e8f040009905283d1bac2292545cf8886c17b61742c9203ae53f987c33`.
+No actual native file-click interaction or independent layout screenshot is
+claimed. Manual preview confirmation remains pending; File Notes is unchanged.
+
 ## Bounded Folder Listing Local Checks: 2026-10-03
 
 Beta.17 adds `folder.list` and Folder Browser 0.1.0 under only `folder.read`.

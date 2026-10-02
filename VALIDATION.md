@@ -392,7 +392,10 @@ strict basename/target validation, serialized/deferred work, redacted failures,
 revocation before/during reads and shutdown. Actual Windows reads cover empty,
 Unicode/BOM/exact-limit/oversized/invalid text, unchanged disk bytes,
 directory/offline/hard-link/reparse rejection and handle-relative reads after
-directory rename/replacement. Manual UI preview remains separate evidence.
+directory rename/replacement. Folder Browser tests also cover click-only reads,
+literal content, cancellation preserving the preview, refresh/release clearing
+it, detached stale rows, busy reads and unsupported/expired-target failures.
+Manual UI preview remains separate evidence.
 
 ## Scope
 

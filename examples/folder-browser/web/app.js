@@ -7,29 +7,64 @@
   const count = document.querySelector("#count");
   const entries = document.querySelector("#entries");
   const status = document.querySelector("#status");
+  const preview = document.querySelector("#preview");
+  const fileName = document.querySelector("#file-name");
+  const fileBytes = document.querySelector("#file-bytes");
   const available = typeof window.velox?.invoke === "function";
   let target = 0;
   let busy = false;
+  let fileButtons = [];
 
   function controls() {
     select.disabled = busy || !available;
     refresh.disabled = release.disabled = busy || !target;
+    for (const button of fileButtons) button.disabled = busy || !target;
+  }
+  function clearPreview() {
+    preview.value = "";
+    fileName.textContent = "No file selected";
+    fileBytes.textContent = "";
   }
   function clear() {
     target = 0;
     folder.textContent = "No folder selected";
     entries.replaceChildren();
+    fileButtons = [];
     count.textContent = "0 items";
+    clearPreview();
+  }
+  async function openText(name) {
+    clearPreview();
+    const result = await window.velox.invoke("folder.openText", { target, name });
+    preview.value = result.text;
+    fileName.textContent = result.name;
+    fileBytes.textContent = `${result.bytes.toLocaleString()} bytes`;
+    status.textContent = "Text loaded.";
   }
   async function list() {
     const result = await window.velox.invoke("folder.list", { target });
+    clearPreview();
+    fileButtons = [];
+    const listedTarget = target;
     entries.replaceChildren(...result.entries.map((item) => {
       const row = document.createElement("tr");
-      for (const value of [item.name, item.kind]) {
-        const cell = document.createElement("td");
-        cell.textContent = value;
-        row.appendChild(cell);
+      const nameCell = document.createElement("td");
+      if (item.kind === "file") {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "file-name";
+        button.textContent = item.name;
+        button.title = `Open ${item.name} as text`;
+        button.addEventListener("click", () => target === listedTarget && run(() => openText(item.name)));
+        fileButtons.push(button);
+        nameCell.appendChild(button);
+      } else {
+        nameCell.textContent = item.name;
       }
+      const kindCell = document.createElement("td");
+      kindCell.textContent = item.kind;
+      row.appendChild(nameCell);
+      row.appendChild(kindCell);
       return row;
     }));
     count.textContent = `${result.entries.length} items`;

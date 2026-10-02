@@ -185,9 +185,10 @@ external-change conflict protection, IndexedDB draft recovery and unsaved-change
 protection. Restored drafts require fresh save selection; no file path or write
 grant is persisted.
 
-`examples/folder-browser` uses only opt-in `folder.read` for native folder
-selection and bounded immediate-entry listing. It exposes no full paths or file
-contents and adds no directory watcher, recursive scan or persisted grant.
+`examples/folder-browser` uses opt-in `folder.read` for native folder selection
+and bounded immediate-entry listing, plus separate `folder.readText` for
+on-click, read-only UTF-8 previews. It exposes no full paths and adds no write
+grant, directory watcher, recursive scan or persisted grant.
 
 ## Development State
 
