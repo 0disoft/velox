@@ -210,8 +210,11 @@ when available.
 
 - Plugin declarations.
 - Sidecars and native backends.
-- Installer, updater, and signing settings.
+- Automatic-update and signing settings.
 - Frontend build commands.
 - Multiple windows.
 - Remote application URLs.
 - macOS and Linux targets.
+
+The optional per-user Windows installer is already available through
+`velox build --installer`; it does not require a separate manifest section.

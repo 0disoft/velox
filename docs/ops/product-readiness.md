@@ -21,6 +21,24 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## External HTTPS Manual Check: 2026-10-02
+
+The maintainer confirmed the allowed fixture behaved as requested: cancelling
+HTTPS confirmation opened no browser, approving the next request opened the
+Velox GitHub repository, and HTTP/File requests returned `INVALID_PARAMS`
+without confirmation. These are user-reported observations. The launcher
+separately recorded exit code 0 without a timeout.
+
+Fixture source was `8ae352d1941bc97320320edc92e233ec1ed8cf7a`; the existing
+host executable SHA-256 was
+`bc35864487532ab49e3bb2f8547bbe6f1b8004b969b130556e0534f29af52752`.
+The source identity describes the fixture checkout, not proof that this
+prebuilt host was produced from that commit. Both fixtures used disposable
+profiles. The denied fixture reached its eight-minute limit without a manual
+response; `PERMISSION_DENIED` remains manually unverified, not passed.
+No user profile, release artifact, or browser was terminated by the harness.
+See [ADR 0023](../adr/0023-confirmed-external-https-links.md).
+
 ## System Tray Manual Check: 2026-10-02
 
 The maintainer reported all requested interactions passed in the isolated

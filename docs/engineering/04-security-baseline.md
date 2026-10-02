@@ -96,7 +96,12 @@ The MVP does not expose:
 - Dynamic plugins.
 - Sidecars.
 - Registry or credential-store access.
-- Clipboard, global shortcut, tray, or unrestricted window APIs.
+- Clipboard, global shortcut, app-defined tray/menu, or unrestricted window APIs.
+
+ADR 0021-0024 authorize only opt-in window-state restoration, single-instance
+activation, confirmed `external.open` HTTPS requests, and a fixed host-owned
+tray menu. None grants arbitrary shell execution or application-defined native
+menus; their scoped threat models and permission boundaries still apply.
 
 Adding one requires a threat-model update, ADR, permission contract, negative
 tests, and performance impact evidence.

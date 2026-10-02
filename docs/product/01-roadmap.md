@@ -279,15 +279,21 @@ trial result schema, pass, fail, and held semantics, contamination controls,
 and privacy boundary are versioned under `evals/llm-agent/v1`, `schema`, and
 `docs/ops/llm-agent-evaluation.md`.
 
-## Not Authorized by M5
+## Capabilities Deferred Beyond M5
 
-- Installers and automatic updates.
-- Per-application executable resource patching.
+The original M5 exclusions have since been amended by ADR 0020 for optional
+Windows installers and per-app executable branding, ADR 0021 for window-state
+restoration, ADR 0022 for single-instance activation, ADR 0023 for confirmed
+external HTTPS links, and ADR 0024 for a fixed host-owned tray menu. These
+narrow opt-in capabilities are implemented; they do not authorize the broader
+features below.
+
+- Automatic updates.
 - Application code signing automation.
 - Sealed or embedded assets.
-- Native filesystem, shell, process, plugin, or sidecar APIs.
+- Native filesystem, arbitrary shell, process, plugin, or sidecar APIs.
 - Frontend bundling, hot reload, and development server.
-- macOS, Linux, ARM64, multi-window, tray, menu, and global shortcuts.
+- macOS, Linux, ARM64, multi-window, app-defined tray/menu APIs, and global shortcuts.
 
 Each deferred item requires a new ADR, measured impact on the headline metrics
 and guardrails, and a clear reason it belongs in core rather than an external

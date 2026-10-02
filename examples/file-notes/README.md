@@ -41,10 +41,17 @@ It is a proportional text font, not for code column alignment. No engine font de
 
 The repository build output is `dist/examples/file-notes/dev.velox.filenotes.zip`.
 Extract the archive to a local folder, then run `dev.velox.filenotes.exe` from
-the extracted app folder. No installer is used.
+the extracted app folder. The portable ZIP does not require installation.
 
-This archive is an unsigned alpha.62 host packaged with the example File Notes
-0.1.1 and the bundled Noto Sans KR font.
+The current example is File Notes 0.1.2, built with the unsigned Velox beta.9
+host and the bundled Noto Sans KR font. It enables window-state restoration,
+single-instance activation, and the host-owned tray menu. Closing the window
+still exits normally; hiding it requires the tray's Hide window command.
+
+An installer-enabled release can also build
+`dist/examples/file-notes/dev.velox.filenotes-setup.exe` with
+`velox build --installer`. The optional Setup installs for the current user;
+building it alone does not install or replace an installed app.
 
 User documents must be explicitly selected through the editor open/save
 gestures. The application draft/profile is managed by WebView2 and is not
