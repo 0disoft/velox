@@ -34,8 +34,13 @@ parameter routing. Existing picker-per-call saving and read-only opening remain
 unchanged. No watcher, worker, timer or new dependency was added.
 
 The Text Writer 0.2.0 example now provides New, Save and Save as with session-only
-target reuse and error-buffer preservation. Real connected Save, native prompt
-interaction and external-change conflict UI are still manually unverified.
+target reuse and error-buffer preservation. The maintainer reported that the
+beta.13 connected-save example worked after the requested manual check. This
+is user-reported success, not independent disk readback or separate confirmation
+of every cancellation and external-change conflict path. The tested source is
+`134e63a`, with packaged host SHA-256
+`6e41f6828ed9b1196a0430cde282cf19ce24490ecc4037e86ec020aa09ecd347`.
+Cancellation and external-change conflict UI remain separately unverified.
 File Notes migration, draft/file reconnection after restart, hosted CI, push,
 publication and beta-channel approval are not claimed by these local checks.
 
