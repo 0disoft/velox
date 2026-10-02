@@ -84,7 +84,7 @@ func NewWindowsSaver(hwnd uintptr, dispatch func(func()), active func() bool, ge
 	}
 	return &Saver{Dispatch: dispatch, Active: valid, Generation: generation, Select: func(name string) (string, error) {
 		return selectDialog(hwnd, func() (*dialogObject, error) { return newSaveDialog(name) })
-	}, Write: writeSelected}
+	}, Write: writeSelected, Snapshot: snapshotSelected, WriteVersion: writeConnected}
 }
 
 func newSaveDialog(name string) (*dialogObject, error) {

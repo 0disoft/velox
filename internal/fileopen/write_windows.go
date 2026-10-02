@@ -16,40 +16,74 @@ import (
 var replaceFile = windows.NewLazySystemDLL("kernel32.dll").NewProc("ReplaceFileW")
 
 func writeSelected(path, text string) (SaveResult, error) {
-	if err := ValidateSaveText(text); err != nil {
-		return SaveResult{}, err
-	}
+	return writeText(path, text, nil)
+}
+
+func writeConnected(path, text string, expected FileVersion) (SaveResult, error) {
+	return writeText(path, text, &expected)
+}
+
+func validateSavePath(path string) error {
 	if !localPath(path) || filepath.Clean(path) != path || ValidateSaveName(filepath.Base(path)) != nil {
-		return SaveResult{}, ErrUnsupported
+		return ErrUnsupported
 	}
 	root, _ := windows.UTF16PtrFromString(filepath.VolumeName(path) + `\`)
 	switch windows.GetDriveType(root) {
 	case windows.DRIVE_FIXED, windows.DRIVE_REMOVABLE, windows.DRIVE_RAMDISK:
 	default:
-		return SaveResult{}, ErrUnsupported
+		return ErrUnsupported
 	}
 	if err := safefs.RejectLinkedComponents(path); err != nil {
-		return SaveResult{}, ErrUnsupported
+		return ErrUnsupported
+	}
+	return nil
+}
+
+func validateSaveHandle(handle windows.Handle, path string, info *windows.ByHandleFileInformation) error {
+	if err := windows.GetFileInformationByHandle(handle, info); err != nil {
+		return err
+	}
+	if info.FileAttributes&(windows.FILE_ATTRIBUTE_DIRECTORY|windows.FILE_ATTRIBUTE_REPARSE_POINT|windows.FILE_ATTRIBUTE_OFFLINE|windows.FILE_ATTRIBUTE_READONLY|windows.FILE_ATTRIBUTE_ENCRYPTED) != 0 || info.NumberOfLinks != 1 {
+		return ErrUnsupported
+	}
+	var final [32768]uint16
+	length, err := windows.GetFinalPathNameByHandle(handle, &final[0], uint32(len(final)), 0)
+	if err != nil || length == 0 || length >= uint32(len(final)) || !strings.EqualFold(strings.TrimPrefix(windows.UTF16ToString(final[:length]), `\\?\`), path) {
+		return ErrUnsupported
+	}
+	return nil
+}
+
+func writeText(path, text string, expected *FileVersion) (SaveResult, error) {
+	if err := ValidateSaveText(text); err != nil {
+		return SaveResult{}, err
+	}
+	if err := validateSavePath(path); err != nil {
+		return SaveResult{}, err
 	}
 	name, _ := windows.UTF16PtrFromString(path)
 	handle, err := windows.CreateFile(name, windows.GENERIC_READ, windows.FILE_SHARE_READ|windows.FILE_SHARE_DELETE, nil, windows.OPEN_EXISTING, windows.FILE_FLAG_OPEN_REPARSE_POINT, 0)
 	exists := err == nil
+	if expected != nil && errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
+		return SaveResult{}, ErrConflict
+	}
 	if !exists && !errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
 		return SaveResult{}, err
 	}
 	var original windows.ByHandleFileInformation
 	if exists {
 		defer windows.CloseHandle(handle)
-		if err := windows.GetFileInformationByHandle(handle, &original); err != nil {
+		if err := validateSaveHandle(handle, path, &original); err != nil {
 			return SaveResult{}, err
 		}
-		if original.FileAttributes&(windows.FILE_ATTRIBUTE_DIRECTORY|windows.FILE_ATTRIBUTE_REPARSE_POINT|windows.FILE_ATTRIBUTE_OFFLINE|windows.FILE_ATTRIBUTE_READONLY|windows.FILE_ATTRIBUTE_ENCRYPTED) != 0 || original.NumberOfLinks != 1 {
-			return SaveResult{}, ErrUnsupported
-		}
-		var final [32768]uint16
-		length, err := windows.GetFinalPathNameByHandle(handle, &final[0], uint32(len(final)), 0)
-		if err != nil || length == 0 || length >= uint32(len(final)) || !strings.EqualFold(strings.TrimPrefix(windows.UTF16ToString(final[:length]), `\\?\`), path) {
-			return SaveResult{}, ErrUnsupported
+		if expected != nil {
+			actual, err := versionOfHandle(handle, original)
+			if err != nil {
+				return SaveResult{}, err
+			}
+			if actual != *expected {
+				return SaveResult{}, ErrConflict
+			}
 		}
 	}
 	temp, err := os.CreateTemp(filepath.Dir(path), ".velox-save-*")
@@ -100,7 +134,7 @@ func writeSelected(path, text string) (SaveResult, error) {
 		var current windows.ByHandleFileInformation
 		err = windows.GetFileInformationByHandle(check, &current)
 		windows.CloseHandle(check)
-		if err != nil || current != original {
+		if err != nil || versionMetadata(current) != versionMetadata(original) || current.FileAttributes != original.FileAttributes || current.NumberOfLinks != original.NumberOfLinks {
 			return SaveResult{}, ErrUnsupported
 		}
 		backup, err := os.CreateTemp(filepath.Dir(path), ".velox-backup-*")
