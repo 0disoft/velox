@@ -185,6 +185,13 @@ names/kinds within 32 KiB, with truncation/exclusion indicators. It does not ena
 writes, recursive access or watching. Defaults remain empty. See
 [selected folders](../architecture/04-ipc-v1.md#selected-local-folders).
 
+Add `folder.readText` alongside `folder.read` to enable `folder.openText` for
+current immediate files in that selected directory. Listing-only manifests
+remain denied. Text is bounded to 2 MiB of UTF-8; basenames to 240 UTF-8 bytes
+using the text-save name grammar. No child-folder traversal, paths, writes,
+persisted grants or automatic reads are added. Hard-linked, reparse, offline
+and encrypted children are not readable through this method.
+
 ## Path Rules
 
 - Relative paths resolve from the manifest's project root.

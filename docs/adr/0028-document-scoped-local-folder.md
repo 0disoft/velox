@@ -50,6 +50,34 @@ or replaced directories return `FOLDER_TARGET_INVALID`; queued release,
 navigation and shutdown invalidate operations before and after reading.
 No path or child-entry identifier becomes an implicit file-read/write grant.
 
+## Immediate Text Read Increment
+
+Beta.18 adds `folder.openText({target, name})`. Both `folder.read` and the new
+opt-in `folder.readText` permission are required; existing listing-only apps do
+not gain content access. No new selection dialog is shown for each read. The
+grant covers current immediate files in the selected directory, not only names
+previously returned by the bounded listing, and is not a snapshot of file contents.
+
+Names use the existing text-save basename grammar: at most 240 UTF-8 bytes,
+without separators, ADS colons, controls, reserved device names, or trailing
+dots/spaces. Reopen and verify the folder identity, then open only this basename
+relative to the checked handle using Windows
+[NtCreateFile](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntcreatefile)
+with `RootDirectory`, `FILE_OPEN`, no reparse following and no offline recall.
+Do not concatenate and reopen an ambient child path. A rename/replacement after
+directory validation cannot redirect the relative child open to the replacement.
+Reject child directories, reparse/offline/encrypted entries and files with more
+than one hard link. A multiply-linked file may appear in the listing but cannot
+be read through this method. Windows ACL checks still apply.
+
+Reuse the existing bounded UTF-8 decoder: at most 2 MiB, optional BOM removed
+from text but included in bytes, invalid UTF-8 and NUL rejected. Return the same
+`{cancelled: false, name, text, bytes}` shape as `file.openText`, without any
+path, child handle or write token. Missing/inaccessible files produce redacted
+native failures; oversize and unsupported types use the existing file errors.
+Reads share the folder operation queue and validate generation/revocation before
+and after I/O. No retries, recursion, child-folder navigation or writes are added.
+
 ## Cost and Evidence
 
 Reuse the existing UI dispatch and dialog COM adapter; no listener, timer,
@@ -66,6 +94,9 @@ limits, child reparse/offline exclusion, identity replacement/deletion, queued
 revocation and no retry. Folder Browser is a dependency-free reference consumer.
 Actual native user selection is separate manual evidence. This does not change
 the release-channel admission decision.
+Text-read tests cover explicit content permission, basename validation, deferred
+completion, revocation during I/O, UTF-8/BOM/size rules, unchanged file bytes,
+hard-link/reparse/offline rejection and directory replacement after validation.
 
 ## Rollback
 

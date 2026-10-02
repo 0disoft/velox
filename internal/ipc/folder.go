@@ -7,11 +7,15 @@ import (
 	"github.com/0disoft/velox/internal/fileopen"
 )
 
-const PermissionFolderRead = "folder.read"
+const (
+	PermissionFolderRead     = "folder.read"
+	PermissionFolderReadText = "folder.readText"
+)
 
 type FolderAccess interface {
 	Select(func(fileopen.FolderResult, error)) error
 	List(uint32, func(fileopen.FolderListing, error)) error
+	OpenText(uint32, string, func(fileopen.Result, error)) error
 	ReleaseTarget(uint32) error
 	ClearTarget()
 }
@@ -40,6 +44,10 @@ func folderFailure(id uint32, err error) Response {
 		code, message = "UNSUPPORTED_FOLDER", fileopen.ErrFolderUnsupported.Error()
 	case errors.Is(err, fileopen.ErrFolderTarget):
 		code, message = "FOLDER_TARGET_INVALID", fileopen.ErrFolderTarget.Error()
+	case errors.Is(err, fileopen.ErrTooLarge):
+		code, message = "PAYLOAD_TOO_LARGE", fileopen.ErrTooLarge.Error()
+	case errors.Is(err, fileopen.ErrUnsupported):
+		code, message = "UNSUPPORTED_FILE", fileopen.ErrUnsupported.Error()
 	}
 	return failure(id, code, message)
 }
@@ -125,5 +133,39 @@ func (d *Dispatcher) listFolder(request Request, finish func(Response)) {
 	}
 	if err := access.List(target, respond); err != nil {
 		respond(fileopen.FolderListing{}, err)
+	}
+}
+
+func (d *Dispatcher) openFolderText(request Request, finish func(Response)) {
+	for _, permission := range []string{PermissionFolderRead, PermissionFolderReadText} {
+		if _, granted := d.permissions[permission]; !granted {
+			finish(failure(request.ID, "PERMISSION_DENIED", "The native method permission is not granted."))
+			return
+		}
+	}
+	var p struct {
+		Target *uint32 `json:"target"`
+		Name   *string `json:"name"`
+	}
+	if decodeSaveParams(request.Params, &p) != nil || p.Target == nil || *p.Target == 0 || p.Name == nil || fileopen.ValidateSaveName(*p.Name) != nil {
+		finish(failure(request.ID, "INVALID_PARAMS", "Folder text parameters must contain only a positive target token and a supported basename."))
+		return
+	}
+	d.mu.Lock()
+	access := d.folders
+	d.mu.Unlock()
+	if access == nil {
+		finish(folderFailure(request.ID, errors.New("unavailable")))
+		return
+	}
+	respond := func(result fileopen.Result, err error) {
+		if err != nil {
+			finish(folderFailure(request.ID, err))
+			return
+		}
+		finish(Response{Version: Version, ID: request.ID, OK: true, Result: result})
+	}
+	if err := access.OpenText(*p.Target, *p.Name, respond); err != nil {
+		respond(fileopen.Result{}, err)
 	}
 }

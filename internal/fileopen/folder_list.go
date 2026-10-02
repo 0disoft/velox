@@ -25,25 +25,18 @@ func (f *Folder) List(target uint32, done func(FolderListing, error)) error {
 			done(FolderListing{}, ErrInactive)
 			return
 		}
-		f.mu.Lock()
-		connected := f.target
-		if connected == nil || target == 0 || connected.id != target || connected.generation != generation || f.revision != revision {
-			f.mu.Unlock()
-			done(FolderListing{}, ErrFolderTarget)
+		selected, err := f.connectedTarget(target, generation, revision)
+		if err != nil {
+			done(FolderListing{}, err)
 			return
 		}
-		selected := *connected
-		f.mu.Unlock()
 		result, err := f.Read(selected.path, selected.identity)
 		if !active() {
 			done(FolderListing{}, ErrInactive)
 			return
 		}
-		f.mu.Lock()
-		revoked := f.revision != revision || f.target == nil || f.target.id != target
-		f.mu.Unlock()
-		if revoked {
-			done(FolderListing{}, ErrFolderTarget)
+		if _, targetErr := f.connectedTarget(target, generation, revision); targetErr != nil {
+			done(FolderListing{}, targetErr)
 			return
 		}
 		if err != nil {

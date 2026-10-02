@@ -12,6 +12,9 @@ type fakeFolderAccess struct {
 	done          func(fileopen.FolderResult, error)
 	listed        uint32
 	listDone      func(fileopen.FolderListing, error)
+	readTarget    uint32
+	readName      string
+	readDone      func(fileopen.Result, error)
 	err           error
 }
 
@@ -23,6 +26,10 @@ func (f *fakeFolderAccess) Select(done func(fileopen.FolderResult, error)) error
 
 func (f *fakeFolderAccess) List(target uint32, done func(fileopen.FolderListing, error)) error {
 	f.listed, f.listDone = target, done
+	return f.err
+}
+func (f *fakeFolderAccess) OpenText(target uint32, name string, done func(fileopen.Result, error)) error {
+	f.readTarget, f.readName, f.readDone = target, name, done
 	return f.err
 }
 func (f *fakeFolderAccess) ReleaseTarget(target uint32) error { f.released = target; return f.err }

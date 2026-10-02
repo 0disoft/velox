@@ -39,6 +39,7 @@ type Folder struct {
 	Choose     func() (string, error)
 	Inspect    func(string) (FolderSnapshot, error)
 	Read       func(string, DirectoryID) (FolderListing, error)
+	ReadText   func(string, DirectoryID, string) (Result, error)
 	pending    atomic.Bool
 	mu         sync.Mutex
 	serial     uint32
@@ -131,4 +132,13 @@ func (f *Folder) ClearTarget() {
 	f.target = nil
 	f.revision++
 	f.mu.Unlock()
+}
+
+func (f *Folder) connectedTarget(target uint32, generation, revision uint64) (folderTarget, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.target == nil || target == 0 || f.target.id != target || f.target.generation != generation || f.revision != revision {
+		return folderTarget{}, ErrFolderTarget
+	}
+	return *f.target, nil
 }

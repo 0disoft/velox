@@ -387,6 +387,12 @@ empty/Unicode folders, immediate-only enumeration and excluded reparse/offline
 entries. The dependency-free `examples/folder-browser` additionally tests
 token-only routing, text-safe rendering, cancellation, invalid-target handling
 and busy controls. Packaging/startup do not replace real picker interaction.
+Folder text-read tests cover the separate `folder.readText` permission,
+strict basename/target validation, serialized/deferred work, redacted failures,
+revocation before/during reads and shutdown. Actual Windows reads cover empty,
+Unicode/BOM/exact-limit/oversized/invalid text, unchanged disk bytes,
+directory/offline/hard-link/reparse rejection and handle-relative reads after
+directory rename/replacement. Manual UI preview remains separate evidence.
 
 ## Scope
 

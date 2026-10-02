@@ -73,6 +73,10 @@ func readSelected(path string) (Result, error) {
 	if !strings.HasPrefix(finalPath, `\\?\`) || !localPath(strings.TrimPrefix(finalPath, `\\?\`)) {
 		return Result{}, ErrUnsupported
 	}
+	return readTextFile(file, filepath.Base(finalPath), info)
+}
+
+func readTextFile(file *os.File, name string, info windows.ByHandleFileInformation) (Result, error) {
 	if info.FileSizeHigh != 0 || info.FileSizeLow > MaxTextBytes {
 		return Result{}, ErrTooLarge
 	}
@@ -87,5 +91,5 @@ func readSelected(path string) (Result, error) {
 	if !utf8.Valid(text) || bytes.IndexByte(text, 0) >= 0 {
 		return Result{}, ErrUnsupported
 	}
-	return Result{Name: filepath.Base(finalPath), Text: string(text), Bytes: len(data)}, nil
+	return Result{Name: name, Text: string(text), Bytes: len(data)}, nil
 }

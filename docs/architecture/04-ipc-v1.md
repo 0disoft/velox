@@ -95,6 +95,7 @@ the window to close, not in a pending native-response continuation.
 | `folder.select` | `folder.read` | `{}` | native folder selection, basename and document-scoped target; cancellation keeps the prior target |
 | `folder.release` | `folder.read` | `{target}` | `null`; revoke that exact folder target |
 | `folder.list` | `folder.read` | `{target}` | bounded immediate names/kinds, truncation and examined exclusion counts |
+| `folder.openText` | `folder.read` + `folder.readText` | `{target, name}` | immediate UTF-8 file contents, basename and byte count; no write grant |
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
@@ -139,7 +140,7 @@ is connected; network/device/stream paths, linked components, offline and
 encrypted folders are rejected. Names are basenames, never full paths.
 Selecting another folder replaces the target; cancellation/failure preserves it.
 `folder.release({target})`, navigation, reload and shutdown revoke the connection.
-It is not persisted and grants no file-content access or write capability.
+It is not persisted; `folder.read` alone grants no file-content access or write capability.
 Selection is deferred to native UI dispatch, with no watcher or background work.
 `UNSUPPORTED_FOLDER` indicates a rejected location; `FOLDER_TARGET_INVALID`
 indicates a stale/released connection.
@@ -154,6 +155,23 @@ the entry or byte limit cut the result short. Filesystem enumeration order is
 unsorted and not a stable snapshot. There is no pagination, total count, recursive
 traversal, file-content access or write grant. Deletion/replacement invalidates
 the target. No handle remains open between operations. See `examples/folder-browser`.
+
+`folder.openText` additionally requires opt-in `folder.readText`; existing
+listing-only apps remain denied. Only an immediate basename (the text-save
+grammar, at most 240 UTF-8 bytes) and the active target are accepted. The host
+revalidates folder identity and opens the child relative to that handle, never
+by joining an ambient path. Directories, reparse/offline/encrypted children and
+multiply hard-linked files are rejected. Traversal, ADS, absolute paths, trailing
+dots/spaces and reserved device names are invalid parameters.
+
+The result is `{cancelled: false, name, text, bytes}`, with the existing 2 MiB
+UTF-8/BOM/NUL rules and no path or write token. `folder.readText` permits reads
+of current immediate files, including names outside a truncated listing; it
+does not freeze file identity or contents at selection/listing time. Missing or
+inaccessible children return redacted `NATIVE_OPERATION_FAILED`; unsupported
+types return `UNSUPPORTED_FILE`, oversized text `PAYLOAD_TOO_LARGE`, and a stale
+directory `FOLDER_TARGET_INVALID`. Queued reads are revoked on release,
+navigation or shutdown and do not retry. No child-folder navigation is added.
 
 ### Selected Local Text Files
 

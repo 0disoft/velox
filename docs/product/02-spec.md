@@ -269,6 +269,11 @@ Web content is not trusted merely because it is local.
   locations. It does not authorize file contents, recursive traversal or watching.
   `folder.list` identity-checks that directory and returns immediate names/kinds
   under 128-entry/32-KiB limits, with explicit truncation and exclusion counts.
+  Adding separate `folder.readText` enables `folder.openText` for immediate
+  UTF-8 files up to 2 MiB, opened relative to the verified directory handle.
+  Existing `folder.read` apps gain no content access. Reject traversal, streams,
+  directories, reparse/offline/encrypted children and multiply-linked files;
+  retain revocation, no recursion, no path result and no write grant.
 - ADR 0027 adds explicit connected Save as/Save under `file.save`: retain only
   one document-scoped target, with no exposed path or restart-persistent grant.
   Verify file identity, size, write time and content digest before reuse;

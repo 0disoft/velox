@@ -43,6 +43,19 @@ func TestFolderPermissionManifestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestFolderTextPermissionManifestRoundTrip(t *testing.T) {
+	value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.folder-test", Name: "Folder test", Version: "1"},
+		Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600}, Security: manifest.Security{Permissions: []string{"folder.read", "folder.readText"}}}}
+	body, err := json.Marshal(FromManifest(value, "web"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := Parse(body)
+	if err != nil || strings.Join(parsed.Security.Permissions, ",") != "folder.read,folder.readText" {
+		t.Fatal(parsed, err)
+	}
+}
+
 func TestAppSingleInstanceManifestRoundTrip(t *testing.T) {
 	for _, enabled := range []bool{false, true} {
 		value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.instance-test", Name: "Test", Version: "1", SingleInstance: enabled},

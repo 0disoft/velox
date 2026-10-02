@@ -173,7 +173,7 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	switch request.Method {
 	case "file.openText":
 		return failure(request.ID, "NATIVE_OPERATION_FAILED", "File selection requires asynchronous dispatch.")
-	case "folder.select", "folder.list":
+	case "folder.select", "folder.list", "folder.openText":
 		return failure(request.ID, "NATIVE_OPERATION_FAILED", "Folder selection requires asynchronous dispatch.")
 	case "app.getInfo":
 		result = d.identity
@@ -207,6 +207,8 @@ func methodPermission(method string) (string, bool) {
 		return PermissionFileOpen, true
 	case "folder.select", "folder.list", "folder.release":
 		return PermissionFolderRead, true
+	case "folder.openText":
+		return PermissionFolderReadText, true
 	case "file.beginSave", "file.appendSave", "file.commitSave", "file.cancelSave", "file.commitSaveAs", "file.commitSaveTo", "file.releaseSaveTarget":
 		return PermissionFileSave, true
 	case "window.getState", "window.minimize", "window.maximize", "window.restore", "window.close":

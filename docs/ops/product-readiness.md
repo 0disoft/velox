@@ -21,6 +21,27 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Immediate Folder Text Reads: 2026-10-03
+
+Beta.18 adds `folder.openText` with separate opt-in `folder.readText`, requiring
+`folder.read` as well. Existing listing-only apps remain denied. Reads use an
+identity-checked directory handle and a validated immediate basename, with
+2 MiB UTF-8 limits and no write grant. Real Windows tests covered unchanged
+file bytes, Unicode/BOM/invalid/oversized text, offline/directory/hard-link/
+reparse rejection, and pinned-handle reads after directory rename/replacement.
+Related file, IPC, manifest/runtime, build/CLI/inspect/runner/WebView and hygiene
+tests passed, as did related Go vet. The source host measured 4,611,584 bytes,
+15,360 bytes (15 KiB, about 0.33%) above beta.17; no dependency, background work,
+DB, repository hygiene or CI workflow change was added.
+
+The built-host GUI subsystem, default icons, lifecycle and security-policy
+subtests passed. The initial early-user-close subtest failed because one browser
+process exceeded its 10-second exit bound; that process was no longer present
+when inspected. A single isolated rerun passed all three early-close attempts.
+This intermittent result is retained, not claimed as a fixed lifecycle defect
+or a uniformly passing initial smoke. No hosted CI, push or public release is
+claimed for beta.18. Actual Folder Browser text preview is separate manual evidence.
+
 ## Bounded Folder Listing Local Checks: 2026-10-03
 
 Beta.17 adds `folder.list` and Folder Browser 0.1.0 under only `folder.read`.
