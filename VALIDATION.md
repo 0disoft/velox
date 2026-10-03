@@ -424,8 +424,11 @@ browser fallback. Mock-native Edge checks at 880 x 620 and 360 x 620 cover butto
 names, textbox labels, keyboard activation/focus return, loaded icons, and long
 text/error overflow. These are not real native clipboard approval evidence.
 Local beta.20 packaging builds twice, compares ZIP digests and inspects directory
-and archive permission/host/asset metadata. Actual No/Yes and Notepad checks
-remain manual; the sample never saves pasted text or touches File Notes data.
+and archive permission/host/asset metadata. The maintainer later reported success
+after the requested actual No/Yes and Notepad check; product readiness records
+that general manual confirmation separately from independent per-action or
+clipboard-byte evidence. The sample never saves pasted text or touches File
+Notes data.
 
 ## Local Folder Access
 

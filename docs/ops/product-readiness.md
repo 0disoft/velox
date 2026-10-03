@@ -57,6 +57,13 @@ not Mustflow receipts. Actual native confirmation and paste remain manual.
 No hosted CI, installer, public publication, dependency, DB, repository hygiene
 rule, runner or CI workflow change was made for this example.
 
+After the requested disposable-text Copy, Paste refusal/approval and Notepad
+check in the prepared Velox Clipboard window, the maintainer reported success.
+This is general manual confirmation for Clipboard 0.1.0 on beta.20, separate
+from mock-native Edge checks. Individual action traces, exact clipboard byte
+readback, non-text formats and real clipboard-contention behavior were not
+independently recorded; those narrower claims are not inferred from the report.
+
 ## Confirmed Clipboard Text Reads: 2026-10-03
 
 Local beta.20 adds only `clipboard.readText({})` under independent, default-off
@@ -81,7 +88,8 @@ comparison, not a zero-cost or unchanged-startup claim. Native built-host
 startup/security/lifecycle smoke passed in 43.18 seconds, including early close,
 icons and the GUI subsystem. Immediate readiness remained about seven seconds;
 the existing relaunch limitation is unchanged. Native clipboard prompt/paste
-interaction remains a separate manual check.
+interaction is separate manual evidence; the subsequent maintainer confirmation
+is recorded in the Clipboard Example Packaging section above.
 
 IPC v1 gains an additive optional method and permission; existing apps retain
 their grants. Permission schemas, product scope, configuration and IPC docs
