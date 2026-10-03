@@ -1,7 +1,7 @@
 # beta.18 Local Distribution Preparation
 
 - Date: 2026-10-03
-- Status: Prepared locally; unsigned; not published or installed
+- Status: Prepared locally; Folder Browser install/removal verified; unsigned; not published
 - Source: `b79fc01def6b88da44574032cd14c80ec36e75bb`
 - Output root: `dist/distribution/beta18/`
 - Runtime: `0.5.10-beta.18`; both examples: `0.2.0`
@@ -42,12 +42,44 @@ inside the five hashed artifacts.
 - Final checksum-list and distribution-guide consistency are checked as part
   of preparation. This is direct local command evidence, not a Mustflow receipt.
 
+## Folder Browser Install/Removal Verification: 2026-10-03
+
+The exact Folder Browser Setup listed above was installed with `--silent` after
+confirming that its install directory, Start Menu shortcut and uninstall
+registration were absent. No existing installation was replaced.
+
+- Setup exited successfully. All eight installed ownership-record files and
+  the Start Menu shortcut matched their recorded SHA-256 digests.
+- The uninstall registration reported `Velox Folder Browser` version `0.2.0`
+  and the expected per-user install location and uninstall command.
+- CLI inspection of the installed app passed with runtime `0.5.10-beta.18`,
+  app version `0.2.0`, and only `folder.read` / `folder.readText` permissions.
+- Launch through the generated Start Menu shortcut opened the installed EXE.
+  The maintainer confirmed the requested folder listing and README.md text
+  preview check, then closed the app. This is manual interaction evidence,
+  not automated UI verification.
+- After confirming that the app and its profile's WebView2 processes had
+  exited, the installed uninstaller ran with `--silent`. Its helper removed
+  the install directory, Start Menu shortcut and uninstall registration.
+- The 217 files in the app profile and seven files in the selected
+  `examples/folder-browser` directory had identical file counts and SHA-256
+  digests immediately before and after removal. The app process was absent.
+- The normal `%TEMP%/velox-uninstall-*` helper directory remains, as documented
+  in [Windows Installer](windows-installer.md). It is not a profile or document
+  deletion, and complete temporary-file cleanup is not claimed.
+
+These checks used direct local commands and maintainer confirmation, not a
+Mustflow receipt. Only Folder Browser was installed; the final File Notes Setup
+and non-silent Setup confirmation dialogs were not exercised. No build or CI
+rerun was needed for this evidence-only update.
+
 ## Delivery Boundary
 
-No app installation, registry/shortcut mutation, app launch, tag, GitHub Release,
-upload or public publication was performed. Final-package runtime interaction
-and fresh install/removal are not newly claimed. Existing beta.18 manual preview
-evidence and intermittent local early-close/packaging failures remain recorded
+Folder Browser's local installation, shortcut launch, manual interaction and
+removal are verified above. File Notes final-package installation is not
+claimed. No tag, GitHub Release, upload or public publication was performed.
+Existing beta.18 manual preview evidence and intermittent local early-close /
+packaging failures remain recorded
 in [product readiness](product-readiness.md). A successful hosted run does not
 prove those intermittent local causes were fixed.
 

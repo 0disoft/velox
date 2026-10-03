@@ -28,8 +28,14 @@ run [37110431391](https://github.com/0disoft/velox/actions/runs/37110431391).
 An installer-enabled runtime bundle and both File Notes / Folder Browser
 portable ZIPs and Setup EXEs are prepared locally with matching beta.18 runtime
 metadata. Runtime-manifest checksums, ZIP inspection and exact Setup template /
-payload verification passed. No additional CI, installation or publication was
-performed; this does not fix or erase prior intermittent local failures.
+payload verification passed. The exact Folder Browser Setup was then installed,
+launched through its Start Menu shortcut, manually checked for folder listing
+and text preview, and removed. Installed-file and shortcut hashes matched;
+the install tree, shortcut and uninstall registration were removed while 217
+profile files and seven selected-folder files retained identical hashes.
+The normal temporary uninstall helper remains. File Notes Setup interaction was
+not checked. No additional CI or publication was performed; this does not fix
+or erase prior intermittent local failures.
 See [local distribution record](beta18-local-distribution.md) for exact files,
 sizes, digests, delivery limits and user instructions.
 
