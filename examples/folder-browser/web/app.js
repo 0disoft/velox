@@ -3,6 +3,7 @@
   const select = document.querySelector("#select");
   const refresh = document.querySelector("#refresh");
   const release = document.querySelector("#release");
+  const copy = document.querySelector("#copy");
   const folder = document.querySelector("#folder-name");
   const count = document.querySelector("#count");
   const entries = document.querySelector("#entries");
@@ -13,14 +14,17 @@
   const available = typeof window.velox?.invoke === "function";
   let target = 0;
   let busy = false;
+  let previewLoaded = false;
   let fileButtons = [];
 
   function controls() {
     select.disabled = busy || !available;
     refresh.disabled = release.disabled = busy || !target;
+    copy.disabled = busy || !available || !previewLoaded;
     for (const button of fileButtons) button.disabled = busy || !target;
   }
   function clearPreview() {
+    previewLoaded = false;
     preview.value = "";
     fileName.textContent = "No file selected";
     fileBytes.textContent = "";
@@ -37,6 +41,7 @@
     clearPreview();
     const result = await window.velox.invoke("folder.openText", { target, name });
     preview.value = result.text;
+    previewLoaded = true;
     fileName.textContent = result.name;
     fileBytes.textContent = `${result.bytes.toLocaleString()} bytes`;
     status.textContent = "Text loaded.";
@@ -97,6 +102,10 @@
     await window.velox.invoke("folder.release", { target });
     clear();
     status.textContent = "Folder released.";
+  }));
+  copy.addEventListener("click", () => previewLoaded && run(async () => {
+    await window.velox.invoke("clipboard.writeText", { text: preview.value });
+    status.textContent = "Text copied.";
   }));
   controls();
   if (!available) status.textContent = "Native folder bridge unavailable.";

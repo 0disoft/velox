@@ -1,9 +1,10 @@
 # Folder Browser
 
-Dependency-free, read-only example (0.2.0) for Velox beta.18's `folder.read` and
-`folder.readText` permissions. Uses `folder.select`, `folder.list`,
-`folder.openText` and `folder.release`. There is no frontend bundle, network
-request, saved token or write API.
+Dependency-free, filesystem-read-only example (0.3.0) for Velox beta.19's
+`folder.read`, `folder.readText` and `clipboard.write` permissions. Uses
+`folder.select`, `folder.list`, `folder.openText`, `folder.release` and
+`clipboard.writeText`. There is no frontend bundle, network request, saved
+token or filesystem write API.
 
 Select one local folder. Refresh reads immediate names and kinds from its
 identity-checked directory handle. Results use filesystem enumeration order,
@@ -25,6 +26,16 @@ or listing. Refresh clears the preview; selection cancellation preserves it;
 replacement/release clear both connection-dependent views. An expired target
 clears both panes without retry or reopening a dialog.
 
+The copy icon writes the loaded preview to the clipboard only on click. It is
+disabled before a successful read, while an operation is pending, and after
+refresh/release clears the preview. Empty files can be copied intentionally.
+The native 32 KiB UTF-8 text limit and 64 KiB serialized IPC limit apply;
+larger previews remain readable/selectable but the copy action reports a size
+error. Busy or failed copying preserves the preview and does not retry.
+No clipboard read, watcher or automatic copy is used. Windows owns any clipboard
+history or synchronization. The bundled Lucide copy icon carries its ISC
+license notice inside `web/copy.svg`; no icon runtime dependency is required.
+
 Cancel preserves the previous connection. Select replaces it; release,
 navigation, reload and shutdown revoke it. Directory replacement/deletion
 invalidates the token. Folders can change between refreshes; this does not
@@ -45,3 +56,5 @@ replace File Notes. Real native selection/cancellation are manual checks;
 package startup alone is not proof that selection, enumeration or preview was
 exercised. Manual check: select a disposable local folder, click a UTF-8 `.txt`
 or `.md` file, verify the text, cancel reselection, then refresh and release.
+Also click the copy icon and paste into a disposable editor to verify the exact
+text, including Korean, emoji and newlines. Copy/paste remains a manual check.

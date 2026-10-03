@@ -180,3 +180,64 @@ test("pending native selection cannot dispatch another operation", async () => {
   await selecting;
   expect(ui.node("#select").disabled).toBe(false);
 });
+
+test("copy writes only on click and stays disabled without a loaded preview", async () => {
+  const calls: any[] = [];
+  const ui = harness(async (method, params) => {
+    calls.push({ method, params });
+    if (method === "folder.select") return { name: "Selected", target: 1 };
+    if (method === "folder.list") return { entries: [{ name: "notes.txt", kind: "file" }], skipped: 0 };
+    if (method === "folder.openText") return { name: "notes.txt", text: "\ud55c\uae00 \ud83d\ude42\nnext", bytes: 16 };
+    return null;
+  });
+  expect(ui.node("#copy").disabled).toBe(true);
+  await ui.click("copy");
+  expect(calls.length).toBe(0);
+  await ui.click("select");
+  expect(ui.node("#copy").disabled).toBe(true);
+  await ui.node("#entries").children[0].children[0].children[0].click();
+  expect(calls.map((c) => c.method)).toEqual(["folder.select", "folder.list", "folder.openText"]);
+  expect(ui.node("#copy").disabled).toBe(false);
+  await ui.click("copy");
+  expect(calls[3]).toEqual({ method: "clipboard.writeText", params: { text: "\ud55c\uae00 \ud83d\ude42\nnext" } });
+  expect(ui.node("#status").textContent).toBe("Text copied.");
+  await ui.click("refresh");
+  expect(ui.node("#copy").disabled).toBe(true);
+  await ui.click("copy");
+  expect(calls.filter((c) => c.method === "clipboard.writeText").length).toBe(1);
+});
+
+test("empty preview copy is explicit; failure preserves preview and pending copy cannot repeat", async () => {
+  let complete!: (result: any) => void;
+  let copies = 0;
+  let fail = false;
+  const ui = harness(async (method) => {
+    if (method === "folder.select") return { name: "Selected", target: 1 };
+    if (method === "folder.list") return { entries: [{ name: "empty.txt", kind: "file" }], skipped: 0 };
+    if (method === "folder.openText") return { name: "empty.txt", text: "", bytes: 0 };
+    if (method === "clipboard.writeText") {
+      copies++;
+      if (fail) throw Object.assign(new Error("busy"), { code: "CLIPBOARD_BUSY" });
+      return new Promise((resolve) => { complete = resolve; });
+    }
+    return null;
+  });
+  await ui.click("select");
+  await ui.node("#entries").children[0].children[0].children[0].click();
+  expect(ui.node("#copy").disabled).toBe(false);
+  const pending = ui.click("copy");
+  expect(ui.node("#copy").disabled).toBe(true);
+  await ui.click("copy");
+  await ui.click("release");
+  expect(copies).toBe(1);
+  complete(null);
+  await pending;
+  fail = true;
+  await ui.click("copy");
+  expect(copies).toBe(2);
+  expect(ui.node("#status").textContent).toBe("CLIPBOARD_BUSY: busy");
+  expect(ui.node("#file-name").textContent).toBe("empty.txt");
+  expect(ui.node("#copy").disabled).toBe(false);
+  await ui.click("release");
+  expect(ui.node("#copy").disabled).toBe(true);
+});

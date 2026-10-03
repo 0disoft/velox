@@ -7,6 +7,8 @@ h1 { font-size: 20px; margin: 0; font-weight: 600; }
 nav { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 24px; background: white; border-bottom: 1px solid #d6dcd8; }
 button { font: inherit; min-height: 40px; padding: 8px 16px; border: 1px solid #478c66; border-radius: 4px; background: white; color: #24633f; cursor: pointer; }
 #refresh, #release { width: 40px; height: 40px; padding: 0; font-size: 22px; flex: 0 0 40px; }
+#copy { width: 40px; height: 40px; padding: 0; flex: 0 0 40px; display: grid; place-items: center; }
+#copy img { display: block; }
 button:hover { background: #eaf4ef; }
 button:disabled { opacity: .55; cursor: default; }
 button:focus-visible { outline: 2px solid #246eac; outline-offset: 2px; }

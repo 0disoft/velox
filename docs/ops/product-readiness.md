@@ -21,6 +21,41 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Opt-In Clipboard Text Writes: 2026-10-03
+
+Beta.19 adds only `clipboard.writeText({text})` under the independent
+`clipboard.write` permission and ADR 0029. The 32 KiB UTF-8 text and existing
+64 KiB serialized IPC budgets remain bounded. No read API, listener, automatic
+retry, worker, timer, database or dependency is added. Clipboard permission
+allows trusted scripts to replace contents without an attested user gesture;
+Folder Browser 0.3.0 invokes it only from its explicit copy button.
+
+Related clipboard, IPC, manifest/runtime, host, CLI, builder, plan, inspector,
+runner and hygiene tests passed locally. Targeted `go vet` passed after fixing
+the initial native-pointer conversion warning with `RtlMoveMemory`. Real
+Windows movable-allocation Unicode readback passed without accessing the
+system clipboard. Folder Browser's ten Bun tests passed, including click-only
+copy, pending-operation suppression, empty text and failure preservation.
+Playwright/Edge layout checks and screenshots at 900x650 and 360x740 verified
+the copy icon, long filename wrapping and no horizontal overflow; those used
+mock IPC and do not prove native clipboard interaction.
+
+Host size comparison used Go 1.27.1, `-trimpath` and
+`-ldflags="-s -w -H windowsgui"`, with CGO disabled. The exact beta.18 runtime ZIP
+from the distribution record supplied the `b79fc01` baseline host, 4,611,584
+bytes. The clean `a85249a` beta.19 host is 4,627,968 bytes: +16,384 bytes
+(0.355%). Both report matching toolchain/target settings and clean VCS metadata.
+This comparison includes version/revision metadata changes and does not claim
+zero startup or invocation latency impact.
+
+Local release assembly, Folder Browser build and package inspection passed
+with runtime beta.19, app version 0.3.0 and exactly the three declared
+permissions. Outputs are isolated under `dist/manual/clipboard-beta19/`;
+the beta.18 distribution and File Notes installs were not replaced. These are
+direct local command results, not Mustflow receipts. No hosted CI, push or
+publication was performed. Actual native copy/paste remains a manual check;
+the maintainer's clipboard was not read or replaced by automated tests.
+
 ## beta.18 Local Distribution Preparation: 2026-10-03
 
 The exact beta.18 source `b79fc01` passed hosted Windows Consumer evidence

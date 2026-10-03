@@ -1,8 +1,8 @@
 {
   "$schema": "../../schema/velox-v1.schema.json",
   "schemaVersion": 1,
-  "app": {"id": "dev.velox.folderbrowser", "name": "Velox Folder Browser", "version": "0.2.0"},
+  "app": {"id": "dev.velox.folderbrowser", "name": "Velox Folder Browser", "version": "0.3.0"},
   "assets": {"root": "web", "entry": "index.html"},
   "window": {"width": 900, "height": 650},
-  "security": {"permissions": ["folder.read", "folder.readText"]}
+  "security": {"permissions": ["folder.read", "folder.readText", "clipboard.write"]}
 }
