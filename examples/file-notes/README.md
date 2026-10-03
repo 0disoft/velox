@@ -51,6 +51,28 @@ unsupported Shift combinations are not intercepted. These are app-local keys,
 not OS-wide shortcuts. Buttons expose matching `aria-keyshortcuts` metadata;
 visible labels, tab order and layout remain unchanged.
 
+## Find in document
+
+`Ctrl+F` or the search icon opens a local search bar. Enter a literal,
+case-sensitive query; Enter finds the next match, Shift+Enter the previous,
+and Escape closes the bar and returns focus to the editor. Arrow buttons do
+the same navigation and wrap at either end. The counter shows the selected
+ordinal / total, or 0 / total after editing invalidates the selection.
+Matches do not overlap. Regular expressions, replacement and case folding are
+not supported. Search text is temporary, not part of the recovery draft.
+
+Search uses native string operations with constant per-match storage, never
+an array of all positions. Wrapped text is measured by browser layout in an
+offscreen, accessibility-hidden mirror only when needed to reveal a result.
+That mirror holds at most one copy of the current editor text and is removed
+when search closes; it is not a background watcher. Large 2 MiB documents can
+still require noticeable scanning/layout work, particularly when many matches
+or long wrapped lines exist. No constant-latency guarantee is made.
+Searching and moving selection do not change document text, dirty state or
+the saved baseline. IME composition, repeated Enter, pending file work and
+the discard dialog cannot navigate search results. Native dialog Escape is
+left to the dialog. Bundled Lucide icon licenses are in `web/icons/LICENSE.txt`.
+
 ## Editor font
 
 The editor area uses the bundled offline font "Velox Noto Sans KR" at 400 1rem/1.7,
@@ -63,7 +85,7 @@ The repository build output is `dist/examples/file-notes/dev.velox.filenotes.zip
 Extract the archive to a local folder, then run `dev.velox.filenotes.exe` from
 the extracted app folder. The portable ZIP does not require installation.
 
-The current example is File Notes 0.3.0, built with the unsigned Velox beta.19
+The current example is File Notes 0.4.0, built with the unsigned Velox beta.19
 host and the bundled Noto Sans KR font. It enables window-state restoration,
 single-instance activation, and the host-owned tray menu. Closing the window
 still exits normally; hiding it requires the tray's Hide window command.

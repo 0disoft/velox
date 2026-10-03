@@ -34,9 +34,11 @@ body {
 }
 
 button,
+input,
 textarea { font: inherit; letter-spacing: 0; }
 
 button:focus-visible,
+input:focus-visible,
 textarea:focus-visible {
   outline: 3px solid rgba(33, 105, 159, 0.42);
   outline-offset: 2px;
@@ -108,8 +110,18 @@ button:hover { border-color: var(--green); color: var(--green); }
   min-height: 0;
   padding: 24px clamp(20px, 5vw, 68px) 12px;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
+
+.editor-shell:has(.find-bar[hidden]) { grid-template-rows: minmax(0, 1fr) auto; }
+.find-bar { display: grid; grid-template-columns: minmax(100px, 1fr) auto auto; align-items: center; gap: 8px; padding-bottom: 12px; }
+.find-bar[hidden] { display: none; }
+#find-input { min-width: 0; width: 100%; height: 38px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: inherit; }
+#find-count { min-width: 100px; font-size: 0.76rem; color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.find-actions { display: flex; gap: 4px; }
+.icon-button { width: 38px; height: 38px; min-height: 38px; padding: 0; display: grid; place-items: center; flex: 0 0 38px; }
+.icon-button img { display: block; }
+button:disabled { opacity: .55; cursor: default; }
 
 textarea {
   width: 100%;
@@ -191,6 +203,10 @@ dialog p { margin: 9px 0 0; color: var(--muted); line-height: 1.5; }
   .document-stats { width: 100%; }
   .editor-shell { min-height: 520px; padding: 18px; }
   .statusbar { gap: 5px; }
+  .find-bar { grid-template-columns: minmax(0, 1fr) auto; }
+  #find-input { grid-column: 1 / -1; }
+  #find-count { text-align: left; }
+  .find-actions { justify-self: end; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -21,6 +21,45 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## File Notes Find in Document: 2026-10-03
+
+File Notes 0.4.0 adds Ctrl+F and an accessible search icon, literal
+case-sensitive non-overlapping matching, a result counter, next/previous
+navigation with wraparound, Enter/Shift+Enter and Escape-to-editor focus return.
+Search does not change document text, dirty state, saved baseline or recovery
+drafts. IME composition, key-code 229, repeated Enter, pending file work and
+the open discard dialog cannot navigate results. Regex, replacement and case
+folding are not included.
+
+Search retains a count and one selected position rather than a position array.
+A temporary accessibility-hidden mirror measures wrapped text through browser
+layout to reveal the selected result and is removed when search closes. Dense
+2 MiB scanning took approximately 434 ms in one local measurement; this is not
+a latency guarantee, and large wrapped documents can also require layout work.
+
+All 30 application/find/model/storage tests passed. Playwright/Edge checks at
+1080 x 760 and 360 x 740 verified icon loading, no horizontal overflow, visible
+selection scrolling, Escape focus return and mirror cleanup. Native file calls
+were mocked; these checks do not prove actual WebView2 keyboard routing or
+native dialog interaction. The narrow native-access hygiene test passed.
+Actual Velox-window search interaction remains a separate manual check.
+
+The example was packaged and inspected with the existing beta.19 CLI/host under
+`dist/manual/file-notes-find/package/`. The ZIP contains 17 portable files,
+is 8,435,363 bytes, and has SHA-256
+`f2a4e8e372f42ebfc208eda036e40ed2ac2d22dd0890185c6754d42695d041cc`.
+Permissions remain exactly `file.open` and `file.save`. The input runtime host remains
+4,627,968 bytes with SHA-256
+`5a3d9595c3a0854f4fa69df4295352b880c62764c63213b02dda22acf6bab62d`.
+
+Only the example version changed from 0.3.0 to 0.4.0. Runtime source/version,
+IPC, permissions, dependencies, DB, CI workflow and repository hygiene rules
+are unchanged. Bundled Lucide/Feather icon licenses accompany the new assets.
+These are direct local checks, not Mustflow receipts. Runtime rebuild,
+installer generation and additional hosted CI were intentionally omitted for
+this frontend-only change. No installed app, open document or user profile
+was replaced, and no public release was published.
+
 ## File Notes Keyboard Actions: 2026-10-03
 
 File Notes 0.3.0 adds app-local Ctrl+S, Ctrl+Shift+S, Ctrl+O and Ctrl+N through

@@ -4,7 +4,7 @@
   "app": {
     "id": "dev.velox.filenotes",
     "name": "Velox File Notes",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "singleInstance": true
   },
   "branding": {

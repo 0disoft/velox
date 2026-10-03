@@ -16,6 +16,7 @@
     save: document.querySelector("#save-document"),
     saveAs: document.querySelector("#save-as-document"),
     discardDialog: document.querySelector("#discard-dialog"),
+    find: document.querySelector("#find-document"),
   };
 
   let state = model.createState();
@@ -24,11 +25,15 @@
   let draftWrites = Promise.resolve();
   let fileActionPending = true;
   let composing = false;
+  const finder = window.FileNotesFind.attach(document, elements.editor,
+    () => fileActionPending || elements.discardDialog.open);
 
   function setBusy(busy, freezeEditor = false) {
     fileActionPending = busy;
     for (const button of [elements.create, elements.open, elements.save, elements.saveAs]) button.disabled = busy;
     elements.editor.readOnly = busy && freezeEditor;
+    elements.find.disabled = busy;
+    finder.refresh();
   }
 
   async function performFileAction(action, freezeEditor = false) {
@@ -49,6 +54,7 @@
     elements.lines.textContent = `${stats.lines} ${stats.lines === 1 ? "line" : "lines"}`;
     elements.characters.textContent = `${stats.characters} ${stats.characters === 1 ? "character" : "characters"}`;
     document.title = `${dirty ? "• " : ""}${state.name} · Velox File Notes`;
+    finder.refresh();
   }
 
   function announce(message) {
@@ -182,14 +188,17 @@
   elements.editor.addEventListener("compositionstart", () => { composing = true; });
   elements.editor.addEventListener("compositionend", () => { composing = false; });
   window.addEventListener("keydown", (event) => {
-    if (event.defaultPrevented || !event.ctrlKey || event.altKey || event.metaKey ||
+    if (event.defaultPrevented ||
         composing || event.isComposing || event.keyCode === 229) return;
+    if (finder.handleKey(event)) return;
+    if (!event.ctrlKey || event.altKey || event.metaKey) return;
     if (event.shiftKey && event.code !== "KeyS") return;
     let button;
     switch (event.code) {
       case "KeyN": button = elements.create; break;
       case "KeyO": button = elements.open; break;
       case "KeyS": button = event.shiftKey ? elements.saveAs : elements.save; break;
+      case "KeyF": button = elements.find; break;
       default: return;
     }
     event.preventDefault();

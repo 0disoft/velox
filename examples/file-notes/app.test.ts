@@ -5,6 +5,7 @@ import { runInNewContext } from "node:vm";
 const model = await readFile(new URL("./web/model.js", import.meta.url), "utf8");
 const app = await readFile(new URL("./web/app.js", import.meta.url), "utf8");
 const storage = await readFile(new URL("./web/storage.js", import.meta.url), "utf8");
+const find = await readFile(new URL("./web/find.js", import.meta.url), "utf8");
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
 function deferred<T>() {
@@ -29,9 +30,13 @@ function harness(options: {
   const ready = deferred<void>();
   function node(id: string) {
     if (!nodes.has(id)) nodes.set(id, {
-      value: "", textContent: "", disabled: false, readOnly: false, returnValue: "", open: false,
+      value: "", textContent: "", disabled: false, readOnly: false, returnValue: "", open: false, hidden: false,
+      selectionStart: 0, selectionEnd: 0, attributes: {} as Record<string, string>,
       addEventListener(event: string, fn: Function) { events.set(`${id}:${event}`, fn); },
-      focus() {}, showModal() { this.open = true; },
+      focus() { context.document.activeElement = this; }, showModal() { this.open = true; },
+      select() { this.selectionStart = 0; this.selectionEnd = this.value.length; },
+      setSelectionRange(start: number, end: number) { this.selectionStart = start; this.selectionEnd = end; },
+      setAttribute(name: string, value: string) { this.attributes[name] = value; },
       click() { if (!this.disabled) return events.get(`${id}:click`)?.(); },
     });
     return nodes.get(id);
@@ -56,6 +61,7 @@ function harness(options: {
   };
   context.window = context;
   runInNewContext(model, context);
+  runInNewContext(find, context);
   runInNewContext(app, context);
   return {
     node, ready: ready.promise,
@@ -68,12 +74,21 @@ function harness(options: {
       return event;
     },
     compose(active: boolean) { events.get(`#editor:composition${active ? "start" : "end"}`)?.(); },
+    composeSearch(active: boolean) { events.get(`#find-input:composition${active ? "start" : "end"}`)?.(); },
     discard(accepted: boolean) {
       node("#discard-dialog").open = false;
       node("#discard-dialog").returnValue = accepted ? "discard" : "cancel";
       events.get("#discard-dialog:close")?.();
     },
     edit(text: string) { node("#editor").value = text; events.get("#editor:input")?.(); },
+    query(text: string) { node("#find-input").value = text; events.get("#find-input:input")?.(); },
+    searchKey(key: string, options: any = {}) {
+      const event = { key, target: node("#find-input"), ctrlKey: false, altKey: false, metaKey: false,
+        shiftKey: false, repeat: false, isComposing: false, defaultPrevented: false,
+        ...options, preventDefault() { this.defaultPrevented = true; } };
+      events.get("window:keydown")?.(event);
+      return event;
+    },
     async flushDraft() { for (const fn of timers.values()) fn(); timers.clear(); await tick(); return persisted; },
     unload() { let prevented = false; events.get("window:beforeunload")?.({ preventDefault() { prevented = true; } }); return prevented; },
   };
@@ -431,7 +446,7 @@ test("IME and unrelated modifier combinations are left untouched", async () => {
     expect(event.defaultPrevented).toBe(!!options.defaultPrevented);
   }
   for (const code of ["KeyO", "KeyN"]) expect(ui.key(code, { shiftKey: true }).defaultPrevented).toBe(false);
-  expect(ui.key("KeyF").defaultPrevented).toBe(false);
+  expect(ui.key("KeyZ").defaultPrevented).toBe(false);
   ui.compose(true);
   expect(ui.key("KeyS").defaultPrevented).toBe(false);
   expect(saves).toBe(0);
@@ -439,4 +454,95 @@ test("IME and unrelated modifier combinations are left untouched", async () => {
   ui.key("KeyS");
   await tick();
   expect(saves).toBe(1);
+});
+
+test("find is literal, wraps in both directions and does not change dirty state or draft", async () => {
+  const ui = harness();
+  await ui.ready;
+  ui.edit("\ud55c\uae00 aa \ud55c\uae00\n\ud83d\ude42 [x] [x]");
+  const before = await ui.flushDraft();
+  expect(ui.key("KeyF").defaultPrevented).toBe(true);
+  expect(ui.node("#find-bar").hidden).toBe(false);
+  ui.query("\ud55c\uae00");
+  expect(ui.node("#find-count").textContent).toBe("1 / 2");
+  expect(ui.node("#editor").selectionStart).toBe(0);
+  ui.searchKey("Enter");
+  expect(ui.node("#find-count").textContent).toBe("2 / 2");
+  expect(ui.node("#editor").selectionStart).toBe(6);
+  ui.searchKey("Enter");
+  expect(ui.node("#editor").selectionStart).toBe(0);
+  ui.searchKey("Enter", { shiftKey: true });
+  expect(ui.node("#editor").selectionStart).toBe(6);
+  ui.query("[x]");
+  expect(ui.node("#find-count").textContent).toBe("1 / 2");
+  expect(ui.node("#editor").selectionStart).toBe(12);
+  expect(await ui.flushDraft()).toEqual(before);
+  expect(ui.unload()).toBe(true);
+  ui.searchKey("Escape");
+  expect(ui.node("#find-bar").hidden).toBe(true);
+});
+
+test("find refreshes after edits and New, with empty query and no-result controls", async () => {
+  const ui = harness();
+  await ui.ready;
+  ui.edit("one one");
+  ui.key("KeyF");
+  ui.query("one");
+  ui.edit("two");
+  expect(ui.node("#find-count").textContent).toBe("0 / 0");
+  expect(ui.node("#find-next").disabled).toBe(true);
+  ui.query("");
+  expect(ui.node("#find-count").textContent).toBe("");
+  ui.query("two");
+  expect(ui.node("#find-count").textContent).toBe("1 / 1");
+  ui.key("KeyN");
+  expect(ui.searchKey("Escape").defaultPrevented).toBe(false);
+  expect(ui.node("#find-bar").hidden).toBe(false);
+  ui.discard(true);
+  await tick();
+  expect(ui.node("#find-count").textContent).toBe("0 / 0");
+});
+
+test("find guards repeated Enter, IME and pending writes", async () => {
+  const saved = deferred<any>();
+  const ui = harness({ save: () => saved.promise });
+  await ui.ready;
+  ui.edit("one one");
+  ui.key("KeyF");
+  ui.query("one");
+  ui.searchKey("Enter", { repeat: true });
+  ui.searchKey("Enter", { isComposing: true });
+  ui.searchKey("Enter", { keyCode: 229 });
+  expect(ui.node("#editor").selectionStart).toBe(0);
+  const saving = ui.click("save-document");
+  ui.click("find-next");
+  ui.searchKey("Enter");
+  expect(ui.node("#editor").selectionStart).toBe(0);
+  saved.resolve({ cancelled: true });
+  await saving;
+  ui.searchKey("Enter");
+  expect(ui.node("#editor").selectionStart).toBe(4);
+});
+
+test("find refreshes a query changed during saving and defers IME query input until completion", async () => {
+  const saved = deferred<any>();
+  const ui = harness({ save: () => saved.promise });
+  await ui.ready;
+  ui.edit("one one two");
+  ui.key("KeyF");
+  ui.query("one");
+  const saving = ui.click("save-document");
+  ui.query("two");
+  saved.resolve({ cancelled: true });
+  await saving;
+  expect(ui.node("#find-count").textContent).toBe("0 / 1");
+  ui.searchKey("Enter");
+  expect(ui.node("#editor").selectionStart).toBe(8);
+  ui.composeSearch(true);
+  ui.query("one");
+  ui.searchKey("Enter");
+  expect(ui.node("#editor").selectionStart).toBe(8);
+  ui.composeSearch(false);
+  expect(ui.node("#find-count").textContent).toBe("1 / 2");
+  expect(ui.node("#editor").selectionStart).toBe(0);
 });

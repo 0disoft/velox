@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="model.js" defer></script>
     <script src="storage.js" defer></script>
+    <script src="find.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -31,6 +32,7 @@
         <button id="open-document" type="button" aria-keyshortcuts="Control+O">Open</button>
         <button id="save-document" type="button" aria-keyshortcuts="Control+S">Save</button>
         <button id="save-as-document" type="button" aria-keyshortcuts="Control+Shift+S">Save as</button>
+        <button id="find-document" class="icon-button" type="button" aria-label="Find in document" title="Find in document" aria-keyshortcuts="Control+F" aria-controls="find-bar" aria-expanded="false"><img src="icons/search.svg" width="18" height="18" alt=""></button>
       </div>
       <div class="document-stats" aria-label="Document statistics">
         <span id="line-count">1 line</span>
@@ -39,6 +41,16 @@
     </nav>
 
     <main class="editor-shell">
+      <div id="find-bar" class="find-bar" role="search" aria-label="Find in document" hidden>
+        <label class="visually-hidden" for="find-input">Find text</label>
+        <input id="find-input" type="search" placeholder="Find" autocomplete="off" spellcheck="false" aria-describedby="find-count">
+        <span id="find-count" role="status" aria-live="polite"></span>
+        <div class="find-actions">
+          <button id="find-previous" class="icon-button" type="button" aria-label="Previous match" title="Previous match"><img src="icons/chevron-up.svg" width="18" height="18" alt=""></button>
+          <button id="find-next" class="icon-button" type="button" aria-label="Next match" title="Next match"><img src="icons/chevron-down.svg" width="18" height="18" alt=""></button>
+          <button id="find-close" class="icon-button" type="button" aria-label="Close find" title="Close find"><img src="icons/x.svg" width="18" height="18" alt=""></button>
+        </div>
+      </div>
       <label class="visually-hidden" for="editor">Markdown document</label>
       <textarea id="editor" spellcheck="true" autocomplete="off" aria-describedby="editor-help" placeholder="# Start writing"></textarea>
       <p id="editor-help">UTF-8 Markdown or text · 2 MiB maximum</p>
