@@ -190,6 +190,10 @@ and bounded immediate-entry listing, plus separate `folder.readText` for
 on-click, read-only UTF-8 previews. It exposes no full paths and adds no write
 grant, directory watcher, recursive scan or persisted grant.
 
+[`examples/clipboard`](examples/clipboard/README.md) uses independent clipboard
+write/read permissions for explicit Copy and host-confirmed Paste actions.
+It displays plain text only and adds no storage, history or monitoring.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging

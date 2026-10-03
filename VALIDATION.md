@@ -405,7 +405,8 @@ Related clipboard, IPC, manifest/runtime and host tests cover default denial,
 strict text-only parameters, UTF-8/NUL/byte limits, Unicode termination,
 shutdown, busy/error redaction and ownership-transfer cleanup. A real Windows
 movable allocation and Unicode copy/readback test does not open or change the
-system clipboard. No clipboard read API, monitoring or dependency is added.
+system clipboard. That write-only change adds no read API, monitoring or
+dependency; ADR 0030 introduces reads separately under per-request approval.
 The maintainer reported successful copying in the isolated beta.19 Folder
 Browser after the requested copy/paste check; this is manual evidence, not an
 automated clipboard readback or independently verified Unicode coverage.
@@ -414,6 +415,17 @@ The current evidence is recorded in `docs/ops/product-readiness.md`. The initial
 copy function; targeted vet and tests then passed. Host size is measured with
 matching build flags and recorded in product readiness; startup equivalence
 is not inferred from code inspection or size alone.
+
+## Clipboard Text Read Example
+
+`examples/clipboard` tests explicit-click invocation, plain-text Unicode display,
+empty text, cancellation/error preservation, pending-read suppression and no
+browser fallback. Mock-native Edge checks at 880 x 620 and 360 x 620 cover button
+names, textbox labels, keyboard activation/focus return, loaded icons, and long
+text/error overflow. These are not real native clipboard approval evidence.
+Local beta.20 packaging builds twice, compares ZIP digests and inspects directory
+and archive permission/host/asset metadata. Actual No/Yes and Notepad checks
+remain manual; the sample never saves pasted text or touches File Notes data.
 
 ## Local Folder Access
 

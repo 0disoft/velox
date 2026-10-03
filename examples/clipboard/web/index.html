@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Velox Clipboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header><h1>Clipboard</h1></header>
+    <main>
+      <section aria-labelledby="source-label">
+        <div class="toolbar">
+          <label id="source-label" for="source-text">Copy text</label>
+          <button id="copy-text" type="button" title="Copy text" aria-label="Copy text"><img src="icons/copy.svg" width="20" height="20" alt=""></button>
+        </div>
+        <textarea id="source-text" spellcheck="false" autocomplete="off">Velox clipboard test</textarea>
+      </section>
+      <section aria-labelledby="result-label">
+        <div class="toolbar">
+          <label id="result-label" for="result-text">Pasted text</label>
+          <button id="paste-text" type="button" title="Paste text" aria-label="Paste text"><img src="icons/clipboard-paste.svg" width="20" height="20" alt=""></button>
+        </div>
+        <textarea id="result-text" readonly spellcheck="false" autocomplete="off"></textarea>
+      </section>
+    </main>
+    <footer><span id="status" role="status" aria-live="polite">Ready.</span></footer>
+  </body>
+</html>

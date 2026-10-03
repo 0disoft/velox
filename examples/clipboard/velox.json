@@ -1,0 +1,7 @@
+{
+  "$schema": "../../schema/velox-v1.schema.json",
+  "schemaVersion": 1,
+  "app": { "id": "dev.velox.clipboard", "name": "Velox Clipboard", "version": "0.1.0" },
+  "window": { "width": 880, "height": 620 },
+  "security": { "permissions": ["clipboard.write", "clipboard.read"] }
+}

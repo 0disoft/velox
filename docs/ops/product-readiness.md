@@ -21,6 +21,42 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Clipboard Example Packaging: 2026-10-03
+
+The independent Clipboard 0.1.0 example (`dev.velox.clipboard`) opts into only
+`clipboard.write` and `clipboard.read`. Copy writes only on a button action;
+Paste waits for the native result, preserves prior output on refusal/error,
+and displays Unicode through a read-only textarea rather than HTML. Both
+buttons are disabled while work is pending. No clipboard content is saved,
+logged, sent over a network or automatically read/written. The example neither
+replaces File Notes nor uses its profile/recovery data.
+
+Four application tests passed. Mock-native Playwright/Edge checks at 880 x 620
+and 360 x 620 passed role/name/label snapshots, Enter/Space button activation,
+focus return, cancellation preservation, Unicode/literal markup display, icon
+loading and long text/error overflow checks. These are browser interaction
+checks, not actual Windows clipboard approval or Notepad interoperability.
+
+The clean runtime build is from `218f30d7ac22ccaadeba3471a527626566da24b9`,
+with input host SHA-256
+`23fe1278886d3ac03a4a2e3044a202d7472ad811ce667417c17031b7dbb49f1e`.
+The 4,651,008-byte host has the same size as the pre-commit native smoke host;
+its build metadata and digest changed. The earlier smoke is source-equivalent
+runtime evidence, not an exact-byte run of this later clean binary.
+The example built twice with identical 2,321,323-byte ZIPs, SHA-256
+`4af5accdcabba695d6598a2f16be0e6aaa41cb02c98d08f97e98944252d1b07b`.
+Directory and ZIP inspection passed with nine portable files, 7,813 asset
+bytes, app version 0.1.0, runtime beta.20 and exactly the two declared permissions.
+Output is under `dist/manual/clipboard-beta20/example/`.
+
+The first packaging attempt used unsupported `--manifest` and returned
+`USAGE_INVALID` before packaging. After checking CLI help, using `--config` and
+an absolute owned output path produced the successful packages above. The failed
+attempt is not counted as a passing build. All checks were direct local runs,
+not Mustflow receipts. Actual native confirmation and paste remain manual.
+No hosted CI, installer, public publication, dependency, DB, repository hygiene
+rule, runner or CI workflow change was made for this example.
+
 ## Confirmed Clipboard Text Reads: 2026-10-03
 
 Local beta.20 adds only `clipboard.readText({})` under independent, default-off
