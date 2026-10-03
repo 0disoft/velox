@@ -49,8 +49,11 @@ handling and connection-expiry cleanup. Validate/doctor, two identical ZIP
 builds, inspection and packaged/source startup passed with private profiles.
 The ZIP measured 3,130,333 bytes, SHA-256
 `e83c54e8f040009905283d1bac2292545cf8886c17b61742c9203ae53f987c33`.
-No actual native file-click interaction or independent layout screenshot is
-claimed. Manual preview confirmation remains pending; File Notes is unchanged.
+The maintainer reported success after the requested folder selection and text
+file click/preview check with the beta.18 example built from `dec8669`. This is
+user-reported manual evidence, not independent byte-for-byte content comparison,
+layout screenshot review or confirmation of every cancellation/error case.
+File Notes is unchanged.
 The first separate `dist/examples/folder-browser-beta18` build returned the
 generic `PACKAGING_FAILED` diagnostic without a specific cause. One unchanged
 retry succeeded with the same ZIP digest above. The initial failure's cause
