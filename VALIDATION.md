@@ -385,7 +385,10 @@ strict text-only parameters, UTF-8/NUL/byte limits, Unicode termination,
 shutdown, busy/error redaction and ownership-transfer cleanup. A real Windows
 movable allocation and Unicode copy/readback test does not open or change the
 system clipboard. No clipboard read API, monitoring or dependency is added.
-Real copy/paste interaction remains a separate manual check. The initial
+The maintainer reported successful copying in the isolated beta.19 Folder
+Browser after the requested copy/paste check; this is manual evidence, not an
+automated clipboard readback or independently verified Unicode coverage.
+The current evidence is recorded in `docs/ops/product-readiness.md`. The initial
 `go vet` pointer-conversion warning was corrected by using the native memory
 copy function; targeted vet and tests then passed. Host size is measured with
 matching build flags and recorded in product readiness; startup equivalence

@@ -53,8 +53,13 @@ with runtime beta.19, app version 0.3.0 and exactly the three declared
 permissions. Outputs are isolated under `dist/manual/clipboard-beta19/`;
 the beta.18 distribution and File Notes installs were not replaced. These are
 direct local command results, not Mustflow receipts. No hosted CI, push or
-publication was performed. Actual native copy/paste remains a manual check;
-the maintainer's clipboard was not read or replaced by automated tests.
+publication was performed. The isolated Folder Browser was launched with the
+private `.cache/clipboard-beta19-manual-profile` profile. After the requested
+copy-button / paste-in-an-editor check, the maintainer reported that copying
+worked. This is manual success evidence for the prepared beta.19 package, not
+an automated clipboard readback. The selected file, pasted bytes and Unicode
+coverage were not independently recorded. The maintainer's clipboard was not
+read or replaced by automated tests. App closure was not separately confirmed.
 
 ## beta.18 Local Distribution Preparation: 2026-10-03
 
