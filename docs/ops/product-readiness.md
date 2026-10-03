@@ -42,7 +42,12 @@ All 30 application/find/model/storage tests passed. Playwright/Edge checks at
 selection scrolling, Escape focus return and mirror cleanup. Native file calls
 were mocked; these checks do not prove actual WebView2 keyboard routing or
 native dialog interaction. The narrow native-access hygiene test passed.
-Actual Velox-window search interaction remains a separate manual check.
+After the requested Ctrl+F, Korean-query, Enter/Shift+Enter and Escape check
+with the prepared EXE, the maintainer reported that search works well in the
+actual Velox window. This is general manual success confirmation for File
+Notes 0.4.0 on beta.19, separate from the mocked Edge checks. Per-action
+results, real IME composition and large-document latency were not independently
+recorded; those narrower claims are not inferred from this confirmation.
 
 The example was packaged and inspected with the existing beta.19 CLI/host under
 `dist/manual/file-notes-find/package/`. The ZIP contains 17 portable files,
