@@ -21,6 +21,18 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## beta.18 Local Distribution Preparation: 2026-10-03
+
+The exact beta.18 source `b79fc01` passed hosted Windows Consumer evidence
+run [37110431391](https://github.com/0disoft/velox/actions/runs/37110431391).
+An installer-enabled runtime bundle and both File Notes / Folder Browser
+portable ZIPs and Setup EXEs are prepared locally with matching beta.18 runtime
+metadata. Runtime-manifest checksums, ZIP inspection and exact Setup template /
+payload verification passed. No additional CI, installation or publication was
+performed; this does not fix or erase prior intermittent local failures.
+See [local distribution record](beta18-local-distribution.md) for exact files,
+sizes, digests, delivery limits and user instructions.
+
 ## Immediate Folder Text Reads: 2026-10-03
 
 Beta.18 adds `folder.openText` with separate opt-in `folder.readText`, requiring
