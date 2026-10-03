@@ -43,6 +43,8 @@ choice inside that scope and cannot silently add a product capability.
 | 0026 | Accepted | Save bounded UTF-8 text through native selection and overwrite confirmation without a reusable grant |
 | 0027 | Accepted | Reuse one document-scoped save target with file identity and content conflict checks |
 | 0028 | Accepted | Select one local folder with a revocable token and bounded immediate-entry listing, without exposed paths |
+| 0029 | Accepted | Write bounded Unicode clipboard text under an independent opt-in permission, without reading or monitoring |
+| 0030 | Accepted | Read bounded Unicode clipboard text only after per-request native approval and an independent opt-in permission |
 
 ## Lifecycle
 

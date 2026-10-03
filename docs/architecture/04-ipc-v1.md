@@ -85,6 +85,7 @@ the window to close, not in a pending native-response continuation.
 | `window.close` | `window.basic` | `{}` | `null` before deferred shutdown |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
 | `clipboard.writeText` | `clipboard.write` | `{text}` | `null` after native Unicode text write |
+| `clipboard.readText` | `clipboard.read` | `{}` | `{cancelled: true}` or `{cancelled: false, text}` after native approval |
 | `file.openText` | `file.open` | `{}` | selected UTF-8 text or a cancellation result after the native dialog |
 | `file.beginSave` | `file.save` | `{name, bytes}` | `{token}` for one bounded text upload |
 | `file.appendSave` | `file.save` | `{token, offset, text}` | `{bytes}` received so far; byte offset must match |
@@ -110,10 +111,31 @@ is allowed. The existing serialized-request budget remains 64 KiB, including
 JSON escaping. Success is `null`. Busy clipboard access returns
 `CLIPBOARD_BUSY` without retry; other native failures return
 `NATIVE_OPERATION_FAILED` without text or OS details. Failure after emptying
-the clipboard can leave it empty. No read API or background monitoring exists.
+the clipboard can leave it empty. This write grant enables no reading or background monitoring.
 The opt-in permission allows trusted scripts to overwrite the clipboard without
 a host prompt; user activation is not attested. Normal browser copy/paste stays
 unchanged. Calls run on the existing UI thread and are rejected during shutdown.
+
+### Clipboard Text Read
+
+[ADR 0030](../adr/0030-confirmed-clipboard-text-read.md) adds the independent
+`clipboard.read` permission. Invoke `window.velox.invoke("clipboard.readText")`
+only from an explicit paste action. Each request requires a native confirmation
+with default No; refusal returns `{cancelled: true}` and reads nothing. Approval
+returns `{cancelled: false, text}` for Unicode text up to 32 KiB of UTF-8,
+including empty text. The response's text budget is independent of the 64 KiB
+serialized request limit; JSON escaping can expand returned text.
+
+The request reserves its ID until deferred completion. One confirmation may be
+pending per host; another read returns `TOO_MANY_REQUESTS`. Contention returns
+`CLIPBOARD_BUSY`, unsupported/invalid Unicode `UNSUPPORTED_TEXT`, oversized
+text `PAYLOAD_TOO_LARGE`, and native or stale-document failures
+`NATIVE_OPERATION_FAILED`, all without contents or OS details. Navigation or
+shutdown prevents stale text disclosure. No background reads, format enumeration,
+history, writes, permanent approval or automatic retries are provided.
+IPC does not attest a click, and returned text is available to opted-in app
+scripts after approval. Clipboard contents can change while the dialog is open;
+Windows retrieval can block the UI thread. Browser-native paste is unchanged.
 
 ### External HTTPS Links
 

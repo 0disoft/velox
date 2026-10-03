@@ -39,8 +39,13 @@ func TestLoadClipboardPermissionIsExplicit(t *testing.T) {
 		t.Fatal(got, err)
 	}
 	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.clipboard-test","name":"Clipboard test","version":"1"},"security":{"permissions":["clipboard.read"]}}`)
+	got, err = Load(path)
+	if err != nil || strings.Join(got.Security.Permissions, ",") != "clipboard.read" {
+		t.Fatal("independent clipboard read permission rejected", got, err)
+	}
+	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.clipboard-test","name":"Clipboard test","version":"1"},"security":{"permissions":["clipboard.watch"]}}`)
 	if _, err := Load(path); err == nil {
-		t.Fatal("clipboard read permission accepted")
+		t.Fatal("clipboard watcher permission accepted")
 	}
 }
 

@@ -34,6 +34,13 @@ The parent workspace command contract currently provides these bounded intents:
   Packaged apps do not allocate a console; the separate Velox CLI retains its
   console subsystem and redirected diagnostics. Native startup smoke checks the
   built host's PE subsystem as well as startup, shutdown, and failure reporting.
+- Clipboard read checks cover independent opt-in permission propagation,
+  deferred single completion, default denial and strict empty parameters,
+  per-request approval/cancellation, pending-request rejection, navigation and
+  shutdown without text disclosure, UTF-16 validation and UTF-8 byte limits,
+  bounded memory copying, lock cleanup and redacted native errors. Windows
+  allocation readback tests use owned temporary memory without accessing the
+  user's clipboard. Actual native approval and paste require manual evidence.
 - `velox_release_bundle` builds the Go CLI and host and assembles the unsigned,
   deterministic Windows x64 release bundle.
 - `velox_alpha_evidence_smoke` verifies the release manifest and emits local

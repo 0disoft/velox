@@ -41,8 +41,12 @@ func TestClipboardPermissionManifestRoundTrip(t *testing.T) {
 	if err != nil || strings.Join(parsed.Security.Permissions, ",") != "clipboard.write" {
 		t.Fatal(parsed, err)
 	}
-	if _, err := Parse([]byte(strings.ReplaceAll(string(body), "clipboard.write", "clipboard.read"))); err == nil {
-		t.Fatal("clipboard read permission accepted")
+	read, err := Parse([]byte(strings.ReplaceAll(string(body), "clipboard.write", "clipboard.read")))
+	if err != nil || strings.Join(read.Security.Permissions, ",") != "clipboard.read" {
+		t.Fatal("clipboard read roundtrip failed", read, err)
+	}
+	if _, err := Parse([]byte(strings.ReplaceAll(string(body), "clipboard.write", "clipboard.watch"))); err == nil {
+		t.Fatal("clipboard watcher permission accepted")
 	}
 }
 

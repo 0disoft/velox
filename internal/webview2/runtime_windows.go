@@ -99,6 +99,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	if slices.Contains(config.Permissions, ipc.PermissionClipboardWrite) {
 		runtime.dispatcher.SetClipboardWriter(clipboard.NewWindows(uintptr(view.Window())))
 	}
+	if slices.Contains(config.Permissions, ipc.PermissionClipboardRead) {
+		runtime.dispatcher.SetClipboardReader(clipboard.NewWindowsReader(uintptr(view.Window()), view.Dispatch,
+			func() bool { return !runtime.dispatcher.IsClosing() }, documentGeneration.Load, config.Title))
+	}
 	if slices.Contains(config.Permissions, ipc.PermissionFileOpen) {
 		runtime.dispatcher.SetFileOpener(fileopen.NewWindows(uintptr(view.Window()), view.Dispatch,
 			func() bool { return !runtime.dispatcher.IsClosing() }, documentGeneration.Load))

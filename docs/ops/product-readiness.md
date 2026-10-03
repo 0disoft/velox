@@ -21,6 +21,39 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Confirmed Clipboard Text Reads: 2026-10-03
+
+Local beta.20 adds only `clipboard.readText({})` under independent, default-off
+`clipboard.read`, with per-request native Yes/No approval (default No).
+Cancellation opens no clipboard and returns no text. Reads are deferred outside
+WebView callbacks, limited to one pending confirmation, and bound to the active
+document. Navigation and shutdown prevent stale text disclosure. The existing
+write permission does not grant reading. See [ADR 0030](../adr/0030-confirmed-clipboard-text-read.md).
+
+Tests passed for permission and parameter denial, deferred/single completion,
+approval/cancellation ordering, queue rejection, stale document/shutdown,
+Unicode/UTF-8 limits, bounded copying, borrowed-handle cleanup and native-error
+redaction. The Windows memory-copy test uses owned allocations and does not
+read or replace the maintainer's clipboard. Related manifest/runtime/build
+permission propagation, builder, CLI, inspector, runner, releasebundle,
+WebView2 and hygiene tests passed, as did targeted Go vet.
+
+The pre-commit GUI host built with Go 1.27.1, trimpath and `-s -w -H windowsgui`
+is 4,651,008 bytes: +23,040 bytes (22.5 KiB, about 0.5%) versus the beta.19
+host built with the same toolchain (4,627,968 bytes). This is a local binary-size
+comparison, not a zero-cost or unchanged-startup claim. Native built-host
+startup/security/lifecycle smoke passed in 43.18 seconds, including early close,
+icons and the GUI subsystem. Immediate readiness remained about seven seconds;
+the existing relaunch limitation is unchanged. Native clipboard prompt/paste
+interaction remains a separate manual check.
+
+IPC v1 gains an additive optional method and permission; existing apps retain
+their grants. Permission schemas, product scope, configuration and IPC docs
+are synchronized. DB, dependencies, repository hygiene, runner selection and
+CI workflows are unchanged. No clipboard listener, timer, retry, stored approval,
+public release or installed-app replacement was added. Additional hosted CI
+and installer generation were intentionally omitted for this local capability.
+
 ## File Notes Find in Document: 2026-10-03
 
 File Notes 0.4.0 adds Ctrl+F and an accessible search icon, literal

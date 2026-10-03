@@ -13,6 +13,9 @@ var (
 	ErrTooLarge    = errors.New("Clipboard text exceeds the 32 KiB limit.")
 	ErrBusy        = errors.New("The clipboard is currently unavailable.")
 	ErrNative      = errors.New("The clipboard operation failed.")
+	ErrPending     = errors.New("A clipboard read confirmation is already pending.")
+	ErrInactive    = errors.New("The requesting document is no longer active.")
+	ErrUnsupported = errors.New("The clipboard does not contain supported Unicode text.")
 )
 
 func Validate(text string) error {

@@ -60,17 +60,18 @@ type RPCError struct {
 }
 
 type Dispatcher struct {
-	identity     Identity
-	permissions  map[string]struct{}
-	window       Window
-	external     ExternalOpener
-	clipboard    ClipboardWriter
-	files        FileOpener
-	saver        FileSaver
-	folders      FolderAccess
-	upload       *saveUpload
-	uploadSerial uint32
-	savePending  bool
+	identity        Identity
+	permissions     map[string]struct{}
+	window          Window
+	external        ExternalOpener
+	clipboard       ClipboardWriter
+	clipboardReader ClipboardReader
+	files           FileOpener
+	saver           FileSaver
+	folders         FolderAccess
+	upload          *saveUpload
+	uploadSerial    uint32
+	savePending     bool
 
 	mu       sync.Mutex
 	closing  bool
@@ -177,6 +178,8 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	switch request.Method {
 	case "file.openText":
 		return failure(request.ID, "NATIVE_OPERATION_FAILED", "File selection requires asynchronous dispatch.")
+	case "clipboard.readText":
+		return failure(request.ID, "NATIVE_OPERATION_FAILED", "Clipboard reading requires asynchronous dispatch.")
 	case "folder.select", "folder.list", "folder.openText":
 		return failure(request.ID, "NATIVE_OPERATION_FAILED", "Folder selection requires asynchronous dispatch.")
 	case "app.getInfo":
@@ -209,6 +212,8 @@ func methodPermission(method string) (string, bool) {
 		return PermissionExternal, true
 	case "clipboard.writeText":
 		return PermissionClipboardWrite, true
+	case "clipboard.readText":
+		return PermissionClipboardRead, true
 	case "file.openText":
 		return PermissionFileOpen, true
 	case "folder.select", "folder.list", "folder.release":

@@ -192,6 +192,15 @@ using the text-save name grammar. No child-folder traversal, paths, writes,
 persisted grants or automatic reads are added. Hard-linked, reparse, offline
 and encrypted children are not readable through this method.
 
+`clipboard.write` allows `clipboard.writeText({text})`, up to 32 KiB of UTF-8
+without NUL, independently of file/folder access. The write permission allows
+trusted app scripts to replace clipboard contents without a host prompt.
+`clipboard.read` separately allows `clipboard.readText({})`, with native
+per-request approval and the same decoded UTF-8 text limit. Refusal reads
+nothing; no persistent approval, images, files or clipboard monitoring is
+provided. Both permissions default off and neither implies the other. See
+[clipboard reads](../architecture/04-ipc-v1.md#clipboard-text-read).
+
 ## Path Rules
 
 - Relative paths resolve from the manifest's project root.

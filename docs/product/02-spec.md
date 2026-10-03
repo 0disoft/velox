@@ -268,6 +268,12 @@ Web content is not trusted merely because it is local.
   monitoring, background work or a new dependency. The existing 64 KiB wire
   limit also applies. The grant permits trusted app scripts to replace the
   clipboard without a confirmation; IPC does not attest user activation.
+- ADR 0030 adds separate opt-in `clipboard.read` and `clipboard.readText({})`:
+  read Unicode text up to 32 KiB of UTF-8 only after per-request native approval
+  with default No. Refusal, navigation and shutdown disclose no text. No
+  background monitoring, stored approval, images/files or new dependency is
+  added. The write permission remains independent; returned text is available
+  to the approved app's scripts and clipboard retrieval can block the UI thread.
 - ADR 0028 adds opt-in `folder.read`: select one local directory using native
   UI and retain a revocable document-scoped token, never a caller path or
   persisted grant. Selection is read-only and excludes linked/remote/offline
