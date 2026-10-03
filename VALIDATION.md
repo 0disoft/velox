@@ -115,7 +115,10 @@ The parent workspace command contract currently provides these bounded intents:
   routing through the same buttons, IME composition and key-code 229 guards,
   repeat/busy suppression and discard-dialog action preservation. Edge keyboard
   checks with mock native calls verify actual key events and dialog cancellation
-  / acceptance; these are not a native WebView2 picker interaction claim.
+    / acceptance; these are not a native WebView2 picker interaction claim.
+    The maintainer later reported success after the requested actual Velox-window
+    shortcut check. Product readiness records that general manual confirmation
+    separately from per-shortcut, disk-readback or real IME evidence.
 - `velox_file_notes_build` leaves a portable File Notes directory and ZIP under
   `dist/examples/file-notes` for manual picker and persistence checks.
 - `velox_llm_agent_evaluation_test` exercises clean-room trial shape checks,

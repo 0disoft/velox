@@ -53,8 +53,14 @@ No runtime source, IPC, permission, dependency, DB, CI workflow or host version
 change was needed. Only the example version changed from 0.2.0 to 0.3.0.
 These are direct local checks, not Mustflow receipts. No existing output,
 installation, open document or user profile was replaced. Additional hosted CI,
-runtime rebuild, installer generation, native manual interaction, push and public
+runtime rebuild, installer generation, push and public
 publication were not performed for this frontend-only change.
+
+After the requested actual Velox-window shortcut check with the prepared EXE,
+the maintainer reported success. This is manual success confirmation for File
+Notes 0.3.0 on beta.19, separate from the mocked Edge checks. Individual shortcut
+results, saved-file byte readback and real IME coverage were not independently
+recorded; those narrower claims are not inferred from the general confirmation.
 
 ## Opt-In Clipboard Text Writes: 2026-10-03
 
