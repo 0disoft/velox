@@ -34,6 +34,23 @@ external-change conflicts have distinct status messages. Errors preserve the
 editor buffer and its unsaved baseline. Recovery errors can follow a partially
 completed replacement; do not treat an error as proof that disk bytes are unchanged.
 
+## Keyboard actions
+
+- `Ctrl+S`: Save, or Save as when no document-scoped target is connected.
+- `Ctrl+Shift+S`: Save as.
+- `Ctrl+O`: Open.
+- `Ctrl+N`: New document.
+
+These use the same buttons, native permissions, cancellation handling and
+unsaved-change confirmation as pointer actions. Recognized shortcuts prevent
+browser defaults, but do not dispatch while a file operation or discard dialog
+is pending, or on repeated keydown. IME composition is left untouched, including
+the Windows key-code 229 fallback. Matching uses physical key codes so Korean
+input mode does not require Latin `event.key` values. Alt/AltGr, Meta and
+unsupported Shift combinations are not intercepted. These are app-local keys,
+not OS-wide shortcuts. Buttons expose matching `aria-keyshortcuts` metadata;
+visible labels, tab order and layout remain unchanged.
+
 ## Editor font
 
 The editor area uses the bundled offline font "Velox Noto Sans KR" at 400 1rem/1.7,
@@ -46,7 +63,7 @@ The repository build output is `dist/examples/file-notes/dev.velox.filenotes.zip
 Extract the archive to a local folder, then run `dev.velox.filenotes.exe` from
 the extracted app folder. The portable ZIP does not require installation.
 
-The current example is File Notes 0.2.0, built with the unsigned Velox beta.19
+The current example is File Notes 0.3.0, built with the unsigned Velox beta.19
 host and the bundled Noto Sans KR font. It enables window-state restoration,
 single-instance activation, and the host-owned tray menu. Closing the window
 still exits normally; hiding it requires the tray's Hide window command.

@@ -21,6 +21,41 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## File Notes Keyboard Actions: 2026-10-03
+
+File Notes 0.3.0 adds app-local Ctrl+S, Ctrl+Shift+S, Ctrl+O and Ctrl+N through
+the existing button click handlers. The connected save, cancellation, error,
+permission and unsaved-change confirmation paths are unchanged. IME composition
+(including key-code 229), repeated keys, pending file work, and the open discard
+dialog cannot dispatch another action. Unsupported modifier combinations and
+unrelated keys are not intercepted. Native button labels and tab order remain
+unchanged; `aria-keyshortcuts` exposes the four bindings.
+
+All 23 File Notes application/model/storage tests passed. Playwright/Edge
+actual keyboard events exercised initial Save as, connected Save, forced Save
+as, Open cancellation and New, plus discard cancellation and acceptance.
+Native calls were mocked; these checks do not establish WebView2 accelerator
+routing or actual native dialog interaction. The narrow File Notes native-access
+hygiene test, local link checks and whitespace checks passed.
+
+The example was packaged and inspected using the existing beta.19 CLI/host,
+with only `file.open` and `file.save`. Two builds produced the same portable ZIP
+digest `facc575a82b2e5b7da1a9b83fafda8d9db2473772747aa028a7b9fe00306ec8c`
+(8,429,399 bytes). Output is isolated under `dist/manual/file-notes-keyboard/`.
+The input host remains 4,627,968 bytes with SHA-256
+`5a3d9595c3a0854f4fa69df4295352b880c62764c63213b02dda22acf6bab62d`.
+An initial host-preservation command used PowerShell's reserved `$Host` variable
+and did not perform that comparison. After correcting the variable, a repeat
+build verified the host digest and identical ZIP bytes; the initial measurement
+error is not counted as a successful check.
+
+No runtime source, IPC, permission, dependency, DB, CI workflow or host version
+change was needed. Only the example version changed from 0.2.0 to 0.3.0.
+These are direct local checks, not Mustflow receipts. No existing output,
+installation, open document or user profile was replaced. Additional hosted CI,
+runtime rebuild, installer generation, native manual interaction, push and public
+publication were not performed for this frontend-only change.
+
 ## Opt-In Clipboard Text Writes: 2026-10-03
 
 Beta.19 adds only `clipboard.writeText({text})` under the independent

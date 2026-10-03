@@ -111,6 +111,11 @@ The parent workspace command contract currently provides these bounded intents:
 - File Notes application/model/storage tests cover session-only target reuse,
   cancellation, conflict/error buffer preservation, explicit target release,
   legacy draft restoration and omission of write tokens from IndexedDB.
+  File Notes 0.3.0 also tests app-local Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+N
+  routing through the same buttons, IME composition and key-code 229 guards,
+  repeat/busy suppression and discard-dialog action preservation. Edge keyboard
+  checks with mock native calls verify actual key events and dialog cancellation
+  / acceptance; these are not a native WebView2 picker interaction claim.
 - `velox_file_notes_build` leaves a portable File Notes directory and ZIP under
   `dist/examples/file-notes` for manual picker and persistence checks.
 - `velox_llm_agent_evaluation_test` exercises clean-room trial shape checks,

@@ -23,6 +23,7 @@
   let draftTimer = null;
   let draftWrites = Promise.resolve();
   let fileActionPending = true;
+  let composing = false;
 
   function setBusy(busy, freezeEditor = false) {
     fileActionPending = busy;
@@ -160,7 +161,7 @@
   }
 
   function requestDestructiveAction(action) {
-    if (fileActionPending) return;
+    if (fileActionPending || elements.discardDialog.open) return;
     if (!model.isDirty(state)) {
       action();
       return;
@@ -178,6 +179,23 @@
   elements.open.addEventListener("click", () => requestDestructiveAction(() => performFileAction(openDocument, true)));
   elements.save.addEventListener("click", () => performFileAction(saveDocument));
   elements.saveAs.addEventListener("click", () => performFileAction(saveAsDocument));
+  elements.editor.addEventListener("compositionstart", () => { composing = true; });
+  elements.editor.addEventListener("compositionend", () => { composing = false; });
+  window.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || !event.ctrlKey || event.altKey || event.metaKey ||
+        composing || event.isComposing || event.keyCode === 229) return;
+    if (event.shiftKey && event.code !== "KeyS") return;
+    let button;
+    switch (event.code) {
+      case "KeyN": button = elements.create; break;
+      case "KeyO": button = elements.open; break;
+      case "KeyS": button = event.shiftKey ? elements.saveAs : elements.save; break;
+      default: return;
+    }
+    event.preventDefault();
+    if (event.repeat || fileActionPending || elements.discardDialog.open) return;
+    button.click();
+  });
   elements.discardDialog.addEventListener("close", () => {
     const action = pendingAction;
     pendingAction = null;

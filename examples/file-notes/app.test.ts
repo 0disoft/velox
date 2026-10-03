@@ -32,6 +32,7 @@ function harness(options: {
       value: "", textContent: "", disabled: false, readOnly: false, returnValue: "", open: false,
       addEventListener(event: string, fn: Function) { events.set(`${id}:${event}`, fn); },
       focus() {}, showModal() { this.open = true; },
+      click() { if (!this.disabled) return events.get(`${id}:click`)?.(); },
     });
     return nodes.get(id);
   }
@@ -58,8 +59,17 @@ function harness(options: {
   runInNewContext(app, context);
   return {
     node, ready: ready.promise,
-    click(id: string) { return events.get(`#${id}:click`)?.(); },
+    click(id: string) { return node(`#${id}`).click(); },
+    key(code: string, options: any = {}) {
+      const event = { code, ctrlKey: true, altKey: false, metaKey: false, shiftKey: false,
+        repeat: false, isComposing: false, keyCode: 0, defaultPrevented: false,
+        ...options, preventDefault() { this.defaultPrevented = true; } };
+      events.get("window:keydown")?.(event);
+      return event;
+    },
+    compose(active: boolean) { events.get(`#editor:composition${active ? "start" : "end"}`)?.(); },
     discard(accepted: boolean) {
+      node("#discard-dialog").open = false;
       node("#discard-dialog").returnValue = accepted ? "discard" : "cancel";
       events.get("#discard-dialog:close")?.();
     },
@@ -345,4 +355,88 @@ test("IndexedDB stores draft fields only, never write targets or legacy handles"
   await context.FileNotesStorage.save({ ...draft, target: 42, handle: {}, path: "private" });
   expect(stored).toEqual(draft);
   expect(closed).toBe(true);
+});
+
+test("keyboard Save and Save as share native selection and connected-save flows", async () => {
+  const selections: any[] = [], writes: any[] = [];
+  const ui = harness({
+    save: async (text, name) => { selections.push({ text, name }); return { name: "note.md", target: 7 }; },
+    saveTo: async (text, target) => { writes.push({ text, target }); return { name: "note.md", target }; },
+  });
+  await ui.ready;
+  ui.edit("first");
+  expect(ui.key("KeyS", { key: "\u3134" }).defaultPrevented).toBe(true);
+  await tick();
+  expect(selections).toEqual([{ text: "first", name: "Untitled.md" }]);
+  ui.edit("second");
+  ui.key("KeyS");
+  await tick();
+  expect(writes).toEqual([{ text: "second", target: 7 }]);
+  ui.key("KeyS", { shiftKey: true });
+  await tick();
+  expect(selections[1]).toEqual({ text: "second", name: "note.md" });
+  expect(ui.unload()).toBe(false);
+});
+
+test("keyboard Open and New preserve discard confirmation and cannot replace a pending action", async () => {
+  let opens = 0;
+  const ui = harness({ open: async () => { opens++; return { cancelled: true }; } });
+  await ui.ready;
+  ui.edit("keep this");
+  ui.key("KeyO");
+  expect(ui.node("#discard-dialog").open).toBe(true);
+  ui.key("KeyN");
+  ui.key("KeyS");
+  expect(opens).toBe(0);
+  ui.discard(false);
+  await tick();
+  expect(ui.node("#editor").value).toBe("keep this");
+  ui.key("KeyO");
+  ui.key("KeyN");
+  ui.discard(true);
+  await tick();
+  expect(opens).toBe(1);
+  expect(ui.node("#editor").value).toBe("keep this");
+  ui.key("KeyN");
+  ui.discard(true);
+  await tick();
+  expect(ui.node("#editor").value).toBe("");
+  expect(ui.node("#status").textContent).toBe("New document created.");
+});
+
+test("shortcuts suppress browser defaults without duplicating restoration or pending file operations", async () => {
+  const load = deferred<any>(), saved = deferred<any>();
+  let saves = 0;
+  const ui = harness({ load: load.promise, save: async () => { saves++; return saved.promise; } });
+  expect(ui.key("KeyS").defaultPrevented).toBe(true);
+  expect(saves).toBe(0);
+  load.resolve(null);
+  await ui.ready;
+  ui.key("KeyS");
+  for (const code of ["KeyS", "KeyO", "KeyN"]) expect(ui.key(code).defaultPrevented).toBe(true);
+  expect(saves).toBe(1);
+  saved.resolve({ cancelled: true });
+  await tick();
+  expect(ui.key("KeyS", { repeat: true }).defaultPrevented).toBe(true);
+  expect(saves).toBe(1);
+});
+
+test("IME and unrelated modifier combinations are left untouched", async () => {
+  let saves = 0;
+  const ui = harness({ save: async () => { saves++; return { cancelled: true }; } });
+  await ui.ready;
+  for (const options of [{ isComposing: true }, { keyCode: 229 }, { ctrlKey: false },
+    { altKey: true }, { metaKey: true }, { defaultPrevented: true }]) {
+    const event = ui.key("KeyS", options);
+    expect(event.defaultPrevented).toBe(!!options.defaultPrevented);
+  }
+  for (const code of ["KeyO", "KeyN"]) expect(ui.key(code, { shiftKey: true }).defaultPrevented).toBe(false);
+  expect(ui.key("KeyF").defaultPrevented).toBe(false);
+  ui.compose(true);
+  expect(ui.key("KeyS").defaultPrevented).toBe(false);
+  expect(saves).toBe(0);
+  ui.compose(false);
+  ui.key("KeyS");
+  await tick();
+  expect(saves).toBe(1);
 });
