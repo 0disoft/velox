@@ -84,6 +84,7 @@ the window to close, not in a pending native-response continuation.
 | `window.restore` | `window.basic` | `{}` | `null` |
 | `window.close` | `window.basic` | `{}` | `null` before deferred shutdown |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
+| `clipboard.writeText` | `clipboard.write` | `{text}` | `null` after native Unicode text write |
 | `file.openText` | `file.open` | `{}` | selected UTF-8 text or a cancellation result after the native dialog |
 | `file.beginSave` | `file.save` | `{name, bytes}` | `{token}` for one bounded text upload |
 | `file.appendSave` | `file.save` | `{token, offset, text}` | `{bytes}` received so far; byte offset must match |
@@ -99,6 +100,20 @@ the window to close, not in a pending native-response continuation.
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
+
+### Clipboard Text Write
+
+ADR 0029 permits only writing text. Add `clipboard.write` to
+`security.permissions` and call `window.velox.invoke("clipboard.writeText", {text})`
+from a copy action. Text is capped at 32 KiB of UTF-8, without NUL; empty text
+is allowed. The existing serialized-request budget remains 64 KiB, including
+JSON escaping. Success is `null`. Busy clipboard access returns
+`CLIPBOARD_BUSY` without retry; other native failures return
+`NATIVE_OPERATION_FAILED` without text or OS details. Failure after emptying
+the clipboard can leave it empty. No read API or background monitoring exists.
+The opt-in permission allows trusted scripts to overwrite the clipboard without
+a host prompt; user activation is not attested. Normal browser copy/paste stays
+unchanged. Calls run on the existing UI thread and are rejected during shutdown.
 
 ### External HTTPS Links
 

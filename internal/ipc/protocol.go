@@ -64,6 +64,7 @@ type Dispatcher struct {
 	permissions  map[string]struct{}
 	window       Window
 	external     ExternalOpener
+	clipboard    ClipboardWriter
 	files        FileOpener
 	saver        FileSaver
 	folders      FolderAccess
@@ -156,6 +157,9 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	if request.Method == "external.open" {
 		return d.openExternal(request)
 	}
+	if request.Method == "clipboard.writeText" {
+		return d.writeClipboard(request)
+	}
 	if permission == PermissionFileSave {
 		return d.prepareSave(request)
 	}
@@ -203,6 +207,8 @@ func methodPermission(method string) (string, bool) {
 		return PermissionAppInfo, true
 	case "external.open":
 		return PermissionExternal, true
+	case "clipboard.writeText":
+		return PermissionClipboardWrite, true
 	case "file.openText":
 		return PermissionFileOpen, true
 	case "folder.select", "folder.list", "folder.release":

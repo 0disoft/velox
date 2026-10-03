@@ -46,7 +46,7 @@ The repository build output is `dist/examples/file-notes/dev.velox.filenotes.zip
 Extract the archive to a local folder, then run `dev.velox.filenotes.exe` from
 the extracted app folder. The portable ZIP does not require installation.
 
-The current example is File Notes 0.2.0, built with the unsigned Velox beta.18
+The current example is File Notes 0.2.0, built with the unsigned Velox beta.19
 host and the bundled Noto Sans KR font. It enables window-state restoration,
 single-instance activation, and the host-owned tray menu. Closing the window
 still exits normally; hiding it requires the tray's Hide window command.

@@ -291,6 +291,8 @@ and ADR 0026 adds selected UTF-8 text saving with a bounded upload and native
 overwrite confirmation. Neither grants unrestricted filesystem access,
 persistent file grants. ADR 0027 adds explicit document-scoped save-target
 reuse with content/identity conflict checks, not a restart-persistent grant.
+ADR 0028 adds bounded selected-folder listing and immediate text reads;
+ADR 0029 permits bounded opt-in clipboard text writes, not reads or monitoring.
 
 - Automatic updates.
 - Application code signing automation.

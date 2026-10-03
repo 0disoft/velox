@@ -263,6 +263,11 @@ Web content is not trusted merely because it is local.
   nothing and document replacement invalidates pending work. File Notes 0.2.0
   uses this read-only API; Open does not connect a future write target.
 - IPC payload size, nesting, and in-flight request counts are bounded.
+- ADR 0029 adds opt-in `clipboard.write` and `clipboard.writeText({text})`:
+  write at most 32 KiB of UTF-8 as native Unicode text, without NUL, reading,
+  monitoring, background work or a new dependency. The existing 64 KiB wire
+  limit also applies. The grant permits trusted app scripts to replace the
+  clipboard without a confirmation; IPC does not attest user activation.
 - ADR 0028 adds opt-in `folder.read`: select one local directory using native
   UI and retain a revocable document-scoped token, never a caller path or
   persisted grant. Selection is read-only and excludes linked/remote/offline

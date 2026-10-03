@@ -54,7 +54,7 @@
         "permissions": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "enum": ["app.info", "window.basic", "external.open", "file.open", "file.save", "folder.read", "folder.readText"] },
+          "items": { "enum": ["app.info", "window.basic", "external.open", "file.open", "file.save", "folder.read", "folder.readText", "clipboard.write"] },
           "default": []
         }
       }

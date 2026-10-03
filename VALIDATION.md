@@ -377,6 +377,20 @@ passed; the release CLI smoke verified the source-free consumer compilation
 boundary. This is local harness evidence, not hosted CI, a push, a release, or a
 manual install. Behavior and layout are in `docs/ops/windows-installer.md`.
 
+## Clipboard Text Write
+
+ADR 0029 adds opt-in `clipboard.write` and only `clipboard.writeText`.
+Related clipboard, IPC, manifest/runtime and host tests cover default denial,
+strict text-only parameters, UTF-8/NUL/byte limits, Unicode termination,
+shutdown, busy/error redaction and ownership-transfer cleanup. A real Windows
+movable allocation and Unicode copy/readback test does not open or change the
+system clipboard. No clipboard read API, monitoring or dependency is added.
+Real copy/paste interaction remains a separate manual check. The initial
+`go vet` pointer-conversion warning was corrected by using the native memory
+copy function; targeted vet and tests then passed. Host size is measured with
+matching build flags and recorded in product readiness; startup equivalence
+is not inferred from code inspection or size alone.
+
 ## Local Folder Access
 
 Folder engine/IPC/Windows tests cover selected-directory tokens, explicit

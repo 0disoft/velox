@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/0disoft/velox/internal/clipboard"
 	"github.com/0disoft/velox/internal/externalurl"
 	"github.com/0disoft/velox/internal/fileopen"
 	"github.com/0disoft/velox/internal/ipc"
@@ -95,6 +96,9 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
 		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
 	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
+	if slices.Contains(config.Permissions, ipc.PermissionClipboardWrite) {
+		runtime.dispatcher.SetClipboardWriter(clipboard.NewWindows(uintptr(view.Window())))
+	}
 	if slices.Contains(config.Permissions, ipc.PermissionFileOpen) {
 		runtime.dispatcher.SetFileOpener(fileopen.NewWindows(uintptr(view.Window()), view.Dispatch,
 			func() bool { return !runtime.dispatcher.IsClosing() }, documentGeneration.Load))

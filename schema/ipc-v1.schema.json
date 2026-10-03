@@ -18,6 +18,12 @@
         "params": { "type": "object" }
       },
       "allOf": [{
+        "if": { "properties": { "method": { "const": "clipboard.writeText" } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["text"],
+          "properties": { "text": { "type": "string", "maxLength": 32768, "pattern": "^[^\\u0000]*$" } }
+        } } }
+      }, {
         "if": { "properties": { "method": { "const": "external.open" } } },
         "then": { "properties": { "params": {
           "type": "object",

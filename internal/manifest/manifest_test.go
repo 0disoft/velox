@@ -31,6 +31,19 @@ func TestLoadAppliesDocumentedDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadClipboardPermissionIsExplicit(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "velox.json")
+	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.clipboard-test","name":"Clipboard test","version":"1"},"security":{"permissions":["clipboard.write"]}}`)
+	got, err := Load(path)
+	if err != nil || strings.Join(got.Security.Permissions, ",") != "clipboard.write" {
+		t.Fatal(got, err)
+	}
+	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.clipboard-test","name":"Clipboard test","version":"1"},"security":{"permissions":["clipboard.read"]}}`)
+	if _, err := Load(path); err == nil {
+		t.Fatal("clipboard read permission accepted")
+	}
+}
+
 func TestLoadFolderPermissionIsExplicit(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "velox.json")
 	writeTestFile(t, path, `{"schemaVersion":1,"app":{"id":"dev.velox.folder-test","name":"Folder test","version":"1"},"security":{"permissions":["folder.read"]}}`)

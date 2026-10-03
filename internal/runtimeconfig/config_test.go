@@ -30,6 +30,22 @@ func TestWindowRememberStateManifestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestClipboardPermissionManifestRoundTrip(t *testing.T) {
+	value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.clipboard-test", Name: "Clipboard test", Version: "1"},
+		Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600}, Security: manifest.Security{Permissions: []string{"clipboard.write"}}}}
+	body, err := json.Marshal(FromManifest(value, "web"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := Parse(body)
+	if err != nil || strings.Join(parsed.Security.Permissions, ",") != "clipboard.write" {
+		t.Fatal(parsed, err)
+	}
+	if _, err := Parse([]byte(strings.ReplaceAll(string(body), "clipboard.write", "clipboard.read"))); err == nil {
+		t.Fatal("clipboard read permission accepted")
+	}
+}
+
 func TestFolderPermissionManifestRoundTrip(t *testing.T) {
 	value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.folder-test", Name: "Folder test", Version: "1"},
 		Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600}, Security: manifest.Security{Permissions: []string{"folder.read"}}}}
