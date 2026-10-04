@@ -44,6 +44,18 @@ These confirmations follow the automated-validation snapshots below.
 Prior automated tests remain valid unchanged. No new build, tests, version
 bump, API, DB, runner change or release is part of this documentation follow-up.
 
+## Activation Shortcut Runtime: 2026-10-04
+
+Optional `window.activationShortcut` (ADR 0039) adds one manifest/runtime-config string with no IPC permission, method or backend, no DB/profile change, no new dependency, timer, polling, worker, OS-setting change or version bump; nothing was pushed or published.
+
+Executed `go test ./internal/activationkey ./internal/manifest ./internal/runtimeconfig ./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene -count=1` and scoped `go vet`; all passed. Focused `-v TestActivationShortcut` runs after adding canceled-`WM_CLOSE` and reentrant-release cases passed without a skip, covering off/invalid input, rollback, and real Windows registration/collision/release with `Ctrl+Alt+Shift+9`, with no unowned `UnregisterHotKey`.
+
+Injected `WM_HOTKEY` messages on real HWNDs verify id/modifier/key filtering, disabled-modal and closing suppression, hidden/minimized restore preserving maximized placement, canceled-close retention, exactly-once cleanup under reentry and no tray requirement. These prove native registration and injected-message handling, not physical-key delivery.
+
+Matching Go 1.27.1 `-buildvcs=false -trimpath -ldflags '-s -w -H windowsgui'` builds measured 4,724,224 bytes before and 4,736,000 bytes after: +11,776 bytes / 11.5 KiB. New host SHA-256: `6097731876cc1e82be5e5fead8de05b96fefcc0d433f6a534fc7a3ed780e6600`. Size is not a startup-latency benchmark.
+
+The matching CLI/host bundle built successfully. A private tray-less smoke app retained `Ctrl+Alt+Shift+9` in its packaged runtime configuration with no permissions; startup and exit-after-ready returned zero. The user-facing example is a separate change. Physical-key foreground activation and the real conflict-warning interaction remain unverified. Existing File Notes and the notification confirmation record are unchanged.
+
 ## Tray Notification Runtime: 2026-10-04
 
 `notification.show` independently permits transient balloons and requires an

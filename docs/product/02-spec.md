@@ -183,6 +183,19 @@ passed with ZIP SHA-256
   reduced resource use is not promised. Single-instance activation also
   reveals a tray-hidden window. The File Notes source opts in; older packaged
   outputs are not implicitly updated.
+- Opt-in activation shortcut (`window.activationShortcut`, default empty/off).
+  When set, the host registers one system-wide Windows hot key on the existing
+  UI thread to reveal the existing window, restoring it from minimized and
+  requesting foreground as best-effort while preserving maximized placement.
+  The value must be exactly `Ctrl+Alt+<key>` or `Ctrl+Alt+Shift+<key>` with one
+  uppercase `A`-`Z` or `0`-`9`; invalid strings fail configuration
+  validation. A combo already owned by another application is reported with
+  one host warning and the app continues without the shortcut; the host never
+  overrides another binding and does not retry. The optional tray is not
+  required. With the field absent or empty, no hot key is registered and no
+  subclass is installed; there is no permission, IPC method or event, key
+  logging, general global-key API, configuration UI, timer, worker,
+  dependency, persistence, or version change.
 - Opt-in system theme (`window.followSystemTheme: true`, default `false`).
   The host requests a native title bar that follows the Windows app light/dark
   setting on documented Windows 11 build 22000 and newer, using the DWM
@@ -320,6 +333,16 @@ Web content is not trusted merely because it is local.
   shell acceptance only, and no body is stored or replayed after an Explorer
   restart. No dependency, timer, worker, persistence, toast registration,
   scheduling or version change is added.
+- ADR 0039 adds optional `window.activationShortcut` (default empty/off): one
+  system-wide `Ctrl+Alt+[Shift+]<key>` hot key on the existing UI thread that
+  reveals the existing window, restoring from minimized and requesting
+  foreground as best-effort while preserving maximized placement. A combo owned
+  by another application is reported with one host warning and the app
+  continues without the shortcut, never overriding another binding and never
+  retrying. Invalid strings fail validation; omitted or empty registers nothing
+  and installs no subclass. No permission, IPC method or event, key logging,
+  general global keys, custom actions, configuration UI, timer, worker,
+  dependency, persistence or version change is added.
 - ADR 0031 adds independent opt-in `window.title` and `window.setTitle({title})`:
   update the native caption with up to 512 UTF-8 bytes without control
   characters, or reset to the manifest app name with an empty string.

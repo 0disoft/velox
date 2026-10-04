@@ -43,7 +43,8 @@
         "alwaysOnTop": { "type": "boolean", "default": false },
         "followSystemTheme": { "type": "boolean", "default": false },
         "rememberState": { "type": "boolean", "default": false },
-        "tray": { "type": "boolean", "default": false }
+        "tray": { "type": "boolean", "default": false },
+        "activationShortcut": { "type": "string", "default": "", "pattern": "^(?:Ctrl\\+Alt\\+(?:Shift\\+)?[A-Z0-9])?$" }
       }
     },
     "security": {

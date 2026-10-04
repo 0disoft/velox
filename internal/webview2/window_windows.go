@@ -49,6 +49,14 @@ func (w nativeWindow) Minimize() error { return w.show(showMinimized) }
 func (w nativeWindow) Maximize() error { return w.show(showMaximized) }
 func (w nativeWindow) Restore() error  { return w.show(showRestored) }
 
+func revealNativeWindow(hwnd uintptr) {
+	showWindow.Call(hwnd, 8) // SW_SHOWNA preserves maximized placement.
+	if minimized, _, _ := isIconic.Call(hwnd); minimized != 0 {
+		showWindow.Call(hwnd, showRestored)
+	}
+	user32Window.NewProc("SetForegroundWindow").Call(hwnd)
+}
+
 func (w nativeWindow) SetTitle(title string) error {
 	handle, err := w.handle()
 	if err != nil {

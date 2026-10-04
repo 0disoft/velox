@@ -49,7 +49,8 @@
         "alwaysOnTop": { "type": "boolean", "default": false, "description": "Initial topmost state; users can toggle it in the window system menu. Not persisted." },
         "followSystemTheme": { "type": "boolean", "default": false, "description": "Opt in to system-themed title bars where supported. App content remains CSS-owned; unsupported systems keep the default frame." },
         "rememberState": { "type": "boolean", "default": false },
-        "tray": { "type": "boolean", "default": false }
+        "tray": { "type": "boolean", "default": false },
+        "activationShortcut": { "type": "string", "default": "", "pattern": "^(?:Ctrl\\+Alt\\+(?:Shift\\+)?[A-Z0-9])?$", "description": "Optional global shortcut to reveal the existing window. Empty disables. Registration failure is reported without stopping the app." }
       }
     },
     "security": {

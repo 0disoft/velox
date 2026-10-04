@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/0disoft/velox/internal/activationkey"
 	"github.com/0disoft/velox/internal/appidentity"
 	"github.com/0disoft/velox/internal/pebranding"
 	"github.com/0disoft/velox/internal/safefs"
@@ -47,15 +48,16 @@ type Assets struct {
 }
 
 type Window struct {
-	Width             uint  `json:"width"`
-	Height            uint  `json:"height"`
-	Resizable         *bool `json:"resizable,omitempty"`
-	MinWidth          uint  `json:"minWidth,omitempty"`
-	MinHeight         uint  `json:"minHeight,omitempty"`
-	AlwaysOnTop       bool  `json:"alwaysOnTop,omitempty"`
-	FollowSystemTheme bool  `json:"followSystemTheme,omitempty"`
-	RememberState     bool  `json:"rememberState,omitempty"`
-	Tray              bool  `json:"tray,omitempty"`
+	Width              uint                   `json:"width"`
+	Height             uint                   `json:"height"`
+	Resizable          *bool                  `json:"resizable,omitempty"`
+	MinWidth           uint                   `json:"minWidth,omitempty"`
+	MinHeight          uint                   `json:"minHeight,omitempty"`
+	AlwaysOnTop        bool                   `json:"alwaysOnTop,omitempty"`
+	FollowSystemTheme  bool                   `json:"followSystemTheme,omitempty"`
+	RememberState      bool                   `json:"rememberState,omitempty"`
+	Tray               bool                   `json:"tray,omitempty"`
+	ActivationShortcut activationkey.Shortcut `json:"activationShortcut,omitempty"`
 }
 
 type Security struct {
@@ -165,6 +167,9 @@ func validate(value Manifest) error {
 		return err
 	}
 	seen := make(map[string]struct{}, len(value.Security.Permissions))
+	if _, err := activationkey.Parse(value.Window.ActivationShortcut); err != nil {
+		return err
+	}
 	for _, permission := range value.Security.Permissions {
 		if permission != "app.info" && permission != "window.basic" && permission != "window.title" && permission != "window.attention" && permission != "window.progress" && permission != "notification.show" && permission != "external.open" && permission != "file.open" && permission != "file.save" && permission != "folder.read" && permission != "folder.readText" && permission != "clipboard.write" && permission != "clipboard.read" {
 			return fmt.Errorf("unsupported permission %q", permission)

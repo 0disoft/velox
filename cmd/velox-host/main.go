@@ -89,6 +89,7 @@ func run(args []string) int {
 		FollowSystemTheme:       cfg.Window.FollowSystemTheme,
 		RememberState:           cfg.Window.RememberState,
 		Tray:                    cfg.Window.Tray,
+		ActivationShortcut:      cfg.Window.ActivationShortcut,
 		SingleInstance:          instance,
 		DataPath:                dataPath,
 		BrowserExecutableFolder: benchmark.browserExecutableFolder,

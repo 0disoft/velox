@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/0disoft/velox/internal/activationkey"
 	"github.com/0disoft/velox/internal/appidentity"
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/manifest"
@@ -38,15 +39,16 @@ type Assets struct {
 }
 
 type Window struct {
-	Width             uint  `json:"width"`
-	Height            uint  `json:"height"`
-	Resizable         *bool `json:"resizable,omitempty"`
-	MinWidth          uint  `json:"minWidth,omitempty"`
-	MinHeight         uint  `json:"minHeight,omitempty"`
-	AlwaysOnTop       bool  `json:"alwaysOnTop,omitempty"`
-	FollowSystemTheme bool  `json:"followSystemTheme,omitempty"`
-	RememberState     bool  `json:"rememberState,omitempty"`
-	Tray              bool  `json:"tray,omitempty"`
+	Width              uint                   `json:"width"`
+	Height             uint                   `json:"height"`
+	Resizable          *bool                  `json:"resizable,omitempty"`
+	MinWidth           uint                   `json:"minWidth,omitempty"`
+	MinHeight          uint                   `json:"minHeight,omitempty"`
+	AlwaysOnTop        bool                   `json:"alwaysOnTop,omitempty"`
+	FollowSystemTheme  bool                   `json:"followSystemTheme,omitempty"`
+	RememberState      bool                   `json:"rememberState,omitempty"`
+	Tray               bool                   `json:"tray,omitempty"`
+	ActivationShortcut activationkey.Shortcut `json:"activationShortcut,omitempty"`
 }
 
 type Security struct {
@@ -67,7 +69,7 @@ func FromManifest(value manifest.Resolved, assetRoot string) Config {
 			ID: value.App.ID, Name: value.App.Name, Version: value.App.Version, SingleInstance: value.App.SingleInstance,
 		},
 		Assets:   Assets{Root: filepath.ToSlash(assetRoot), Entry: filepath.ToSlash(value.Assets.Entry)},
-		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, Resizable: value.Window.Resizable, MinWidth: value.Window.MinWidth, MinHeight: value.Window.MinHeight, AlwaysOnTop: value.Window.AlwaysOnTop, FollowSystemTheme: value.Window.FollowSystemTheme, RememberState: value.Window.RememberState, Tray: value.Window.Tray},
+		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, Resizable: value.Window.Resizable, MinWidth: value.Window.MinWidth, MinHeight: value.Window.MinHeight, AlwaysOnTop: value.Window.AlwaysOnTop, FollowSystemTheme: value.Window.FollowSystemTheme, RememberState: value.Window.RememberState, Tray: value.Window.Tray, ActivationShortcut: value.Window.ActivationShortcut},
 		Security: Security{Permissions: append([]string{}, value.Security.Permissions...)},
 	}
 }
@@ -160,6 +162,9 @@ func validate(cfg Config) error {
 		return errors.New("security.permissions is required")
 	}
 	seen := make(map[string]struct{}, len(cfg.Security.Permissions))
+	if _, err := activationkey.Parse(cfg.Window.ActivationShortcut); err != nil {
+		return err
+	}
 	for _, permission := range cfg.Security.Permissions {
 		if permission != "app.info" && permission != "window.basic" && permission != "window.title" && permission != "window.attention" && permission != "window.progress" && permission != "notification.show" && permission != "external.open" && permission != "file.open" && permission != "file.save" && permission != "folder.read" && permission != "folder.readText" && permission != "clipboard.write" && permission != "clipboard.read" {
 			return fmt.Errorf("unsupported permission %q", permission)

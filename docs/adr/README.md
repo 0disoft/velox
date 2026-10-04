@@ -53,6 +53,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0036 | Accepted | Allow an opt-in native title bar that follows the Windows app light/dark setting without script control |
 | 0037 | Accepted | Allow independently permitted taskbar progress with readiness-gated COM lifetime |
 | 0038 | Accepted | Allow one transient tray balloon for opted-in tray apps under an independent notification permission |
+| 0039 | Accepted | Allow one optional manifest activation shortcut that reveals the existing window through a single system-wide hot key, off by default and non-fatal when unavailable |
 
 ## Lifecycle
 

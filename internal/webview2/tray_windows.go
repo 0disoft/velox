@@ -191,12 +191,7 @@ func (t *systemTray) available() bool {
 }
 
 func (t *systemTray) show() {
-	trayUser32.NewProc("ShowWindow").Call(t.data.Window, 8) // SW_SHOWNA preserves maximized placement.
-	minimized, _, _ := trayUser32.NewProc("IsIconic").Call(t.data.Window)
-	if minimized != 0 {
-		trayUser32.NewProc("ShowWindow").Call(t.data.Window, 9) // SW_RESTORE
-	}
-	trayUser32.NewProc("SetForegroundWindow").Call(t.data.Window)
+	revealNativeWindow(t.data.Window)
 }
 
 func (t *systemTray) command(command uintptr) {

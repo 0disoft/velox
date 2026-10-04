@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/0disoft/velox/internal/activationkey"
 	"github.com/0disoft/velox/internal/singleinstance"
 	"github.com/0disoft/velox/internal/windowlimits"
 )
@@ -38,6 +39,7 @@ type Config struct {
 	FollowSystemTheme       bool
 	RememberState           bool
 	Tray                    bool
+	ActivationShortcut      activationkey.Shortcut
 	SingleInstance          *singleinstance.Guard
 	DataPath                string
 	BrowserExecutableFolder string
@@ -72,6 +74,9 @@ func RuntimeCapabilities() Capabilities {
 }
 
 func (c Config) validate() error {
+	if _, err := activationkey.Parse(c.ActivationShortcut); err != nil {
+		return err
+	}
 	if c.Title == "" {
 		return errors.New("window title is required")
 	}

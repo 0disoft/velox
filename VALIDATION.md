@@ -50,6 +50,22 @@ Visible Windows balloon display, suppression and click-to-restore remain
 separate manual evidence. These are requirements, with no completed validation
 claimed by this entry.
 
+Activation shortcut requirements: scoped manifest/runtime-config/WebView2/host/
+hygiene checks and related vet when implementation is ready. Cover the strict
+grammar `Ctrl+Alt+[Shift+]<one A-Z or 0-9>` including rejected null and
+non-string values, modifier order, spaces, lowercase, duplicates, `Win`,
+`F12`, multibyte and empty keys. Verify one `RegisterHotKey` binding with
+`MOD_NOREPEAT` on the existing HWND, id/modifier/key validation before reveal,
+no native registration or subclass when the field is omitted or empty,
+mock-message reveal of hidden/minimized windows with maximized placement
+preserved, rollback that never unregisters an unowned binding on a conflicting
+or failed registration, and exactly-once `UnregisterHotKey` across
+`WM_DESTROY`/`WM_NCDESTROY`. A conflict must warn once and leave the app
+running without the shortcut and without retries. Physical key presses
+revealing hidden, minimized, and background windows remain separate manual
+evidence. These are requirements, with no completed validation claimed by this
+entry.
+
 Fixed-size windows: scoped manifest/runtime-config/WebView2/builder/host/hygiene
 Go tests and go vet. Cover omission/true/false, invalid types, default style,
 native frame/system commands, IPC maximize rejection, no initial geometry or

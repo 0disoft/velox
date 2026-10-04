@@ -47,7 +47,8 @@ shape is:
         "alwaysOnTop": false,
         "followSystemTheme": false,
         "rememberState": false,
-        "tray": false
+        "tray": false,
+        "activationShortcut": ""
       },
       "security": {
         "permissions": []
@@ -186,6 +187,22 @@ Initial width and height, optional minimum dimensions and window-state persisten
   process is added. ADR 0038 adds an optional transient balloon under a
   separate default-off permission. Hidden WebView content still runs; hiding
   does not promise lower CPU or memory use. See ADR 0024.
+
+- `activationShortcut`: optional string, default empty (disabled). When set,
+  the host registers one system-wide Windows hot key on the existing UI thread
+  that reveals the existing window, restoring it from minimized and requesting
+  foreground as best-effort while preserving maximized placement. The value
+  must be exactly `Ctrl+Alt+<key>` or `Ctrl+Alt+Shift+<key>` with one uppercase
+  `A`-`Z` or `0`-`9`; `null`, non-strings, other modifiers, order or spacing
+  variants, lowercase, duplicates, `Win`, `F12`, and multibyte keys are
+  rejected. Prefer `Ctrl+Alt+Shift+<key>` because some layouts use `Ctrl+Alt`
+  (AltGr) for typed characters. A combo already owned by another application is
+  reported with one host warning and the app continues without the shortcut;
+  registration never overrides another process's binding and is not retried.
+  Successful registration unregisters exactly once on window destruction. The
+  field requires no permission and adds no IPC method or event, key logging,
+  general global keys, custom actions, configuration UI, timer, worker,
+  dependency, persistence or version change. See ADR 0039.
 
 Position policy and background color are not manifest fields
 in v1.

@@ -196,6 +196,9 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		destroyBeforeRun(view)
 		return nil, err
 	}
+	if err := installActivationShortcut(uintptr(view.Window()), config.ActivationShortcut, runtime.dispatcher.IsClosing); err != nil {
+		warnActivationShortcut(uintptr(view.Window()), config.ActivationShortcut)
+	}
 	view.Navigate(entryURL)
 	if config.StartupPhase != nil {
 		config.StartupPhase("navigation-dispatched")
