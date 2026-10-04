@@ -8,9 +8,7 @@ This guide starts from published release bytes. It does not require a Velox
 source checkout, Go, C++, Rust, Zig, Node.js, Bun, a frontend package manager,
 or a build-system cache.
 
-The PowerShell examples below are consumer-facing local commands. They are not
-repository-maintainer command authority and do not replace the repository's
-Mustflow validation intents.
+The PowerShell examples below are consumer-facing local commands.
 
 ## 1. Record the release identity
 
@@ -49,7 +47,7 @@ supplied expected digest. Stop before extraction when either comparison fails.
 
 ## 3. Extract the release
 
-Velox is distributed as a portable ZIP, not an installer. Extract the entire
+The Velox CLI tool is distributed as a portable ZIP. Extract the entire
 archive before running it; do not run an executable from inside the ZIP or
 copy an executable out by itself. Keep the files in each extracted directory
 together. No automatic update is provided.
@@ -132,6 +130,119 @@ deliberately clear IndexedDB or other browser storage. Save in-app edits before
 reloading. Close the app before rebuilding its portable output. Without
 `--debug`, development tools and default context menus remain disabled; the
 flag does not change packaged configuration, native permissions, or origin policy.
+
+## 7. Grant a native permission
+
+Sections 7 and 8 describe current-source additions, not the published
+alpha.62 bundle. Use them once your chosen release includes these features;
+the first six sections remain the public-release path.
+
+New bundles' `velox init` writes `velox.json`, three web assets (`web/index.html`,
+`web/style.css`, `web/app.js`), and a root `velox.d.ts`. The generated manifest
+starts with `"security": { "permissions": [] }`, so the app can call no native
+capability until you opt in. Add permissions to the manifest; nothing is
+granted implicitly. Replace the existing `security` object's permissions with
+the following; keep the rest of your manifest:
+
+```json
+{
+  "security": { "permissions": ["app.info", "file.save"] }
+}
+```
+
+`app.info` enables `window.velox.invoke("app.getInfo")`; `file.save` enables
+`window.velox.saveText`, `saveTextAs`, and `saveTextTo`. Each permission is
+independent and enforced by the host. See the
+[configuration guide](cli/configuration.md) and the
+[IPC method table](architecture/04-ipc-v1.md#methods).
+The save example only needs `file.save`; omit `app.info` if your app does not
+read its native identity.
+
+### A click-triggered save
+
+For this minimal example, add one textarea, one button and one output to the
+page, then put the JavaScript in `web/app.js`. Keep the existing deferred script
+reference in the HTML; the manifest's CSP does not permit inline scripts.
+
+```html
+<label for="note">Note</label>
+<textarea id="note"></textarea>
+<button type="button">Save</button>
+<output role="status"></output>
+```
+
+```js
+const editor = document.querySelector("textarea");
+const saveButton = document.querySelector("button");
+const saveStatus = document.querySelector("output");
+if (!editor || !saveButton || !saveStatus) throw new Error("Save controls missing.");
+/** @type {number | undefined} */
+let saveTarget;
+
+saveButton.addEventListener("click", async () => {
+  const api = window.velox;
+  if (!api || typeof api.saveTextAs !== "function") {
+    saveStatus.value = "This bundle does not provide native text saving.";
+    return;
+  }
+  if (saveButton.disabled) return;
+  saveButton.disabled = true;
+  try {
+    const saved = saveTarget === undefined
+      ? await api.saveTextAs(editor.value, "note.txt")
+      : await api.saveTextTo(editor.value, saveTarget);
+    if (saved.cancelled) saveStatus.value = "Save cancelled.";
+    else {
+      saveTarget = saved.target;
+      saveStatus.value = "Saved " + saved.name;
+    }
+  } catch (error) {
+    saveTarget = undefined;
+    saveStatus.value = "Save failed. Keep your text and retry Save as.";
+  } finally {
+    saveButton.disabled = false;
+  }
+});
+```
+
+`saveTextAs` opens a native Save-as dialog and returns a document-scoped
+`target` only on success; a cancelled dialog returns `{cancelled: true}` and
+writes nothing. Later clicks reuse that target through `saveTextTo`. Call
+`window.velox.invoke("file.releaseSaveTarget", { target: saveTarget })` before
+New in the same page, only when a target is connected. Reset the local target
+after release; navigation clears host targets automatically. This example never
+clears the editor buffer. `window.velox` is injected only into
+a trusted top-level Velox document, so check it before use.
+
+### TypeScript is optional
+
+`velox.d.ts` is a declaration-only mirror of the IPC surface: it ships no
+runtime payload and installs no compiler. Plain JavaScript apps need no
+TypeScript for `init` or `build`; developers choosing TypeScript compile their
+own frontend sources separately and use the declaration for type checking. See the
+[type guide](../types/README.md).
+
+## 8. Current host options
+
+Current sources also support window lifecycle and packaging options. This is a
+small, non-exhaustive sample; the
+[configuration guide](cli/configuration.md) lists every field. Merge these
+fields into the existing manifest rather than replacing it:
+
+```json
+{
+  "app": { "singleInstance": true },
+  "branding": { "company": "Rodisoft" },
+  "window": { "tray": true, "rememberState": true, "activationShortcut": "Ctrl+Alt+Shift+V" }
+}
+```
+
+`singleInstance` suppresses a second window; `tray` adds a notification-area
+icon; `rememberState` restores window placement across launches;
+`activationShortcut` registers a global reveal hotkey; and `branding` writes
+Windows version resources during `velox build`. `velox build --installer` also
+emits a per-user Setup executable when the release includes its template.
+These options are opt-in and default off.
 
 ## Failure Boundaries
 

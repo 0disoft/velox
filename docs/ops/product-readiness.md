@@ -21,6 +21,28 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Quickstart Refresh And Batched Push: 2026-10-05
+
+The seven verified commits after `35f6956` through `ee75d63` were pushed to
+origin/main once. A separate remote-ref lookup confirmed
+`ee75d63a0d178dd8337da5fbb8ed8d177da04f35`; no release was published or
+additional workflow dispatched. This quickstart follow-up is a local commit.
+
+The quickstart retains its immutable public-release download and seven-command
+CLI path, removes obsolete Mustflow guidance, and adds gated current-source
+permission, plain-JavaScript save, optional type and host-configuration examples.
+Sections 7/8 do not claim those additions are present in published alpha.62.
+The save example reports cancellation/failure, preserves text, disables duplicate
+clicks, reuses only a document-scoped target and retries selection after errors.
+
+The focused CLI sequence and public-byte hygiene checks passed. Strict checkJs
+and a local sandbox passed missing/old bridge, cancelled save, successful save,
+connected-target conflict, Save-as retry and duplicate-click suppression cases.
+These are mocked interactions, not another native dialog test. Runtime code,
+API behavior, DB, dependencies and CI configuration are unchanged; host rebuild,
+performance tests and native UI verification were not repeated. The first seven
+commits were pushed; this documentation follow-up is not yet remote.
+
 ## TypeScript Delivery: 2026-10-05
 
 Source-built release archives now include the explicit `types/velox.d.ts`,
