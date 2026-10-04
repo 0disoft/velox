@@ -44,6 +44,15 @@ func TestBuildProducesDeterministicChecksumsSBOMAndProvenance(t *testing.T) {
 	if document.SPDXVersion != "SPDX-2.3" || len(document.Packages) != 1 || len(document.Files) == 0 {
 		t.Fatalf("unexpected SPDX document: %+v", document)
 	}
+	listed := make(map[string]bool)
+	for _, file := range document.Files {
+		listed[file.FileName] = true
+	}
+	for _, name := range []string{"velox.d.ts", "README.md", "example.ts"} {
+		if !listed["./types/"+name] {
+			t.Errorf("type file missing from release SBOM: %s", name)
+		}
+	}
 	provenance, err := os.ReadFile(first.Provenance)
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +84,9 @@ func buildReleaseFixture(t *testing.T) releasebundle.Result {
 		writeEvidenceFixture(t, filepath.Join(source, "schema", name), []byte("{}\n"))
 	}
 	writeEvidenceFixture(t, filepath.Join(source, "THIRD_PARTY_NOTICES.md"), []byte("notices\n"))
+	for _, name := range []string{"velox.d.ts", "README.md", "example.ts"} {
+		writeEvidenceFixture(t, filepath.Join(source, "types", name), []byte("type fixture: "+name+"\n"))
+	}
 	result, err := releasebundle.Build(releasebundle.Options{CLIPath: filepath.Join(input, "velox.exe"), HostPath: filepath.Join(input, "velox-host.exe"), SourceRoot: source, OutputRoot: filepath.Join(root, "release")})
 	if err != nil {
 		t.Fatal(err)

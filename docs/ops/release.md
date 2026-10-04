@@ -84,6 +84,27 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.63 Source Candidate: 2026-10-05
+
+The working tree is aligned to source version `0.5.10-alpha.63`, replacing the
+`0.5.10-beta.20` development version string. This is a source-only version and
+channel alignment: the candidate has no release artifact, bundle ZIP, checksum
+or SHA record yet, is not tagged, and is not published. The current public
+preview remains
+[`v0.5.10-alpha.62`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.62)
+with the URLs and SHA-256 records above unchanged. Beta remains held under
+`docs/ops/product-readiness.md`; this alignment does not promote beta and does
+not claim any alpha.63 artifact bytes.
+
+Cached `beta.20` CLI/host bundles and the prior verification records must not be
+represented as `alpha.63` artifacts. Any published asset and release manifest
+needs newly built, matching CLI/host binaries at the new version; no existing
+beta.20 bundle is a substitute.
+
+No API, database, CI, dependency or native-feature contract change is included.
+Local verification is recorded under Version And Channel Alignment in
+[Product Readiness](product-readiness.md#version-and-channel-alignment-2026-10-05).
+
 ## Alpha.49 Product Delivery: 2026-09-10
 
 The previous preview is

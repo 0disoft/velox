@@ -146,8 +146,17 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	}
 
 	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-beta.20"`) {
-		t.Fatal("local candidate version is not beta.2")
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.63"`) {
+		t.Fatal("local candidate version is not alpha.63")
+	}
+	readiness := readNormalized(t, repositoryPath("docs", "ops", "product-readiness.md"))
+	for _, marker := range []string{
+		"- Status: Alpha active; beta not approved",
+		"- Candidate: `0.5.10-alpha.63` (source only; not tagged or published)",
+	} {
+		if !strings.Contains(readiness, marker) {
+			t.Errorf("candidate channel is not synchronized: missing %q", marker)
+		}
 	}
 }
 

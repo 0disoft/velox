@@ -3,6 +3,7 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
+- Candidate: `0.5.10-alpha.63` (source only; not tagged or published)
 
 ## Required Beta Checks
 
@@ -20,6 +21,28 @@ files and a private profile for validation; never overwrite a user's files.
 Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
+
+## Version And Channel Alignment: 2026-10-05
+
+Source version is aligned to `0.5.10-alpha.63`, replacing the `0.5.10-beta.20`
+development string. This is a source-only candidate: it is not tagged or
+published, and no alpha.63 release artifact, bundle or checksum exists yet. The
+status line stays "Alpha active; beta not approved"; the current public preview
+remains `v0.5.10-alpha.62` and its recorded verification stays valid.
+
+Cached `beta.20` CLI/host bundles and the prior verification records are not
+alpha.63 artifacts. Matching binaries must be rebuilt at the new version before
+any release or publication. No API, database, CI, dependency or native-feature
+contract change is included.
+
+Build-plan, builder, CLI, inspector, runner, host-metadata and release-bundle
+tests passed. Release-evidence tests initially failed because their source
+fixture lacked the three newly required type files. The fixture was updated,
+SBOM coverage for those files added, and the release-evidence tests passed.
+Scoped vet passed. `go run ./cmd/velox version --json` reported
+`0.5.10-alpha.63`; candidate/public-version hygiene checks and diff checks passed.
+No matching release bundle, native UI test, benchmark, workflow dispatch, tag,
+push or publication was performed in this source-alignment step.
 
 ## Quickstart Refresh And Batched Push: 2026-10-05
 
