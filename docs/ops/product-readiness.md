@@ -40,6 +40,11 @@ API/spec/ADR/configuration/validation sources are updated; runtime version
 remains beta.20. No push, remote CI dispatch or publication is part of this
 local verification.
 
+The repository hygiene suite initially rejected File Notes' already-approved
+window.title grant because its exact permission list still expected two file
+permissions. The assertion now requires exactly file.open, file.save and
+window.title, and the suite passed. File Notes gains no attention permission.
+
 ## Dynamic Window Title Runtime: 2026-10-04
 
 `window.title` independently enables `window.setTitle({title})`, without

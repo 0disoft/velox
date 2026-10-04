@@ -25,7 +25,7 @@ func TestFileNotesUsesBoundedNativeFileAccess(t *testing.T) {
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.App.ID != "dev.velox.filenotes" || strings.Join(manifest.Security.Permissions, ",") != "file.open,file.save" {
+	if manifest.App.ID != "dev.velox.filenotes" || strings.Join(manifest.Security.Permissions, ",") != "file.open,file.save,window.title" {
 		t.Fatalf("file-notes widened the native boundary: id=%q permissions=%v", manifest.App.ID, manifest.Security.Permissions)
 	}
 
