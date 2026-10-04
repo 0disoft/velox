@@ -21,6 +21,29 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Taskbar Progress Example: 2026-10-04
+
+The isolated taskbar-progress example requests only window.progress. Its
+three Bun interaction tests passed, covering all state payloads, local-only
+slider input until change, clear, pending-call suppression, failure unlock
+and missing bridge. Headless Edge with a controlled mock bridge passed eight
+same-origin HTTP cases at 620 x 480 and 320 x 480 in light/dark and both
+forced-color modes. Screenshots show readable controls and the existing
+Lucide clear icon with no horizontal clipping or page errors. Live CSS theme
+switching preserves selected state and percentage without another IPC call.
+This is browser UI evidence, not native taskbar presentation.
+
+The beta.20 CLI build and ZIP inspection passed, including runtime-config
+permission readback. ZIP: 2,348,032 bytes, SHA-256
+`7333500a2c63b98afcc1e7e28f935c9f482d902aaf0e6a7f104e543d13eb9276`.
+Packaged host SHA-256:
+`86e8e5c5fcb9bcd5598b432119ecf8ce90032c71e2cb71034c7a4bfd8fc809ea`.
+Packaged startup and exit-after-ready returned zero with a disposable profile.
+Visible Windows taskbar state/color/percentage/clear and actual Explorer
+restart recovery remain manual observations. File Notes is untouched. No
+network, file permission, draft storage, frontend package or timer is added.
+No version change, push, workflow dispatch or publication occurred.
+
 ## Taskbar Progress Runtime: 2026-10-04
 
 Independent window.progress adds window.setProgress under ADR 0037. IPC,

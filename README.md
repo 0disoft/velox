@@ -196,6 +196,9 @@ It displays plain text only and adds no storage, history or monitoring.
 
 [`examples/window-attention`](examples/window-attention/README.md) uses only
 `window.attention` for bounded taskbar flashing and explicit cancellation.
+
+[`examples/taskbar-progress`](examples/taskbar-progress/README.md) uses only
+`window.progress` for application-supplied taskbar progress and explicit clearing.
 Its cancellable delay permits a manual background-window check; the host adds
 no timer, dependency, notification or foreground activation.
 
