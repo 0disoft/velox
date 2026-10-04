@@ -7,7 +7,7 @@ import (
 	"unsafe"
 )
 
-func assertTopmost(t *testing.T, hwnd uintptr, enabled bool, rect windowRect) {
+func assertTopmost(t *testing.T, hwnd uintptr, enabled bool, rect windowRect, visible bool) {
 	t.Helper()
 	if windowIsTopmost(hwnd) != enabled {
 		style, _, err := topmostGetStyle.Call(hwnd, ^uintptr(19))
@@ -25,8 +25,8 @@ func assertTopmost(t *testing.T, hwnd uintptr, enabled bool, rect windowRect) {
 	if foreground, _, _ := stateUser32.NewProc("GetForegroundWindow").Call(); foreground == hwnd {
 		t.Fatal("window activated")
 	}
-	if visible, _, _ := stateUser32.NewProc("IsWindowVisible").Call(hwnd); visible != 0 {
-		t.Fatal("hidden window was shown")
+	if shown, _, _ := stateUser32.NewProc("IsWindowVisible").Call(hwnd); (shown != 0) != visible {
+		t.Fatalf("window visibility changed: want %v, got %v", visible, shown != 0)
 	}
 }
 
@@ -34,22 +34,24 @@ func TestAlwaysOnTopNativeToggleAndCleanup(t *testing.T) {
 	stateTestThread(t)
 	for _, initial := range []bool{false, true} {
 		hwnd := stateTestWindow(t)
+		// Exercise system-menu commands on a displayed, inactive window.
+		stateUser32.NewProc("ShowWindow").Call(hwnd, 8) // SW_SHOWNA does not activate.
 		var rect windowRect
 		minimumGetRect.Call(hwnd, uintptr(unsafe.Pointer(&rect)))
 		if err := installAlwaysOnTop(hwnd, initial); err != nil {
 			t.Fatal(err)
 		}
-		assertTopmost(t, hwnd, initial, rect)
+		assertTopmost(t, hwnd, initial, rect, true)
 		for _, enabled := range []bool{!initial, initial} {
 			stateUser32.NewProc("SendMessageW").Call(hwnd, 0x112, topmostMenuID|3, 0)
-			assertTopmost(t, hwnd, enabled, rect)
+			assertTopmost(t, hwnd, enabled, rect, true)
 		}
 		// Refresh the menu if another native operation changes the OS state.
 		if err := setWindowTopmost(hwnd, !initial); err != nil {
 			t.Fatal(err)
 		}
 		stateUser32.NewProc("SendMessageW").Call(hwnd, 0x117, 0, 0)
-		assertTopmost(t, hwnd, !initial, rect)
+		assertTopmost(t, hwnd, !initial, rect, true)
 		stateUser32.NewProc("DestroyWindow").Call(hwnd)
 		if exists, _, _ := stateUser32.NewProc("IsWindow").Call(hwnd); exists != 0 {
 			t.Fatal("destroy retained window")
@@ -62,6 +64,19 @@ func TestAlwaysOnTopNativeToggleAndCleanup(t *testing.T) {
 		if windowIsTopmost(reopened) != initial {
 			t.Fatal("reopened state differs from configuration")
 		}
+	}
+}
+
+func TestAlwaysOnTopHiddenWindowStartup(t *testing.T) {
+	stateTestThread(t)
+	for _, initial := range []bool{false, true} {
+		hwnd := stateTestWindow(t)
+		var rect windowRect
+		minimumGetRect.Call(hwnd, uintptr(unsafe.Pointer(&rect)))
+		if err := installAlwaysOnTop(hwnd, initial); err != nil {
+			t.Fatal(err)
+		}
+		assertTopmost(t, hwnd, initial, rect, false)
 	}
 }
 

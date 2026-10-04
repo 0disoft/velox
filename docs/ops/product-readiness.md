@@ -21,6 +21,26 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Always-On-Top Native Test Follow-up: 2026-10-04
+
+The earlier failure was reproduced at the first default-off menu toggle,
+not at initial installation. An initial isolated ten-repeat run passed,
+but subsequent isolated and full scoped runs failed on the never-shown
+STATIC window. Direct topmost changes on that hidden fixture also failed
+readback, despite SetWindowPos returning success. This is not evidence that
+all hidden windows behave the same way, or a reproduction in a Velox app.
+
+The system-menu test now shows its disposable window with SW_SHOWNA before
+installation, without activating it. The final ten-repeat run passed, retaining
+topmost/menu readback, geometry, visibility, no-activation, cleanup and
+restart-default assertions. A separate hidden-window startup test covers
+default-off and default-on installation without showing or activating either
+window. The six-package scoped command below now passes with count=1;
+go vet for internal/webview2 and git diff --check also pass.
+No production runtime or dependency change is included. Hidden-window menu
+toggle readback is no longer used as a proxy for a displayed system menu;
+the historical failure remains recorded below.
+
 ## System Theme Example: 2026-10-04
 
 The isolated scratchpad opts into window.followSystemTheme with no native
@@ -39,6 +59,10 @@ These browser checks do not prove live Windows theme switching or the native
 title bar. The example's manual live Windows theme switch remains pending.
 File Notes and its data are untouched. No dependency, IPC permission, DB,
 runner, workflow or version change is included; runtime version stays beta.20.
+
+The maintainer reported "잘됨" after using the example. This is general
+confirmation; individual theme-switch and high-contrast observations were
+not separately reported.
 
 ## System Theme Runtime: 2026-10-04
 
