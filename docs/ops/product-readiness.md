@@ -22,6 +22,17 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## File Notes Public-Runtime Package: 2026-10-05
+
+File Notes 0.4.0 was packaged locally with the verified public alpha.63 CLI,
+including portable ZIP and opt-in Setup, in a separate output folder. The
+old beta.20 output, application identity/version, 14 web assets and three
+permissions were preserved. Packaged icons/font bytes and installer payload
+identity passed inspection; an isolated actual-app readiness/shutdown smoke
+passed with host exit 0 and browser exit. Setup was not executed, and no new
+manual save/open/rendering evidence or beta promotion is claimed. Hashes,
+paths and exact scope are recorded in [the package receipt](file-notes-alpha63.md).
+
 ## Alpha.63 Publication: 2026-10-05
 
 The owner approved publication of `v0.5.10-alpha.63` at
