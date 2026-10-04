@@ -3,7 +3,7 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
-- Candidate: `0.5.10-alpha.63` (source only; not tagged or published)
+- Candidate: `0.5.10-alpha.63` (local candidate; not tagged or published)
 
 ## Required Beta Checks
 
@@ -43,6 +43,66 @@ Scoped vet passed. `go run ./cmd/velox version --json` reported
 `0.5.10-alpha.63`; candidate/public-version hygiene checks and diff checks passed.
 No matching release bundle, native UI test, benchmark, workflow dispatch, tag,
 push or publication was performed in this source-alignment step.
+
+## Alpha.63 Local Candidate Build: 2026-10-05
+
+A local alpha.63 candidate was built from source and remote `main`
+`5c07245eb3794c88d54c61e65a69c8d35db06b12`; the prior two commits were pushed
+and the remote SHA was verified. The build used Go 1.27.1 with `-buildvcs=false`,
+`-trimpath` and `-s -w`; host and setup also use `-H windowsgui`. CLI, host and
+setup were each built twice. The compiler cache was reused, so no cold-build
+performance claim is made.
+
+Local machine-readable results are `dist/candidates/alpha63-5c07245/candidate-result.json`
+and `consumer-result.json`. The generated bundle is not design authority and no
+runtime contract changed.
+
+- ZIP `dist/candidates/alpha63-5c07245/velox-windows-x64.zip`: 6,782,242 bytes,
+  SHA-256 `e637ff7eb36f665d7c929b6f799124b47cb91b78598bb7a69dd68ab9d6b62eec`.
+- `velox.exe` 4,984,320; `velox-host.exe` 4,736,000; `velox-setup.exe`
+  4,099,584 bytes, read from the hashes JSON.
+- Release manifest: 16 artifact items including the three `types/` files; no
+  `embed.go`.
+- Sidecars: `checksums.sha256`, SPDX SBOM and provenance. The evidence is
+  unsigned and unauthenticated. Authenticode reports `NotSigned` for all
+  three release executables.
+
+The provenance generator retains its workflow-style GitHub Actions builder ID;
+the invocation ID is local. This unsigned JSON is not a hosted-run receipt.
+
+`TestBuiltHostStartup` passed all five subcases (early-close, icons, GUI,
+lifecycle, security policy) in 45.079 s. First readiness 0.622 s, immediate
+7.199 s; profile cleanup and browser exit were observed. The multi-second
+relaunch delay remains and is not a performance advantage.
+
+A local controller extracted the candidate ZIP outside the checkout and used
+only the CLI consumer commands (version, init, validate, doctor, build twice
+with `--installer`, inspect, run) plus the extracted app EXE. Source and packaged
+launches both reached native ready phase `dom-2raf` and exited 0 with browser
+exit. App ZIP 2,356,596 bytes, SHA-256
+`5b481c3921362302cf184164536a7e82acaa62069309c868762b0f0561ea11ff`. Installer
+`dev.velox.project-setup.exe` 6,456,244 bytes, SHA-256
+`ebdaf919cfc5f1d92bcfbf9a229b1100828aa0bf04d5e6022d1b11b87346a360`, never
+executed (no install or uninstall). The disposable fixture JavaScript check saw
+the heading plus two animation frames, which is not visual-render proof and not
+a manual save-UI check. The declaration matched the types, `permissions` was
+empty, and the temporary run config was removed.
+
+The first consumer controller attempt timed out after 60 s because it read the
+readiness pipe only after the process exit; the controller was revised to read
+readiness before waiting for exit, and the unchanged artifact then passed. The
+failure and fix are preserved; no runtime fix was applied.
+
+Not run: hosted CI, public download, or manual native functional tests. No tag,
+release, publication, signing, new dependency, API, DB or CI workflow change is
+included. Status stays "Alpha active; beta not approved" and the current public
+preview remains
+[`v0.5.10-alpha.62`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.62).
+The generated Setup payload was opened and safely extracted into the disposable
+consumer directory with the existing payload API. Its portable contents passed
+inspection as alpha.63, its embedded archive was 2,356,596 bytes, and its
+4,099,584-byte template matched the release template. The installer itself was
+not executed. This documentation follow-up is local and unpublished.
 
 ## Quickstart Refresh And Batched Push: 2026-10-05
 

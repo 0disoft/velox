@@ -152,7 +152,7 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	readiness := readNormalized(t, repositoryPath("docs", "ops", "product-readiness.md"))
 	for _, marker := range []string{
 		"- Status: Alpha active; beta not approved",
-		"- Candidate: `0.5.10-alpha.63` (source only; not tagged or published)",
+		"- Candidate: `0.5.10-alpha.63` (local candidate; not tagged or published)",
 	} {
 		if !strings.Contains(readiness, marker) {
 			t.Errorf("candidate channel is not synchronized: missing %q", marker)

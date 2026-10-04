@@ -84,6 +84,31 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.63 Local Candidate Build: 2026-10-05
+
+Source and remote `main` are `5c07245eb3794c88d54c61e65a69c8d35db06b12`; the
+prior two commits were pushed and the remote SHA was verified. A fresh local
+candidate was built from that commit with Go 1.27.1 (`-buildvcs=false`,
+`-trimpath`, `-s -w`) for the CLI, the windowsgui host and setup, twice for
+CLI, host and setup. The compiler cache was reused, so this is not a cold-build
+performance claim.
+
+Candidate ZIP `dist/candidates/alpha63-5c07245/velox-windows-x64.zip` is
+6,782,242 bytes, SHA-256
+`e637ff7eb36f665d7c929b6f799124b47cb91b78598bb7a69dd68ab9d6b62eec`.
+Binaries: `velox.exe` 4,984,320, `velox-host.exe` 4,736,000, `velox-setup.exe`
+4,099,584 bytes. The bundle carries 16 manifest artifacts including the three
+`types/` files, with no `embed.go`. Sidecars are `checksums.sha256`, SPDX SBOM
+and unsigned provenance; they do not authenticate the publisher. `TestBuiltHostStartup`
+passed all five subcases in 45.079 s.
+
+This candidate is local only: not tagged, published or signed. The current
+public preview remains
+[`v0.5.10-alpha.62`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.62)
+with the URLs and SHA-256 records above unchanged, and beta remains held. The
+detailed verification record is under Alpha.63 Local Candidate Build in
+[Product Readiness](product-readiness.md#alpha63-local-candidate-build-2026-10-05).
+
 ## Alpha.63 Source Candidate: 2026-10-05
 
 The working tree is aligned to source version `0.5.10-alpha.63`, replacing the
@@ -104,6 +129,9 @@ beta.20 bundle is a substitute.
 No API, database, CI, dependency or native-feature contract change is included.
 Local verification is recorded under Version And Channel Alignment in
 [Product Readiness](product-readiness.md#version-and-channel-alignment-2026-10-05).
+
+This is the earlier source-only step; the built local candidate and its
+checksums are recorded in the local candidate build section above.
 
 ## Alpha.49 Product Delivery: 2026-09-10
 
