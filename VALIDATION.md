@@ -16,6 +16,12 @@ PowerShell. `go vet ./cmd/velox-consumer-summary` checks this development tool.
 The workflow keeps aggregation separate from the compiler-free Windows
 consumer job. On 2026-10-05, Windows tests and Linux amd64 test cross-compilation
 passed; local Linux execution was unavailable because WSL registration failed.
+An external Debian 13 amd64 / Go 1.26.7 execution receipt was subsequently
+reviewed: root-module tests, vet and summary CLI checks passed without source
+changes. Source/archive hashes, command exits and detailed test counts matched.
+See [the Linux receipt record](docs/ops/linux-common-go-20261005.md) for the two
+existing runtime skips and excluded Windows/nested-module coverage. No local
+rerun was needed to inspect this evidence.
 
 TypeScript bridge declarations: `tsc --noEmit -p tests/types/tsconfig.json` checks
 all public method calls and save helpers, inferred responses, cancellation

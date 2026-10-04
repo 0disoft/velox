@@ -55,7 +55,11 @@ On 2026-10-05, all root-module test packages compiled for Linux amd64 using
 `go test -c -o .cache/linux-tests/ ./...` with `GOOS=linux` and `GOARCH=amd64`.
 This was cross-compilation on Windows, not a Linux test execution. Local WSL
 execution was unavailable (`Wsl/CallMsi/Install/REGDB_E_CLASSNOTREG`); Linux
-runtime results remain unverified. Linux application support is out of scope.
+runtime execution was subsequently verified by an external Debian 13 amd64 /
+Go 1.26.7 receipt. Full root-module tests, vet and actual summary CLI cases
+passed without source changes; two existing conditional skips are recorded in
+[the reviewed receipt](docs/ops/linux-common-go-20261005.md). Windows native
+features remain outside that receipt. Linux application support is out of scope.
 
 ## Suitable Contributions
 

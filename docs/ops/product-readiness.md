@@ -22,6 +22,24 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## External Linux Common-Code Verification: 2026-10-05
+
+An external Debian 13 amd64 / Go 1.26.7 receipt for source archive commit
+`5daf7ae3aa58a9c1e19ae11e048083765961a141` was reviewed locally. The 690 source
+hashes match the original archive; result checksums, recorded command exits
+and detailed test counts also match. No source changes were made by the
+external verifier. Root-module tests and vet exited 0, and actual consumer
+summary CLI success/negative cases behaved as expected with synthetic inputs.
+
+The detailed log contains 39 passed test packages, 323 passed top-level items,
+two existing conditional skips and no failed items. Windows native features
+and the separate WebView2 module's tests were not executed. This evidence
+closes the common-code Linux execution gap for this source snapshot without
+adding Linux application support or changing beta/release status. The external
+receipt was inspected, not rerun or promoted to a hosted CI attestation.
+Full scope, hashes and preserved logs are in
+[the Linux receipt record](linux-common-go-20261005.md).
+
 ## Version And Channel Alignment: 2026-10-05
 
 Source version is aligned to `0.5.10-alpha.63`, replacing the `0.5.10-beta.20`
