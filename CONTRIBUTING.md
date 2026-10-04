@@ -19,6 +19,33 @@ Feature breadth is not a current goal.
 4. State which validation names can run and which are unavailable.
 5. Keep unrelated generated scaffold files unchanged.
 
+## Development Platforms
+
+The packaged application runs on Windows x64, but contributors do not need
+Windows to work on platform-independent Go code. Use the Go version required by
+`go.mod` or a newer stable release. From the repository root, in any shell:
+
+```text
+go test ./...
+go vet ./...
+```
+
+Go excludes Windows-only source and tests on Linux. Configuration, archives,
+IPC policy, release metadata, and JSON result processing can be developed
+without WebView2 or PowerShell. A passing Linux run does not cover native
+Windows behavior. The host, installer, dialogs, tray, shortcuts, clipboard,
+and process tracing still need Windows checks when changed.
+
+Keep common tooling in Go rather than adding parallel `.ps1` and `.sh`
+implementations. PowerShell is appropriate for Windows-specific probes, not
+as a prerequisite for portable result processing.
+
+On 2026-10-05, all root-module test packages compiled for Linux amd64 using
+`go test -c -o .cache/linux-tests/ ./...` with `GOOS=linux` and `GOARCH=amd64`.
+This was cross-compilation on Windows, not a Linux test execution. Local WSL
+execution was unavailable (`Wsl/CallMsi/Install/REGDB_E_CLASSNOTREG`); Linux
+runtime results remain unverified. Linux application support is out of scope.
+
 ## Suitable Contributions
 
 - Corrections to product or architecture contradictions.
