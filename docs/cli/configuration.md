@@ -194,6 +194,15 @@ in v1.
 A closed permission list and production browser settings. Unknown permissions
 are errors, not warnings.
 
+`window.progress` independently enables only `window.setProgress({state, value?})`.
+`none` and `indeterminate` forbid `value`; `normal`, `error` and `paused`
+require an integer 0..100. Unknown fields, fractions and null are invalid.
+No basic, title or attention permission is required or granted. Default
+permissions remain empty; omission installs no progress handler and makes no
+progress COM calls. Accepted requests return `null` and may be cached before
+taskbar readiness. No file, persisted setting, timer, worker or dependency is added.
+See [taskbar progress](../architecture/04-ipc-v1.md#taskbar-progress) and ADR 0037.
+
 `window.attention` independently enables `window.requestAttention({count})`
 and `window.cancelAttention({})`. Count defaults to 3 and is limited to 1..5.
 This requests taskbar attention without activating a window, not a notification

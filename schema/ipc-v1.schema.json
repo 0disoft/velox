@@ -18,6 +18,17 @@
         "params": { "type": "object" }
       },
       "allOf": [{
+        "if": { "properties": { "method": { "const": "window.setProgress" } } },
+        "then": { "properties": { "params": {
+          "oneOf": [
+            { "type": "object", "additionalProperties": false, "required": ["state"],
+              "properties": { "state": { "enum": ["none", "indeterminate"] } } },
+            { "type": "object", "additionalProperties": false, "required": ["state", "value"],
+              "properties": { "state": { "enum": ["normal", "error", "paused"] },
+                "value": { "type": "integer", "minimum": 0, "maximum": 100 } } }
+          ]
+        } } }
+      }, {
         "if": { "properties": { "method": { "const": "window.requestAttention" } } },
         "then": { "properties": { "params": {
           "type": "object", "additionalProperties": false,

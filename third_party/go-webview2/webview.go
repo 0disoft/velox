@@ -77,6 +77,7 @@ type webview struct {
 	initializationCanceled bool
 	shutdownPhase          func(name string)
 	maxWebMessageBytes     int
+	windowSetupErr         error
 }
 
 type WindowOptions struct {
@@ -85,6 +86,8 @@ type WindowOptions struct {
 	Height uint
 	IconId uint
 	Center bool
+	// BeforeShow installs native handlers before the first taskbar button exists.
+	BeforeShow func(hwnd uintptr) error
 }
 
 type WebViewOptions struct {
@@ -212,6 +215,9 @@ func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 		options.StartupPhase("window-create-started")
 	}
 	if !w.CreateWithOptions(options.WindowOptions) {
+		if w.windowSetupErr != nil {
+			return nil, w.windowSetupErr
+		}
 		return nil, initializationResultError(w.initializationCanceled, chromium.InitializationError())
 	}
 	if options.StartupPhase != nil {
@@ -470,6 +476,14 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 		return false
 	}
 	setWindowContext(w.hwnd, w)
+	if opts.BeforeShow != nil {
+		if err := opts.BeforeShow(w.hwnd); err != nil {
+			w.windowSetupErr = err
+			_, _, _ = w32.User32DestroyWindow.Call(w.hwnd)
+			w.hwnd = 0
+			return false
+		}
+	}
 
 	_, _, _ = w32.User32ShowWindow.Call(w.hwnd, w32.SWShow)
 	_, _, _ = w32.User32UpdateWindow.Call(w.hwnd)

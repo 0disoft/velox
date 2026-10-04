@@ -70,6 +70,25 @@ func TestWindowAttentionPermissionManifestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestWindowProgressPermissionManifestRoundTrip(t *testing.T) {
+	value := manifest.Resolved{Manifest: manifest.Manifest{
+		App:    manifest.App{ID: "dev.velox.progress-test", Name: "Progress test", Version: "1"},
+		Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600},
+		Security: manifest.Security{Permissions: []string{"window.progress"}},
+	}}
+	body, err := json.Marshal(FromManifest(value, "web"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := Parse(body)
+	if err != nil || strings.Join(parsed.Security.Permissions, ",") != "window.progress" {
+		t.Fatal("progress permission roundtrip failed", parsed, err)
+	}
+	if _, err := Parse([]byte(strings.ReplaceAll(string(body), "window.progress", "window.overlay"))); err == nil {
+		t.Fatal("unrelated overlay permission accepted")
+	}
+}
+
 func TestFolderPermissionManifestRoundTrip(t *testing.T) {
 	value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.folder-test", Name: "Folder test", Version: "1"},
 		Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600}, Security: manifest.Security{Permissions: []string{"folder.read"}}}}

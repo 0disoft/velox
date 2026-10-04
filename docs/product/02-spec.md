@@ -274,6 +274,17 @@ Web content is not trusted merely because it is local.
   nothing and document replacement invalidates pending work. File Notes 0.2.0
   uses this read-only API; Open does not connect a future write target.
 - IPC payload size, nesting, and in-flight request counts are bounded.
+- ADR 0037 adds only `window.setProgress` under independent, default-disabled
+  `window.progress`. States `none`/`indeterminate` forbid a value;
+  `normal`/`error`/`paused` require an integer 0..100. Acceptance returns
+  `null`, including caching before taskbar readiness. The existing UI/COM
+  thread installs opted-in handlers before show, waits for
+  `TaskbarButtonCreated`, lazily initializes COM for non-none requests,
+  deduplicates repeats and restores the last state after button recreation.
+  Destruction clears best effort and releases exactly once under reentry.
+  Omitted permission installs no progress machinery or progress COM calls.
+  No activation, polling, timer, worker, new dependency, files, DB/state-format,
+  version or File Notes change is added. Actual presentation is shell-owned.
 - ADR 0035 adds optional `window.resizable` (default true). False disables
   user resize/maximization and rejects window.maximize without disabling
   minimize/restore/close or normal DPI handling. Saved position is restored

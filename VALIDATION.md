@@ -8,6 +8,20 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Taskbar progress requirements: scoped IPC/manifest/runtime-config/build-report/
+builder/WebView2/host/hygiene checks and related vet when implementation is ready.
+Cover independent permission/default denial, strict state/value grammar
+(including unknown fields, fractions and null), packaged propagation and
+redacted errors. Verify BeforeShow registration before initial display,
+latest-state caching with no ITaskbarList3 calls before TaskbarButtonCreated,
+non-none lazy COM/HrInit, initialization failure release, value-before-state,
+successful-repeat deduplication, Explorer button recreation, and best-effort
+clear/exactly-once release under synchronous reentry and destruction.
+Permission-absent windows must install nothing and make no progress COM calls.
+Visible taskbar progress and Explorer restart recovery need separate native
+evidence; size and operation counts require measured results. These are
+requirements, with no completed validation claimed by this entry.
+
 Fixed-size windows: scoped manifest/runtime-config/WebView2/builder/host/hygiene
 Go tests and go vet. Cover omission/true/false, invalid types, default style,
 native frame/system commands, IPC maximize rejection, no initial geometry or

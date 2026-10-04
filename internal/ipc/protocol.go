@@ -21,6 +21,7 @@ const (
 	PermissionWindow          = "window.basic"
 	PermissionWindowTitle     = "window.title"
 	PermissionWindowAttention = "window.attention"
+	PermissionWindowProgress  = "window.progress"
 	PermissionExternal        = "external.open"
 )
 
@@ -40,6 +41,7 @@ type Window interface {
 	SetTitle(string) error
 	RequestAttention(uint32) error
 	CancelAttention() error
+	SetProgress(string, uint32) error
 }
 
 type ExternalOpener interface{ Open(string) error }
@@ -172,6 +174,9 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	if permission == PermissionWindowAttention {
 		return d.windowAttention(request)
 	}
+	if permission == PermissionWindowProgress {
+		return d.windowProgress(request)
+	}
 	if permission == PermissionFileSave {
 		return d.prepareSave(request)
 	}
@@ -223,6 +228,8 @@ func methodPermission(method string) (string, bool) {
 		return PermissionWindowTitle, true
 	case "window.requestAttention", "window.cancelAttention":
 		return PermissionWindowAttention, true
+	case "window.setProgress":
+		return PermissionWindowProgress, true
 	case "external.open":
 		return PermissionExternal, true
 	case "clipboard.writeText":

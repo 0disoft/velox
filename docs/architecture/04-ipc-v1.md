@@ -86,6 +86,7 @@ the window to close, not in a pending native-response continuation.
 | `window.setTitle` | `window.title` | `{title}` | `null` after native title update |
 | `window.requestAttention` | `window.attention` | `{}` or `{count: 1..5}` | `null` after bounded taskbar attention request |
 | `window.cancelAttention` | `window.attention` | `{}` | `null` after stopping attention |
+| `window.setProgress` | `window.progress` | `{state, value?}` (see below) | `null` when accepted, possibly cached before taskbar readiness |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
 | `clipboard.writeText` | `clipboard.write` | `{text}` | `null` after native Unicode text write |
 | `clipboard.readText` | `clipboard.read` | `{}` | `{cancelled: true}` or `{cancelled: false, text}` after native approval |
@@ -108,6 +109,39 @@ policy. Minimize, restore and close retain their existing behavior.
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
+
+### Taskbar Progress
+
+[ADR 0037](../adr/0037-taskbar-progress.md) adds
+`window.velox.invoke("window.setProgress", params)` under independent,
+default-disabled `window.progress`. It requires no basic, title or attention
+permission and grants none of those operations.
+
+- `{state: "none"}` clears progress; `{state: "indeterminate"}` requests
+  activity without a percentage. Neither accepts a `value` field.
+- `{state: "normal", value: 50}` requests determinate progress. `error` and
+  `paused` use the same required integer `value` range, 0..100.
+
+Unknown fields/states, missing required values, fractions, null and out-of-range
+values return `INVALID_PARAMS`. Permission denial and shutdown retain the
+existing errors. Native failures use redacted `NATIVE_OPERATION_FAILED`,
+never a frontend HRESULT. A successful `null` acknowledges acceptance, including
+latest-state caching before `TaskbarButtonCreated`; it does not confirm pixels
+or report later shell restoration results.
+
+Calls use the existing UI/COM thread. Permission-absent windows install no
+progress machinery and make no progress COM calls. An opted-in `BeforeShow`
+hook attaches the handler before initial display. No `ITaskbarList3` method is
+called until the readiness message. Non-`none` progress then lazily creates
+and initializes COM; determinate updates set the value before the state and
+deduplicate successfully applied repeats. A recreated taskbar button restores
+the latest request through a fresh COM object. Destruction clears best effort
+and releases exactly once even under reentry.
+
+Apps must clear completed/cancelled progress with `none` and keep an in-window
+indication: high contrast or taskbar grouping can suppress their taskbar cue.
+No polling, timer, worker, new dependency, file or persistent state is added.
+Existing origin, wire limits and shutdown rules apply.
 
 ### Window Attention
 

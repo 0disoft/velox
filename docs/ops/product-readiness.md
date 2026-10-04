@@ -21,6 +21,27 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Taskbar Progress Runtime: 2026-10-04
+
+Independent window.progress adds window.setProgress under ADR 0037. IPC,
+manifest, runtime-config, webview2, builder, host and hygiene tests passed;
+buildreport has no tests. The vendored go-webview2 root tests and scoped
+go vet passed. Native tests received a real Explorer TaskbarButtonCreated
+message and exercised all five states through ITaskbarList3 on a disposable
+window. This proves native call success, not visible taskbar rendering.
+Controlled clients cover pre-ready caching without COM calls, lazy creation,
+value-before-state, deduplication, creation/application failures and explicit
+retry, button recreation, queued reentrant reset, destruction and exactly-once
+release during an active native call. BeforeShow tests verify hidden-window
+installation and failed-setup window/context cleanup. Explorer itself was not
+restarted, and no latency or memory benchmark was run.
+
+Matched stripped windowsgui/trimpath/buildvcs=false host builds grew from
+4,696,576 to 4,717,568 bytes: +20,992 bytes / 20.5 KiB, about 0.45%.
+No new dependency, timer, worker, DB/state format, file permission or runner
+change is included. File Notes is unchanged; runtime remains beta.20.
+This is local validation only, with no push or publication.
+
 ## File Notes System Theme: 2026-10-04
 
 File Notes opts in with window.followSystemTheme true; CSS provides light and

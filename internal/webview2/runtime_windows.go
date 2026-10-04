@@ -43,6 +43,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 
 	var documentGeneration atomic.Uint64
 	var runtime *Runtime
+	var beforeShow func(uintptr) error
+	if slices.Contains(config.Permissions, ipc.PermissionWindowProgress) {
+		beforeShow = installTaskbarProgress
+	}
 	view, createErr := webview.NewWithOptionsAndError(webview.WebViewOptions{
 		Debug:                   config.Debug,
 		DataPath:                config.DataPath,
@@ -74,11 +78,12 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		StartupPhase:   config.StartupPhase,
 		ShutdownPhase:  config.ShutdownPhase,
 		WindowOptions: webview.WindowOptions{
-			IconId: 1,
-			Title:  config.Title,
-			Width:  config.Width,
-			Height: config.Height,
-			Center: true,
+			IconId:     1,
+			Title:      config.Title,
+			Width:      config.Width,
+			Height:     config.Height,
+			Center:     true,
+			BeforeShow: beforeShow,
 		},
 	})
 	if view == nil {
