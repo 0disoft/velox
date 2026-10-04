@@ -11,14 +11,33 @@
   font-family: "Segoe UI", Arial, sans-serif;
   font-size: 16px;
   letter-spacing: 0;
-  color: #1b211f;
-  background: #f2f4f1;
-  --line: #d5dad5;
+  --bg: #f2f4f1;
+  --text: #1b211f;
+  --field-text: #1d2522;
   --muted: #69726e;
+  --line: #d5dad5;
   --surface: #ffffff;
   --rail: #17211d;
+  --rail-text: #f4f8f5;
+  --rail-muted: #aebbb5;
+  --brand-border: #5e8e76;
+  --brand-text: #a9d9be;
+  --control-border: #b4bdb7;
+  --control-bg: #ffffff;
+  --control-text: #25302c;
+  --placeholder: #9ba39f;
+  --status-bg: #e7eae6;
+  --status-text: #59625e;
+  --dialog-border: #c7cdc8;
+  --shadow: rgba(18, 25, 22, 0.28);
+  --backdrop: rgba(19, 27, 23, 0.52);
+  --focus: rgba(33, 105, 159, 0.42);
   --green: #2a7857;
   --red: #a44138;
+  --red-strong: #89372f;
+  --danger-text: #ffffff;
+  color: var(--text);
+  background: var(--bg);
 }
 
 * { box-sizing: border-box; }
@@ -30,7 +49,7 @@ body {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   overflow: hidden;
-  background: #f2f4f1;
+  background: var(--bg);
 }
 
 button,
@@ -40,7 +59,7 @@ textarea { font: inherit; letter-spacing: 0; }
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgba(33, 105, 159, 0.42);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -52,7 +71,7 @@ textarea:focus-visible {
   justify-content: space-between;
   gap: 24px;
   background: var(--rail);
-  color: #f4f8f5;
+  color: var(--rail-text);
 }
 
 .brand { display: flex; align-items: center; gap: 11px; }
@@ -64,14 +83,14 @@ textarea:focus-visible {
   height: 38px;
   display: grid;
   place-items: center;
-  border: 1px solid #5e8e76;
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
-  color: #a9d9be;
+  color: var(--brand-text);
   font-weight: 760;
 }
 
 .brand span,
-.document-identity span { color: #aebbb5; font-size: 0.75rem; }
+.document-identity span { color: var(--rail-muted); font-size: 0.75rem; }
 .document-identity { max-width: 55%; text-align: right; }
 .document-identity strong { overflow-wrap: anywhere; }
 
@@ -92,10 +111,10 @@ textarea:focus-visible {
 button {
   min-height: 38px;
   padding: 7px 13px;
-  border: 1px solid #b4bdb7;
+  border: 1px solid var(--control-border);
   border-radius: 4px;
-  background: #ffffff;
-  color: #25302c;
+  background: var(--control-bg);
+  color: var(--control-text);
   cursor: pointer;
   font-weight: 670;
 }
@@ -120,7 +139,27 @@ button:hover { border-color: var(--green); color: var(--green); }
 #find-count { min-width: 100px; font-size: 0.76rem; color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .find-actions { display: flex; gap: 4px; }
 .icon-button { width: 38px; height: 38px; min-height: 38px; padding: 0; display: grid; place-items: center; flex: 0 0 38px; }
-.icon-button img { display: block; }
+/* External black-stroke SVGs cannot inherit color; paint the shape as a mask
+   so it follows currentColor in every theme, including forced colors. */
+.icon-button img { display: none; }
+.icon-button::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask-image: var(--icon);
+  mask-image: var(--icon);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 18px 18px;
+  mask-size: 18px 18px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+#find-document { --icon: url("icons/search.svg"); }
+#find-previous { --icon: url("icons/chevron-up.svg"); }
+#find-next { --icon: url("icons/chevron-down.svg"); }
+#find-close { --icon: url("icons/x.svg"); }
 button:disabled { opacity: .55; cursor: default; }
 
 textarea {
@@ -132,13 +171,13 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--surface);
-  color: #1d2522;
+  color: var(--field-text);
   font: 400 1rem/1.7 "Velox Noto Sans KR", "Malgun Gothic", sans-serif;
   overflow-wrap: anywhere;
   tab-size: 2;
 }
 
-textarea::placeholder { color: #9ba39f; }
+textarea::placeholder { color: var(--placeholder); }
 
 #editor-help {
   margin: 8px 2px 0;
@@ -154,8 +193,8 @@ textarea::placeholder { color: #9ba39f; }
   justify-content: space-between;
   gap: 20px;
   border-top: 1px solid var(--line);
-  background: #e7eae6;
-  color: #59625e;
+  background: var(--status-bg);
+  color: var(--status-text);
   font-size: 0.74rem;
 }
 
@@ -165,20 +204,20 @@ textarea::placeholder { color: #9ba39f; }
 dialog {
   width: min(430px, calc(100% - 32px));
   padding: 0;
-  border: 1px solid #c7cdc8;
+  border: 1px solid var(--dialog-border);
   border-radius: 6px;
-  background: #ffffff;
-  color: #1b211f;
-  box-shadow: 0 20px 60px rgba(18, 25, 22, 0.28);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 20px 60px var(--shadow);
 }
 
-dialog::backdrop { background: rgba(19, 27, 23, 0.52); }
+dialog::backdrop { background: var(--backdrop); }
 dialog form { padding: 24px; }
 dialog h2 { margin: 0; font-size: 1.15rem; }
 dialog p { margin: 9px 0 0; color: var(--muted); line-height: 1.5; }
 .dialog-actions { margin-top: 24px; display: flex; justify-content: flex-end; gap: 9px; }
-.danger-button { border-color: var(--red); background: var(--red); color: #ffffff; }
-.danger-button:hover { border-color: #89372f; background: #89372f; color: #ffffff; }
+.danger-button { border-color: var(--red); background: var(--red); color: var(--danger-text); }
+.danger-button:hover { border-color: var(--red-strong); background: var(--red-strong); color: var(--danger-text); }
 
 .visually-hidden {
   position: absolute;
@@ -190,6 +229,65 @@ dialog p { margin: 9px 0 0; color: var(--muted); line-height: 1.5; }
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #202020;
+    --text: #e6e6e6;
+    --field-text: #e6e6e6;
+    --muted: #a3a3a3;
+    --line: #3a3a3a;
+    --surface: #262626;
+    --rail: #171717;
+    --rail-text: #f2f2f2;
+    --rail-muted: #b0b0b0;
+    --brand-border: #4d4d4d;
+    --control-border: #4a4a4a;
+    --control-bg: #2b2b2b;
+    --control-text: #eaeaea;
+    --placeholder: #9a9a9a;
+    --status-bg: #1c1c1c;
+    --status-text: #b0b0b0;
+    --dialog-border: #3f3f3f;
+    --shadow: rgba(0, 0, 0, 0.6);
+    --backdrop: rgba(0, 0, 0, 0.6);
+    --focus: rgba(120, 170, 230, 0.6);
+    --green: #58b98c;
+    --red: #c14a40;
+    --red-strong: #a83c33;
+  }
+}
+
+@media (forced-colors: active) {
+  :root,
+  body { background: Canvas; color: CanvasText; }
+  .titlebar { background: Canvas; color: CanvasText; border-bottom: 1px solid CanvasText; }
+  .brand-mark { border-color: CanvasText; color: CanvasText; }
+  .toolbar,
+  #find-input,
+  textarea,
+  dialog,
+  .statusbar { background: Canvas; color: CanvasText; border-color: CanvasText; }
+  .brand span,
+  .document-identity span,
+  .document-stats,
+  #find-count,
+  #editor-help,
+  textarea::placeholder,
+  dialog p,
+  .statusbar { color: GrayText; }
+  button { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
+  button:hover { border-color: Highlight; color: Highlight; }
+  button:disabled { color: GrayText; border-color: GrayText; }
+  .icon-button::before { forced-color-adjust: none; }
+  .danger-button { background: Canvas; color: CanvasText; border-color: CanvasText; }
+  .danger-button:hover { background: Highlight; color: HighlightText; border-color: Highlight; }
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible { outline-color: Highlight; }
+  dialog::backdrop { background: Canvas; }
 }
 
 @media (max-width: 650px) {

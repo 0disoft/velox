@@ -21,6 +21,33 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## File Notes System Theme: 2026-10-04
+
+File Notes opts in with window.followSystemTheme true; CSS provides light and
+dark palettes plus forced-colors, and the four icon buttons reuse the existing
+Lucide SVGs as masks. Thirty-three Bun app/model/find tests passed. Same-origin
+local HTTP headless Edge checks at 1080 x 760 and 390 x 844 passed eight CSS
+cases (light/dark x none/active forced-colors), live light/dark changes kept
+the buffer, and local find with discard cancellation worked with no page
+errors or horizontal clipping. Screenshot inspection caught blank masked
+icons in the initial file:// harness; the same-origin rerun visibly shows all
+four icons.
+
+CLI validate, build and ZIP inspect passed on beta.20; runtime-config readback
+kept followSystemTheme true, and a disposable-profile packaged start exited
+after ready with code 0. The archive is 8,458,736 bytes, SHA-256
+`eaa25ecfaf67599324a213f807a9c3ad8770051f969dcde1e90c3afed8c32cf6`.
+The shared host is unchanged at
+`8577ceb149427e25ef68e84ca5f150c874ca950da28a4c0a8b92c7727f53dac0`;
+the branded packaged host SHA-256 is
+`2d3062de52b74e6593bdd0a1b2df08122fc1b59e5f369eae2a50f5018f9eafdf`.
+Assets add 3,197 bytes over the preceding File Notes sources. No save,
+recovery, JS, API, DB, permission, runner, dependency or version change is
+included, and no push or publication occurred. The native title bar runtime
+checks from ADR 0036 are reused; browser emulation does not verify current
+live OS theme or high contrast, and real file saving was not repeated because
+the JS and save logic are unchanged.
+
 ## Always-On-Top Native Test Follow-up: 2026-10-04
 
 The earlier failure was reproduced at the first default-off menu toggle,

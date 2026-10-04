@@ -43,6 +43,16 @@ save connections are deleted. Minimize/maximize remain normal Windows actions.
 A smaller screen may override this requested floor, so responsive layout
 and scrolling remain necessary.
 
+## System theme
+
+The manifest requests `window.followSystemTheme: true`. On Windows 11 build
+22000 and newer the native title bar follows the current Windows app light or
+dark setting; older or unsupported builds keep the default title bar (ADR 0036).
+The application CSS does not depend on that flag: it follows
+`prefers-color-scheme` for light and dark and `forced-colors` for high
+contrast, updating live without a reload. This adds no dependency, native
+permission, timer, or change to saving and draft recovery.
+
 ## Window title
 
 The native caption shows the filename and app name, with a leading dirty marker
@@ -103,7 +113,7 @@ The repository build output is `dist/examples/file-notes/dev.velox.filenotes.zip
 Extract the archive to a local folder, then run `dev.velox.filenotes.exe` from
 the extracted app folder. The portable ZIP does not require installation.
 
-The current example is File Notes 0.4.0, built with the unsigned Velox beta.19
+The current example is File Notes 0.4.0, built with the unsigned Velox beta.20
 host and the bundled Noto Sans KR font. It enables window-state restoration,
 single-instance activation, and the host-owned tray menu. Closing the window
 still exits normally; hiding it requires the tray's Hide window command.
