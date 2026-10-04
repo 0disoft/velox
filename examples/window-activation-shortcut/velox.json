@@ -1,0 +1,15 @@
+{
+  "$schema": "../../schema/velox-v1.schema.json",
+  "schemaVersion": 1,
+  "app": { "id": "dev.velox.activation", "name": "Velox Activation Shortcut", "version": "0.1.0" },
+  "window": {
+    "width": 620,
+    "height": 480,
+    "minWidth": 360,
+    "minHeight": 360,
+    "tray": true,
+    "followSystemTheme": true,
+    "activationShortcut": "Ctrl+Alt+Shift+V"
+  },
+  "security": { "permissions": [] }
+}

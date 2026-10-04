@@ -40,6 +40,14 @@ requested workflow. Per-kind icon/color, exact UTF-16 byte behavior, quiet
 time and Explorer restart recovery were not separately reported. This is a
 general workflow confirmation, not per-detail evidence.
 
+When asked to type a disposable note, use tray Hide window, press
+`Ctrl+Alt+Shift+V`, minimize and press the key again, close the window and
+report any shortcut warning, the maintainer replied "같은 창과 글자가 잘 복원됨",
+generally confirming that the same window and its text were restored. The
+minimized-key restore, close-time unregistration and the conflict warning were
+not separately reported, and the other manual conditions remain unverified.
+This is a general workflow confirmation, not per-detail evidence.
+
 These confirmations follow the automated-validation snapshots below.
 Prior automated tests remain valid unchanged. No new build, tests, version
 bump, API, DB, runner change or release is part of this documentation follow-up.
@@ -55,6 +63,35 @@ Injected `WM_HOTKEY` messages on real HWNDs verify id/modifier/key filtering, di
 Matching Go 1.27.1 `-buildvcs=false -trimpath -ldflags '-s -w -H windowsgui'` builds measured 4,724,224 bytes before and 4,736,000 bytes after: +11,776 bytes / 11.5 KiB. New host SHA-256: `6097731876cc1e82be5e5fead8de05b96fefcc0d433f6a534fc7a3ed780e6600`. Size is not a startup-latency benchmark.
 
 The matching CLI/host bundle built successfully. A private tray-less smoke app retained `Ctrl+Alt+Shift+9` in its packaged runtime configuration with no permissions; startup and exit-after-ready returned zero. The user-facing example is a separate change. Physical-key foreground activation and the real conflict-warning interaction remain unverified. Existing File Notes and the notification confirmation record are unchanged.
+
+## Activation Shortcut Example: 2026-10-04
+
+The isolated activation-shortcut 0.1.0 example sets
+`window.activationShortcut: "Ctrl+Alt+Shift+V"` with `window.tray: true` and no
+native permissions. Three Bun tests passed (0 failures, 15 assertions), and
+headless Edge passed eight same-origin cases at 620 x 480 and 320 x 480 in
+light/dark and both forced-color modes: the exact `Note` textbox label, local
+Unicode UTF-16 counting, focus and live-theme note preservation, the 2048
+`maxlength` blocking an extra input, and no IPC, page errors or horizontal
+clipping. Desktop-light and mobile-dark screenshots are readable; an actual
+native `Ctrl+Alt+Shift+V` key press was later exercised in the requested manual
+workflow and generally confirmed, under Maintainer Workflow Confirmations:
+2026-10-04.
+
+The matching cached new beta.20 runtime (commit `1542c8a`) and CLI built the ZIP
+without a runtime Go test, vet or rebuild rerun. ZIP inspection passed with no
+permissions and runtime `activationShortcut: Ctrl+Alt+Shift+V`, `tray: true`:
+2,357,597 bytes, SHA-256
+`26a21442030dd98f3093a7dd5a0b8f2d3b461d433d0a722ea6b7a49dc8fd7517` (host
+`6097731876cc1e82be5e5fead8de05b96fefcc0d433f6a534fc7a3ed780e6600`). Packaged
+startup and exit-after-ready returned zero with a private profile, and a visible
+preview was opened for the user. The same-window and text restore was generally
+confirmed for the type, tray-hide and `Ctrl+Alt+Shift+V` workflow; the
+minimized-key restore and close-time unregistration were not separately reported,
+and the conflict warning and other manual conditions remain unverified and are
+not release blockers. No permission, IPC method, DB, dependency, timer, storage,
+network, CI, version, push, public release, File Notes or Activation Shortcut
+Runtime record change was added.
 
 ## Tray Notification Runtime: 2026-10-04
 

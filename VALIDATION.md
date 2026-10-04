@@ -66,6 +66,20 @@ revealing hidden, minimized, and background windows remain separate manual
 evidence. These are requirements, with no completed validation claimed by this
 entry.
 
+Activation shortcut example requirements: the isolated
+`examples/window-activation-shortcut` app must set `window.activationShortcut` with
+`window.tray: true` and no native permissions, and must not invoke IPC or show the
+shortcut, tray menu or any how-to text in the page. Its Bun interaction checks
+must cover a local UTF-16 counter from the initial `Note` value, a `Note changed.`
+status on input with no native call, a `Window focused.` status that preserves the
+note across repeated focus, and the 2048 `maxlength` boundary with the `Ready.`
+initial status. Browser checks must cover the exact `Note` textbox label,
+620 x 480 and 320 x 480 with no horizontal clipping, light/dark and both
+forced-color modes, text and counter preserved across a live theme switch, no
+page errors and no IPC. A physical key press revealing a hidden, minimized or
+background window and the real conflict warning remain separate manual evidence.
+These are requirements, with no completed validation claimed by this entry.
+
 Fixed-size windows: scoped manifest/runtime-config/WebView2/builder/host/hygiene
 Go tests and go vet. Cover omission/true/false, invalid types, default style,
 native frame/system commands, IPC maximize rejection, no initial geometry or
