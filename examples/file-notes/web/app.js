@@ -25,6 +25,7 @@
   let draftWrites = Promise.resolve();
   let fileActionPending = true;
   let composing = false;
+  let requestedTitle = null;
   const finder = window.FileNotesFind.attach(document, elements.editor,
     () => fileActionPending || elements.discardDialog.open);
 
@@ -54,7 +55,18 @@
     elements.lines.textContent = `${stats.lines} ${stats.lines === 1 ? "line" : "lines"}`;
     elements.characters.textContent = `${stats.characters} ${stats.characters === 1 ? "character" : "characters"}`;
     document.title = `${dirty ? "• " : ""}${state.name} · Velox File Notes`;
+    updateNativeTitle(document.title);
     finder.refresh();
+  }
+
+  async function updateNativeTitle(title) {
+    if (title === requestedTitle || typeof window.velox?.invoke !== "function") return;
+    requestedTitle = title;
+    try {
+      await window.velox.invoke("window.setTitle", { title });
+    } catch {
+      // A cosmetic caption failure must not interrupt editing or file operations.
+    }
   }
 
   function announce(message) {

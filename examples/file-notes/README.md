@@ -2,7 +2,7 @@
 
 File Notes is a local UTF-8 Markdown and text editor using Velox's bounded
 native file dialogs and IndexedDB for one recoverable draft. It requests only
-`file.open` and `file.save`; it does not use browser File System Access pickers.
+`file.open`, `file.save` and `window.title`; it does not use browser File System Access pickers.
 
 The application has no network request, frontend package, bundler, or generated
 binding. The host accepts only explicitly selected local regular UTF-8 files
@@ -33,6 +33,15 @@ policy. Cancellation, manifest permission denial, expired connections and
 external-change conflicts have distinct status messages. Errors preserve the
 editor buffer and its unsaved baseline. Recovery errors can follow a partially
 completed replacement; do not treat an error as proof that disk bytes are unchanged.
+
+## Window title
+
+The native caption shows the filename and app name, with a leading dirty marker
+when edits are unsaved. Open, New, Save as and draft restoration update it.
+Identical captions are deduplicated, including consecutive edits to an already
+dirty document. App identity, permission prompts and tray tooltip stay unchanged.
+If the native method is unavailable or denied, editing and saving continue;
+the browser document title still updates.
 
 ## Keyboard actions
 

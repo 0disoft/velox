@@ -22,6 +22,6 @@
     "tray": true
   },
   "security": {
-    "permissions": ["file.open", "file.save"]
+    "permissions": ["file.open", "file.save", "window.title"]
   }
 }

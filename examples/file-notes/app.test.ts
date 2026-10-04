@@ -21,12 +21,14 @@ function harness(options: {
   save?: (text: string, name: string) => Promise<any>;
   saveTo?: (text: string, target: number) => Promise<any>;
   release?: (target: number) => Promise<any>; unavailable?: boolean;
+  title?: (title: string) => Promise<any>;
 } = {}) {
   const nodes = new Map<string, any>();
   const events = new Map<string, Function>();
   const timers = new Map<number, Function>();
   let timer = 0;
   let persisted: any;
+  const titles: string[] = [];
   const ready = deferred<void>();
   function node(id: string) {
     if (!nodes.has(id)) nodes.set(id, {
@@ -45,9 +47,13 @@ function harness(options: {
     document: { querySelector: node, title: "" }, indexedDB: {},
     FileNotesStorage: { load: () => options.load ?? Promise.resolve(options.draft), save: async (state: any) => { persisted = { ...state }; } },
     velox: options.unavailable ? undefined : {
-      invoke(method: string, params?: { target: number }) {
+      invoke(method: string, params?: { target?: number; title?: string }) {
+        if (method === "window.setTitle") {
+          titles.push(params!.title!);
+          return options.title?.(params!.title!) ?? Promise.resolve(null);
+        }
         if (method === "file.openText") return options.open?.() ?? Promise.resolve({ cancelled: true });
-        if (method === "file.releaseSaveTarget") return options.release?.(params!.target) ?? Promise.resolve({});
+        if (method === "file.releaseSaveTarget") return options.release?.(params!.target!) ?? Promise.resolve({});
         throw new Error(`unexpected method: ${method}`);
       },
       saveTextAs: options.save ?? (async () => ({ cancelled: true })),
@@ -64,7 +70,7 @@ function harness(options: {
   runInNewContext(find, context);
   runInNewContext(app, context);
   return {
-    node, ready: ready.promise,
+    node, titles, document: context.document, ready: ready.promise,
     click(id: string) { return node(`#${id}`).click(); },
     key(code: string, options: any = {}) {
       const event = { code, ctrlKey: true, altKey: false, metaKey: false, shiftKey: false,
@@ -93,6 +99,62 @@ function harness(options: {
     unload() { let prevented = false; events.get("window:beforeunload")?.({ preventDefault() { prevented = true; } }); return prevented; },
   };
 }
+
+test("native title follows dirty, saved, renamed, open and new transitions without per-keystroke calls", async () => {
+  let saves = 0;
+  const ui = harness({
+    save: async () => ({ name: ++saves === 1 ? "note.md" : "renamed.txt", target: saves }),
+    open: async () => ({ name: "opened.md", text: "opened" }),
+  });
+  await ui.ready;
+  expect(ui.titles).toEqual(["Untitled.md · Velox File Notes"]);
+  ui.edit("first");
+  ui.edit("second");
+  expect(ui.titles).toEqual(["Untitled.md · Velox File Notes", "• Untitled.md · Velox File Notes"]);
+  ui.edit("");
+  expect(ui.titles.at(-1)).toBe("Untitled.md · Velox File Notes");
+  ui.edit("write");
+  await ui.click("save-document");
+  expect(ui.titles.at(-1)).toBe("note.md · Velox File Notes");
+  await ui.click("save-as-document");
+  expect(ui.titles.at(-1)).toBe("renamed.txt · Velox File Notes");
+  await ui.click("open-document");
+  await tick();
+  expect(ui.titles.at(-1)).toBe("opened.md · Velox File Notes");
+  await ui.click("new-document");
+  expect(ui.titles.at(-1)).toBe("Untitled.md · Velox File Notes");
+  expect(ui.document.title).toBe(ui.titles.at(-1));
+});
+
+test("restored dirty title and canceled save keep the correct caption", async () => {
+  const ui = harness({ draft: { schemaVersion: 1, name: "복구.md", text: "edit", savedText: "" } });
+  await ui.ready;
+  expect(ui.titles).toEqual(["• 복구.md · Velox File Notes"]);
+  await ui.click("save-as-document");
+  expect(ui.titles).toEqual(["• 복구.md · Velox File Notes"]);
+});
+
+test("unavailable or rejected native titles never block editing or saving", async () => {
+  for (const code of ["METHOD_NOT_FOUND", "PERMISSION_DENIED", "NATIVE_OPERATION_FAILED"]) {
+    const ui = harness({
+      title: async () => { throw failure(code); },
+      save: async () => ({ name: "saved.md", target: 1 }),
+    });
+    await ui.ready;
+    ui.edit("first");
+    ui.edit("second");
+    await tick();
+    expect(ui.titles).toHaveLength(2);
+    await ui.click("save-document");
+    expect(ui.node("#status").textContent).toBe("saved.md saved.");
+    expect(ui.unload()).toBe(false);
+  }
+  const browser = harness({ unavailable: true });
+  await browser.ready;
+  browser.edit("text");
+  expect(browser.document.title).toBe("• Untitled.md · Velox File Notes");
+  expect(browser.titles).toHaveLength(0);
+});
 
 test("saving a snapshot never marks edits made during the native write as saved", async () => {
   const saved = deferred<any>();

@@ -38,6 +38,31 @@ This is size evidence, not a startup-latency benchmark. No dependency, worker,
 DB or runner change was made. Packaged File Notes interaction is not yet
 manual evidence; no version bump, remote CI dispatch or publication occurred.
 
+## File Notes Title Candidate: 2026-10-04
+
+File Notes now opts into `window.title`. Its native caption follows restored,
+opened, new, saved and renamed documents, with a dirty marker. Identical
+captions are not sent again on each edit. Caption failures do not block file
+actions; 33 Bun tests passed, including these transitions, cancellation,
+restoration, denied/unavailable title calls and existing save/find behavior.
+
+Two local builds produced the same 8,443,807-byte ZIP with SHA-256
+`6e90d293594ca45e0453ee1f7a26ccc0d99f31a53e81443e3d4ecfe99dde1eab`.
+ZIP and directory inspection both passed with the three explicit permissions
+`file.open`, `file.save`, `window.title`. The packaged host SHA-256 is
+`87e87950ad3b0d5b19bfe3bcb6ae200ced9aa174b75ed8ed8b25bf974e41ddf8`.
+Local runtime and example versions remain beta.20 and 0.4.0; this candidate is
+not a new published release.
+
+Direct packaged launch and CLI source run with private profiles and automatic
+exit-after-ready returned zero. Two earlier Start-Process Hidden checks timed
+out and their test processes were stopped; do not count hidden-window readiness
+as passed or infer its cause from the successful ordinary launches. An initial
+inspect used the wrong output path: relative build output resolves from the
+manifest directory; rerunning against the actual candidate passed.
+Manual packaged filename/dirty-marker interactions remain unverified.
+Existing app files and the user's recovery profile were not replaced.
+
 ## Clipboard Example Packaging: 2026-10-03
 
 The independent Clipboard 0.1.0 example (`dev.velox.clipboard`) opts into only
