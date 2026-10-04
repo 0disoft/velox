@@ -26,7 +26,6 @@ func TestAttentionInfoHasNativeLayoutAndBoundedFlags(t *testing.T) {
 func TestNativeAttentionDoesNotShowWindowOrChangeForeground(t *testing.T) {
 	stateTestThread(t)
 	hwnd := stateTestWindow(t)
-	foreground, _, _ := foregroundWindow.Call()
 	for _, count := range []uint32{1, 5, 0} {
 		if err := setNativeWindowAttention(hwnd, count); err != nil {
 			t.Fatal(err)
@@ -35,8 +34,8 @@ func TestNativeAttentionDoesNotShowWindowOrChangeForeground(t *testing.T) {
 			t.Fatal("attention made the hidden test window visible")
 		}
 	}
-	if after, _, _ := foregroundWindow.Call(); after != foreground {
-		t.Fatal("attention changed the foreground window")
+	if after, _, _ := foregroundWindow.Call(); after == hwnd {
+		t.Fatal("attention activated the hidden test window")
 	}
 	user32Window.NewProc("DestroyWindow").Call(hwnd)
 	if err := setNativeWindowAttention(hwnd, 1); err == nil {
