@@ -1,0 +1,7 @@
+{
+  "$schema": "../../schema/velox-v1.schema.json",
+  "schemaVersion": 1,
+  "app": { "id": "dev.velox.attention", "name": "Velox Window Attention", "version": "0.1.0" },
+  "window": { "width": 680, "height": 400 },
+  "security": { "permissions": ["window.attention"] }
+}

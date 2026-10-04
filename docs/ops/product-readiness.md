@@ -45,6 +45,29 @@ window.title grant because its exact permission list still expected two file
 permissions. The assertion now requires exactly file.open, file.save and
 window.title, and the suite passed. File Notes gains no attention permission.
 
+## Window Attention Example: 2026-10-04
+
+The independent Window Attention 0.1.0 example requests only window.attention.
+It has numeric count/delay controls and Lucide request/cancel buttons, no
+network or persistence, and one frontend timeout only after an explicit click.
+Six Bun tests passed: explicit/snapshot-bound requests, duplicate suppression,
+delayed and in-flight cancellation, late-response isolation, strict inputs,
+redacted failures, missing bridge and pagehide cleanup.
+
+Mock-native Edge checks at 680 x 400 and 360 x 400 passed loaded icons,
+no horizontal overflow, stable 44-pixel buttons, Enter request and Space
+cancel, scheduling and control recovery. Screenshots were visually checked.
+These checks do not observe real taskbar flashing.
+
+Two builds produced the same 2,324,106-byte ZIP, SHA-256
+`b0bf293ec7960be1eeaa2e554c692e71a48f038a09a8eb8b6403857d53bd0fc5`.
+ZIP inspection confirmed the sole permission and packaged host SHA-256
+`b1c33356c917450e1b4a35c314c75395b9431679d3fd16a79c284752a32a4885`.
+Direct packaged launch with a private profile and exit-after-ready returned
+zero. Actual background-window blinking, explicit visual stop and foreground
+no-op are still manual checks. No release/version change, push or hosted CI
+dispatch occurred; existing File Notes and recovery data were not replaced.
+
 ## Dynamic Window Title Runtime: 2026-10-04
 
 `window.title` independently enables `window.setTitle({title})`, without

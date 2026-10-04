@@ -194,6 +194,11 @@ grant, directory watcher, recursive scan or persisted grant.
 write/read permissions for explicit Copy and host-confirmed Paste actions.
 It displays plain text only and adds no storage, history or monitoring.
 
+[`examples/window-attention`](examples/window-attention/README.md) uses only
+`window.attention` for bounded taskbar flashing and explicit cancellation.
+Its cancellable delay permits a manual background-window check; the host adds
+no timer, dependency, notification or foreground activation.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging

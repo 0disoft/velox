@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>Velox Window Attention</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header><h1>Window Attention</h1></header>
+    <main>
+      <div class="controls">
+        <label for="flash-count">Flashes<input id="flash-count" type="number" min="1" max="5" step="1" value="3"></label>
+        <label for="delay-seconds">Delay (seconds)<input id="delay-seconds" type="number" min="0" max="10" step="1" value="3"></label>
+        <div class="actions">
+          <button id="request-attention" type="button" title="Request attention" aria-label="Request attention"><img src="icons/bell.svg" width="20" height="20" alt=""></button>
+          <button id="cancel-attention" type="button" title="Cancel attention" aria-label="Cancel attention"><img src="icons/x.svg" width="20" height="20" alt=""></button>
+        </div>
+      </div>
+    </main>
+    <footer><span id="status" role="status" aria-live="polite">Ready.</span></footer>
+  </body>
+</html>
