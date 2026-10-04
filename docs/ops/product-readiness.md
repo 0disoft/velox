@@ -21,6 +21,25 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Always On Top Example: 2026-10-04
+
+The isolated scratchpad opts into window.alwaysOnTop with no native permissions.
+Two final builds produced the same 2,326,201-byte ZIP, SHA-256
+`738a7acd91c347cd9a339d9085c91ee990cff3d9a7db0e4acf6c42d1637cd447`.
+ZIP inspection and runtime-config readback passed; unchanged packaged host
+SHA-256 is `c94a6bf8705550ee0b36acd870ab37aada7dab80ce90c6aa7b831513e65d63e2`.
+Packaged startup with a private profile and exit-after-ready completed with
+status zero. The first startup probe timed out because the static example
+omitted the benchmark readiness marker; adding the existing two-animation-frame
+marker fixed the probe. Preserve this failure as test-fixture evidence.
+
+Edge checks at 480 x 360 and 320 x 200 passed text input, textbox bounds,
+no page errors and no horizontal clipping; screenshots were inspected.
+These browser checks do not prove native z-order or menu interaction.
+Visible Alt+Space/toggle/overlap/minimize/restore remains a manual check.
+The scratchpad does not save its text; existing File Notes data is untouched.
+No installer, public release, version bump or remote push is included.
+
 ## Always On Top Runtime: 2026-10-04
 
 Optional window.alwaysOnTop defaults false and propagates through the manifest,

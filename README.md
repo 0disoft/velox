@@ -199,6 +199,11 @@ It displays plain text only and adds no storage, history or monitoring.
 Its cancellable delay permits a manual background-window check; the host adds
 no timer, dependency, notification or foreground activation.
 
+[`examples/window-always-on-top`](examples/window-always-on-top/README.md) is
+an unsaved scratchpad with `window.alwaysOnTop: true` and no native permissions.
+The host-owned system menu lets users toggle topmost; restarting reapplies the
+manifest default. File Notes keeps the default off.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging
