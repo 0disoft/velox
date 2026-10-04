@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/0disoft/velox/internal/singleinstance"
+	"github.com/0disoft/velox/internal/windowlimits"
 )
 
 var ErrRuntimeUnavailable = errors.New("WebView2 Runtime is unavailable or initialization failed")
@@ -30,6 +31,8 @@ type Config struct {
 	Permissions             []string
 	Width                   uint
 	Height                  uint
+	MinWidth                uint
+	MinHeight               uint
 	RememberState           bool
 	Tray                    bool
 	SingleInstance          *singleinstance.Guard
@@ -77,6 +80,9 @@ func (c Config) validate() error {
 	}
 	if c.Width == 0 || c.Height == 0 {
 		return errors.New("window dimensions must be positive")
+	}
+	if err := windowlimits.Validate(c.Width, c.Height, c.MinWidth, c.MinHeight); err != nil {
+		return err
 	}
 	if !filepath.IsAbs(c.DataPath) {
 		return errors.New("WebView2 data path must be absolute")

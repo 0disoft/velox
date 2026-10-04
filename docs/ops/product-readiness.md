@@ -21,6 +21,32 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Minimum Window Size Runtime: 2026-10-04
+
+Optional window.minWidth/minHeight are validated and propagated through the
+manifest, runtime config and host. Zero axes retain normal Windows tracking;
+both zero install no handler. Minimums are outer 96-DPI logical dimensions,
+bounded by initial dimensions and 16384. Current DPI scaling and monitor work
+area caps apply after saved-state restoration, on normal resize/restore and
+to suggested normal DPI-change rectangles. Maximum geometry remains OS-owned.
+
+Scoped windowlimits/manifest/runtimeconfig/WebView2/builder/host tests, repository
+hygiene checks and go vet passed. Pure checks cover 96/120/144 DPI, one-axis
+limits, negative-coordinate and small work areas. Disposable hidden HWND tests
+cover native tracking, normal programmatic resize, suggested DPI rectangles,
+unchanged unset/max geometry, no visibility/activation and cleanup.
+An existing attention test's comparison against arbitrary foreground desktop
+state was replaced with checking that the test HWND never becomes foreground;
+other user window switches no longer make the assertion flaky.
+
+Matched Go 1.27.1 stripped windowsgui/trimpath/buildvcs=false builds increased
+the host from 4,661,248 to 4,671,488 bytes: +10,240 bytes / 10 KiB, about 0.22%.
+This is size evidence, not a latency benchmark. The added owner record exists
+only for opting-in windows and is removed on destruction. No dependency,
+worker, timer, public IPC method/permission, DB or state-format migration is
+added. Physical monitor dragging and visually shrinking packaged windows
+remain unverified. Version remains beta.20; no release publication occurred.
+
 ## Window Attention Runtime: 2026-10-04
 
 Independent `window.attention` enables bounded request and explicit cancel

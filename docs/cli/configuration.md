@@ -109,11 +109,23 @@ the canonical project root after validation.
 
 ### window
 
-Initial width and height, plus optional window-state persistence.
+Initial width and height, optional minimum dimensions and window-state persistence.
 
 - `width`, `height`: initial outer size in 96-DPI logical units. Zero or
   omitted values resolve to 960 by 640. Widths below 320 and heights below 240
   are rejected.
+- `minWidth`, `minHeight`: optional minimum outer dimensions in the same
+  96-DPI logical units. Each omitted/zero axis retains the normal Windows
+  tracking minimum. A nonzero value must be at most 16384 and must not exceed
+  the corresponding initial dimension. Native validation is authoritative for
+  the cross-field bound. No new permission is required.
+  The effective minimum scales for the window's current DPI and is capped to
+  its monitor's work area, so a small screen can still contain the window.
+  The host applies the bound after state restoration, on normal resize/restore
+  and during DPI changes. It does not change maximized geometry or disable
+  minimization. A missing monitor query falls back to normal Windows sizing
+  for that event. With both fields zero, no minimum-size handler is installed.
+  See ADR 0033.
 - `rememberState`: optional boolean, default `false`. When `true`, the host
   saves the raw physical screen normal rectangle, the monitor work area, the
   DPI, the maximized state, and a state-format version (currently `1`) to

@@ -47,6 +47,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0030 | Accepted | Read bounded Unicode clipboard text only after per-request native approval and an independent opt-in permission |
 | 0031 | Accepted | Update a bounded native window caption under independent opt-in permission without changing app identity |
 | 0032 | Accepted | Request bounded taskbar attention or cancel it under independent permission without activation or background work |
+| 0033 | Accepted | Allow optional DPI-aware minimum outer window dimensions bounded by the current monitor work area |
 
 ## Lifecycle
 

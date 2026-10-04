@@ -159,6 +159,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 			return nil, err
 		}
 	}
+	if err := installWindowMinimums(uintptr(view.Window()), config.MinWidth, config.MinHeight); err != nil {
+		destroyBeforeRun(view)
+		return nil, err
+	}
 	if config.SingleInstance != nil {
 		if err := config.SingleInstance.Attach(uintptr(view.Window())); err != nil {
 			destroyBeforeRun(view)

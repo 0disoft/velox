@@ -82,6 +82,8 @@ func run(args []string) int {
 		Permissions:             cfg.Security.Permissions,
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
+		MinWidth:                cfg.Window.MinWidth,
+		MinHeight:               cfg.Window.MinHeight,
 		RememberState:           cfg.Window.RememberState,
 		Tray:                    cfg.Window.Tray,
 		SingleInstance:          instance,

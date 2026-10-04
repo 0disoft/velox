@@ -8,6 +8,13 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Minimum window dimensions: `go test ./internal/windowlimits ./internal/manifest
+./internal/runtimeconfig ./internal/webview2 ./internal/builder ./cmd/velox-host`.
+Check opt-out/one-axis behavior, configuration bounds/round-trip, 96/120/144 DPI
+and small work areas, native tracking and normal restore, DPI suggested rects,
+maximum geometry, no activation and subclass cleanup. Physical screen dragging
+and visually shrinking a packaged window remain manual checks.
+
 Window attention checks use the same scoped Go packages as title checks below.
 Cover independent permission propagation, strict optional count 1..5/default 3,
 empty cancel parameters, shutdown, redacted errors, FLASHWINFO ABI layout and

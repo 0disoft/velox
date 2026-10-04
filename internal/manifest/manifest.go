@@ -12,6 +12,7 @@ import (
 	"github.com/0disoft/velox/internal/appidentity"
 	"github.com/0disoft/velox/internal/pebranding"
 	"github.com/0disoft/velox/internal/safefs"
+	"github.com/0disoft/velox/internal/windowlimits"
 )
 
 const Version = 1
@@ -48,6 +49,8 @@ type Assets struct {
 type Window struct {
 	Width         uint `json:"width"`
 	Height        uint `json:"height"`
+	MinWidth      uint `json:"minWidth,omitempty"`
+	MinHeight     uint `json:"minHeight,omitempty"`
 	RememberState bool `json:"rememberState,omitempty"`
 	Tray          bool `json:"tray,omitempty"`
 }
@@ -154,6 +157,9 @@ func validate(value Manifest) error {
 	}
 	if value.Window.Width < 320 || value.Window.Height < 240 {
 		return errors.New("window dimensions must be at least 320x240")
+	}
+	if err := windowlimits.Validate(value.Window.Width, value.Window.Height, value.Window.MinWidth, value.Window.MinHeight); err != nil {
+		return err
 	}
 	seen := make(map[string]struct{}, len(value.Security.Permissions))
 	for _, permission := range value.Security.Permissions {

@@ -12,6 +12,7 @@ import (
 	"github.com/0disoft/velox/internal/appidentity"
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/manifest"
+	"github.com/0disoft/velox/internal/windowlimits"
 )
 
 const Version = 1
@@ -39,6 +40,8 @@ type Assets struct {
 type Window struct {
 	Width         uint `json:"width"`
 	Height        uint `json:"height"`
+	MinWidth      uint `json:"minWidth,omitempty"`
+	MinHeight     uint `json:"minHeight,omitempty"`
 	RememberState bool `json:"rememberState,omitempty"`
 	Tray          bool `json:"tray,omitempty"`
 }
@@ -61,7 +64,7 @@ func FromManifest(value manifest.Resolved, assetRoot string) Config {
 			ID: value.App.ID, Name: value.App.Name, Version: value.App.Version, SingleInstance: value.App.SingleInstance,
 		},
 		Assets:   Assets{Root: filepath.ToSlash(assetRoot), Entry: filepath.ToSlash(value.Assets.Entry)},
-		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, RememberState: value.Window.RememberState, Tray: value.Window.Tray},
+		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, MinWidth: value.Window.MinWidth, MinHeight: value.Window.MinHeight, RememberState: value.Window.RememberState, Tray: value.Window.Tray},
 		Security: Security{Permissions: append([]string{}, value.Security.Permissions...)},
 	}
 }
@@ -146,6 +149,9 @@ func validate(cfg Config) error {
 	}
 	if cfg.Window.Width < 320 || cfg.Window.Height < 240 {
 		return errors.New("window dimensions must be at least 320x240")
+	}
+	if err := windowlimits.Validate(cfg.Window.Width, cfg.Window.Height, cfg.Window.MinWidth, cfg.Window.MinHeight); err != nil {
+		return err
 	}
 	if cfg.Security.Permissions == nil {
 		return errors.New("security.permissions is required")
