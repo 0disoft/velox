@@ -32,6 +32,14 @@ Explorer restart recovery remains unverified.
 Earlier, the maintainer replied "잘됨" after being asked to check actual
 Windows app light/dark switching for File Notes, generally confirming that
 workflow. Native high contrast and a new file-save test were not reported.
+
+When asked to press the tray bell, observe the actual notification, use tray
+Hide window, then click the balloon to restore the window and close the test
+window, the maintainer replied "잘됨. 다음 할일", generally confirming that
+requested workflow. Per-kind icon/color, exact UTF-16 byte behavior, quiet
+time and Explorer restart recovery were not separately reported. This is a
+general workflow confirmation, not per-detail evidence.
+
 These confirmations follow the automated-validation snapshots below.
 Prior automated tests remain valid unchanged. No new build, tests, version
 bump, API, DB, runner change or release is part of this documentation follow-up.
@@ -91,8 +99,11 @@ Go test, vet or rebuild reran. ZIP inspection passed with only
 `notification.show` granted: 2,354,764 bytes, SHA-256
 `6de96c0a6d7863b96a15849a1f5f4eb006a34f388d3ff9d5dd92667a3ed19b3e`. Packaged
 startup and exit-after-ready returned zero with a private profile. Actual
-balloon display, suppression and click-to-restore remain manual and still
-pending (a visible preview was opened with a private profile). The first preview
+balloon display and click-to-restore now carry the general maintainer workflow
+confirmation under Maintainer Workflow Confirmations: 2026-10-04. Per-kind
+icon/color, suppression settings, quiet time and exact UTF-16 byte behavior
+remain unverified, outside that requested manual workflow. The preview used a
+private profile. The first preview
 helper started the GUI hidden; it was stopped and relaunched with normal GUI
 options. No dependency, timer,
 worker, network, storage or file permission was added, and no File Notes,
