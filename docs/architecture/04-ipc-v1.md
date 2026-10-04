@@ -437,11 +437,20 @@ path races and power-loss atomicity retain ADR 0026's limitations.
 `types/velox.d.ts` is a declaration-only mirror of this application-facing
 surface. It emits no JavaScript and adds no runtime guard, so native
 permission, UTF-8 byte-limit, range, and integer checks remain authoritative
-and runtime behavior is unchanged. The file is repository-local: it is not part
-of the current release archive or `velox init` output and is not published to
-npm. Applications opt in by copying it into their sources, `import type` from
-the copied path, or referencing it from a TypeScript or `checkJs` JavaScript
-project.
+and runtime behavior is unchanged.
+
+The declaration ships in two places. A release archive built from the current
+sources includes `types/velox.d.ts`, `types/README.md`, and `types/example.ts`;
+releases published before this addition do not contain them. `velox init`
+writes a root `velox.d.ts` byte-identical to the declaration the CLI embeds,
+beside the four generated project files, and the generated `web/app.js` opens
+with `/// <reference path="../velox.d.ts" />`. The file stays at the project
+root and is not copied into the default `web` asset root. None of this enables
+a native permission or installs TypeScript, and the declarations are not
+published to npm.
+
+See [the type guide](../../types/README.md) for type-only imports, references
+and the save/cancellation/error-handling example.
 
 Declarations export `Method`, `Params`, `Result`, `VeloxError`, and
 `VeloxAPI`. `window.velox` is optional: the host injects it only into trusted
@@ -452,7 +461,7 @@ results retain native fields on cancellation, which callers must still check.
 Strict `catch` values are `unknown`, and no runtime guard is exported; check
 the actual caught value before reading `code` or treating it as `VeloxError`.
 
-Maintainers can check the declarations with
+Maintainers can check the declarations and the example with
 `tsc --noEmit -p tests/types/tsconfig.json`.
 
 ## Stable Error Codes

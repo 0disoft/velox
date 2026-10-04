@@ -16,6 +16,14 @@ compares the declaration method keys with the native dispatcher. These checks
 emit no application JavaScript and do not replace native permission or value
 validation. Runtime-only checks need not be rerun for declaration-only changes.
 
+TypeScript delivery: scoped initializer/release-bundle/CLI tests check root
+declaration identity, editor reference, unchanged permissions and web asset
+boundary, conflict preservation, required type-file failure cleanup, ZIP
+contents, deterministic archives and artifact hashes. Type-check the shipped
+example and a generated JavaScript project with `checkJs`. Reuse an unchanged
+host for a matching local bundle's init/validate/build/inspect path; host UI and
+performance tests are not required when the host dependency tree is unchanged.
+
 Taskbar progress requirements: scoped IPC/manifest/runtime-config/build-report/
 builder/WebView2/host/hygiene checks and related vet when implementation is ready.
 Cover independent permission/default denial, strict state/value grammar

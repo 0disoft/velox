@@ -9,5 +9,5 @@
     "lib": ["ES2022", "DOM"],
     "types": []
   },
-  "files": ["velox.test.ts"]
+  "files": ["velox.test.ts", "../../types/example.ts"]
 }

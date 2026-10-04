@@ -21,6 +21,40 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## TypeScript Delivery: 2026-10-05
+
+Source-built release archives now include the explicit `types/velox.d.ts`,
+`types/README.md` and `types/example.ts` inventory with byte counts and SHA-256
+digests. The CLI embeds only the declaration and init writes it at project root
+alongside the four prior files, with a triple-slash reference in `web/app.js`.
+Default permissions remain empty and the web asset boundary remains three
+files. Init refuses a preexisting declaration before creating any new file.
+Missing required release type files fail with staging cleanup. No dependency,
+IPC method, DB, CI, version, push or public release change was added.
+
+Initializer, release-bundle and CLI package tests passed; the release command
+and embed package compiled. Focused missing-type cases and native-method
+coverage passed, as did scoped vet. Strict no-emit TypeScript 5.9.3 and 6.0.3
+checks included the save/error example; 6.0.3 checkJs passed on generated app.js
+with its root declaration reference. A first checkJs invocation used an invalid
+empty `--types` CLI argument; the corrected `--typeRoots` invocation passed.
+The example was type-checked, not executed against native UI.
+
+The rebuilt CLI was 4,984,320 bytes versus the same-toolchain cached CLI's
+4,978,688 bytes (+5,632 / 5.5 KiB). The host dependency tree excludes the types
+package; the unchanged 4,736,000-byte host retained SHA-256
+`6097731876cc1e82be5e5fead8de05b96fefcc0d433f6a534fc7a3ed780e6600`.
+No startup/performance benchmark or native UI test was repeated.
+
+The local matching bundle built successfully (4,774,917 bytes, SHA-256
+`8557d81b61423967986ef8635acba93683f39fca735d5dba1a9b9c8cf0718400`). All
+three archived type files matched source and release-manifest hashes; the Go
+embed source was absent from the ZIP. CLI init/validate/build/inspect passed,
+and the generated declaration matched source SHA-256
+`246cb4e21da585f70490f15a1f4e066ce33ad7e04bdbbfa2079207c1fe43a77c`.
+The application ZIP contained no declarations, only the normal three web assets
+and host/runtime/report files. This is local delivery evidence, not publication.
+
 ## TypeScript Bridge Declarations: 2026-10-05
 
 The repository-local `types/velox.d.ts` describes all 26 IPC methods and the

@@ -1,8 +1,12 @@
 package releasebundle
 
 import (
+	"archive/zip"
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,7 +21,7 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	hostPath := filepath.Join(root, "input", "velox-host.exe")
 	writeReleaseFile(t, cliPath, []byte("cli-binary"))
 	writeReleaseFile(t, hostPath, []byte("host-binary"))
-	writeReleaseSchemas(t, sourceRoot)
+	writeReleaseInputs(t, sourceRoot)
 	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "consumer-e2e-v1.schema.json"), []byte("must-not-ship\n"))
 	writeReleaseFile(t, filepath.Join(sourceRoot, "schema", "signing-record-v1.schema.json"), []byte("must-not-ship\n"))
 	writeReleaseFile(t, filepath.Join(sourceRoot, "THIRD_PARTY_NOTICES.md"), []byte("notices\n"))
@@ -51,7 +55,7 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 12 {
+	if manifest.SchemaVersion != SchemaVersion || len(manifest.Artifacts) != 15 {
 		t.Fatalf("unexpected release manifest: %+v", manifest)
 	}
 	if _, err := os.Stat(filepath.Join(first.Directory, "schema", "public-preview-verification-v1.schema.json")); err != nil {
@@ -67,6 +71,46 @@ func TestBuildCreatesDeterministicSelfDescribingBundle(t *testing.T) {
 			t.Fatalf("release artifacts are not sorted: %+v", manifest.Artifacts)
 		}
 	}
+	reader, err := zip.OpenReader(first.Archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	for _, name := range releaseTypeFiles {
+		relative := "types/" + name
+		want, err := os.ReadFile(filepath.Join(sourceRoot, filepath.FromSlash(relative)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, artifact := range manifest.Artifacts {
+			if artifact.File == relative {
+				found = artifact.Bytes == int64(len(want)) && artifact.SHA256 == fmt.Sprintf("%x", sha256.Sum256(want))
+			}
+		}
+		if !found {
+			t.Fatalf("missing or incorrect type artifact inventory: %s", relative)
+		}
+		found = false
+		for _, entry := range reader.File {
+			if entry.Name != "velox-windows-x64/"+relative {
+				continue
+			}
+			file, err := entry.Open()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := io.ReadAll(file)
+			file.Close()
+			if err != nil || !bytes.Equal(got, want) {
+				t.Fatalf("type ZIP contents differ: %s %v", relative, err)
+			}
+			found = true
+		}
+		if !found {
+			t.Fatalf("missing type ZIP entry: %s", relative)
+		}
+	}
 }
 
 func TestBuildReplacesExistingReleaseAtomically(t *testing.T) {
@@ -76,7 +120,7 @@ func TestBuildReplacesExistingReleaseAtomically(t *testing.T) {
 	hostPath := filepath.Join(root, "velox-host.exe")
 	writeReleaseFile(t, cliPath, []byte("cli"))
 	writeReleaseFile(t, hostPath, []byte("host"))
-	writeReleaseSchemas(t, sourceRoot)
+	writeReleaseInputs(t, sourceRoot)
 	writeReleaseFile(t, filepath.Join(sourceRoot, "THIRD_PARTY_NOTICES.md"), []byte("notices"))
 	outputRoot := filepath.Join(root, "out")
 	if _, err := Build(Options{CLIPath: cliPath, HostPath: hostPath, SourceRoot: sourceRoot, OutputRoot: outputRoot}); err != nil {
@@ -102,7 +146,7 @@ func TestOptionalSetupIsIncludedInReleaseInventory(t *testing.T) {
 	writeReleaseFile(t, cli, []byte("cli"))
 	writeReleaseFile(t, host, []byte("host"))
 	writeReleaseFile(t, setup, []byte("setup"))
-	writeReleaseSchemas(t, source)
+	writeReleaseInputs(t, source)
 	writeReleaseFile(t, filepath.Join(source, "THIRD_PARTY_NOTICES.md"), []byte("notices"))
 	result, err := Build(Options{CLIPath: cli, HostPath: host, SetupPath: setup, SourceRoot: source, OutputRoot: filepath.Join(root, "out")})
 	if err != nil {
@@ -138,10 +182,38 @@ func TestBuildFailsWhenRequiredReleaseSchemaIsMissing(t *testing.T) {
 	}
 }
 
-func writeReleaseSchemas(t *testing.T, sourceRoot string) {
+func TestBuildFailsWhenRequiredTypeFileIsMissing(t *testing.T) {
+	for _, name := range releaseTypeFiles {
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			source := filepath.Join(root, "source")
+			cli, host := filepath.Join(root, "cli.exe"), filepath.Join(root, "host.exe")
+			writeReleaseFile(t, cli, []byte("cli"))
+			writeReleaseFile(t, host, []byte("host"))
+			writeReleaseInputs(t, source)
+			writeReleaseFile(t, filepath.Join(source, "THIRD_PARTY_NOTICES.md"), []byte("notices"))
+			if err := os.Remove(filepath.Join(source, "types", name)); err != nil {
+				t.Fatal(err)
+			}
+			out := filepath.Join(root, "out")
+			if _, err := Build(Options{CLIPath: cli, HostPath: host, SourceRoot: source, OutputRoot: out}); err == nil {
+				t.Fatal("accepted missing type file")
+			}
+			entries, err := os.ReadDir(out)
+			if err != nil || len(entries) != 0 {
+				t.Fatalf("failed bundle left outputs: %v %v", entries, err)
+			}
+		})
+	}
+}
+
+func writeReleaseInputs(t *testing.T, sourceRoot string) {
 	t.Helper()
 	for _, name := range releaseSchemaFiles {
 		writeReleaseFile(t, filepath.Join(sourceRoot, "schema", name), []byte("{}\n"))
+	}
+	for _, name := range releaseTypeFiles {
+		writeReleaseFile(t, filepath.Join(sourceRoot, "types", name), []byte("type fixture: "+name+"\n"))
 	}
 }
 

@@ -37,6 +37,13 @@ Create a minimal manifest and dependency-free static web example.
 - Preflight every planned path and refuse the operation if any generated file
   already exists.
 - Remove only files and directories created by the failed invocation.
+- Write a root `velox.d.ts` byte-identical to the declaration embedded in the
+  CLI, beside the manifest and `web/` files. The generated `web/app.js` opens
+  with `/// <reference path="../velox.d.ts" />`, a type-checking hint only.
+- Keep the declaration at the project root; do not copy it into the `web` asset
+  directory or add it to generated application assets.
+- Grant no native permission, install no TypeScript, and compile or run no
+  example.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
 

@@ -37,6 +37,8 @@ var releaseSchemaFiles = []string{
 	"velox-v1.schema.json",
 }
 
+var releaseTypeFiles = []string{"velox.d.ts", "README.md", "example.ts"}
+
 type Options struct {
 	CLIPath    string
 	HostPath   string
@@ -143,6 +145,14 @@ func Build(options Options) (Result, error) {
 		return Result{}, fmt.Errorf("package third-party notices: %w", err)
 	}
 	artifacts = append(artifacts, notices)
+	for _, name := range releaseTypeFiles {
+		relative := "types/" + name
+		artifact, err := copyArtifact(filepath.Join(options.SourceRoot, "types", name), filepath.Join(stageDirectory, "types", name), relative)
+		if err != nil {
+			return Result{}, fmt.Errorf("package TypeScript file %s: %w", name, err)
+		}
+		artifacts = append(artifacts, artifact)
+	}
 	hostMetadataArtifact, err := inspectArtifact(filepath.Join(stageDirectory, "velox-host.json"), "velox-host.json")
 	if err != nil {
 		return Result{}, err

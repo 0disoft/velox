@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/0disoft/velox/internal/safefs"
+	bridgetypes "github.com/0disoft/velox/types"
 )
 
 var invalidSlug = regexp.MustCompile(`[^a-z0-9-]+`)
@@ -94,6 +95,7 @@ func Create(directory string) (Result, error) {
 
 	files := []plannedFile{
 		{path: "velox.json", data: manifestData},
+		{path: "velox.d.ts", data: []byte(bridgetypes.Declaration())},
 		{path: "web/index.html", data: []byte(indexHTML(name))},
 		{path: "web/style.css", data: []byte(styleCSS)},
 		{path: "web/app.js", data: []byte(appJS)},
@@ -142,7 +144,11 @@ func Create(directory string) (Result, error) {
 	}
 
 	relative := filepath.ToSlash(directory)
-	return Result{Directory: relative, AppID: appID, AppName: name, Files: []string{"velox.json", "web/index.html", "web/style.css", "web/app.js"}}, nil
+	fileNames := make([]string, 0, len(files))
+	for _, file := range files {
+		fileNames = append(fileNames, file.path)
+	}
+	return Result{Directory: relative, AppID: appID, AppName: name, Files: fileNames}, nil
 }
 
 func projectSlug(value string) string {
@@ -229,5 +235,6 @@ p {
 }
 `
 
-const appJS = `document.documentElement.dataset.velox = "ready";
+const appJS = `/// <reference path="../velox.d.ts" />
+document.documentElement.dataset.velox = "ready";
 `
