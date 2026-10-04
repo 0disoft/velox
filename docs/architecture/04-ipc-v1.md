@@ -432,6 +432,29 @@ Verification/replacement failures can occur after writing, so retain buffers.
 No file handle, watcher, timer or background worker is retained. Same-user
 path races and power-loss atomicity retain ADR 0026's limitations.
 
+## TypeScript Declarations
+
+`types/velox.d.ts` is a declaration-only mirror of this application-facing
+surface. It emits no JavaScript and adds no runtime guard, so native
+permission, UTF-8 byte-limit, range, and integer checks remain authoritative
+and runtime behavior is unchanged. The file is repository-local: it is not part
+of the current release archive or `velox init` output and is not published to
+npm. Applications opt in by copying it into their sources, `import type` from
+the copied path, or referencing it from a TypeScript or `checkJs` JavaScript
+project.
+
+Declarations export `Method`, `Params`, `Result`, `VeloxError`, and
+`VeloxAPI`. `window.velox` is optional: the host injects it only into trusted
+top-level documents, not browser previews or child frames. Check it before use.
+Clipboard reads and connected saves use `cancelled` discriminated unions;
+narrow `cancelled` before reading their `text` or `target`. File/folder dialog
+results retain native fields on cancellation, which callers must still check.
+Strict `catch` values are `unknown`, and no runtime guard is exported; check
+the actual caught value before reading `code` or treating it as `VeloxError`.
+
+Maintainers can check the declarations with
+`tsc --noEmit -p tests/types/tsconfig.json`.
+
 ## Stable Error Codes
 
 - `INVALID_REQUEST`

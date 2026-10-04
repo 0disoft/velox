@@ -8,6 +8,14 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+TypeScript bridge declarations: `tsc --noEmit -p tests/types/tsconfig.json` checks
+all public method calls and save helpers, inferred responses, cancellation
+narrowing, optional/readonly browser globals, invalid names/params and correlated
+method/parameter pairs. `go test ./tests/hygiene -run '^TestTypeScriptMethodCoverage$'`
+compares the declaration method keys with the native dispatcher. These checks
+emit no application JavaScript and do not replace native permission or value
+validation. Runtime-only checks need not be rerun for declaration-only changes.
+
 Taskbar progress requirements: scoped IPC/manifest/runtime-config/build-report/
 builder/WebView2/host/hygiene checks and related vet when implementation is ready.
 Cover independent permission/default denial, strict state/value grammar

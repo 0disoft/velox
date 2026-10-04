@@ -21,6 +21,25 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## TypeScript Bridge Declarations: 2026-10-05
+
+The repository-local `types/velox.d.ts` describes all 26 IPC methods and the
+three existing text-save helpers. It includes method-specific overloads,
+response types, connected-save and clipboard cancellation unions, known error
+codes, and an optional readonly `window.velox` for non-host browser previews.
+Native permission, numeric/byte limits and document-token checks remain
+authoritative. Definitions add no executable code and no runtime dependency.
+
+Strict no-emit compilation passed with locally available TypeScript 5.9.3 and
+6.0.3, including expected failures for unsupported names, missing/wrong/extra
+parameters, inconsistent progress states, mismatched union-method arguments,
+absent browser bridges and readonly assignments. The focused Go hygiene test
+passed, comparing all 26 declaration keys against the native dispatcher's AST.
+`git diff --check` passed. Runtime code is unchanged, so no host rebuild, native
+UI test, performance benchmark or broad Go suite was repeated. The declaration
+is not yet included in release bundles or init output, and no package-manager
+publication, version, API behavior, DB, CI, push or release change was made.
+
 ## Maintainer Workflow Confirmations: 2026-10-04
 
 When asked to verify actual Windows taskbar Normal percentages, Error,
