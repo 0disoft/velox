@@ -21,6 +21,30 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Always On Top Runtime: 2026-10-04
+
+Optional window.alwaysOnTop defaults false and propagates through the manifest,
+runtime config and host. Every app receives a checkable system-menu toggle.
+It reads the actual WS_EX_TOPMOST state, does not activate/show/resize a window,
+and does not persist the user's toggle. Restart reuses the manifest value.
+File Notes does not opt in. No new IPC method/permission, dependency, timer,
+worker, DB/state-format, runner or workflow change is included.
+
+Scoped manifest/runtime-config/WebView2/builder/host/hygiene tests and go vet
+passed. Disposable hidden HWND checks cover default-off-first and default-on
+installation, command/checkmark round-trip, reserved low command bits, native
+state refresh, unchanged geometry/visibility/focus, invalid handles, destruction
+and fresh-window defaults. Early tests failed on the first lazy SetWindowPos
+lookup from a native callback; pre-resolving it before installation passed two
+ten-repeat native runs and the scoped suite. An earlier non-inlining hypothesis
+was disproved and that workaround was removed.
+
+Matched Go 1.27.1 stripped windowsgui/trimpath/buildvcs=false builds increased
+the host from 4,671,488 to 4,677,632 bytes: +6,144 bytes / 6 KiB, about 0.13%.
+This is size evidence, not a startup-latency or memory benchmark. System-menu
+interaction, visible overlap and owned dialogs remain manual checks. Version
+remains beta.20; no push or release publication was performed for this change.
+
 ## Minimum Window Size Examples: 2026-10-04
 
 File Notes requests an outer minimum of 720 x 520 logical units; the isolated

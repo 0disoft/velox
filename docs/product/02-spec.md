@@ -263,6 +263,11 @@ Web content is not trusted merely because it is local.
   nothing and document replacement invalidates pending work. File Notes 0.2.0
   uses this read-only API; Open does not connect a future write target.
 - IPC payload size, nesting, and in-flight request counts are bounded.
+- ADR 0034 adds optional `window.alwaysOnTop` (default false) and a checkable
+  host-owned system-menu toggle for every app. Initial topmost follows the
+  manifest; user toggles last only for the current process, independently of
+  saved placement. Geometry, visibility and focus are unchanged. No script
+  permission, timer, worker, dependency or profile-format change is added.
 - ADR 0033 adds optional `window.minWidth/minHeight` manifest/runtime fields:
   96-DPI logical outer-window minimums, capped to the current monitor's work
   area and applied to normal sizing, restored placement and DPI changes.

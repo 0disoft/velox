@@ -39,6 +39,7 @@
         "height": { "type": "integer", "minimum": 240 },
         "minWidth": { "type": "integer", "minimum": 0, "maximum": 16384, "default": 0 },
         "minHeight": { "type": "integer", "minimum": 0, "maximum": 16384, "default": 0 },
+        "alwaysOnTop": { "type": "boolean", "default": false },
         "rememberState": { "type": "boolean", "default": false },
         "tray": { "type": "boolean", "default": false }
       }

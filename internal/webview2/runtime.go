@@ -33,6 +33,7 @@ type Config struct {
 	Height                  uint
 	MinWidth                uint
 	MinHeight               uint
+	AlwaysOnTop             bool
 	RememberState           bool
 	Tray                    bool
 	SingleInstance          *singleinstance.Guard

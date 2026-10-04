@@ -163,6 +163,11 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		destroyBeforeRun(view)
 		return nil, err
 	}
+	// The user can undo topmost independently of application JavaScript.
+	if err := installAlwaysOnTop(uintptr(view.Window()), config.AlwaysOnTop); err != nil {
+		destroyBeforeRun(view)
+		return nil, err
+	}
 	if config.SingleInstance != nil {
 		if err := config.SingleInstance.Attach(uintptr(view.Window())); err != nil {
 			destroyBeforeRun(view)

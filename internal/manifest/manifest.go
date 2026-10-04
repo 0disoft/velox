@@ -51,6 +51,7 @@ type Window struct {
 	Height        uint `json:"height"`
 	MinWidth      uint `json:"minWidth,omitempty"`
 	MinHeight     uint `json:"minHeight,omitempty"`
+	AlwaysOnTop   bool `json:"alwaysOnTop,omitempty"`
 	RememberState bool `json:"rememberState,omitempty"`
 	Tray          bool `json:"tray,omitempty"`
 }

@@ -8,6 +8,13 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Always-on-top checks: `go test ./internal/manifest ./internal/runtimeconfig
+./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene` and
+scoped `go vet`. Cover boolean/default propagation, initial native topmost,
+system-menu toggle/check synchronization, unchanged geometry/visibility/focus,
+invalid handles, destruction and non-persisted defaults. Visible overlap and
+user-driven system-menu/dialog interaction remain manual evidence.
+
 Minimum window dimensions: `go test ./internal/windowlimits ./internal/manifest
 ./internal/runtimeconfig ./internal/webview2 ./internal/builder ./cmd/velox-host`.
 Check opt-out/one-axis behavior, configuration bounds/round-trip, 96/120/144 DPI

@@ -43,6 +43,7 @@ shape is:
       "window": {
         "width": 960,
         "height": 640,
+        "alwaysOnTop": false,
         "rememberState": false,
         "tray": false
       },
@@ -126,6 +127,13 @@ Initial width and height, optional minimum dimensions and window-state persisten
   minimization. A missing monitor query falls back to normal Windows sizing
   for that event. With both fields zero, no minimum-size handler is installed.
   See ADR 0033.
+- `alwaysOnTop`: optional boolean, default `false`. Sets the initial topmost
+  state. Every app exposes a checkable "Always on top" title-bar system-menu
+  item (Alt+Space), so users can toggle it without application JavaScript.
+  Toggling preserves geometry, visibility and focus. Other topmost windows
+  still share the topmost band. The toggle is session-only: restarting uses
+  the manifest value, including when `rememberState` is enabled. No new IPC
+  permission is needed. See ADR 0034.
 - `rememberState`: optional boolean, default `false`. When `true`, the host
   saves the raw physical screen normal rectangle, the monitor work area, the
   DPI, the maximized state, and a state-format version (currently `1`) to
