@@ -21,6 +21,21 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Maintainer Workflow Confirmations: 2026-10-04
+
+When asked to verify actual Windows taskbar Normal percentages, Error,
+Paused, Indeterminate and X clear in the isolated Taskbar Progress preview,
+the maintainer replied "잘됨," generally confirming the requested interaction
+worked. Individual percentages/colors were not separately reported. Actual
+Explorer restart recovery remains unverified.
+
+Earlier, the maintainer replied "잘됨" after being asked to check actual
+Windows app light/dark switching for File Notes, generally confirming that
+workflow. Native high contrast and a new file-save test were not reported.
+These confirmations follow the automated-validation snapshots below.
+Prior automated tests remain valid unchanged. No new build, tests, version
+bump, API, DB, runner change or release is part of this documentation follow-up.
+
 ## Taskbar Progress Example: 2026-10-04
 
 The isolated taskbar-progress example requests only window.progress. Its
