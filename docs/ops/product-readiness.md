@@ -3,13 +3,13 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
-- Candidate: `0.5.10-alpha.63` (local candidate; not tagged or published)
+- Public preview: `0.5.10-alpha.63` (published unsigned prerelease)
 
 ## Required Beta Checks
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.62 public verification run 35079337819 passed; exact source and digest are recorded in release.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.63 tag CI 37224406021 passed checkout-free builds; unauthenticated public downloads and metadata/version checks passed locally. Native launch was not repeated for these bytes. Prior alpha.62 public verification run 35079337819 remains historical; exact sources and digests are recorded in release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | On 2026-09-22, public alpha.62 passed two consecutive normal HTML/CSS/JS reloads via `scripts/dev-reload-smoke.ts` (public CLI `4d41f9c8706c29a5131f9d74da68689a7d9f466aae51182d0103e2e2fc6510b1`, host `651a9d87d16eee5687f4a1072226e3f9209a6ece438c0672e6c30e6680037679`, same origin, private profile, test process cleanup status 0). Historical alpha.53/54 passes and failures remain recorded below |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
@@ -21,6 +21,21 @@ files and a private profile for validation; never overwrite a user's files.
 Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
+
+## Alpha.63 Publication: 2026-10-05
+
+The owner approved publication of `v0.5.10-alpha.63` at
+`fce9955bdb355fd1b1a377dec277a60727c4ad39` as an unsigned prerelease, not beta.
+Tag CI `37224406021` passed reproducible release builds and checkout-free
+consumer builds. Its verified artifacts were published manually without a
+second producer run. All four assets were downloaded from public URLs without
+authentication and matched checksums, manifest and SBOM file digests and
+provenance source/run; the public CLI reported alpha.63. ZIP SHA-256:
+`19205e691e79dcddaeeb414cbbeb4cb055e59344d85dabfd5f7bfe5ea99b27ca`.
+The payload is unsigned. Native startup/UI/lifecycle and full stress checks
+were not repeated on these exact public bytes; earlier evidence is preserved
+with its original source/toolchain boundary. See
+[the publication record](release.md#alpha63-published-preview-2026-10-05).
 
 ## External Linux Common-Code Verification: 2026-10-05
 

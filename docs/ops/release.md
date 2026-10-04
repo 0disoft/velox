@@ -84,6 +84,57 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.63 Published Preview: 2026-10-05
+
+The current unsigned prerelease is
+[`v0.5.10-alpha.63`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.63),
+source `fce9955bdb355fd1b1a377dec277a60727c4ad39`. Its annotated tag was pushed
+and its peeled remote SHA matched this source. The owner explicitly approved
+the unsigned alpha publication in the release task.
+
+[Tag CI run 37224406021](https://github.com/0disoft/velox/actions/runs/37224406021)
+passed reproducible producer builds and the checkout-free consumer job. It
+used Go 1.26.0 on `windows-2025`. The two producer ZIP hashes matched; consumer
+builds matched SHA-256
+`dfc7d9787eb537221f412e281009980635030ead808f4a852b80222ecf16c762`.
+The consumer invoked only `velox.exe`. Its 2,494.3955 ms acquisition/build
+receipt is a single hosted observation, not a cold-build performance claim.
+
+Publication reused this successful tag run's four assets with authenticated
+`gh release create --prerelease --verify-tag --latest=false`, after local
+payload verification. The workflow publication job was skipped on the tag
+push; no second producer run was dispatched. No existing release was replaced.
+Release ID `403152107` is public, non-draft and prerelease, with four assets:
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `velox-windows-x64.zip` | 5,825,098 | `19205e691e79dcddaeeb414cbbeb4cb055e59344d85dabfd5f7bfe5ea99b27ca` |
+| `checksums.sha256` | 279 | `379322658c7ab0f1f44305d4d5cbfa46cfa8682cf3ef6aadc35778771ab71e72` |
+| `velox-windows-x64.spdx.json` | 9,618 | `b828f931e8f0daacb7d278a16d1ee5330be265f0dce9c7af8988a6fd2e27d3ae` |
+| `velox-windows-x64.intoto.jsonl` | 744 | `fcbf5c5c017e82cae2bde5e9d3f3680eeae35da6b66c2a404aea7596f7443703` |
+
+All four exact public release URLs were downloaded with `curl` without an
+authentication header. Three checksum entries, all 16 release-manifest
+artifacts, all 17 SPDX file digests, ZIP read/CRC integrity, version/target,
+and provenance source/run `37224406021/1` matched. Public CLI `version --json`
+returned `0.5.10-alpha.63`. The publication payload's three executables had
+Authenticode `NotSigned`; host and setup PE subsystems were GUI (2).
+
+Host SHA-256:
+`9094c807a068e57bec3d055a4393a4c8ba70cdacf1e679309f75fda13b40df1d`;
+CLI SHA-256:
+`76d462fefdaf8a5eec6b63d1caede1104db961a69655f9d816c480d98945bff0`.
+This Go 1.26.0 CI bundle differs from the earlier Go 1.27.1 local candidate;
+their sizes are not a like-for-like performance comparison.
+
+No public-preview-verification workflow, fresh native UI/lifecycle test,
+Linux retest or full stress run was repeated in this publication step. The
+previous alpha.62 public/native records and local candidate records remain
+historical, not observations of these exact public bytes. Beta remains held.
+Release notes disclose unsigned publisher identity, external mutable assets,
+restart latency, the supported Windows floor, opt-in installer/branding, and
+the absence of an updater or macOS/Linux application runtime.
+
 ## Alpha.63 Local Candidate Build: 2026-10-05
 
 Source and remote `main` are `5c07245eb3794c88d54c61e65a69c8d35db06b12`; the
@@ -272,8 +323,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.62` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.62`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.63` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.63`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, signing, and publication remain separate maintainer
@@ -335,8 +386,10 @@ authenticated provenance and Authenticode controls for a later signed channel.
   no updater, elevation, or repair; changed or unowned files block removal.
 - The preview is marked prerelease and prominently identifies both executables
   as unsigned.
-- Publication requires a manual exact-phrase confirmation on an existing alpha
-  tag and refuses to replace an existing release.
+- Publication requires explicit maintainer approval on an existing alpha tag
+  and refuses to replace an existing release. The publication workflow uses
+  exact-phrase confirmation; an approved manual publication can instead reuse
+  a successful tag run's verified artifacts without rebuilding them.
 
 ## Compatibility Floor
 

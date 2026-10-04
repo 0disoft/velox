@@ -389,14 +389,18 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.62`, source
-`02c9acb5035014d9e29a0eb5881a3cf5310f5d6d`. Publication run `35079091056`
-passed reproducible builds and checkout-free consumer checks.
-Public-download verification run `35079337819` passed using
-the digest independently computed from the publication Actions artifact:
-`10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`
-(3,778,397 bytes). This remains `same-repository-public-download` with
-`externalUserAttempt: false`. Maintainer-confirmed saving and restart recovery
+The current public preview is `v0.5.10-alpha.63`, source
+`fce9955bdb355fd1b1a377dec277a60727c4ad39`. Tag CI `37224406021` passed
+reproducible builds and checkout-free consumer checks; its four verified
+assets were published without a second producer run. Unauthenticated public
+downloads matched checksum, manifest, SBOM and provenance digests locally;
+the public CLI version was alpha.63. ZIP SHA-256:
+`19205e691e79dcddaeeb414cbbeb4cb055e59344d85dabfd5f7bfe5ea99b27ca`
+(5,825,098 bytes). This local public-byte inspection did not repeat native
+startup or UI tests. The previous alpha.62 public-download verification run
+`35079337819` remains `same-repository-public-download` with
+`externalUserAttempt: false`, not evidence for alpha.63 native launch.
+Maintainer-confirmed saving and restart recovery
 for the prior CI-built alpha.61 package are recorded in
 `docs/ops/file-permission-recovery.md`. That manual check is not claimed for
 the later publication bytes, nor as a human Deny-reset prompt test.
