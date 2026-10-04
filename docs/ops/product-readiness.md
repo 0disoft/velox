@@ -21,6 +21,25 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Window Attention Runtime: 2026-10-04
+
+Independent `window.attention` enables bounded request and explicit cancel
+without window activation or visibility changes. Scoped IPC/WebView2/manifest/
+runtime-config/builder tests and go vet passed. Build-report propagation is
+covered by builder tests, not a separate build-report suite. Native tests use
+a disposable hidden window to check FLASHWINFO layout, taskbar-only bounded
+flags, accepted calls without interpreting BOOL as success, unchanged
+foreground/visibility and invalid/destroyed handles. They do not establish
+visible taskbar flashing or foreground no-op behavior by human observation.
+
+Matched stripped Windows GUI, trimpath, buildvcs=false host builds compare
+the previous title host (4,655,616 bytes) with attention (4,661,248 bytes):
++5,632 bytes / 5.5 KiB, approximately 0.12%. No startup performance claim,
+dependency, host timer, DB, repository-hygiene or runner change is made.
+API/spec/ADR/configuration/validation sources are updated; runtime version
+remains beta.20. No push, remote CI dispatch or publication is part of this
+local verification.
+
 ## Dynamic Window Title Runtime: 2026-10-04
 
 `window.title` independently enables `window.setTitle({title})`, without

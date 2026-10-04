@@ -150,6 +150,11 @@ in v1.
 A closed permission list and production browser settings. Unknown permissions
 are errors, not warnings.
 
+`window.attention` independently enables `window.requestAttention({count})`
+and `window.cancelAttention({})`. Count defaults to 3 and is limited to 1..5.
+This requests taskbar attention without activating a window, not a notification
+or foreground/restore permission. See [window attention](../architecture/04-ipc-v1.md#window-attention).
+
 `window.title` independently opts into `window.setTitle({title})`; it grants
 no basic window controls. Titles are bounded to 512 UTF-8 bytes without control
 characters; empty resets to the manifest app name. App identity and native

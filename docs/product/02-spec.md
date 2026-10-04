@@ -263,6 +263,10 @@ Web content is not trusted merely because it is local.
   nothing and document replacement invalidates pending work. File Notes 0.2.0
   uses this read-only API; Open does not connect a future write target.
 - IPC payload size, nesting, and in-flight request counts are bounded.
+- ADR 0032 adds independent opt-in `window.attention`: request 1..5 taskbar
+  flashes (default 3) or explicitly cancel. No window activation, visibility
+  change, toast notification, host timer, background worker or dependency is
+  added. Actual taskbar presentation remains controlled by Windows.
 - ADR 0031 adds independent opt-in `window.title` and `window.setTitle({title})`:
   update the native caption with up to 512 UTF-8 bytes without control
   characters, or reset to the manifest app name with an empty string.

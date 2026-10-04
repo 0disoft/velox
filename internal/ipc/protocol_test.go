@@ -11,11 +11,13 @@ import (
 )
 
 type fakeWindow struct {
-	title           string
-	state           string
-	operationErr    error
-	blockMinimize   <-chan struct{}
-	minimizeStarted chan<- struct{}
+	title              string
+	attentionCount     uint32
+	attentionCancelled int
+	state              string
+	operationErr       error
+	blockMinimize      <-chan struct{}
+	minimizeStarted    chan<- struct{}
 }
 
 func (f *fakeWindow) State() (string, error) { return f.state, f.operationErr }
@@ -33,6 +35,16 @@ func (f *fakeWindow) Restore() error  { return f.operationErr }
 func (f *fakeWindow) Close() error    { return f.operationErr }
 func (f *fakeWindow) SetTitle(title string) error {
 	f.title = title
+	return f.operationErr
+}
+
+func (f *fakeWindow) RequestAttention(count uint32) error {
+	f.attentionCount = count
+	return f.operationErr
+}
+
+func (f *fakeWindow) CancelAttention() error {
+	f.attentionCancelled++
 	return f.operationErr
 }
 

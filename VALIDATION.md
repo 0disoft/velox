@@ -8,6 +8,12 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Window attention checks use the same scoped Go packages as title checks below.
+Cover independent permission propagation, strict optional count 1..5/default 3,
+empty cancel parameters, shutdown, redacted errors, FLASHWINFO ABI layout and
+bounded taskbar-only flags. Disposable native window checks must not activate
+or show a window. Visible taskbar blinking/cancellation remains a manual check.
+
 Dynamic window title checks: `go test ./internal/ipc ./internal/webview2
 ./internal/manifest ./internal/runtimeconfig ./internal/buildreport ./internal/builder`.
 Cover independent permission propagation, strict parameters, UTF-8/control

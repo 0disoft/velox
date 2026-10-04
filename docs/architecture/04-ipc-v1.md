@@ -84,6 +84,8 @@ the window to close, not in a pending native-response continuation.
 | `window.restore` | `window.basic` | `{}` | `null` |
 | `window.close` | `window.basic` | `{}` | `null` before deferred shutdown |
 | `window.setTitle` | `window.title` | `{title}` | `null` after native title update |
+| `window.requestAttention` | `window.attention` | `{}` or `{count: 1..5}` | `null` after bounded taskbar attention request |
+| `window.cancelAttention` | `window.attention` | `{}` | `null` after stopping attention |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
 | `clipboard.writeText` | `clipboard.write` | `{text}` | `null` after native Unicode text write |
 | `clipboard.readText` | `clipboard.read` | `{}` | `{cancelled: true}` or `{cancelled: false, text}` after native approval |
@@ -102,6 +104,30 @@ the window to close, not in a pending native-response continuation.
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
+
+### Window Attention
+
+`window.requestAttention({count})` and `window.cancelAttention({})` require
+independent, default-disabled `window.attention`. Basic controls and title
+permissions do not grant attention, nor does attention grant those methods.
+Count is an optional JSON integer from 1 to 5, default 3. Unknown fields,
+null, nonintegers and out-of-range values are `INVALID_PARAMS`. Cancel accepts
+no fields. Missing/unavailable windows return redacted `NATIVE_OPERATION_FAILED`.
+
+Use only bounded taskbar-button flashing at the Windows default blink rate,
+without caption flashing or continuous timer flags. A request for the current
+foreground window is a no-op. Cancel uses FLASHW_STOP. Neither operation shows,
+restores, focuses or activates a window. Hidden-to-tray windows may have no
+taskbar button; shell/accessibility settings determine the actual visual cue.
+Success means the host issued the request, not that flashing was observed.
+Repeated calls may restart flashing; the count bound applies per request.
+
+Both methods run on the existing UI/COM thread. No host timer, worker, listener,
+stored state or dependency is added. FlashWindowEx's BOOL is the previous
+active state, not a success flag; validity is checked before invoking it.
+See [FlashWindowEx](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-flashwindowex)
+and [FLASHWINFO](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-flashwinfo).
+Existing origin, wire limits and shutdown rejection remain authoritative.
 
 ### Window Title
 

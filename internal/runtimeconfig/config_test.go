@@ -54,6 +54,22 @@ func TestClipboardPermissionManifestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestWindowAttentionPermissionManifestRoundTrip(t *testing.T) {
+	value := manifest.Resolved{Manifest: manifest.Manifest{
+		App:    manifest.App{ID: "dev.velox.attention-test", Name: "Attention test", Version: "1"},
+		Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600},
+		Security: manifest.Security{Permissions: []string{"window.attention"}},
+	}}
+	body, err := json.Marshal(FromManifest(value, "web"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := Parse(body)
+	if err != nil || strings.Join(parsed.Security.Permissions, ",") != "window.attention" {
+		t.Fatal("independent attention permission roundtrip failed", parsed, err)
+	}
+}
+
 func TestFolderPermissionManifestRoundTrip(t *testing.T) {
 	value := manifest.Resolved{Manifest: manifest.Manifest{App: manifest.App{ID: "dev.velox.folder-test", Name: "Folder test", Version: "1"},
 		Assets: manifest.Assets{Entry: "index.html"}, Window: manifest.Window{Width: 800, Height: 600}, Security: manifest.Security{Permissions: []string{"folder.read"}}}}

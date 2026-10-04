@@ -157,7 +157,7 @@ func validate(value Manifest) error {
 	}
 	seen := make(map[string]struct{}, len(value.Security.Permissions))
 	for _, permission := range value.Security.Permissions {
-		if permission != "app.info" && permission != "window.basic" && permission != "window.title" && permission != "external.open" && permission != "file.open" && permission != "file.save" && permission != "folder.read" && permission != "folder.readText" && permission != "clipboard.write" && permission != "clipboard.read" {
+		if permission != "app.info" && permission != "window.basic" && permission != "window.title" && permission != "window.attention" && permission != "external.open" && permission != "file.open" && permission != "file.save" && permission != "folder.read" && permission != "folder.readText" && permission != "clipboard.write" && permission != "clipboard.read" {
 			return fmt.Errorf("unsupported permission %q", permission)
 		}
 		if _, exists := seen[permission]; exists {
