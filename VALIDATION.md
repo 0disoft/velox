@@ -27,7 +27,7 @@ Final responses must list executed validations, passed validations, skipped vali
 Task runner files are optional. This repository still uses runner `none`.
 The parent workspace command contract currently provides these bounded intents:
 
-- `velox_format` maps to format.
+- `go fmt ./...` maps to format.
 - `velox_lint` maps to lint.
 - `velox_test` maps to test.
 - `velox_build` maps to the production Go host build with `-H windowsgui`.
@@ -64,13 +64,13 @@ The parent workspace command contract currently provides these bounded intents:
 - `velox_cli_run_smoke` launches source assets through the assembled release
   CLI, requires the host to reach its ready callback, exits it, and verifies the
   temporary runtime configuration was removed.
-- `velox_consumer_benchmark_smoke` runs three local samples to validate the
+- `pwsh -NoProfile -NonInteractive -File scripts/measure-consumer-build.ps1 -Cli dist/release/velox-windows-x64/velox.exe -WorkRoot .cache/consumer-benchmark-smoke -ResultPath .cache/consumer-benchmark-smoke/latest.json -Repetitions 3` runs three local samples to validate the
   benchmark harness and schema without turning unavailable process tracing into
   a false pass.
-- `velox_consumer_asset_benchmark_smoke` runs three local samples with the
+- `pwsh -NoProfile -NonInteractive -File scripts/measure-consumer-build.ps1 -Cli dist/release/velox-windows-x64/velox.exe -WorkRoot .cache/consumer-asset-benchmark-smoke -ResultPath .cache/consumer-asset-benchmark-smoke/latest.json -Repetitions 3 -FixtureKind asset-pack` runs three local samples with the
   pinned 1,000-file, exact-10-MiB asset-pack fixture to expose archive and
   filesystem scaling regressions without making hosted comparison claims.
-- `velox_consumer_benchmark` runs ten local clean-output samples and enforces
+- `pwsh -NoProfile -NonInteractive -File scripts/measure-consumer-build.ps1 -Cli dist/release/velox-windows-x64/velox.exe -WorkRoot .cache/consumer-benchmark -ResultPath .cache/consumer-benchmark/latest.json -Repetitions 10 -Enforce` runs ten local clean-output samples and enforces
   build-duration, cache, intermediate-file, and compiler/package-manager
   child-process gates. It is expected to fail when Windows process-start
   tracing is unavailable.
@@ -80,7 +80,7 @@ The parent workspace command contract currently provides these bounded intents:
   evidence. Child-process tracing may remain `unverified` locally.
 - `velox_consumer_e2e_failure_smoke` injects a release-checksum mismatch and
   requires a schema-valid `release-verification` failure result.
-- `velox_consumer_e2e_summary_smoke` aggregates one local raw result and
+- `pwsh -NoProfile -NonInteractive -File scripts/summarize-consumer-e2e.ps1 -ResultsRoot .cache/consumer-e2e-smoke/latest.json -ResultPath .cache/consumer-e2e-summary-smoke/latest.json -ExpectedSamples 1` aggregates one local raw result and
   validates the summary schema without promoting it to hosted evidence.
 - `velox_consumer_e2e_summary_failure_smoke` aggregates one success and one
   injected failure, requires the summary command to fail, and verifies the
@@ -90,30 +90,30 @@ The parent workspace command contract currently provides these bounded intents:
   the hosted evidence gate.
 - `velox_consumer_e2e_hosted_summary_gate_smoke` requires an unverified hosted
   process trace to remain counted and fail the aggregate summary gate.
-- `velox_workflow_validate` parses the repository-owned GitHub Actions workflow
+- `yq eval-all . .github/ISSUE_TEMPLATE/external-user-attempt.yml .github/workflows/alpha-evidence.yml .github/workflows/consumer-evidence.yml .github/workflows/public-preview-verification.yml .github/workflows/actions-warning-monitor.yml` parses the repository-owned GitHub Actions workflow
   with `yq` without modifying it.
 - `velox_startup_smoke` maps to smoke.
-- `velox_deskboard_model_test` exercises the functional example's persisted
+- `bun test examples/deskboard/model.test.ts` exercises the functional example's persisted
   task-state normalization, mutations, filters, and derived progress without a
   browser or frontend dependency.
-- `velox_deskboard_smoke` validates, diagnoses, builds twice, compares archive
+- `bun scripts/verify-example.ts examples/deskboard/velox.json dev.velox.deskboard deskboard` validates, diagnoses, builds twice, compares archive
   hashes, inspects, starts the packaged application directly from a non-app
   working directory, and starts `examples/deskboard` through the assembled
   Velox release. The harness is Bun/TypeScript and adds no PowerShell surface.
-- `velox_deskboard_build` leaves a portable Deskboard directory and ZIP under
+- `bun scripts/build-example.ts deskboard` leaves a portable Deskboard directory and ZIP under
   `dist/examples/deskboard` for manual use.
-- `velox_capability_probe_smoke` validates, diagnoses, reproducibly builds,
+- `bun scripts/verify-example.ts examples/capability-probe/velox.json dev.velox.capabilityprobe capability-probe` validates, diagnoses, reproducibly builds,
   inspects, directly starts, and source-starts the browser capability probe.
-- `velox_capability_probe_model_test` verifies operation-result replacement,
+- `bun test examples/capability-probe/model.test.ts` verifies operation-result replacement,
   rerun preservation, evidence-state summaries, and versioned report snapshots.
-- `velox_capability_probe_build` leaves a portable probe directory and ZIP
+- `bun scripts/build-example.ts capability-probe` leaves a portable probe directory and ZIP
   under `dist/examples/capability-probe` for manual user-gesture checks.
-- `velox_example_tooling_test` verifies that the maintainer example builder can
+- `bun test scripts/build-example.test.ts` verifies that the maintainer example builder can
   replace only the allowlisted `dist/examples` outputs and rejects
   arbitrary output names.
-- `velox_file_notes_model_test` verifies draft restoration, dirty-state
+- `bun test examples/file-notes/model.test.ts` verifies draft restoration, dirty-state
   derivation, selected-file baselines, saved baselines, and Unicode statistics.
-- `velox_file_notes_smoke` validates, diagnoses, reproducibly builds, inspects,
+- `bun scripts/verify-example.ts examples/file-notes/velox.json dev.velox.filenotes file-notes` validates, diagnoses, reproducibly builds, inspects,
   directly starts, and source-starts the native-file editor.
 - File Notes application/model/storage tests cover session-only target reuse,
   cancellation, conflict/error buffer preservation, explicit target release,
@@ -132,9 +132,9 @@ The parent workspace command contract currently provides these bounded intents:
   guards. Edge layout checks verify visible selection scrolling, focus return,
   icon loading and mirror cleanup at desktop/narrow widths; native WebView2
   interaction is still separate manual evidence.
-- `velox_file_notes_build` leaves a portable File Notes directory and ZIP under
+- `bun scripts/build-example.ts file-notes` leaves a portable File Notes directory and ZIP under
   `dist/examples/file-notes` for manual picker and persistence checks.
-- `velox_llm_agent_evaluation_test` exercises clean-room trial shape checks,
+- `bun test scripts/llm-agent-evaluation.test.ts` exercises clean-room trial shape checks,
   prompt and artifact digest verification, path-containment rejection,
   pass-gate consistency, failed-sequence preservation, model-diversity series
   gating, and the read-only Hermes attestation adapter's session counter,
@@ -147,12 +147,12 @@ The parent workspace command contract currently provides these bounded intents:
   receipts. The ordinary Go test intent runs the Windows AppContainer and Job
   Object adversarial test for denied outside access, contained child execution,
   state export, and ACL, profile, environment, and private-state cleanup.
-- `velox_hermes_attestation_live_smoke` reads one explicitly selected, finished
+- `bun scripts/llm-agent-orchestrator.ts live-smoke` reads one explicitly selected, finished
   local Hermes session through the read-only adapter and writes only a compact
   diagnostic attestation under ignored `.cache/hermes-attestation-smoke`. It is
   adapter evidence, not a qualifying beta trial or a replacement for the new
   three-session series.
-- `velox_hermes_completion_live_diagnose` reads only completion metadata for an
+- `bun scripts/llm-agent-orchestrator.ts live-diagnose` reads only completion metadata for an
   explicitly selected local Hermes session. It distinguishes stored `ended_at`
   values from a final active assistant `finish_reason=stop` without printing
   message content, tool arguments, or the raw session ID.
