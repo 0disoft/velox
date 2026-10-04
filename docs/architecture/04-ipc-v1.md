@@ -87,6 +87,7 @@ the window to close, not in a pending native-response continuation.
 | `window.requestAttention` | `window.attention` | `{}` or `{count: 1..5}` | `null` after bounded taskbar attention request |
 | `window.cancelAttention` | `window.attention` | `{}` | `null` after stopping attention |
 | `window.setProgress` | `window.progress` | `{state, value?}` (see below) | `null` when accepted, possibly cached before taskbar readiness |
+| `notification.show` | `notification.show` | `{kind, message}` | `null` when the shell accepts a transient tray balloon |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
 | `clipboard.writeText` | `clipboard.write` | `{text}` | `null` after native Unicode text write |
 | `clipboard.readText` | `clipboard.read` | `{}` | `{cancelled: true}` or `{cancelled: false, text}` after native approval |
@@ -166,6 +167,43 @@ active state, not a success flag; validity is checked before invoking it.
 See [FlashWindowEx](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-flashwindowex)
 and [FLASHWINFO](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-flashwinfo).
 Existing origin, wire limits and shutdown rejection remain authoritative.
+
+### Tray Notifications
+
+[ADR 0038](../adr/0038-tray-notifications.md) adds
+`window.velox.invoke("notification.show", {kind, message})` under independent,
+default-disabled `notification.show`. `window.tray` neither grants nor
+requires it, and it grants no other window or tray control.
+
+- `kind` is required and one of `info`, `warning`, or `error`.
+- `message` is required, must contain at least one non-whitespace character, is
+  bounded to 255 UTF-16 code units, and may not contain NUL, DEL or another C0/C1
+  control character except line feed and tab.
+
+Only those two fields are accepted; unknown fields, missing/wrong types,
+whitespace-only or oversized messages, and disallowed controls return
+`INVALID_PARAMS`. Permission denial and shutdown keep the existing errors.
+
+The manifest must set `window.tray: true` and the tray icon must be currently
+registered; otherwise the method returns redacted `NATIVE_OPERATION_FAILED` and
+installs no icon. A successful `null` means the Windows shell accepted a
+transient request, not that a balloon was seen.
+
+The host reuses the registered icon with `NIM_MODIFY` and a transient
+`NOTIFYICONDATAW` copy using `NIF_INFO | NIF_REALTIME`, the manifest app name
+as a fixed title truncated to 63 UTF-16 code units, and
+`NIIF_NOSOUND | NIIF_RESPECT_QUIET_TIME` with the requested kind. The body is
+not stored and is not replayed after an Explorer restart. A
+`NIN_BALLOONUSERCLICK` (0x405) reveals the existing window through the normal
+modal-owner and shutdown gates, like the tray Open command.
+
+This adds no dependency, timer, worker, polling, file, persisted state, version
+change, or toast registration. Windows notification settings can suppress the
+balloon. Existing origin, wire limits and shutdown rejection remain
+authoritative. See
+[NOTIFYICONDATAW](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-notifyicondataw)
+and
+[Shell_NotifyIconW](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shell_notifyiconw).
 
 ### Window Title
 

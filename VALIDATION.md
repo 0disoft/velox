@@ -22,6 +22,20 @@ Visible taskbar progress and Explorer restart recovery need separate native
 evidence; size and operation counts require measured results. These are
 requirements, with no completed validation claimed by this entry.
 
+Tray notification requirements: scoped IPC/manifest/runtime-config/host/hygiene
+checks when implementation is ready. Cover independent default-off
+`notification.show`, strict two-field grammar (unknown fields, missing/wrong
+types, kind values, whitespace-only and oversized messages, NUL, DEL and C0/C1
+controls other than LF and TAB), packaged propagation and redacted errors.
+Verify `window.tray: true` plus a registered icon is required and that a
+missing or disabled tray installs nothing and returns `NATIVE_OPERATION_FAILED`,
+fixed manifest-title truncation to 63 UTF-16 units, `NIM_MODIFY` with a
+transient `NIF_INFO | NIF_REALTIME` copy, no stored body or Explorer-restart
+replay, and `NIN_BALLOONUSERCLICK` reveal through normal modal/shutdown gates.
+Actual balloon visibility and Windows quiet-time or disabled-notification
+behavior remain shell-controlled manual evidence. These are requirements, with
+no completed validation claimed by this entry.
+
 Fixed-size windows: scoped manifest/runtime-config/WebView2/builder/host/hygiene
 Go tests and go vet. Cover omission/true/false, invalid types, default style,
 native frame/system commands, IPC maximize rejection, no initial geometry or

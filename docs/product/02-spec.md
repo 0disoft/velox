@@ -178,8 +178,9 @@ passed with ZIP SHA-256
   until a later successful registration. Normal destruction removes the icon.
   With the field absent or false, no tray icon, subclass, restart-message
   registration, polling, or native menu is added. There is no additional process,
-  dependency, timer, notification API, or IPC permission. Hidden content keeps
-  running; reduced resource use is not promised. Single-instance activation also
+  dependency or timer. A separate default-off `notification.show` permission adds
+  an optional transient balloon (ADR 0038). Hidden content keeps running;
+  reduced resource use is not promised. Single-instance activation also
   reveals a tray-hidden window. The File Notes source opts in; older packaged
   outputs are not implicitly updated.
 - Opt-in system theme (`window.followSystemTheme: true`, default `false`).
@@ -310,6 +311,15 @@ Web content is not trusted merely because it is local.
   flashes (default 3) or explicitly cancel. No window activation, visibility
   change, toast notification, host timer, background worker or dependency is
   added. Actual taskbar presentation remains controlled by Windows.
+- ADR 0038 adds independent opt-in `notification.show` and
+  `notification.show({kind, message})`: show one transient tray balloon with
+  kind `info`/`warning`/`error` and a non-whitespace message of at most 255
+  UTF-16 units without NUL, DEL or other C0/C1 controls except LF and TAB. It requires
+  an opted-in, currently registered `window.tray` icon and otherwise fails
+  without installing one. Windows settings can suppress the balloon, success is
+  shell acceptance only, and no body is stored or replayed after an Explorer
+  restart. No dependency, timer, worker, persistence, toast registration,
+  scheduling or version change is added.
 - ADR 0031 adds independent opt-in `window.title` and `window.setTitle({title})`:
   update the native caption with up to 512 UTF-8 bytes without control
   characters, or reset to the manifest app name with an empty string.

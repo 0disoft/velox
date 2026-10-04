@@ -182,9 +182,10 @@ Initial width and height, optional minimum dimensions and window-state persisten
   Explorer restart re-registers the icon; failure reveals the window and prevents
   further tray hiding until registration succeeds. The icon is removed on normal
   destruction. Forced termination can leave a stale shell icon until Windows
-  cleans it up. Foreground focus is best-effort. No timer, polling, extra process,
-  notification API, or public IPC method is added. Hidden WebView content still
-  runs; hiding does not promise lower CPU or memory use. See ADR 0024.
+  cleans it up. Foreground focus is best-effort. No timer, polling or extra
+  process is added. ADR 0038 adds an optional transient balloon under a
+  separate default-off permission. Hidden WebView content still runs; hiding
+  does not promise lower CPU or memory use. See ADR 0024.
 
 Position policy and background color are not manifest fields
 in v1.
@@ -207,6 +208,17 @@ See [taskbar progress](../architecture/04-ipc-v1.md#taskbar-progress) and ADR 00
 and `window.cancelAttention({})`. Count defaults to 3 and is limited to 1..5.
 This requests taskbar attention without activating a window, not a notification
 or foreground/restore permission. See [window attention](../architecture/04-ipc-v1.md#window-attention).
+
+`notification.show` independently enables `notification.show({kind, message})`
+for an opted-in tray. `kind` is required and must be `info`, `warning`, or
+`error`; `message` is required, non-whitespace, at most 255 UTF-16 code units,
+and may not contain NUL, DEL or another C0/C1 control character except line feed and
+tab. Only those two fields are accepted. Success returns `null`, which means
+the shell accepted the request, not that it was displayed. The manifest must also
+set `window.tray: true` and the icon must be registered, or the method fails
+with `NATIVE_OPERATION_FAILED`; no tray is installed automatically. See
+[tray notifications](../architecture/04-ipc-v1.md#tray-notifications) and
+ADR 0038.
 
 `window.title` independently opts into `window.setTitle({title})`; it grants
 no basic window controls. Titles are bounded to 512 UTF-8 bytes without control

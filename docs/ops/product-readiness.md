@@ -36,6 +36,41 @@ These confirmations follow the automated-validation snapshots below.
 Prior automated tests remain valid unchanged. No new build, tests, version
 bump, API, DB, runner change or release is part of this documentation follow-up.
 
+## Tray Notification Runtime: 2026-10-04
+
+`notification.show` independently permits transient balloons and requires an
+explicitly enabled `window.tray`. IPC, manifest, runtime-config, WebView2, builder and
+host tests passed, as did the repository hygiene suite; build-report has no
+standalone tests and is covered by builder checks. Scoped `go vet` passed.
+A second native pass adding a missing-tray case and title/short-message cases
+kept the ipc and WebView2 suites green.
+
+Tests inject the `Shell_NotifyIcon` call and use disposable real HWNDs. They
+cover the strict 255-UTF-16 message limit and two-field validation under an
+independent permission, `NIM_MODIFY` with `NIF_INFO | NIF_REALTIME` and
+termination, the fixed manifest app name even when the caption changes,
+missing-tray failure without auto-installing an icon, unavailable/modal/
+shutdown rejection, shell failure, click restoring a hidden or minimized
+window, and cleanup with no replay after `TaskbarCreated`. They do not submit
+a real shell balloon, so actual visibility, click handling, quiet time and
+disabled-notification settings remain manual unverified.
+
+Matched Go 1.27.1 `-buildvcs=false -trimpath -ldflags '-s -w -H windowsgui'`
+host builds compare 4,717,568 bytes before and 4,724,224 bytes after:
++6,656 bytes / 6.5 KiB. Final host SHA-256
+`8005b4dc55a12c2c81ee3558a19004e3411208d9b1ea39f6f6b6cded12e9d171`. The
+matching beta.20 CLI/host bundle was built and a private smoke app with
+`tray: true` and `notification.show` packaged; runtime permission readback
+matched, and a startup plus exit-after-ready run returned zero with a packaged
+invalid message rejected as `INVALID_PARAMS`. The first smoke timed out and
+was killed because its test HTML lacked the explicit `__veloxReady` signal;
+only the test page was fixed before it passed. This is size evidence, not a
+startup-latency benchmark. No dependency, timer, worker, DB or profile-format,
+file-permission, CI/runner, version or File Notes change was made, and nothing
+was pushed or published.
+
+Validation: `go test ./internal/ipc ./internal/manifest ./internal/runtimeconfig ./internal/buildreport ./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene -count=1`, then scoped `go vet`.
+
 ## Taskbar Progress Example: 2026-10-04
 
 The isolated taskbar-progress example requests only window.progress. Its

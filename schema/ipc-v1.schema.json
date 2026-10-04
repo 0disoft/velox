@@ -18,6 +18,17 @@
         "params": { "type": "object" }
       },
       "allOf": [{
+        "if": { "properties": { "method": { "const": "notification.show" } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "message"],
+          "properties": {
+            "kind": { "enum": ["info", "warning", "error"] },
+            "message": { "type": "string", "minLength": 1, "maxLength": 255,
+              "pattern": "^[^\\u0000-\\u0008\\u000b-\\u001f\\u007f-\\u009f]*$",
+              "description": "Non-whitespace text; host enforces 255 UTF-16 units, not code points." }
+          }
+        } } }
+      }, {
         "if": { "properties": { "method": { "const": "window.setProgress" } } },
         "then": { "properties": { "params": {
           "oneOf": [

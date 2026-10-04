@@ -44,7 +44,7 @@
     "permissions": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "enum": ["app.info", "window.basic", "window.title", "window.attention", "window.progress", "external.open", "file.open", "file.save", "folder.read", "folder.readText", "clipboard.write", "clipboard.read"] }
+      "items": { "enum": ["app.info", "window.basic", "window.title", "window.attention", "window.progress", "notification.show", "external.open", "file.open", "file.save", "folder.read", "folder.readText", "clipboard.write", "clipboard.read"] }
     },
     "outputs": {
       "type": "object",

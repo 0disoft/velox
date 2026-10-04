@@ -16,6 +16,8 @@ type fakeWindow struct {
 	attentionCancelled int
 	progressState      string
 	progressValue      uint32
+	notificationKind   string
+	notificationText   string
 	state              string
 	operationErr       error
 	blockMinimize      <-chan struct{}
@@ -52,6 +54,11 @@ func (f *fakeWindow) CancelAttention() error {
 
 func (f *fakeWindow) SetProgress(state string, value uint32) error {
 	f.progressState, f.progressValue = state, value
+	return f.operationErr
+}
+
+func (f *fakeWindow) ShowNotification(kind, message string) error {
+	f.notificationKind, f.notificationText = kind, message
 	return f.operationErr
 }
 

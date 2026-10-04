@@ -10,6 +10,7 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
+	"github.com/0disoft/velox/internal/ipc"
 	"golang.org/x/sys/windows"
 )
 
@@ -91,6 +92,7 @@ func attachSystemTray(hwnd uintptr, title string, closing func() bool, notify fu
 		Flags: 1 | 2 | 4 | 0x80, Callback: trayMessage, Icon: icon, Version: 4,
 	}}
 	copy(item.data.Tip[:], trayTooltip(title))
+	copy(item.data.InfoTitle[:], trayText(title, 63))
 	systemTrays.Lock()
 	systemTrays.items[hwnd] = item
 	systemTrays.Unlock()
@@ -106,14 +108,59 @@ func attachSystemTray(hwnd uintptr, title string, closing func() bool, notify fu
 }
 
 func trayTooltip(title string) []uint16 {
+	return trayText(title, 127)
+}
+
+func trayText(title string, limit int) []uint16 {
 	text := utf16.Encode([]rune(strings.ReplaceAll(title, "\x00", " ")))
-	if len(text) > 127 {
-		text = text[:127]
-		if text[126] >= 0xd800 && text[126] <= 0xdbff {
-			text = text[:126]
+	if len(text) > limit {
+		text = text[:limit]
+		if text[limit-1] >= 0xd800 && text[limit-1] <= 0xdbff {
+			text = text[:limit-1]
 		}
 	}
 	return text
+}
+
+func (w nativeWindow) ShowNotification(kind, message string) error {
+	hwnd, err := w.handle()
+	if err != nil {
+		return err
+	}
+	return showTrayNotification(hwnd, kind, message)
+}
+
+func showTrayNotification(hwnd uintptr, kind, message string) error {
+	systemTrays.Lock()
+	item := systemTrays.items[hwnd]
+	systemTrays.Unlock()
+	if item == nil {
+		return fmt.Errorf("notification requires an enabled tray")
+	}
+	return item.showNotification(kind, message)
+}
+
+func (t *systemTray) showNotification(kind, message string) error {
+	if !ipc.ValidNotification(kind, message) || !t.registered || !t.available() {
+		return fmt.Errorf("notification is unavailable")
+	}
+	// Keep balloon fields transient so Explorer recovery never replays old text.
+	data := t.data
+	data.Flags = 0x10 | 0x40 // NIF_INFO | NIF_REALTIME: no delayed shell queue.
+	copy(data.Info[:], utf16.Encode([]rune(message)))
+	data.InfoFlags = 0x10 | 0x80 // NIIF_NOSOUND | NIIF_RESPECT_QUIET_TIME.
+	switch kind {
+	case "info":
+		data.InfoFlags |= 1
+	case "warning":
+		data.InfoFlags |= 2
+	case "error":
+		data.InfoFlags |= 3
+	}
+	if !t.notify(1, &data) { // NIM_MODIFY; success means accepted, not displayed.
+		return fmt.Errorf("submit tray notification")
+	}
+	return nil
 }
 
 func (t *systemTray) add() bool {
@@ -220,7 +267,7 @@ func systemTrayProc(hwnd, message, wparam, lparam, id, reference uintptr) uintpt
 		case trayMessage:
 			if (lparam>>16)&0xffff == trayIconID && item.available() {
 				switch lparam & 0xffff {
-				case 0x400, 0x401: // NIN_SELECT, NIN_KEYSELECT (NOTIFYICON_VERSION_4)
+				case 0x400, 0x401, 0x405: // NIN_SELECT, NIN_KEYSELECT, NIN_BALLOONUSERCLICK.
 					item.command(trayShow)
 				case 0x7b: // WM_CONTEXTMENU
 					item.popup(wparam)
