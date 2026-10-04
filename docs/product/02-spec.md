@@ -263,6 +263,10 @@ Web content is not trusted merely because it is local.
   nothing and document replacement invalidates pending work. File Notes 0.2.0
   uses this read-only API; Open does not connect a future write target.
 - IPC payload size, nesting, and in-flight request counts are bounded.
+- ADR 0031 adds independent opt-in `window.title` and `window.setTitle({title})`:
+  update the native caption with up to 512 UTF-8 bytes without control
+  characters, or reset to the manifest app name with an empty string.
+  No app-identity change, background work, persistence or dependency is added.
 - ADR 0029 adds opt-in `clipboard.write` and `clipboard.writeText({text})`:
   write at most 32 KiB of UTF-8 as native Unicode text, without NUL, reading,
   monitoring, background work or a new dependency. The existing 64 KiB wire

@@ -67,7 +67,7 @@ func TestBuildCancellationPreservesOutputAndAllowsRetry(t *testing.T) {
 }
 
 func TestBuildPreservesOptInPermissions(t *testing.T) {
-	for _, permission := range []string{"external.open", "file.open", "file.save", "clipboard.read"} {
+	for _, permission := range []string{"external.open", "file.open", "file.save", "clipboard.read", "window.title"} {
 		t.Run(permission, func(t *testing.T) {
 			root, path, host := fixture(t)
 			value, err := manifest.Load(path)

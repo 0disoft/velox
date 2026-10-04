@@ -150,6 +150,11 @@ in v1.
 A closed permission list and production browser settings. Unknown permissions
 are errors, not warnings.
 
+`window.title` independently opts into `window.setTitle({title})`; it grants
+no basic window controls. Titles are bounded to 512 UTF-8 bytes without control
+characters; empty resets to the manifest app name. App identity and native
+permission prompts do not change. See [window titles](../architecture/04-ipc-v1.md#window-title).
+
 `app.info` allows application information, `window.basic` allows basic window
 operations, and `external.open` opts into confirmed HTTPS link opening in the
 default Windows browser handler. The default list remains empty. Each external

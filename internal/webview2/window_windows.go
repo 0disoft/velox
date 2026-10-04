@@ -4,6 +4,8 @@ package webview2
 
 import (
 	"errors"
+	"runtime"
+	"unsafe"
 
 	webview "github.com/jchv/go-webview2"
 	"golang.org/x/sys/windows"
@@ -16,10 +18,12 @@ const (
 )
 
 var (
-	user32Window = windows.NewLazySystemDLL("user32.dll")
-	showWindow   = user32Window.NewProc("ShowWindow")
-	isIconic     = user32Window.NewProc("IsIconic")
-	isZoomed     = user32Window.NewProc("IsZoomed")
+	user32Window   = windows.NewLazySystemDLL("user32.dll")
+	showWindow     = user32Window.NewProc("ShowWindow")
+	isIconic       = user32Window.NewProc("IsIconic")
+	isZoomed       = user32Window.NewProc("IsZoomed")
+	setWindowText  = user32Window.NewProc("SetWindowTextW")
+	isNativeWindow = user32Window.NewProc("IsWindow")
 )
 
 type nativeWindow struct {
@@ -44,6 +48,30 @@ func (w nativeWindow) State() (string, error) {
 func (w nativeWindow) Minimize() error { return w.show(showMinimized) }
 func (w nativeWindow) Maximize() error { return w.show(showMaximized) }
 func (w nativeWindow) Restore() error  { return w.show(showRestored) }
+
+func (w nativeWindow) SetTitle(title string) error {
+	handle, err := w.handle()
+	if err != nil {
+		return err
+	}
+	return setNativeWindowTitle(handle, title)
+}
+
+func setNativeWindowTitle(handle uintptr, title string) error {
+	if valid, _, _ := isNativeWindow.Call(handle); valid == 0 {
+		return errors.New("native window is unavailable")
+	}
+	text, err := windows.UTF16PtrFromString(title)
+	if err != nil {
+		return err
+	}
+	result, _, _ := setWindowText.Call(handle, uintptr(unsafe.Pointer(text)))
+	runtime.KeepAlive(text)
+	if result == 0 {
+		return errors.New("native window title update failed")
+	}
+	return nil
+}
 
 func (w nativeWindow) Close() error {
 	if _, err := w.handle(); err != nil {

@@ -83,6 +83,7 @@ the window to close, not in a pending native-response continuation.
 | `window.maximize` | `window.basic` | `{}` | `null` |
 | `window.restore` | `window.basic` | `{}` | `null` |
 | `window.close` | `window.basic` | `{}` | `null` before deferred shutdown |
+| `window.setTitle` | `window.title` | `{title}` | `null` after native title update |
 | `external.open` | `external.open` | `{"url":"https://example.com/"}` | `{"queued":true}` before native confirmation |
 | `clipboard.writeText` | `clipboard.write` | `{text}` | `null` after native Unicode text write |
 | `clipboard.readText` | `clipboard.read` | `{}` | `{cancelled: true}` or `{cancelled: false, text}` after native approval |
@@ -101,6 +102,21 @@ the window to close, not in a pending native-response continuation.
 
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
+
+### Window Title
+
+`window.setTitle({title})` requires the independent, default-disabled
+`window.title` permission, not `window.basic`. Accept only a title string
+up to 512 UTF-8 bytes without Unicode control characters. Empty string
+restores the manifest app name. Invalid fields/types/control characters return
+`INVALID_PARAMS`; oversized titles return `PAYLOAD_TOO_LARGE`; native failures
+return redacted `NATIVE_OPERATION_FAILED`.
+
+The call runs synchronously on the existing UI/COM thread and updates only
+the native window caption. App identity, native confirmation text, tray
+tooltip, executable metadata and manifest stay unchanged. It adds no timer,
+worker, dependency or persistent state. Call only when the desired title
+changes; a dynamic caption is app-provided text, not a trusted app identity.
 
 ### Clipboard Text Write
 

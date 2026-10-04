@@ -8,6 +8,13 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Dynamic window title checks: `go test ./internal/ipc ./internal/webview2
+./internal/manifest ./internal/runtimeconfig ./internal/buildreport ./internal/builder`.
+Cover independent permission propagation, strict parameters, UTF-8/control
+limits, unchanged app identity, shutdown and native caption readback. Native
+tests use a disposable hidden window. File Notes tests verify title transitions
+and deduplication; packaged app interaction remains separately recorded.
+
 - format
 - lint
 - typecheck

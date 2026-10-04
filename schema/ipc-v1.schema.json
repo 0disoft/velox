@@ -18,6 +18,15 @@
         "params": { "type": "object" }
       },
       "allOf": [{
+        "if": { "properties": { "method": { "const": "window.setTitle" } } },
+        "then": { "properties": { "params": {
+          "type": "object", "additionalProperties": false, "required": ["title"],
+          "properties": { "title": {
+            "type": "string", "maxLength": 512, "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]*$",
+            "description": "At most 512 UTF-8 bytes, enforced by the host. Empty resets to the manifest app name."
+          } }
+        } } }
+      }, {
         "if": { "properties": { "method": { "const": "clipboard.writeText" } } },
         "then": { "properties": { "params": {
           "type": "object", "additionalProperties": false, "required": ["text"],

@@ -13,13 +13,14 @@ import (
 )
 
 const (
-	Version            = 1
-	MaxRequestBytes    = 64 << 10
-	MaxNestingDepth    = 16
-	MaxInflight        = 64
-	PermissionAppInfo  = "app.info"
-	PermissionWindow   = "window.basic"
-	PermissionExternal = "external.open"
+	Version               = 1
+	MaxRequestBytes       = 64 << 10
+	MaxNestingDepth       = 16
+	MaxInflight           = 64
+	PermissionAppInfo     = "app.info"
+	PermissionWindow      = "window.basic"
+	PermissionWindowTitle = "window.title"
+	PermissionExternal    = "external.open"
 )
 
 type Identity struct {
@@ -35,6 +36,7 @@ type Window interface {
 	Maximize() error
 	Restore() error
 	Close() error
+	SetTitle(string) error
 }
 
 type ExternalOpener interface{ Open(string) error }
@@ -161,6 +163,9 @@ func (d *Dispatcher) dispatch(request Request) Response {
 	if request.Method == "clipboard.writeText" {
 		return d.writeClipboard(request)
 	}
+	if request.Method == "window.setTitle" {
+		return d.setWindowTitle(request)
+	}
 	if permission == PermissionFileSave {
 		return d.prepareSave(request)
 	}
@@ -208,6 +213,8 @@ func methodPermission(method string) (string, bool) {
 	switch method {
 	case "app.getInfo":
 		return PermissionAppInfo, true
+	case "window.setTitle":
+		return PermissionWindowTitle, true
 	case "external.open":
 		return PermissionExternal, true
 	case "clipboard.writeText":

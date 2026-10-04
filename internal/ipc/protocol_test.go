@@ -11,6 +11,7 @@ import (
 )
 
 type fakeWindow struct {
+	title           string
 	state           string
 	operationErr    error
 	blockMinimize   <-chan struct{}
@@ -30,6 +31,10 @@ func (f *fakeWindow) Minimize() error {
 func (f *fakeWindow) Maximize() error { return f.operationErr }
 func (f *fakeWindow) Restore() error  { return f.operationErr }
 func (f *fakeWindow) Close() error    { return f.operationErr }
+func (f *fakeWindow) SetTitle(title string) error {
+	f.title = title
+	return f.operationErr
+}
 
 func TestDispatcherReturnsApplicationInfo(t *testing.T) {
 	dispatcher := NewDispatcher(Identity{

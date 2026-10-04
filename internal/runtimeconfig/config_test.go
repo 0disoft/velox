@@ -48,6 +48,10 @@ func TestClipboardPermissionManifestRoundTrip(t *testing.T) {
 	if _, err := Parse([]byte(strings.ReplaceAll(string(body), "clipboard.write", "clipboard.watch"))); err == nil {
 		t.Fatal("clipboard watcher permission accepted")
 	}
+	title, err := Parse([]byte(strings.ReplaceAll(string(body), "clipboard.write", "window.title")))
+	if err != nil || strings.Join(title.Security.Permissions, ",") != "window.title" {
+		t.Fatal("independent window title permission roundtrip failed", title, err)
+	}
 }
 
 func TestFolderPermissionManifestRoundTrip(t *testing.T) {

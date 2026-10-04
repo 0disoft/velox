@@ -21,6 +21,23 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Dynamic Window Title Runtime: 2026-10-04
+
+`window.title` independently enables `window.setTitle({title})`, without
+changing app identity or native approval text. IPC, WebView2, manifest,
+runtime-config and builder tests passed; build-report has no standalone tests
+and its permission propagation is exercised by builder checks. Scoped
+`go vet` passed. A disposable hidden Win32 window verified Korean/ASCII/empty
+caption readback and destroyed-window rejection. An initial failure on a
+destroyed handle was fixed with an explicit IsWindow check and retested.
+
+Matched Go 1.27.1, buildvcs=false, trimpath and stripped windowsgui builds
+compare pre-change HEAD a753ea3 (4,651,008 bytes) with the title runtime
+(4,655,616 bytes): +4,608 bytes / 4.5 KiB, approximately 0.10%.
+This is size evidence, not a startup-latency benchmark. No dependency, worker,
+DB or runner change was made. Packaged File Notes interaction is not yet
+manual evidence; no version bump, remote CI dispatch or publication occurred.
+
 ## Clipboard Example Packaging: 2026-10-03
 
 The independent Clipboard 0.1.0 example (`dev.velox.clipboard`) opts into only
