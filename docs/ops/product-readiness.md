@@ -21,6 +21,22 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Fixed Window Example: 2026-10-04
+
+The isolated scratchpad uses resizable false, rememberState true and no native
+permissions. Packaged runtime-config readback preserved both flags. Two builds
+produced the same 2,329,784-byte ZIP, SHA-256
+`75ef85623a920427377c9c7e092b560fcc61f38a0c0b818913d39c451d20df4e`.
+Inspection passed; packaged host SHA-256 is
+`937181aeeedb9631e51b95ddb858906a38df18330fecc8c6a2a3a9f9cf0b3d08`.
+Packaged startup exited-after-ready with zero status using a private profile.
+Edge typing/layout checks at 464 x 320 and 320 x 200 passed textbox bounds,
+no page errors and no horizontal clipping; screenshots were inspected.
+These browser checks do not verify native resize/maximize restrictions.
+The native runtime checks are recorded below; physical drag/double-click,
+minimize/restore, keyboard snap and cross-monitor DPI remain manual checks.
+No existing user profile, installer or public release is replaced.
+
 ## Fixed Window Runtime: 2026-10-04
 
 Optional window.resizable defaults true; omission remains omitted in packaged

@@ -204,6 +204,10 @@ an unsaved scratchpad with `window.alwaysOnTop: true` and no native permissions.
 The host-owned system menu lets users toggle topmost; restarting reapplies the
 manifest default. File Notes keeps the default off.
 
+[`examples/window-fixed-size`](examples/window-fixed-size/README.md) demonstrates
+`window.resizable: false` with saved-position restoration and no native
+permissions. Its scratchpad text is unsaved; only the window position persists.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging
