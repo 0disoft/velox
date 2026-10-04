@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>Velox Tray Notification</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header><h1>Tray Notification</h1></header>
+    <main>
+      <form id="notification-form">
+        <div class="field">
+          <label for="kind">Kind</label>
+          <select id="kind">
+            <option value="info" selected>Info</option>
+            <option value="warning">Warning</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" maxlength="255" rows="6" spellcheck="false">Velox notification test.</textarea>
+        </div>
+        <div class="message-foot">
+          <output id="message-count" for="message">24 / 255</output>
+          <button id="send-notification" type="submit" title="Send notification" aria-label="Send notification"><img src="icons/bell.svg" width="20" height="20" alt=""></button>
+        </div>
+      </form>
+    </main>
+    <footer><span id="status" role="status" aria-live="polite">Ready.</span></footer>
+  </body>
+</html>

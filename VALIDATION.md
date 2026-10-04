@@ -36,6 +36,20 @@ Actual balloon visibility and Windows quiet-time or disabled-notification
 behavior remain shell-controlled manual evidence. These are requirements, with
 no completed validation claimed by this entry.
 
+Tray notification example requirements: the isolated `examples/tray-notification`
+app must keep native work behind an explicit form submit. Its Bun interaction
+checks must cover kinds `info`/`warning`/`error`, the 255-UTF-16 boundary
+(empty, whitespace-only, oversized, and disallowed NUL/DEL/C0/C1 controls other
+than LF and TAB), a local message counter with no native call on input or kind
+change, pending-submit duplicate blocking, kind/message preservation with focus
+return, redacted failure codes and the missing-bridge status. Browser checks
+must cover keyboard submit, exact `Kind`/`Message` field names, light/dark and
+both forced-color modes, 620 x 480 and 320 x 480 with no horizontal clipping,
+the current-color bell mask, no page errors and no IPC on a live theme switch.
+Visible Windows balloon display, suppression and click-to-restore remain
+separate manual evidence. These are requirements, with no completed validation
+claimed by this entry.
+
 Fixed-size windows: scoped manifest/runtime-config/WebView2/builder/host/hygiene
 Go tests and go vet. Cover omission/true/false, invalid types, default style,
 native frame/system commands, IPC maximize rejection, no initial geometry or

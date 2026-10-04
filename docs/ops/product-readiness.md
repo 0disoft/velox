@@ -71,6 +71,33 @@ was pushed or published.
 
 Validation: `go test ./internal/ipc ./internal/manifest ./internal/runtimeconfig ./internal/buildreport ./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene -count=1`, then scoped `go vet`.
 
+## Tray Notification Example: 2026-10-04
+
+The isolated tray-notification 0.1.0 example requests only `notification.show`
+with `window.tray: true`. Five Bun tests passed (0 failures, 66 assertions):
+submit-only native calls, kinds and the 255-UTF-16 boundary, local input
+counting, duplicate blocking, input preservation with focus return, redacted
+errors and missing bridge. Headless Edge with a controlled mock bridge passed
+eight same-origin cases at 620 x 480 and 320 x 480 in light/dark and both
+forced-color modes: keyboard submit, exact `Kind`/`Message` names (corrected
+from an initial nested-label timeout), the Lucide bell as a current-color mask,
+no clipping, no page errors, and no IPC on live theme switching; inspected
+desktop-light and mobile-dark screenshots are readable. This is mock-bridge UI
+evidence, not native shell balloons.
+
+The matching beta.20 CLI/host bundle was reused unchanged (host SHA-256
+`8005b4dc55a12c2c81ee3558a19004e3411208d9b1ea39f6f6b6cded12e9d171`); no runtime
+Go test, vet or rebuild reran. ZIP inspection passed with only
+`notification.show` granted: 2,354,764 bytes, SHA-256
+`6de96c0a6d7863b96a15849a1f5f4eb006a34f388d3ff9d5dd92667a3ed19b3e`. Packaged
+startup and exit-after-ready returned zero with a private profile. Actual
+balloon display, suppression and click-to-restore remain manual and still
+pending (a visible preview was opened with a private profile). The first preview
+helper started the GUI hidden; it was stopped and relaunched with normal GUI
+options. No dependency, timer,
+worker, network, storage or file permission was added, and no File Notes,
+runtime API, DB, CI, version, push or release change occurred.
+
 ## Taskbar Progress Example: 2026-10-04
 
 The isolated taskbar-progress example requests only window.progress. Its
