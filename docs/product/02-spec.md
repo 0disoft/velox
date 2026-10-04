@@ -263,6 +263,11 @@ Web content is not trusted merely because it is local.
   nothing and document replacement invalidates pending work. File Notes 0.2.0
   uses this read-only API; Open does not connect a future write target.
 - IPC payload size, nesting, and in-flight request counts are bounded.
+- ADR 0035 adds optional `window.resizable` (default true). False disables
+  user resize/maximization and rejects window.maximize without disabling
+  minimize/restore/close or normal DPI handling. Saved position is restored
+  with the current configured size; saved maximization is ignored. Default
+  apps have no fixed-size handler. No dependency, timer or state-format change.
 - ADR 0034 adds optional `window.alwaysOnTop` (default false) and a checkable
   host-owned system-menu toggle for every app. Initial topmost follows the
   manifest; user toggles last only for the current process, independently of

@@ -26,6 +26,7 @@ type Runtime struct {
 	dispatcher    *ipc.Dispatcher
 	shutdownPhase func(name string)
 	closeOnce     sync.Once
+	fixedSize     bool
 }
 
 func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
@@ -92,7 +93,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime = &Runtime{view: view, shutdownPhase: config.ShutdownPhase}
+	runtime = &Runtime{view: view, shutdownPhase: config.ShutdownPhase, fixedSize: config.FixedSize}
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
 		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
 	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
@@ -153,8 +154,16 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("bind ready marker: %w", err)
 	}
+	if err := installFixedWindow(uintptr(view.Window()), config.FixedSize); err != nil {
+		destroyBeforeRun(view)
+		return nil, err
+	}
 	if config.RememberState {
-		if err := installWindowState(uintptr(view.Window()), config.DataPath, config.AppID); err != nil {
+		var fixedWidth, fixedHeight uint
+		if config.FixedSize {
+			fixedWidth, fixedHeight = config.Width, config.Height
+		}
+		if err := installWindowState(uintptr(view.Window()), config.DataPath, config.AppID, fixedWidth, fixedHeight); err != nil {
 			destroyBeforeRun(view)
 			return nil, err
 		}

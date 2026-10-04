@@ -31,6 +31,7 @@ type Config struct {
 	Permissions             []string
 	Width                   uint
 	Height                  uint
+	FixedSize               bool
 	MinWidth                uint
 	MinHeight               uint
 	AlwaysOnTop             bool

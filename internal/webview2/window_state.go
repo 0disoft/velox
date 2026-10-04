@@ -94,9 +94,17 @@ func saveWindowState(profile string, state windowState) error {
 
 // Normalize screen coordinates relative to the old work area, not the desktop origin.
 func (s windowState) fit(work windowRect, dpi uint32) windowRect {
+	return s.fitSize(work, dpi, 0, 0)
+}
+
+func (s windowState) fitSize(work windowRect, dpi uint32, fixedWidth, fixedHeight uint) windowRect {
 	scale := func(value int32) int32 { return int32((int64(value)*int64(dpi) + int64(s.DPI)/2) / int64(s.DPI)) }
 	width := min(max(scale(s.Normal.Right-s.Normal.Left), int32(320*dpi/96)), work.Right-work.Left)
 	height := min(max(scale(s.Normal.Bottom-s.Normal.Top), int32(240*dpi/96)), work.Bottom-work.Top)
+	if fixedWidth != 0 && fixedHeight != 0 {
+		limit := scaledWindowMinimum(fixedWidth, fixedHeight, dpi, work)
+		width, height = limit.X, limit.Y
+	}
 	left := min(max(work.Left+scale(s.Normal.Left-s.Work.Left), work.Left), work.Right-width)
 	top := min(max(work.Top+scale(s.Normal.Top-s.Work.Top), work.Top), work.Bottom-height)
 	return windowRect{left, top, left + width, top + height}

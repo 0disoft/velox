@@ -8,6 +8,13 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Fixed-size windows: scoped manifest/runtime-config/WebView2/builder/host/hygiene
+Go tests and go vet. Cover omission/true/false, invalid types, default style,
+native frame/system commands, IPC maximize rejection, no initial geometry or
+visibility/focus change, saved-position-only restoration, ignored maximization,
+DPI/work-area fitting and destruction. Physical frame dragging, snapping and
+multi-monitor DPI changes remain manual evidence.
+
 Always-on-top checks: `go test ./internal/manifest ./internal/runtimeconfig
 ./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene` and
 scoped `go vet`. Cover boolean/default propagation, initial native topmost,

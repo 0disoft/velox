@@ -49,6 +49,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0032 | Accepted | Request bounded taskbar attention or cancel it under independent permission without activation or background work |
 | 0033 | Accepted | Allow optional DPI-aware minimum outer window dimensions bounded by the current monitor work area |
 | 0034 | Accepted | Allow an initial always-on-top option with a user-controlled system-menu toggle |
+| 0035 | Accepted | Allow optional fixed-size windows while retaining position and DPI handling |
 
 ## Lifecycle
 

@@ -21,6 +21,31 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Fixed Window Runtime: 2026-10-04
+
+Optional window.resizable defaults true; omission remains omitted in packaged
+config. False removes sizing/maximize frame bits, blocks SC_SIZE/SC_MAXIMIZE
+and rejects the existing window.maximize IPC operation with the existing native
+failure result. Minimize/move/restore/close and DPI suggested-rectangle handling
+are retained. Saved-state restoration for fixed apps uses current configured
+outer dimensions at target DPI and saved position, ignoring saved maximization.
+Resizable apps retain full-placement behavior. No state-format migration occurs.
+
+Scoped manifest/runtime-config/WebView2/builder/host/hygiene tests and go vet
+passed. Three-repeat fixed-window tests passed. Native checks cover default
+style preservation, fixed style bits, system commands, maximize rejection,
+unchanged geometry/visibility/focus, invalid handles, destruction and saved
+position/current size with saved maximization ignored. Pure fitting checks
+cover 96/120/144 DPI, negative monitor origins and small work-area bounds.
+Actual frame dragging, keyboard snapping and physical DPI transitions remain
+manual checks; no broader platform compatibility claim is added.
+
+Matched Go 1.27.1 stripped windowsgui/trimpath/buildvcs=false builds increased
+the host from 4,677,632 to 4,682,240 bytes: +4,608 bytes / 4.5 KiB, about 0.10%.
+This measures artifact size, not startup latency or memory. No new IPC method
+or permission, dependency, timer, worker, DB, runner or workflow is added.
+Version remains beta.20; installer/public release publication is not included.
+
 ## Always On Top Example: 2026-10-04
 
 The isolated scratchpad opts into window.alwaysOnTop with no native permissions.
@@ -36,7 +61,9 @@ marker fixed the probe. Preserve this failure as test-fixture evidence.
 Edge checks at 480 x 360 and 320 x 200 passed text input, textbox bounds,
 no page errors and no horizontal clipping; screenshots were inspected.
 These browser checks do not prove native z-order or menu interaction.
-Visible Alt+Space/toggle/overlap/minimize/restore remains a manual check.
+The maintainer reported "잘됨" after the manual test window on 2026-10-04.
+Record that the example worked without inventing separate observations for
+every menu, overlap, minimize/restore or owned-dialog step.
 The scratchpad does not save its text; existing File Notes data is untouched.
 No installer, public release, version bump or remote push is included.
 

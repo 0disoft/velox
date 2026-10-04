@@ -47,7 +47,7 @@ func TestWindowStateNativeCaptureRestoreAndDestroy(t *testing.T) {
 	stateTestThread(t)
 	profile := t.TempDir()
 	hwnd := stateTestWindow(t)
-	if err := installWindowState(hwnd, profile, "dev.velox.state-test"); err != nil {
+	if err := installWindowState(hwnd, profile, "dev.velox.state-test", 0, 0); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(filepath.Join(profile, windowStateFile)); !os.IsNotExist(err) {
@@ -92,7 +92,7 @@ func TestWindowStateNativeMinimizedMaximizedReopensVisible(t *testing.T) {
 	stateTestThread(t)
 	profile := t.TempDir()
 	hwnd := stateTestWindow(t)
-	if err := installWindowState(hwnd, profile, "dev.velox.state-test"); err != nil {
+	if err := installWindowState(hwnd, profile, "dev.velox.state-test", 0, 0); err != nil {
 		t.Fatal(err)
 	}
 	stateUser32.NewProc("ShowWindow").Call(hwnd, showMaximized)
@@ -103,7 +103,7 @@ func TestWindowStateNativeMinimizedMaximizedReopensVisible(t *testing.T) {
 		t.Fatalf("minimized-maximized state = %+v, %v", state, err)
 	}
 	reopened := stateTestWindow(t)
-	if err := installWindowState(reopened, profile, state.AppID); err != nil {
+	if err := installWindowState(reopened, profile, state.AppID, 0, 0); err != nil {
 		t.Fatal(err)
 	}
 	minimized, _, _ := stateUser32.NewProc("IsIconic").Call(reopened)

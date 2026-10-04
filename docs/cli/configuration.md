@@ -43,6 +43,7 @@ shape is:
       "window": {
         "width": 960,
         "height": 640,
+        "resizable": true,
         "alwaysOnTop": false,
         "rememberState": false,
         "tray": false
@@ -127,6 +128,16 @@ Initial width and height, optional minimum dimensions and window-state persisten
   minimization. A missing monitor query falls back to normal Windows sizing
   for that event. With both fields zero, no minimum-size handler is installed.
   See ADR 0033.
+- `resizable`: optional boolean, default `true`. False removes user resize and
+  maximization controls and blocks resize/maximize system commands. Minimize,
+  move, restore and close remain available. `window.maximize` also fails with
+  `NATIVE_OPERATION_FAILED` even with `window.basic` permission. With
+  `rememberState`, only position is restored: current configured outer size
+  is scaled for the target monitor DPI and capped to its work area; saved
+  maximization is ignored. Normal DPI suggested rectangles and minimum-size
+  handling continue. This does not block native programmatic geometry changes.
+  Omitted/true preserves current behavior and installs no fixed-size handler.
+  No new native permission is needed. See ADR 0035.
 - `alwaysOnTop`: optional boolean, default `false`. Sets the initial topmost
   state. Every app exposes a checkable "Always on top" title-bar system-menu
   item (Alt+Space), so users can toggle it without application JavaScript.
@@ -162,7 +173,7 @@ Initial width and height, optional minimum dimensions and window-state persisten
   notification API, or public IPC method is added. Hidden WebView content still
   runs; hiding does not promise lower CPU or memory use. See ADR 0024.
 
-Resizable state, position policy, and background color are not manifest fields
+Position policy and background color are not manifest fields
 in v1.
 
 ### security

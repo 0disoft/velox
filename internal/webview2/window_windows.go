@@ -88,6 +88,9 @@ func (w nativeWindow) show(command uintptr) error {
 	if err != nil {
 		return err
 	}
+	if command == showMaximized && w.runtime.fixedSize {
+		return errors.New("window maximization is disabled")
+	}
 	showWindow.Call(handle, command)
 	return nil
 }

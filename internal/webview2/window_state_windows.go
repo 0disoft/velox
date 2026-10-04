@@ -67,7 +67,7 @@ func stateWindowDPI(hwnd uintptr) uint32 {
 	return uint32(value)
 }
 
-func installWindowState(hwnd uintptr, profile, appID string) error {
+func installWindowState(hwnd uintptr, profile, appID string, fixedWidth, fixedHeight uint) error {
 	stateSubclassOnce.Do(func() {
 		stateSubclass = windows.NewCallback(windowStateProc)
 		windowStates.items = make(map[uintptr]*windowStateOwner)
@@ -84,7 +84,7 @@ func installWindowState(hwnd uintptr, profile, appID string) error {
 		return fmt.Errorf("install window state handler: %v", err)
 	}
 	if state, err := loadWindowState(profile, appID); err == nil {
-		if err := restoreWindowState(hwnd, state); err != nil {
+		if err := restoreWindowStateSized(hwnd, state, fixedWidth, fixedHeight); err != nil {
 			fmt.Fprintln(os.Stderr, "velox-host: saved window placement could not be fully restored")
 		}
 	}
@@ -92,6 +92,10 @@ func installWindowState(hwnd uintptr, profile, appID string) error {
 }
 
 func restoreWindowState(hwnd uintptr, state windowState) error {
+	return restoreWindowStateSized(hwnd, state, 0, 0)
+}
+
+func restoreWindowStateSized(hwnd uintptr, state windowState, fixedWidth, fixedHeight uint) error {
 	monitor, _, _ := stateMonitorFromRect.Call(uintptr(unsafe.Pointer(&state.Normal)), 2)
 	info, err := monitorInfo(monitor)
 	if err != nil {
@@ -105,13 +109,13 @@ func restoreWindowState(hwnd uintptr, state windowState) error {
 		}
 		return nil
 	}
-	if err := move(state.fit(info.Work, state.DPI)); err != nil {
+	if err := move(state.fitSize(info.Work, state.DPI, fixedWidth, fixedHeight)); err != nil {
 		return err
 	}
-	if err := move(state.fit(info.Work, stateWindowDPI(hwnd))); err != nil {
+	if err := move(state.fitSize(info.Work, stateWindowDPI(hwnd), fixedWidth, fixedHeight)); err != nil {
 		return err
 	}
-	if state.Maximized {
+	if state.Maximized && fixedWidth == 0 && fixedHeight == 0 {
 		stateShowWindow.Call(hwnd, showMaximized)
 	}
 	return nil

@@ -102,6 +102,10 @@ the window to close, not in a pending native-response continuation.
 | `folder.list` | `folder.read` | `{target}` | bounded immediate names/kinds, truncation and examined exclusion counts |
 | `folder.openText` | `folder.read` + `folder.readText` | `{target, name}` | immediate UTF-8 file contents, basename and byte count; no write grant |
 
+`window.maximize` returns redacted `NATIVE_OPERATION_FAILED` when the manifest
+sets `window.resizable: false`. Basic permission does not override this sizing
+policy. Minimize, restore and close retain their existing behavior.
+
 The method table is a closed switch. Reflection is confined to the private
 WebView transport adapter and cannot select a product method dynamically.
 

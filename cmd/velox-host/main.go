@@ -82,6 +82,7 @@ func run(args []string) int {
 		Permissions:             cfg.Security.Permissions,
 		Width:                   cfg.Window.Width,
 		Height:                  cfg.Window.Height,
+		FixedSize:               cfg.Window.Resizable != nil && !*cfg.Window.Resizable,
 		MinWidth:                cfg.Window.MinWidth,
 		MinHeight:               cfg.Window.MinHeight,
 		AlwaysOnTop:             cfg.Window.AlwaysOnTop,
