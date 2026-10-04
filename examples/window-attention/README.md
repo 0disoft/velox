@@ -6,6 +6,10 @@ not replace File Notes or use its recovery profile. Icons are vendored Lucide.
 The host has no added timer; the example has at most one cancellable frontend
 timeout, scheduled only after a request-button action.
 
+The requested outer minimum is 360 x 360 logical units at 96 DPI; the host
+scales and caps it to the current monitor work area. No new permission is
+needed for the minimum size.
+
 ## Build and Test
 
 Build with a local CLI/host bundle containing ADR 0032 support:

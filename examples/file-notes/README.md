@@ -34,6 +34,15 @@ external-change conflicts have distinct status messages. Errors preserve the
 editor buffer and its unsaved baseline. Recovery errors can follow a partially
 completed replacement; do not treat an error as proof that disk bytes are unchanged.
 
+## Minimum Window Size
+
+The manifest requests a minimum outer window of 720 x 520 in 96-DPI logical
+units. The host scales it for current DPI and caps it to the monitor work area.
+Older saved smaller rectangles are fitted on startup; no recovery data or
+save connections are deleted. Minimize/maximize remain normal Windows actions.
+A smaller screen may override this requested floor, so responsive layout
+and scrolling remain necessary.
+
 ## Window title
 
 The native caption shows the filename and app name, with a leading dirty marker

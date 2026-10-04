@@ -21,6 +21,35 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Minimum Window Size Examples: 2026-10-04
+
+File Notes requests an outer minimum of 720 x 520 logical units; the isolated
+attention example requests 360 x 360. Packaged runtime configs preserved both
+pairs without changing permissions. Two File Notes builds produced the same
+8,447,049-byte ZIP, SHA-256
+`1519a3bd0738f20c1f70853eb4776d35faedc59ba44540b346cd2e01ca3ca187`.
+ZIP inspection passed; packaged branded host SHA-256 is
+`581ca0999074c673b2ed6e307f25207cc5f423b0752e9f2d7d2eb61c3eb04bb1`.
+Attention's 2,326,784-byte ZIP SHA-256 is
+`6afab3841a974ad266e2185d6b8af41799c76959953c7b853f7e850f5c964487`.
+
+Both packaged apps started and exited-after-ready with zero status using
+separate private profiles. Thirty-nine File Notes/attention Bun tests passed.
+Mock-native Edge checks at File Notes 704 x 480 / 344 x 320 and attention
+344 x 320 / 680 x 400 passed controls, search/request interactions, font/icon
+loading and no horizontal clipping. Screenshots were inspected. Narrow File
+Notes layouts intentionally use vertical scrolling; smaller work areas may
+cap the requested minimum below its configured value. These browser checks
+do not prove physical monitor/DPI dragging or user-driven native resizing.
+
+The maintainer reported "잘됨" for the prior attention test executable on
+2026-10-04. Record this as confirmation that the example worked, without
+inventing individual flash counts or per-step cancellation observations.
+No repeat human attention test is required for this minimum-size-only change.
+Actual packaged visual shrinking and physical monitor changes remain manual.
+Existing File Notes/recovery data and versions are preserved; no installer,
+release, DB, dependency, runner or workflow change is included.
+
 ## Minimum Window Size Runtime: 2026-10-04
 
 Optional window.minWidth/minHeight are validated and propagated through the
