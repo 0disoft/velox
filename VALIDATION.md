@@ -8,6 +8,15 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Portable consumer summary: `go test ./cmd/velox-consumer-summary` covers schema
+validation, nested/single-file input, duplicate IDs, nearest-rank statistics,
+missing/excess/failed samples, mixed release digests, hosted process-evidence
+requirements, and input preservation. It needs Go but not Windows or
+PowerShell. `go vet ./cmd/velox-consumer-summary` checks this development tool.
+The workflow keeps aggregation separate from the compiler-free Windows
+consumer job. On 2026-10-05, Windows tests and Linux amd64 test cross-compilation
+passed; local Linux execution was unavailable because WSL registration failed.
+
 TypeScript bridge declarations: `tsc --noEmit -p tests/types/tsconfig.json` checks
 all public method calls and save helpers, inferred responses, cancellation
 narrowing, optional/readonly browser globals, invalid names/params and correlated
@@ -212,7 +221,7 @@ The parent workspace command contract currently provides these bounded intents:
   evidence. Child-process tracing may remain `unverified` locally.
 - `velox_consumer_e2e_failure_smoke` injects a release-checksum mismatch and
   requires a schema-valid `release-verification` failure result.
-- `pwsh -NoProfile -NonInteractive -File scripts/summarize-consumer-e2e.ps1 -ResultsRoot .cache/consumer-e2e-smoke/latest.json -ResultPath .cache/consumer-e2e-summary-smoke/latest.json -ExpectedSamples 1` aggregates one local raw result and
+- `go run ./cmd/velox-consumer-summary --results-root .cache/consumer-e2e-smoke/latest.json --output .cache/consumer-e2e-summary-smoke/latest.json --expected-samples 1` aggregates one local raw result and
   validates the summary schema without promoting it to hosted evidence.
 - `velox_consumer_e2e_summary_failure_smoke` aggregates one success and one
   injected failure, requires the summary command to fail, and verifies the

@@ -33,3 +33,12 @@ The upstream MIT license is preserved at
 
 Microsoft WebView2 Runtime and loader redistribution obligations remain
 separate from the licenses above and must be reviewed before a public release.
+
+## Development-Only Result Validation
+
+- `github.com/santhosh-tekuri/jsonschema/v6`: `v6.0.3`, Apache-2.0.
+- `golang.org/x/text`: `v0.42.0`, BSD-3-Clause (validator dependency).
+- Purpose: Validate raw and summary JSON in `cmd/velox-consumer-summary`.
+- Neither dependency is imported by the shipped CLI, host, or setup executable.
+- Source and license: <https://github.com/santhosh-tekuri/jsonschema> and
+  <https://go.googlesource.com/text>.

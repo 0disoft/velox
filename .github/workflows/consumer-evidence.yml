@@ -11,7 +11,6 @@ on:
       - "schema/**"
       - "tests/startup/**"
       - "scripts/measure-consumer-e2e.ps1"
-      - "scripts/summarize-consumer-e2e.ps1"
       - "scripts/lib/process-trace.ps1"
       - "go.mod"
       - "go.sum"
@@ -371,8 +370,8 @@ jobs:
     name: Consumer summary
     if: always() && needs.release.result == 'success'
     needs: [release, consumer]
-    runs-on: windows-2025
-    timeout-minutes: 3
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - name: Check out summary contract
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -386,15 +385,23 @@ jobs:
           path: .ci/raw
           merge-multiple: true
 
-      - name: Summarize results
-        shell: pwsh
+      - name: Set up Go for summary tool
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          check-latest: false
+          cache: false
+
+      - name: Test and summarize results
+        shell: bash
         env:
           EXPECTED_SAMPLES: ${{ (startsWith(github.ref, 'refs/tags/') || inputs.evidence_tier == 'full') && '10' || '1' }}
         run: |
-          & scripts/summarize-consumer-e2e.ps1 `
-            -ResultsRoot '.ci/raw' `
-            -ResultPath '.ci/summary/consumer-e2e-summary.json' `
-            -ExpectedSamples ([int] $env:EXPECTED_SAMPLES)
+          go test ./cmd/velox-consumer-summary
+          go run ./cmd/velox-consumer-summary \
+            --results-root .ci/raw \
+            --output .ci/summary/consumer-e2e-summary.json \
+            --expected-samples "$EXPECTED_SAMPLES"
 
       - name: Upload summary
         if: always()

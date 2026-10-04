@@ -254,12 +254,17 @@ Actions steps and processes. The nested build-command duration still uses a
 monotonic `Stopwatch`. Results must therefore retain both clocks and must not
 compare local smoke duration with hosted evidence.
 
-`scripts/summarize-consumer-e2e.ps1` validates every raw result before
+`go run ./cmd/velox-consumer-summary` validates every raw result before
 aggregation. It reports expected, observed, successful, failed, and missing
 sample counts; rejects duplicate sample IDs; requires one release archive
 digest; and calculates nearest-rank p50 and p95 only from successful samples.
 The summary still records failed samples and returns non-zero when evidence is
 incomplete.
+
+The summary command runs on Windows and Linux without PowerShell. Its schema
+validator is a development-tool dependency, not part of the packaged host or
+consumer CLI. CI aggregates on Ubuntu in a separate job; the measured consumer
+job remains Windows-only and compiler-free.
 
 The end-to-end harness subscribes to Windows process-start events around the
 consumer build. It records process names only, never arguments or environment

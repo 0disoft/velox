@@ -104,6 +104,11 @@ func TestConsumerEvidenceWorkflowKeepsConsumerBuildCompilerFree(t *testing.T) {
 		t.Fatal("consumer job is missing")
 	}
 	consumer := workflow[consumerIndex:]
+	summaryIndex := strings.Index(consumer, "\n  summary:\n")
+	if summaryIndex < 0 {
+		t.Fatal("summary job is missing")
+	}
+	consumer = consumer[:summaryIndex]
 	for _, forbidden := range []string{"go build", "go run", "go test", "setup-go", "actions/cache"} {
 		if strings.Contains(consumer, forbidden) {
 			t.Errorf("consumer job contains forbidden toolchain surface %q", forbidden)
@@ -112,8 +117,26 @@ func TestConsumerEvidenceWorkflowKeepsConsumerBuildCompilerFree(t *testing.T) {
 	if !strings.Contains(consumer, "scripts/measure-consumer-e2e.ps1") {
 		t.Fatal("consumer job does not invoke the end-to-end measurement contract")
 	}
-	if !strings.Contains(consumer, "scripts/summarize-consumer-e2e.ps1") || !strings.Contains(consumer, "merge-multiple: true") {
-		t.Fatal("consumer evidence workflow does not aggregate all raw sample artifacts")
+}
+
+func TestConsumerSummaryIsPortableAndSeparateFromMeasuredConsumer(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "consumer-evidence.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := string(data)
+	index := strings.Index(workflow, "\n  summary:\n")
+	if index < 0 {
+		t.Fatal("summary job is missing")
+	}
+	job := workflow[index:]
+	for _, required := range []string{"runs-on: ubuntu-24.04", "shell: bash", "cache: false", "go test ./cmd/velox-consumer-summary", "go run ./cmd/velox-consumer-summary", "merge-multiple: true", "--expected-samples", "if: always()"} {
+		if !strings.Contains(job, required) {
+			t.Errorf("portable summary job is missing %q", required)
+		}
+	}
+	if strings.Contains(job, "pwsh") || strings.Contains(job, ".ps1") {
+		t.Fatal("portable summary must not require PowerShell")
 	}
 }
 

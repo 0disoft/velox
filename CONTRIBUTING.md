@@ -40,6 +40,17 @@ Keep common tooling in Go rather than adding parallel `.ps1` and `.sh`
 implementations. PowerShell is appropriate for Windows-specific probes, not
 as a prerequisite for portable result processing.
 
+Aggregate Windows measurement JSON on either operating system with:
+
+```text
+go run ./cmd/velox-consumer-summary --results-root raw-results --output summary.json --expected-samples 1
+```
+
+Run `go test ./cmd/velox-consumer-summary` to check this tool without collecting
+new measurements. Put the output outside the input directory. Failed or
+incomplete evidence produces a summary and a non-zero exit; malformed input
+and duplicate sample IDs are rejected before output is written.
+
 On 2026-10-05, all root-module test packages compiled for Linux amd64 using
 `go test -c -o .cache/linux-tests/ ./...` with `GOOS=linux` and `GOARCH=amd64`.
 This was cross-compilation on Windows, not a Linux test execution. Local WSL
