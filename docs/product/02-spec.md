@@ -182,6 +182,17 @@ passed with ZIP SHA-256
   running; reduced resource use is not promised. Single-instance activation also
   reveals a tray-hidden window. The File Notes source opts in; older packaged
   outputs are not implicitly updated.
+- Opt-in system theme (`window.followSystemTheme: true`, default `false`).
+  The host requests a native title bar that follows the Windows app light/dark
+  setting on documented Windows 11 build 22000 and newer, using the DWM
+  immersive-dark-mode attribute plus `WM_SETTINGCHANGE`, `WM_THEMECHANGED` and
+  `WM_SYSCOLORCHANGE` on the existing UI thread. High contrast keeps the system
+  scheme, a missing preference reads as light, and read errors keep the last
+  successful appearance. Older or unsupported builds keep the default title
+  bar. Application CSS remains app-owned through `prefers-color-scheme`. With
+  the field absent or `false`, no theme API or window subclass is installed.
+  No IPC method, native permission, timer, worker, dependency or persistent
+  state is added.
 - Virtual HTTPS remains the only production asset transport while
   immediate-relaunch recovery is diagnosed under ADR 0007; file URL loading is
   a benchmark control only.
@@ -268,6 +279,12 @@ Web content is not trusted merely because it is local.
   minimize/restore/close or normal DPI handling. Saved position is restored
   with the current configured size; saved maximization is ignored. Default
   apps have no fixed-size handler. No dependency, timer or state-format change.
+- ADR 0036 adds optional `window.followSystemTheme` (default false) for a
+  native title bar that follows the Windows app light/dark setting on supported
+  builds, with high contrast keeping the system scheme and no script
+  permission. Older or unsupported builds keep the default title bar. No public
+  IPC, permission, timer, worker, dependency or state-format change is added,
+  and application CSS remains app-owned.
 - ADR 0034 adds optional `window.alwaysOnTop` (default false) and a checkable
   host-owned system-menu toggle for every app. Initial topmost follows the
   manifest; user toggles last only for the current process, independently of

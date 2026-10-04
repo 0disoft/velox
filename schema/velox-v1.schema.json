@@ -47,6 +47,7 @@
         "minHeight": { "type": "integer", "minimum": 0, "maximum": 16384, "default": 0, "description": "Optional outer minimum in 96-DPI logical units; must not exceed initial height. Zero leaves system behavior unchanged." },
         "resizable": { "type": "boolean", "default": true, "description": "Allow user resize and maximization. False restores saved position only, retaining configured DPI-aware size." },
         "alwaysOnTop": { "type": "boolean", "default": false, "description": "Initial topmost state; users can toggle it in the window system menu. Not persisted." },
+        "followSystemTheme": { "type": "boolean", "default": false, "description": "Opt in to system-themed title bars where supported. App content remains CSS-owned; unsupported systems keep the default frame." },
         "rememberState": { "type": "boolean", "default": false },
         "tray": { "type": "boolean", "default": false }
       }

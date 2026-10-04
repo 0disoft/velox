@@ -15,6 +15,16 @@ visibility/focus change, saved-position-only restoration, ignored maximization,
 DPI/work-area fitting and destruction. Physical frame dragging, snapping and
 multi-monitor DPI changes remain manual evidence.
 
+System theme checks: `go test ./internal/manifest ./internal/runtimeconfig
+./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene` and
+scoped `go vet`. Cover false/default omission, true propagation, invalid
+types, older or unsupported-build fallback to the default title bar, light/dark
+`AppsUseLightTheme` reading, a missing preference reading as light,
+high-contrast priority, error retention of the last successful appearance and
+deduplicated native writes. Confirm no script method or permission, no
+persistent state and no new dependency. Live user-driven Windows theme changes
+and visual title bar comparison remain manual evidence.
+
 Always-on-top checks: `go test ./internal/manifest ./internal/runtimeconfig
 ./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene` and
 scoped `go vet`. Cover boolean/default propagation, initial native topmost,

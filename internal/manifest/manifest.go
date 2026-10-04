@@ -47,14 +47,15 @@ type Assets struct {
 }
 
 type Window struct {
-	Width         uint  `json:"width"`
-	Height        uint  `json:"height"`
-	Resizable     *bool `json:"resizable,omitempty"`
-	MinWidth      uint  `json:"minWidth,omitempty"`
-	MinHeight     uint  `json:"minHeight,omitempty"`
-	AlwaysOnTop   bool  `json:"alwaysOnTop,omitempty"`
-	RememberState bool  `json:"rememberState,omitempty"`
-	Tray          bool  `json:"tray,omitempty"`
+	Width             uint  `json:"width"`
+	Height            uint  `json:"height"`
+	Resizable         *bool `json:"resizable,omitempty"`
+	MinWidth          uint  `json:"minWidth,omitempty"`
+	MinHeight         uint  `json:"minHeight,omitempty"`
+	AlwaysOnTop       bool  `json:"alwaysOnTop,omitempty"`
+	FollowSystemTheme bool  `json:"followSystemTheme,omitempty"`
+	RememberState     bool  `json:"rememberState,omitempty"`
+	Tray              bool  `json:"tray,omitempty"`
 }
 
 type Security struct {

@@ -50,6 +50,7 @@ choice inside that scope and cannot silently add a product capability.
 | 0033 | Accepted | Allow optional DPI-aware minimum outer window dimensions bounded by the current monitor work area |
 | 0034 | Accepted | Allow an initial always-on-top option with a user-controlled system-menu toggle |
 | 0035 | Accepted | Allow optional fixed-size windows while retaining position and DPI handling |
+| 0036 | Accepted | Allow an opt-in native title bar that follows the Windows app light/dark setting without script control |
 
 ## Lifecycle
 

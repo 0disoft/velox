@@ -177,6 +177,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		destroyBeforeRun(view)
 		return nil, err
 	}
+	if err := installSystemTheme(uintptr(view.Window()), config.FollowSystemTheme); err != nil {
+		destroyBeforeRun(view)
+		return nil, err
+	}
 	if config.SingleInstance != nil {
 		if err := config.SingleInstance.Attach(uintptr(view.Window())); err != nil {
 			destroyBeforeRun(view)

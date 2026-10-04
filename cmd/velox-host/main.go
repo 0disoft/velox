@@ -86,6 +86,7 @@ func run(args []string) int {
 		MinWidth:                cfg.Window.MinWidth,
 		MinHeight:               cfg.Window.MinHeight,
 		AlwaysOnTop:             cfg.Window.AlwaysOnTop,
+		FollowSystemTheme:       cfg.Window.FollowSystemTheme,
 		RememberState:           cfg.Window.RememberState,
 		Tray:                    cfg.Window.Tray,
 		SingleInstance:          instance,

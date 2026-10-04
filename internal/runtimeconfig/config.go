@@ -38,14 +38,15 @@ type Assets struct {
 }
 
 type Window struct {
-	Width         uint  `json:"width"`
-	Height        uint  `json:"height"`
-	Resizable     *bool `json:"resizable,omitempty"`
-	MinWidth      uint  `json:"minWidth,omitempty"`
-	MinHeight     uint  `json:"minHeight,omitempty"`
-	AlwaysOnTop   bool  `json:"alwaysOnTop,omitempty"`
-	RememberState bool  `json:"rememberState,omitempty"`
-	Tray          bool  `json:"tray,omitempty"`
+	Width             uint  `json:"width"`
+	Height            uint  `json:"height"`
+	Resizable         *bool `json:"resizable,omitempty"`
+	MinWidth          uint  `json:"minWidth,omitempty"`
+	MinHeight         uint  `json:"minHeight,omitempty"`
+	AlwaysOnTop       bool  `json:"alwaysOnTop,omitempty"`
+	FollowSystemTheme bool  `json:"followSystemTheme,omitempty"`
+	RememberState     bool  `json:"rememberState,omitempty"`
+	Tray              bool  `json:"tray,omitempty"`
 }
 
 type Security struct {
@@ -66,7 +67,7 @@ func FromManifest(value manifest.Resolved, assetRoot string) Config {
 			ID: value.App.ID, Name: value.App.Name, Version: value.App.Version, SingleInstance: value.App.SingleInstance,
 		},
 		Assets:   Assets{Root: filepath.ToSlash(assetRoot), Entry: filepath.ToSlash(value.Assets.Entry)},
-		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, Resizable: value.Window.Resizable, MinWidth: value.Window.MinWidth, MinHeight: value.Window.MinHeight, AlwaysOnTop: value.Window.AlwaysOnTop, RememberState: value.Window.RememberState, Tray: value.Window.Tray},
+		Window:   Window{Width: value.Window.Width, Height: value.Window.Height, Resizable: value.Window.Resizable, MinWidth: value.Window.MinWidth, MinHeight: value.Window.MinHeight, AlwaysOnTop: value.Window.AlwaysOnTop, FollowSystemTheme: value.Window.FollowSystemTheme, RememberState: value.Window.RememberState, Tray: value.Window.Tray},
 		Security: Security{Permissions: append([]string{}, value.Security.Permissions...)},
 	}
 }

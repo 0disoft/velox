@@ -41,6 +41,7 @@
         "minHeight": { "type": "integer", "minimum": 0, "maximum": 16384, "default": 0 },
         "resizable": { "type": "boolean", "default": true },
         "alwaysOnTop": { "type": "boolean", "default": false },
+        "followSystemTheme": { "type": "boolean", "default": false },
         "rememberState": { "type": "boolean", "default": false },
         "tray": { "type": "boolean", "default": false }
       }

@@ -45,6 +45,7 @@ shape is:
         "height": 640,
         "resizable": true,
         "alwaysOnTop": false,
+        "followSystemTheme": false,
         "rememberState": false,
         "tray": false
       },
@@ -145,6 +146,18 @@ Initial width and height, optional minimum dimensions and window-state persisten
   still share the topmost band. The toggle is session-only: restarting uses
   the manifest value, including when `rememberState` is enabled. No new IPC
   permission is needed. See ADR 0034.
+- `followSystemTheme`: optional boolean, default `false`. When `true`, the
+  host requests a native title bar that follows the Windows app light/dark
+  setting on documented Windows 11 build 22000 and newer using the DWM
+  immersive-dark-mode attribute. The host reacts to `WM_SETTINGCHANGE`,
+  `WM_THEMECHANGED`, and `WM_SYSCOLORCHANGE` on the UI thread and adds no
+  polling, timer, worker, or dependency. High contrast keeps the system scheme,
+  a missing preference reads as light, and read errors keep the last successful
+  appearance. Older or unsupported builds retain the default title bar. The
+  application's own CSS remains app-owned through `prefers-color-scheme`; the
+  host does not inject or mutate application styles. Omitted or `false` loads
+  no theme API or window subclass. No public IPC method, native permission,
+  timer, worker, dependency, or persistent state is added. See ADR 0036.
 - `rememberState`: optional boolean, default `false`. When `true`, the host
   saves the raw physical screen normal rectangle, the monitor work area, the
   DPI, the maximized state, and a state-format version (currently `1`) to
