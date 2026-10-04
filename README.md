@@ -208,6 +208,11 @@ manifest default. File Notes keeps the default off.
 `window.resizable: false` with saved-position restoration and no native
 permissions. Its scratchpad text is unsaved; only the window position persists.
 
+[`examples/window-system-theme`](examples/window-system-theme/README.md) is an
+unsaved scratchpad with `window.followSystemTheme: true` and no native
+permissions. The host follows the Windows app light/dark setting for the native
+title bar where supported; application CSS stays app-owned.
+
 ## Development State
 
 M0 selected the pure-Go WebView2 host, M1 completed the compile-free packaging

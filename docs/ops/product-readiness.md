@@ -21,6 +21,53 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## System Theme Example: 2026-10-04
+
+The isolated scratchpad opts into window.followSystemTheme with no native
+permissions. Two final builds produced the same 2,334,142-byte ZIP, SHA-256
+`1d0492ab4ddf819c0bcbfe4c0d5e2d79aae032ae00a1aebc6d28a013fdd761b6`.
+ZIP inspection passed; packaged host SHA-256 is
+`8577ceb149427e25ef68e84ca5f150c874ca950da28a4c0a8b92c7727f53dac0`.
+Packaged startup with private profiles and exit-after-ready returned zero
+across two probes; the final startup after the CSS-only palette change passed.
+
+Edge emulated CSS checks at 480 x 360 and 320 x 200 covered light and dark,
+plus one 320 x 200 forced-colors active pass. They confirmed text input,
+in-bounds textbox, no page errors, live prefers-color-scheme switching without
+reload and Canvas/CanvasText forced-color mapping; screenshots were inspected.
+These browser checks do not prove live Windows theme switching or the native
+title bar. The example's manual live Windows theme switch remains pending.
+File Notes and its data are untouched. No dependency, IPC permission, DB,
+runner, workflow or version change is included; runtime version stays beta.20.
+
+## System Theme Runtime: 2026-10-04
+
+Optional window.followSystemTheme defaults false. The core change is committed
+at de7ff35. Theme-specific `go test ./internal/webview2 -run Theme -v -count=1`
+passed all four tests, including a native DWM attribute-20 readback that checks
+the applied ABI value. Manifest, runtime-config, builder, host and hygiene
+packages passed, and `go vet` passed for the changed packages. Theme tests
+cover default/unsupported no-call behavior, mocked light, dark, high-contrast
+and deduplicated paths, synchronous re-entry, retained-state retry after
+read/apply errors and owner cleanup. The registry is queried read-only; no
+global setting is mutated. The Windows 11 build 22000 / attribute 20 floor is
+documented, and unsupported builds keep the default title bar.
+
+The full scoped command `go test ./internal/manifest ./internal/runtimeconfig
+./internal/webview2 ./internal/builder ./cmd/velox-host ./tests/hygiene`
+failed only on the existing `TestAlwaysOnTopNativeToggleAndCleanup` at
+`always_on_top_windows_test.go:45` (`topmost != true` on a hidden
+disposable STATIC HWND). No topmost code changed; that failure's cause and its
+relationship to this change were not isolated. This is not a full-suite pass,
+and the failure is not classified as known-flaky here.
+
+Matched Go 1.27.1 stripped windowsgui/trimpath/buildvcs=false builds increased
+the host from 4,682,240 to 4,696,576 bytes: +14,336 bytes / 14 KiB, about 0.31%.
+This is artifact-size evidence, not a latency or memory benchmark. No new IPC
+method or permission, dependency, timer, worker, DB, runner, workflow or
+state-format change is added. Version remains beta.20; no push or release
+publication was performed.
+
 ## Fixed Window Example: 2026-10-04
 
 The isolated scratchpad uses resizable false, rememberState true and no native
@@ -36,6 +83,10 @@ These browser checks do not verify native resize/maximize restrictions.
 The native runtime checks are recorded below; physical drag/double-click,
 minimize/restore, keyboard snap and cross-monitor DPI remain manual checks.
 No existing user profile, installer or public release is replaced.
+
+The maintainer reported "잘됨" for the Fixed Window example on 2026-10-04.
+Record this as general confirmation that the example worked; do not infer
+separate drag, snap or DPI observations.
 
 ## Fixed Window Runtime: 2026-10-04
 
