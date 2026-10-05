@@ -58,8 +58,19 @@ Create a minimal manifest and dependency-free static web example.
 The text-editor starter includes New/Open/Save/Save as, document-scoped native
 save-target reuse, a discard dialog, close protection and IME-aware keyboard
 actions. The first Save after Open still prompts for a save target. It includes
-four local Lucide icons and their license, but no bundled font, draft storage,
-recovery, find or preview. Its assets add no runtime dependency or host code.
+four local Lucide icons and their license, but no bundled font, find or preview.
+Public alpha.65 includes no draft storage or recovery. Its assets add no
+runtime dependency or host code.
+
+Source-only text-editor generation also includes `drafts.js` and a
+Restore/Discard dialog. One local IndexedDB record contains only
+`schemaVersion`, `name`, `text` and `updatedAt`, with a 2 MiB UTF-8 text limit.
+Writes debounce for 300 ms and serialize with clears; success is reported
+only after transaction completion. Restored text is dirty and has no save
+target, so its first Save reselects a destination. Storage errors preserve
+editing and unsaved-change protection. No native path, token, saved-text
+baseline or permission is persisted. This affects newly generated projects,
+not existing projects or public alpha.65; host, IPC and permissions are unchanged.
 
 The folder-browser starter provides folder selection, immediate-entry listing,
 explicit refresh, readonly UTF-8 file preview and folder release. It reuses
@@ -67,7 +78,7 @@ the existing host bounds and document-scoped folder tokens. Selection
 cancellation retains the current view; unsupported reads clear the preview;
 expired tokens clear both panes. It includes three local licensed icons but
 no subfolder navigation, clipboard, writes, monitoring, bundled font or new
-dependency. Basic and text-editor output remain unchanged.
+dependency. Folder-browser does not change the basic or text-editor template.
 
 ### velox validate
 

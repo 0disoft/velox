@@ -161,8 +161,17 @@ velox build --config my-editor/velox.json --installer
 Use the alpha.65 CLI with its matching release bundle; alpha.64 does not
 include template selection. The generated manifest requests only
 `file.open` and `file.save`. Initial Save after Open selects a destination;
-later Save reuses that page's save target. This small starter has no draft
-storage or recovery. Omitting `--template` retains the basic starter.
+later Save reuses that page's save target. The public alpha.65 starter has no
+draft storage or recovery. Omitting `--template` retains the basic starter.
+
+New text-editor projects generated from the source checkout store one local
+IndexedDB draft after a 300 ms typing pause and offer Restore/Discard on
+relaunch. Restore keeps the document unsaved; the next Save selects a new
+destination because file paths and save permissions are never persisted.
+This is not included in public alpha.65 and does not update existing projects.
+Draft storage failure is reported without disabling editing or bypassing
+unsaved-change protection. Abrupt exit can lose edits not yet committed to
+IndexedDB. See [the verification record](ops/text-editor-drafts.md).
 
 For a read-only folder browser, use the second native starter:
 

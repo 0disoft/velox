@@ -6,6 +6,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
     <title>{{APP_NAME}}</title>
     <link rel="stylesheet" href="style.css">
+    <script src="drafts.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -25,7 +26,17 @@
     <main>
       <textarea id="editor" aria-label="Text document" spellcheck="true" autocomplete="off"></textarea>
     </main>
-    <footer><p id="status" role="status" aria-live="polite">Ready.</p></footer>
+    <footer><p id="status" role="status" aria-live="polite">Ready.</p><p id="draft-state" role="status" aria-live="polite">Checking draft...</p></footer>
+    <dialog id="recovery-dialog" aria-labelledby="recovery-title">
+      <form method="dialog">
+        <h2 id="recovery-title">Recover draft?</h2>
+        <p id="draft-name"></p>
+        <div class="dialog-actions">
+          <button type="submit" value="recover" autofocus>Restore</button>
+          <button type="submit" value="discard" class="danger">Discard</button>
+        </div>
+      </form>
+    </dialog>
     <dialog id="discard-dialog" aria-labelledby="discard-title">
       <form method="dialog">
         <h2 id="discard-title">Discard unsaved changes?</h2>

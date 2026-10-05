@@ -8,6 +8,22 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor draft recovery (source-only, 2026-10-05): initializer/CLI/hygiene
+Go tests and scoped initializer/CLI vet passed; 23 Bun cases passed across
+draft storage, text-editor and folder-browser. Storage cases cover transaction
+completion, aborts, blocked/late opens, invalid/oversized records and omission
+of native authority. UI cases cover restoration, durable discard, serialized
+write/clear ordering, failure protection and IME coalescing. Edge mock checks
+passed at 960/360 widths in light/dark modes with no overflow, modal Escape
+protection, literal restored text and no restore-time native calls. Native CDP
+passed write, restore/clear and cleared-relaunch with close/cleanup exit 0.
+That smoke does not verify an actual save-dialog destination re-pick or the
+OS beforeunload prompt. The unchanged host is 4,861,440 bytes; no performance
+benchmark, hosted stress or installer test was repeated for template-only
+assets. Public alpha.65 is unchanged. New template-local IndexedDB storage is
+explicit; host DB, public API/IPC, schemas, dependencies and CI are unchanged.
+Hashes and the repeatable smoke command are in `docs/ops/text-editor-drafts.md`.
+
 Development diagnostics (source-only, 2026-10-05): scoped devdiagnostic,
 WebView2, CLI, runner and host tests/vet passed. Six Bun listener cases cover
 same-origin path/query removal, untouched error/rejection contents, rejected

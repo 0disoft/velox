@@ -170,11 +170,17 @@ velox init my-editor --template text-editor
 velox init my-browser --template folder-browser
 ```
 
-Text-editor requests only `file.open`/`file.save` and has no draft recovery.
+Text-editor requests only `file.open`/`file.save`; public alpha.65 has no draft recovery.
 Folder-browser requests only `folder.read`/`folder.readText` for immediate
 listing and readonly UTF-8 preview, with no recursion or writes. Both use
 local licensed icons, without a bundled font or new host dependency. Omitting
 `--template` keeps the permission-free basic starter.
+
+The source checkout additionally offers local IndexedDB draft recovery for
+newly generated text editors. Restore recovers unsaved text, not file paths or
+save permissions; the next Save selects a destination again. Existing generated
+projects and public alpha.65 are unchanged. See the
+[draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
 The published preview supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves trigger full-page reloads without enabling

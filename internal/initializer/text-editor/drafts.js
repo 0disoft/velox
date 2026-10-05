@@ -45,6 +45,8 @@
         transaction.onerror = fail;
         transaction.onabort = fail;
       });
+    } catch {
+      throw new Error("Draft storage unavailable.");
     } finally {
       database.close();
     }

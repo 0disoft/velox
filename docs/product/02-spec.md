@@ -242,6 +242,16 @@ discard/close protection and local licensed icons. It bundles no font and adds
 no draft storage, host code or background process. This template selection is
 available in the published alpha.65 CLI; alpha.64 does not include it.
 
+The source text-editor template additionally stores one bounded local
+IndexedDB draft and offers Restore/Discard on startup. It persists only
+schema version, filename, unsaved text and update time, never native paths,
+save targets, permissions or saved baselines. Restored documents remain dirty
+and require a fresh save selection. Writes debounce for 300 ms, serialize
+with clears and report success only after commit. Storage failure leaves
+editing and unsaved-change protection intact. This is source-only and does
+not alter public alpha.65, existing generated projects or the host. See
+[the recovery record](../ops/text-editor-drafts.md).
+
 Folder-browser reuses the existing example's immediate folder listing and
 readonly text preview with only `folder.read` and `folder.readText`. It omits
 the example's clipboard operation, uses local licensed icons and adds no

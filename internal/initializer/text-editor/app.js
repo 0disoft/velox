@@ -5,7 +5,11 @@
   const nameLabel = document.querySelector("#document-name");
   const saveState = document.querySelector("#save-state");
   const status = document.querySelector("#status");
+  const draftState = document.querySelector("#draft-state");
+  const recoveryDialog = document.querySelector("#recovery-dialog");
+  const draftName = document.querySelector("#draft-name");
   const dialog = document.querySelector("#discard-dialog");
+  const drafts = window.EditorDrafts;
   const buttons = ["new", "open", "save", "save-as"].map((id) => document.querySelector(`#${id}-document`));
   const appName = document.title;
   let name = "Untitled.txt";
@@ -14,21 +18,85 @@
   let busy = false;
   let composing = false;
   let pendingAction = null;
+  let checkingDraft = true;
+  let recoveryCandidate = null;
+  let recovered = false;
+  let draftTimer = null;
+  let draftRevision = 0;
+  let draftPending = false;
+  let draftWrites = Promise.resolve();
   const native = typeof window.velox?.invoke === "function" &&
     typeof window.velox?.saveTextAs === "function" && typeof window.velox?.saveTextTo === "function";
 
+  function isDirty() { return recovered || editor.value !== savedText; }
+
   function render() {
-    const dirty = editor.value !== savedText;
+    const dirty = isDirty();
+    const blocked = busy || checkingDraft || recoveryCandidate !== null;
     nameLabel.textContent = name;
     saveState.textContent = dirty ? "Unsaved changes" : target ? "Saved to file" : "No save target";
     saveState.dataset.dirty = String(dirty);
     document.title = `${dirty ? "* " : ""}${name} - ${appName}`;
-    buttons.forEach((button, index) => { button.disabled = busy || (index > 0 && !native); });
-    editor.readOnly = busy;
+    buttons.forEach((button, index) => { button.disabled = blocked || (index > 0 && !native); });
+    editor.readOnly = blocked;
+  }
+
+  function writeDraft(snapshot, revision) {
+    const job = draftWrites.then(() => snapshot === null ? drafts.clear() : drafts.save(snapshot));
+    // Keep one serial chain even after failures; never let an old write follow a clear.
+    draftWrites = job.catch(() => {});
+    job.then(() => {
+      if (revision !== draftRevision) return;
+      draftPending = false;
+      draftState.textContent = snapshot === null ? "No draft" : "Draft stored";
+    }, () => {
+      if (revision !== draftRevision) return;
+      draftPending = false;
+      draftState.textContent = "Draft recovery unavailable";
+    });
+    return job;
+  }
+
+  function scheduleDraft() {
+    clearTimeout(draftTimer);
+    const revision = ++draftRevision;
+    draftPending = true;
+    draftState.textContent = "Saving draft...";
+    draftTimer = setTimeout(() => {
+      draftTimer = null;
+      const snapshot = isDirty() ? { name, text: editor.value, updatedAt: Date.now() } : null;
+      void writeDraft(snapshot, revision).catch(() => {});
+    }, 300);
+  }
+
+  function clearDraft() {
+    clearTimeout(draftTimer);
+    draftTimer = null;
+    draftPending = true;
+    draftState.textContent = "Saving draft...";
+    return writeDraft(null, ++draftRevision);
+  }
+
+  async function initializeDraft() {
+    try {
+      recoveryCandidate = await drafts.load();
+      if (recoveryCandidate !== null) {
+        draftName.textContent = recoveryCandidate.name;
+        draftState.textContent = "Draft available";
+        recoveryDialog.returnValue = "";
+        recoveryDialog.showModal();
+      } else draftState.textContent = "No draft";
+    } catch {
+      recoveryCandidate = null;
+      draftState.textContent = "Draft recovery unavailable";
+    } finally {
+      checkingDraft = false;
+      render();
+    }
   }
 
   async function perform(action) {
-    if (busy) return;
+    if (busy || checkingDraft || recoveryCandidate !== null) return;
     busy = true;
     render();
     try {
@@ -52,18 +120,24 @@
 
   async function newDocument() {
     await releaseTarget();
+    let cleared = true;
+    try { await clearDraft(); } catch { cleared = false; }
     name = "Untitled.txt";
     editor.value = savedText = "";
-    status.textContent = "New document.";
+    recovered = false;
+    status.textContent = cleared ? "New document." : "New document. Draft cleanup unavailable.";
   }
 
   async function openDocument() {
     const result = await window.velox.invoke("file.openText", {});
     if (result.cancelled) { status.textContent = "Open canceled."; return; }
     await releaseTarget();
+    let cleared = true;
+    try { await clearDraft(); } catch { cleared = false; }
     name = result.name;
     editor.value = savedText = result.text;
-    status.textContent = "File opened.";
+    recovered = false;
+    status.textContent = cleared ? "File opened." : "File opened. Draft cleanup unavailable.";
   }
 
   async function saveDocument(saveAs) {
@@ -75,12 +149,15 @@
     target = result.target;
     name = result.name;
     savedText = snapshot;
+    recovered = false;
     status.textContent = "File saved.";
+    try { await clearDraft(); }
+    catch { status.textContent = "File saved. Draft cleanup unavailable."; }
   }
 
   function requestReplacement(action) {
-    if (busy || dialog.open) return;
-    if (editor.value === savedText) { void perform(action); return; }
+    if (busy || checkingDraft || recoveryCandidate !== null || dialog.open) return;
+    if (!isDirty()) { void perform(action); return; }
     pendingAction = action;
     dialog.returnValue = "cancel";
     dialog.showModal();
@@ -90,9 +167,44 @@
   buttons[1].addEventListener("click", () => requestReplacement(openDocument));
   buttons[2].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(false)); });
   buttons[3].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(true)); });
-  editor.addEventListener("input", render);
-  editor.addEventListener("compositionstart", () => { composing = true; });
-  editor.addEventListener("compositionend", () => { composing = false; });
+  editor.addEventListener("input", () => { render(); if (!composing && !checkingDraft && recoveryCandidate === null) scheduleDraft(); });
+  editor.addEventListener("compositionstart", () => {
+    composing = true;
+    clearTimeout(draftTimer);
+    draftTimer = null;
+    draftRevision++;
+    draftPending = true;
+    draftState.textContent = "Saving draft...";
+  });
+  editor.addEventListener("compositionend", () => { composing = false; scheduleDraft(); });
+  recoveryDialog.addEventListener("cancel", (event) => { event.preventDefault(); });
+  recoveryDialog.addEventListener("close", async () => {
+    if (recoveryCandidate === null) return;
+    if (recoveryDialog.returnValue === "recover") {
+      name = recoveryCandidate.name;
+      editor.value = recoveryCandidate.text;
+      savedText = "";
+      target = null;
+      recovered = true;
+      recoveryCandidate = null;
+      status.textContent = "Draft restored.";
+      scheduleDraft();
+    } else if (recoveryDialog.returnValue === "discard") {
+      busy = true;
+      render();
+      try {
+        await clearDraft();
+        recoveryCandidate = null;
+        status.textContent = "Draft discarded.";
+      } catch {
+        status.textContent = "Draft could not be discarded.";
+        recoveryDialog.returnValue = "";
+        recoveryDialog.showModal();
+      } finally { busy = false; }
+    } else recoveryDialog.showModal();
+    render();
+    if (!recoveryDialog.open) editor.focus();
+  });
   dialog.addEventListener("close", () => {
     const action = pendingAction;
     pendingAction = null;
@@ -100,7 +212,7 @@
     else editor.focus();
   });
   window.addEventListener("beforeunload", (event) => {
-    if (!busy && editor.value === savedText) return;
+    if (!busy && !isDirty() && !draftPending) return;
     event.preventDefault();
     event.returnValue = "";
   });
@@ -115,4 +227,5 @@
   });
   if (!native) status.textContent = "Native file access unavailable.";
   render();
+  void initializeDraft();
 })();

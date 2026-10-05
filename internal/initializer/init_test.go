@@ -61,7 +61,7 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
-	if err != nil || len(assets.Files) != 8 || len(result.Files) != 10 {
+	if err != nil || len(assets.Files) != 9 || len(result.Files) != 11 {
 		t.Fatalf("unexpected inventory: %+v %+v %v", result.Files, assets, err)
 	}
 	for _, relative := range result.Files {
@@ -73,6 +73,9 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 	index, err := os.ReadFile(filepath.Join(target, "web", "index.html"))
 	if err != nil || strings.Contains(string(index), "{{APP_NAME}}") || !strings.Contains(string(index), "My Editor") {
 		t.Fatalf("app name not substituted: %v", err)
+	}
+	if !strings.Contains(string(index), `src="drafts.js"`) || !strings.Contains(string(index), `id="recovery-dialog"`) {
+		t.Fatal("draft storage or recovery dialog is not delivered")
 	}
 }
 

@@ -44,11 +44,12 @@ nav button::before { content: ""; width: 20px; height: 20px; background: current
 #save-as-document { --icon: url("save-all.svg"); }
 main { min-height: 0; min-width: 0; display: flex; }
 textarea { width: 100%; min-height: 0; resize: none; border: 0; padding: 20px; color: inherit; background: var(--bg); font: 400 18px/1.6 "Segoe UI", "Malgun Gothic", system-ui, sans-serif; letter-spacing: 0; tab-size: 2; }
-footer { padding: 8px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 footer p { margin: 0; overflow-wrap: anywhere; }
 dialog { max-width: min(400px, calc(100vw - 32px)); border: 1px solid var(--line); border-radius: 8px; padding: 20px; background: var(--bg); color: inherit; }
 dialog::backdrop { background: rgb(0 0 0 / .45); }
 dialog h2 { font-size: 18px; margin: 0 0 20px; }
+#draft-name { overflow-wrap: anywhere; margin: 0 0 20px; }
 .dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 .danger { color: var(--danger); border-color: var(--danger); }
 @media (max-width: 480px) {
