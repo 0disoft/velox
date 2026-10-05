@@ -284,21 +284,27 @@ func TestUsageFailureHonorsJSONAnywhere(t *testing.T) {
 	}
 }
 
-func TestInitTextEditorAndTemplateErrors(t *testing.T) {
-	for _, form := range []int{0, 1, 2} {
-		target := filepath.Join(t.TempDir(), "editor")
-		args := []string{"init", target, "--template", "text-editor", "--json"}
-		if form == 1 {
-			args = []string{"init", "--template", "text-editor", "--json", target}
-		} else if form == 2 {
-			args = []string{"init", target, "--template=text-editor", "--quiet", "--json"}
-		}
-		var stdout, stderr bytes.Buffer
-		if code := Run(args, Dependencies{Stdout: &stdout, Stderr: &stderr}); code != 0 || stderr.Len() != 0 {
-			t.Fatalf("form %d: code=%d stdout=%s stderr=%s", form, code, stdout.String(), stderr.String())
-		}
-		if !strings.Contains(stdout.String(), "web/save.svg") {
-			t.Fatalf("template files absent: %s", stdout.String())
+func TestInitNativeTemplatesAndTemplateErrors(t *testing.T) {
+	for _, template := range []string{"text-editor", "folder-browser"} {
+		for _, form := range []int{0, 1, 2} {
+			target := filepath.Join(t.TempDir(), "editor")
+			args := []string{"init", target, "--template", template, "--json"}
+			if form == 1 {
+				args = []string{"init", "--template", template, "--json", target}
+			} else if form == 2 {
+				args = []string{"init", target, "--template=" + template, "--quiet", "--json"}
+			}
+			var stdout, stderr bytes.Buffer
+			if code := Run(args, Dependencies{Stdout: &stdout, Stderr: &stderr}); code != 0 || stderr.Len() != 0 {
+				t.Fatalf("form %d: code=%d stdout=%s stderr=%s", form, code, stdout.String(), stderr.String())
+			}
+			marker := "web/save.svg"
+			if template == "folder-browser" {
+				marker = "web/refresh-cw.svg"
+			}
+			if !strings.Contains(stdout.String(), marker) {
+				t.Fatalf("template files absent: %s", stdout.String())
+			}
 		}
 	}
 	for _, template := range []string{"unknown", ""} {

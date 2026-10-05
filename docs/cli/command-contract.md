@@ -34,7 +34,9 @@ Create a minimal manifest and dependency-free static web example.
 
 - `--template basic` is the default and keeps the existing output and empty
   permissions. `--template text-editor` creates the native text-editor starter
-  with only `file.open` and `file.save`. Unknown templates exit 2 with
+  with only `file.open` and `file.save`. `--template folder-browser` creates a
+  read-only folder starter with only `folder.read` and `folder.readText`.
+  Unknown templates exit 2 with
   `USAGE_INVALID` and write nothing. This option is source-only and not included
   in the public alpha.64 release.
 - Derive a conservative `dev.velox.<directory>` application ID and display name
@@ -48,8 +50,8 @@ Create a minimal manifest and dependency-free static web example.
 - Keep the declaration at the project root; do not copy it into the `web` asset
   directory or add it to generated application assets.
 - Grant no native permission for the basic template, install no TypeScript,
-  and compile or run no example. The text-editor template explicitly declares
-  its two file permissions in the generated manifest.
+  and compile or run no example. Each native template explicitly declares
+  its respective two permissions in the generated manifest.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
 
@@ -58,6 +60,14 @@ save-target reuse, a discard dialog, close protection and IME-aware keyboard
 actions. The first Save after Open still prompts for a save target. It includes
 four local Lucide icons and their license, but no bundled font, draft storage,
 recovery, find or preview. Its assets add no runtime dependency or host code.
+
+The folder-browser starter provides folder selection, immediate-entry listing,
+explicit refresh, readonly UTF-8 file preview and folder release. It reuses
+the existing host bounds and document-scoped folder tokens. Selection
+cancellation retains the current view; unsupported reads clear the preview;
+expired tokens clear both panes. It includes three local licensed icons but
+no subfolder navigation, clipboard, writes, monitoring, bundled font or new
+dependency. Basic and text-editor output remain unchanged.
 
 ### velox validate
 

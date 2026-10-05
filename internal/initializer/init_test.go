@@ -76,6 +76,50 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 	}
 }
 
+func TestCreateFolderBrowserTemplate(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "my-browser")
+	result, err := CreateFromTemplate(target, "folder-browser")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := manifest.Load(filepath.Join(target, "velox.json"))
+	if err != nil || !reflect.DeepEqual(config.Security.Permissions, []string{"folder.read", "folder.readText"}) {
+		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
+	}
+	assets, err := assettree.Scan(filepath.Join(target, "web"))
+	if err != nil || len(assets.Files) != 7 || len(result.Files) != 9 {
+		t.Fatalf("unexpected inventory: %+v %+v %v", result.Files, assets, err)
+	}
+	for _, relative := range result.Files {
+		data, err := os.ReadFile(filepath.Join(target, filepath.FromSlash(relative)))
+		if err != nil || len(data) == 0 || (relative != "velox.d.ts" && strings.Contains(string(data), "clipboard")) {
+			t.Fatalf("missing asset or extra capability in %s: %v", relative, err)
+		}
+	}
+	files, err := templateFiles("folder-browser", `<img src=x>`)
+	if err != nil || strings.Contains(string(files[0].data), `<img src=x>`) || !strings.Contains(string(files[0].data), "&lt;img src=x&gt;") {
+		t.Fatalf("unsafe app name: %v", err)
+	}
+	conflict := t.TempDir()
+	if err := os.Mkdir(filepath.Join(conflict, "web"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(conflict, "web", "refresh-cw.svg")
+	if err := os.WriteFile(path, []byte("keep"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CreateFromTemplate(conflict, "folder-browser"); err == nil {
+		t.Fatal("expected icon conflict")
+	}
+	if _, err := os.Stat(filepath.Join(conflict, "velox.json")); !os.IsNotExist(err) {
+		t.Fatal("partial manifest remained")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil || string(data) != "keep" {
+		t.Fatalf("user icon changed: %q %v", data, err)
+	}
+}
+
 func TestTextEditorEscapesNameAndPreservesConflictingIcon(t *testing.T) {
 	files, err := templateFiles("text-editor", `<script>alert("name")</script>`)
 	if err != nil || strings.Contains(string(files[0].data), `<script>alert`) || !strings.Contains(string(files[0].data), "&lt;script&gt;") {

@@ -8,6 +8,23 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Folder-browser starter (source-only, 2026-10-05): scoped initializer/CLI tests
+cover generation, both native templates' flag forms, exact permissions,
+escaped names, asset inventory and conflict preservation. The folder starter's
+six Bun cases plus the text editor's six cases passed, covering literal text,
+non-navigable directories, cancellation, refresh/release, pending guards,
+expired/unsupported/denied reads and absent-bridge behavior. Edge mock checks
+passed at 960/360 widths in light/dark modes with loaded icons, keyboard folder
+selection and independently usable panes without horizontal overflow.
+CommandCode DeepSeek 4.1 Flash/high supplied the checked design/doc drafts.
+The generated project had 7 web assets / 12,667 bytes; local matching-bundle
+init/validate/build/inspect passed. The inspected host digest remained
+`ae5cd1bdd78b19743aebdfa80bb15e91e3f7b01b992e02aab6414e29eb0b151d`.
+Native folder dialogs/reads, installation, hosted CI and performance tests
+were not repeated: native implementation and dependencies are unchanged.
+These are mock/local packaging results, not a new public release.
+No IPC/schema/DB/host/dependency/workflow or version change is included.
+
 Text-editor starter (source-only, 2026-10-05):
 `go test ./internal/initializer ./internal/cli ./tests/hygiene` and scoped vet
 passed. `bun test internal/initializer/text_editor.test.ts` passed six cases

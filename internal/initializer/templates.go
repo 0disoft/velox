@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-//go:embed text-editor/*
-var editorTemplate embed.FS
+//go:embed text-editor/* folder-browser/*
+var templateAssets embed.FS
 
 func templateFiles(template, name string) ([]plannedFile, error) {
 	if template == "basic" {
@@ -19,9 +19,12 @@ func templateFiles(template, name string) ([]plannedFile, error) {
 		}, nil
 	}
 	names := []string{"index.html", "style.css", "app.js", "file-plus.svg", "folder-open.svg", "save.svg", "save-all.svg", "icons-license.txt"}
+	if template == "folder-browser" {
+		names = []string{"index.html", "style.css", "app.js", "folder-open.svg", "refresh-cw.svg", "x.svg", "icons-license.txt"}
+	}
 	files := make([]plannedFile, 0, len(names))
 	for _, filename := range names {
-		data, err := editorTemplate.ReadFile("text-editor/" + filename)
+		data, err := templateAssets.ReadFile(template + "/" + filename)
 		if err != nil {
 			return nil, fmt.Errorf("read embedded template %s: %w", filename, err)
 		}

@@ -164,6 +164,20 @@ with a matching release bundle. The generated manifest requests only
 later Save reuses that page's save target. This small starter has no draft
 storage or recovery. Omitting `--template` retains the basic starter.
 
+For a read-only folder browser, use the source checkout's second native starter:
+
+```sh
+velox init my-browser --template folder-browser
+velox run --config my-browser/velox.json --watch
+velox build --config my-browser/velox.json
+```
+
+Like text-editor, this option is not in public alpha.64. It requests only
+`folder.read` and `folder.readText`. Select a folder, refresh its immediate
+entries, select a file for a readonly UTF-8 preview, and release the folder
+when done. Subdirectories are listed but not navigable. No clipboard, write
+or background monitoring permission is added.
+
 `app.info` enables `window.velox.invoke("app.getInfo")`; `file.save` enables
 `window.velox.saveText`, `saveTextAs`, and `saveTextTo`. Each permission is
 independent and enforced by the host. See the

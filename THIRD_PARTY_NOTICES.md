@@ -43,10 +43,10 @@ separate from the licenses above and must be reviewed before a public release.
 - Source and license: <https://github.com/santhosh-tekuri/jsonschema> and
   <https://go.googlesource.com/text>.
 
-## Lucide Text-Editor Starter Icons
+## Lucide Starter Icons
 
-The CLI embeds file-plus, folder-open, save and save-all from
-<https://github.com/lucide-icons/lucide>. Generated text-editor projects retain
+The CLI embeds file-plus, folder-open, save, save-all, refresh-cw and x from
+<https://github.com/lucide-icons/lucide>. Generated native starter projects retain
 the complete notice in `web/icons-license.txt`.
 
 ISC License

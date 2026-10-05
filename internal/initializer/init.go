@@ -17,7 +17,7 @@ import (
 
 var invalidSlug = regexp.MustCompile(`[^a-z0-9-]+`)
 
-var ErrUnknownTemplate = errors.New("template must be basic or text-editor")
+var ErrUnknownTemplate = errors.New("template must be basic, text-editor or folder-browser")
 
 type Result struct {
 	Directory string   `json:"directory"`
@@ -56,7 +56,7 @@ func Create(directory string) (Result, error) {
 }
 
 func CreateFromTemplate(directory, template string) (Result, error) {
-	if template != "basic" && template != "text-editor" {
+	if template != "basic" && template != "text-editor" && template != "folder-browser" {
 		return Result{}, ErrUnknownTemplate
 	}
 	if strings.TrimSpace(directory) == "" {
@@ -98,6 +98,8 @@ func CreateFromTemplate(directory, template string) (Result, error) {
 	manifest.Security.Permissions = []string{}
 	if template == "text-editor" {
 		manifest.Security.Permissions = []string{"file.open", "file.save"}
+	} else if template == "folder-browser" {
+		manifest.Security.Permissions = []string{"folder.read", "folder.readText"}
 	}
 	manifestData, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {

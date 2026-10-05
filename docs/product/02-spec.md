@@ -235,12 +235,17 @@ as passed; `docs/ops/product-readiness.md` owns the remaining checks.
 
 ### CLI
 
-The source checkout adds `init --template basic|text-editor`. Basic remains
+The source checkout adds `init --template basic|text-editor|folder-browser`. Basic remains
 the unchanged permission-free default. Text-editor scaffolds a dependency-free
 native file editor with only `file.open`/`file.save`, page-scoped save reuse,
 discard/close protection and local licensed icons. It bundles no font and adds
 no draft storage, host code or background process. This template selection is
 not yet in the published alpha.64 CLI.
+
+Folder-browser reuses the existing example's immediate folder listing and
+readonly text preview with only `folder.read` and `folder.readText`. It omits
+the example's clipboard operation, uses local licensed icons and adds no
+subfolder navigation, write permission, monitoring, font or host dependency.
 
 - init
 - validate
