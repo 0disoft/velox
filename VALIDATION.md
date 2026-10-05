@@ -8,6 +8,20 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.66 local preparation (2026-10-05): source version is
+`0.5.10-alpha.66`, not published; public alpha.65 evidence is preserved.
+Version-dependent buildplan, builder, CLI, inspector, runner, host metadata,
+release-bundle and release-evidence tests passed, as did hygiene tests and
+scoped vet. Buildinfo has no test files. `go run ./cmd/velox version --json`
+reported alpha.66. The publishing script parsed and its release-notes text
+contained no control escapes. Existing implementation/native evidence was
+not repeated for a version/prose-only preparation. No alpha.66 distribution
+bundle, digest, hosted result, tag, push or publication is claimed; old
+source-11efd69 binaries remain alpha.65-string artifacts. API/IPC, DB/schema,
+dependencies and runner/job scheduling are unchanged; workflow changes only
+correct the generated release description. Scope and skipped-check boundaries
+are in `docs/ops/alpha66-preparation.md`.
+
 Alpha.65 source candidate `11efd69` (source-only, 2026-10-05): local source
 `11efd69a7dfeda04ec84e31b804b6af68cc29bad` was clean at build time and kept the
 `0.5.10-alpha.65` string, but its bytes differ from the public alpha.65

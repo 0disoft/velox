@@ -313,7 +313,11 @@ jobs:
 
           Packaged applications keep HTML, CSS, JavaScript, and velox.runtime.json beside the unchanged generic host. Anyone who can modify the application directory can change application behavior. This preview does not provide sealed assets or local tamper resistance.
 
-          The unchanged generic host does not provide application-specific executable icons or metadata, an installer, or an updater. The velox command and velox.exe name also collide with unrelated released software; invoke the downloaded executable by an explicit path while evaluating it.
+          Optional build --installer produces a per-user Windows Setup for a single account, and a build can stage an optional application icon and version resource into its host copy. Without branding, the generic prebuilt host keeps its own icon, version resources, and unchanged bytes. No automatic updater, machine-wide or elevation-requiring install, MSI/MSIX package, code signing, arbitrary backend, or non-Windows target is included.
+
+          This preview adds image and font asset detection to run --watch by path, size, and modification time without reading binary contents, so same-size edits that preserve the modification time are not detected. It adds opt-in run --debug metadata-only JavaScript error diagnostics where unknown and Promise locations remain unavailable and no raw message, stack, or rejection content is read. It adds bounded local IndexedDB draft recovery to newly generated init --template text-editor projects, storing no native paths, save tokens, or saved-text baselines; existing generated projects are not upgraded. Starter templates remain opt-in: init --template text-editor and the folder-browser starter are generated only on request.
+
+          The velox command and velox.exe name also collide with unrelated released software; invoke the downloaded executable by an explicit path while evaluating it.
 
           The independently recorded release ZIP SHA-256 is $env:VELOX_RELEASE_SHA256.
           "@ | Set-Content -LiteralPath '.ci/release-notes.md' -Encoding utf8

@@ -84,6 +84,34 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.66 Local Preparation: 2026-10-05
+
+The source version is prepared at `0.5.10-alpha.66`, and this preparation is
+not published. The current public preview remains `v0.5.10-alpha.65`; no
+alpha.66 tag, release, hosted run, or publication exists. No matching alpha.66
+distribution bundle, digests, or hosted evidence exists yet, although a locally
+run `go run ./cmd/velox version --json` reports the prepared version.
+
+The prepared release scope is the feature slices implemented after the
+alpha.65 publication: image and font asset detection in
+`run --watch`, opt-in metadata-only `run --debug` JavaScript diagnostics, and
+local IndexedDB draft recovery for newly generated `init --template text-editor`
+projects. Existing generated projects are not upgraded. The
+optional per-user Windows Setup from `build --installer` and optional
+per-application EXE icon and version resource staging are already implemented
+and are not new here. There is still no automatic updater, sealed assets,
+Authenticode signing, arbitrary application backend or plugins, or non-Windows
+target.
+
+Version-dependent package tests, hygiene tests and scoped vet passed locally.
+The publishing script parsed successfully and its notes contained no control
+escapes; the workflow's triggers, jobs and commands are unchanged.
+Preparation scope, validation boundaries, and the
+historical source-candidate record are in
+[the alpha.66 preparation doc](alpha66-preparation.md). The prior local
+source candidate `11efd69` carries the same feature commits but uses the
+`0.5.10-alpha.65` version string, so its bytes are not alpha.66 artifacts.
+
 ## Alpha.65 Published Preview: 2026-10-05
 
 Unsigned prerelease `v0.5.10-alpha.65` ships the text-editor and folder-browser

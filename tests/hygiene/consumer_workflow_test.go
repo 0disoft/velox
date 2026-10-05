@@ -293,7 +293,11 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 		"Immediate same-profile relaunch can take several seconds",
 		"Evergreen WebView2 Runtime 92.0.902.49 or newer",
 		"This preview does not provide sealed assets or local tamper resistance",
-		"does not provide application-specific executable icons or metadata, an installer, or an updater",
+		"build --installer",
+		"run --watch",
+		"run --debug",
+		"init --template text-editor",
+		"No automatic updater",
 		"velox command and velox.exe name also collide with unrelated released software",
 	} {
 		if !strings.Contains(workflow, required) {
@@ -303,9 +307,9 @@ func TestAlphaEvidenceWorkflowKeepsConsumerCheckoutAndToolchainFree(t *testing.T
 	if strings.Count(workflow, "contents: write") != 1 {
 		t.Fatal("only the isolated preview publication job may receive contents: write")
 	}
-	for _, forbidden := range []string{"SIGNPATH_", "velox-signing-record authenticode", "attest-build-provenance"} {
+	for _, forbidden := range []string{"SIGNPATH_", "velox-signing-record authenticode", "attest-build-provenance", "does not provide application-specific executable icons or metadata, an installer, or an updater"} {
 		if strings.Contains(workflow, forbidden) {
-			t.Errorf("unsigned preview workflow contains deferred signing surface %q", forbidden)
+			t.Errorf("unsigned preview workflow contains forbidden publication content %q", forbidden)
 		}
 	}
 }

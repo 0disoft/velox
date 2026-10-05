@@ -73,6 +73,9 @@ native lifecycle evidence remain separate historical records. See the
 [release record](docs/ops/release.md) for exact scope and retained failures.
 Beta remains held under the product workflow checklist.
 
+Source version: `0.5.10-alpha.66` (not published); the public preview above
+remains `v0.5.10-alpha.65` until an alpha.66 release is published.
+
 ## Headline Metrics
 
 1. End-to-end cold build time.

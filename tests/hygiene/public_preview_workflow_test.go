@@ -145,10 +145,6 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 
 	}
 
-	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-alpha.65"`) {
-		t.Fatal("published source version is not alpha.65")
-	}
 	readiness := readNormalized(t, repositoryPath("docs", "ops", "product-readiness.md"))
 	for _, marker := range []string{
 		"- Status: Alpha active; beta not approved",
@@ -157,6 +153,23 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 		if !strings.Contains(readiness, marker) {
 			t.Errorf("published channel is not synchronized: missing %q", marker)
 		}
+	}
+}
+
+func TestAlpha66SourcePreparationKeepsPublishedAlpha65(t *testing.T) {
+	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.66"`) {
+		t.Fatal("prepared source version is not alpha.66")
+	}
+	for _, relative := range []string{"README.md", "docs/ops/product-readiness.md"} {
+		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
+		if !strings.Contains(doc, "Source version: `0.5.10-alpha.66` (not published)") {
+			t.Errorf("%s does not distinguish the prepared source version", relative)
+		}
+	}
+	preparation := readNormalized(t, repositoryPath("docs", "ops", "alpha66-preparation.md"))
+	if !strings.Contains(preparation, "not published") {
+		t.Fatal("alpha.66 preparation must not claim publication")
 	}
 }
 
