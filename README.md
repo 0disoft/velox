@@ -180,7 +180,11 @@ The published preview supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves trigger full-page reloads without enabling
 DevTools. Keep the downloaded CLI/host pair together. App `beforeunload`
 handlers can cancel a reload. Normal `run` and packaged apps do not start a
-watcher. Fonts/images and manifest changes are not auto-reloaded.
+watcher. Public alpha.65 does not watch fonts/images or manifest changes.
+The source checkout additionally watches common image/font assets by path,
+size and modification time without repeatedly reading binary contents.
+Same-size binary edits with a preserved modification time are not detected;
+manifest changes and unlisted asset formats remain outside the watch scope.
 Local candidate verification and extraction instructions are in
 [the alpha.64 candidate receipt](docs/ops/alpha64-candidate.md); it is not a
 published release download. Use the public release linked above for published bytes.

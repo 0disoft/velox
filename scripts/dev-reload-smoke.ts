@@ -9,6 +9,8 @@ type Message = { id?: number; method?: string; params?: { type?: string }; error
 const root = resolve(import.meta.dir, "..");
 const release = resolve(root, process.env.VELOX_RELOAD_RELEASE_DIR ?? "dist/release/velox-windows-x64");
 const watch = process.env.VELOX_RELOAD_WATCH === "1";
+const visualAssets = process.env.VELOX_RELOAD_VISUAL_ASSETS === "1";
+if (visualAssets && !watch) throw Error("Visual asset smoke requires watch mode");
 const manifest = JSON.parse(await readFile(join(release, "release-manifest.json"), "utf8"));
 const hashes: Record<string, string> = {};
 for (const file of ["velox.exe", "velox-host.exe"]) {
@@ -24,6 +26,19 @@ await mkdir(work, { recursive: true });
 await cp(join(root, "examples/file-notes"), project, { recursive: true });
 const index = join(web, "index.html"), original = await readFile(index, "utf8");
 if (!original.includes("</body>")) throw Error("Missing HTML body");
+const image = join(web, "watch-proof.svg"), font = join(web, "fonts", "watch-proof.ttf");
+const visualMarkup = visualAssets
+  ? '<link rel="stylesheet" href="watch-proof.css"><img id="watch-image" src="watch-proof.svg"><script src="watch-proof.js"></script>'
+  : "";
+async function changeImage(color: string) {
+  await writeFile(image, '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect width="2" height="2" fill="' + color + '"/></svg>');
+}
+if (visualAssets) {
+  await changeImage("red");
+  await cp(join(web, "fonts", "NotoSansKR.ttf"), font);
+  await writeFile(join(web, "watch-proof.css"), '@font-face{font-family:WatchProofFont;src:url("fonts/watch-proof.ttf")}#watch-image{position:fixed;bottom:0;right:0;width:2px;height:2px}');
+  await writeFile(join(web, "watch-proof.js"), "window.__watchAssetDocument=crypto.randomUUID();");
+}
 const phases = [
   { name: "before", color: "rgb(200, 10, 20)" },
   { name: "after-one", color: "rgb(10, 120, 30)" },
@@ -31,7 +46,7 @@ const phases = [
 ];
 async function change(phase: typeof phases[number]) {
   await writeFile(index, original.replace("</body>",
-    '<div id="reload-proof" data-phase="' + phase.name + '"></div><link rel="stylesheet" href="reload-proof.css"><script src="reload-proof.js"></script></body>'));
+    '<div id="reload-proof" data-phase="' + phase.name + '"></div><link rel="stylesheet" href="reload-proof.css"><script src="reload-proof.js"></script>' + visualMarkup + '</body>'));
   await writeFile(join(web, "reload-proof.js"), 'document.getElementById("reload-proof").textContent=' + JSON.stringify(phase.name) + ";");
   await writeFile(join(web, "reload-proof.css"), "#reload-proof{color:" + phase.color + "}");
 }
@@ -42,11 +57,13 @@ const address = server.address();
 if (!address || typeof address === "string") throw Error("No local diagnostic port");
 const port = address.port;
 await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+type VisualState = { documentId: string; imagePixel: number[]; fontLoaded: boolean; fontWidth: number; origin: string };
 const result: {
   version: string; hashes: Record<string, string>; startedAtUtc: string; finishedAtUtc?: string;
   before?: State; cycles: { phase: string; ignoreCache: false; observed?: State; passed: boolean }[];
   mode: string; canceledReloadPreservedInput?: boolean; normalCloseExitCode?: number | null;
   passed: boolean; error?: string; cleanupExitCode?: number | null;
+  visualAssets?: { before: VisualState; imageOnly: VisualState; fontOnly: VisualState };
 } = { mode: watch ? "watch-with-debug-off" : "manual-debug", version: manifest.releaseVersion, hashes, startedAtUtc: new Date().toISOString(), cycles: [], passed: false };
 const child = spawn(join(release, "velox.exe"), ["run", "--config", join(project, "velox.json"), watch ? "--watch" : "--debug", "--json"], {
   cwd: root, env: { ...process.env, VELOX_DATA_DIR: join(work, "profile"),
@@ -124,6 +141,43 @@ try {
     const passed = matches(observed, phase) && observed?.origin === result.before!.origin;
     result.cycles.push({ phase: phase.name, ignoreCache: false, observed, passed });
     if (!passed) throw Error("Normal reload failed: " + phase.name);
+  }
+  if (visualAssets) {
+    const visualState = async () => {
+      const response = await call("Runtime.evaluate", {
+        expression: `(async()=>{
+          const loaded=await document.fonts.load('20px "WatchProofFont"');
+          const image=document.getElementById("watch-image");await image.decode();
+          const canvas=document.createElement("canvas");canvas.width=2;canvas.height=2;
+          const context=canvas.getContext("2d");context.drawImage(image,0,0);
+          const imagePixel=Array.from(context.getImageData(0,0,1,1).data);
+          context.font='20px "WatchProofFont"';
+          return {documentId:window.__watchAssetDocument,imagePixel,fontLoaded:loaded.length===1,
+            fontWidth:context.measureText("WWWWiiii0123456789").width,origin:location.origin};
+        })()`,
+        awaitPromise: true, returnByValue: true,
+      });
+      return response.result?.result?.value as unknown as VisualState | undefined;
+    };
+    async function observeVisual(previous: VisualState, matches: (value: VisualState) => boolean) {
+      const deadline = Date.now() + 8000;
+      do {
+        try {
+          const value = await visualState();
+          if (value && value.documentId !== previous.documentId && value.origin === previous.origin && value.fontLoaded && matches(value)) return value;
+        } catch {}
+        await wait(100);
+      } while (Date.now() < deadline);
+      throw Error("Visual asset edit did not render through automatic reload");
+    }
+    const before = await visualState();
+    if (!before?.fontLoaded || !before.documentId || before.imagePixel.join(",") !== "255,0,0,255") throw Error("Visual baseline not rendered: " + JSON.stringify(before));
+    // Change only the referenced asset, keeping HTML, CSS and JS untouched.
+    await changeImage("lime");
+    const imageOnly = await observeVisual(before, value => value.imagePixel.join(",") === "0,255,0,255");
+    await cp(join(process.env.WINDIR ?? "C:/Windows", "Fonts", "arial.ttf"), font);
+    const fontOnly = await observeVisual(imageOnly, value => value.fontWidth !== imageOnly.fontWidth && value.imagePixel.join(",") === "0,255,0,255");
+    result.visualAssets = { before, imageOnly, fontOnly };
   }
   if (watch) {
     await call("Page.enable");

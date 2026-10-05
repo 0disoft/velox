@@ -8,6 +8,23 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Image/font development watch (source-only, 2026-10-05): scoped devwatch,
+runner, CLI and WebView2 tests/vet passed. Detector cases cover all supported
+extensions including uppercase forms, metadata-only same-size edits, stable
+debounce, addition/rename/removal, a sparse font larger than the 64 MiB text
+budget, the documented same-size/time limitation and link rejection without
+skips. The native smoke used a matching local CLI/host, copied assets and a
+private profile with debug off: image-only SVG edits changed decoded canvas
+pixels, font-only edits changed loaded-font metrics, and each caused normal
+automatic reload without HTML/CSS/JS edits or test-side cache/navigation
+overrides. Existing text reload, canceled-input protection, subsequent retry
+and close/cleanup with exit 0 also passed. The first inline test fixture was
+blocked by CSP; external local CSS/JS fixed the fixture, not the runtime.
+The same-Go/flags host grew 1,024 bytes. Public alpha.65 is unchanged; no
+hosted release/stress, installer or production performance test was repeated
+for this development-only extension. Receipts and hashes are in
+`docs/ops/development-watch.md`. No API/IPC/DB/schema/dependency/CI change.
+
 Folder-browser starter (initial source-only step, 2026-10-05): scoped initializer/CLI tests
 cover generation, both native templates' flag forms, exact permissions,
 escaped names, asset inventory and conflict preservation. The folder starter's

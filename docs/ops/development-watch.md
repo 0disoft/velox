@@ -11,7 +11,53 @@ and normal close. Its current hashes and version boundary are recorded in
 [the candidate receipt](alpha64-candidate.md). The earlier hashes below remain
 the original source-integration evidence.
 
-## Scope
+## Image/Font Source Extension: 2026-10-05
+
+The source checkout now includes common image/font metadata in the existing
+500 ms polling and 500 ms quiet-period detector. Images PNG/APNG/JPG/JPEG/
+GIF/WebP/AVIF/BMP/ICO/SVG and fonts WOFF/WOFF2/TTF/OTF/EOT are matched
+case-insensitively. The existing safe tree traversal contributes only path,
+size and modification time for those assets, with no binary content read,
+new cache or dependency. The 64 MiB content budget still applies only to the
+entry and supported text files. Additions, deletions and renames count.
+Reverting text contents cancels a pending notification; binary edits that
+preserve size and modification time are intentionally not detected. Manifest
+edits and other formats remain excluded. No watcher starts by default.
+This extension is not in published alpha.65; the earlier release receipts
+above and original scope below remain historical.
+
+Scoped devwatch/runner/CLI/WebView2 tests and vet passed, including every
+extension, uppercase forms, same-size changed-time writes, debounce,
+addition/rename/removal, a sparse font larger than 64 MiB, same-size/time
+limitations and symlink rejection without skips. Native/CDP verification
+used a matching local source CLI/host, copied File Notes assets and a private
+profile. Without changing HTML/CSS/JS, replacing the SVG changed decoded
+canvas pixels from `[255,0,0,255]` to `[0,255,0,255]`; replacing the font at
+the same URL from Noto Sans KR to local Windows Arial changed measured text
+width from `203.23989868164062` to `204.51171875` with a loaded FontFace.
+Each operation produced a new document and retained the HTTPS origin.
+Existing text reload, real beforeunload cancellation preserving input,
+subsequent retry and normal close/cleanup also passed with exit 0. Debug was
+off; no test-side navigation or cache override was used.
+
+The first visual fixture used inline CSS/JS and failed its baseline under
+the existing CSP. It cleaned up with exit 0; changing the fixture to local
+external files passed without changing CSP or runtime behavior.
+Failed receipt: `.cache/normal-reload-1791199787277/result.json`.
+Passed receipt: `.cache/normal-reload-1791199834636/result.json`.
+Local CLI SHA-256: `1e45ae85492ae725b2aecb44625c233c71705d687af1d56079d12eff77751602`.
+Local host SHA-256: `1d62f8f2dc8f5a5888bfa9e1cb5a5cb2666c56ed0d2282e61b7dc0d3df3f0fc7`.
+These source-build bytes report alpha.65 but are not its public release bytes.
+
+Compared with an archive of source `bd0ad1e` using Go 1.27.1 and identical
+`-buildvcs=false -trimpath -ldflags='-s -w -H windowsgui'` options, the host
+grew from 4,853,760 to 4,854,784 bytes: +1,024 bytes. This is a size check,
+not a production performance benchmark. No hosted release/stress, installer
+execution, dependency/IPC/DB/schema/CI/version change, public publication or
+beta promotion was performed. Existing user apps and profiles were untouched.
+CommandCode DeepSeek 4.1 Flash/high supplied the checked scope draft.
+
+## Original Text-only Scope
 
 `velox run --watch` samples entry/HTML/HTM/CSS/JS/MJS content every
 500 ms and emits once after a 500 ms quiet period. It uses bounded content

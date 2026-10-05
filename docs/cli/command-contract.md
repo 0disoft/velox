@@ -107,8 +107,13 @@ replacement process.
 - `--debug` explicitly enables development tools and cache bypass.
 - `--watch` independently enables full-page reload after source HTML, HTM,
   CSS, JS or MJS contents settle for 500 ms, sampled every 500 ms. The entry
-  file is always included. Additions and deletions count; reverted edits do
-  not. Font/image and manifest edits are outside the watch scope.
+  file is always included. The source checkout also watches image extensions
+  PNG/APNG/JPG/JPEG/GIF/WebP/AVIF/BMP/ICO/SVG and font extensions
+  WOFF/WOFF2/TTF/OTF/EOT, case-insensitively, by path, size and modification
+  time only. Binary contents are not repeatedly read or counted in the text
+  budget. Additions, deletions and renames count; reverted text contents do
+  not. Same-size binary edits with preserved modification times cannot be
+  detected. Manifest changes and other asset formats remain outside the scope.
 - Watch is default-off and is passed as a host argument, not stored in the
   manifest, runtime configuration, profile, build report or ZIP. It does not
   enable DevTools; cache bypass is confined to the development WebView.
@@ -124,6 +129,7 @@ replacement process.
   running app with the same identity/profile before starting a watched run.
 - Watch is available in published alpha.64 and needs its matching CLI/host
   pair. Earlier alpha.63 binaries do not implement this option.
+  Image/font watching is source-only and not in published alpha.65.
 
 ### velox build
 

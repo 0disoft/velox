@@ -101,13 +101,17 @@ func (w *Watcher) snapshot() ([32]byte, error) {
 	for _, asset := range tree.Files {
 		ext := strings.ToLower(filepath.Ext(asset.RelativePath))
 		if asset.SourcePath != w.entry && ext != ".html" && ext != ".htm" && ext != ".css" && ext != ".js" && ext != ".mjs" {
+			// Binary assets contribute metadata only, not repeated content reads.
+			if isVisualAsset(ext) {
+				fmt.Fprintf(hash, "asset\x00%s\x00%d\x00%d\x00", asset.RelativePath, asset.Size, asset.ModifiedUnixNano)
+			}
 			continue
 		}
 		file, before, err := safefs.OpenVerifiedRegular(asset.SourcePath)
 		if err != nil {
 			return result, err
 		}
-		fmt.Fprintf(hash, "%s\x00%d\x00", asset.RelativePath, before.Size())
+		fmt.Fprintf(hash, "text\x00%s\x00%d\x00", asset.RelativePath, before.Size())
 		n, readErr := io.Copy(hash, io.LimitReader(file, maxTextBytes-total+1))
 		after, statErr := file.Stat()
 		closeErr := file.Close()
@@ -124,4 +128,14 @@ func (w *Watcher) snapshot() ([32]byte, error) {
 	}
 	copy(result[:], hash.Sum(nil))
 	return result, nil
+}
+
+func isVisualAsset(ext string) bool {
+	switch ext {
+	case ".png", ".apng", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".bmp", ".ico", ".svg",
+		".woff", ".woff2", ".ttf", ".otf", ".eot":
+		return true
+	default:
+		return false
+	}
 }

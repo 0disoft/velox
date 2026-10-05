@@ -257,11 +257,15 @@ subfolder navigation, write permission, monitoring, font or host dependency.
 
 All listed M1 commands are currently implemented.
 
-The source checkout adds opt-in `run --watch` for stable HTML/CSS/JavaScript
-edits, using full-page reload with application `beforeunload` protection.
+The source checkout supports opt-in `run --watch` for stable HTML/CSS/JavaScript
+edits and metadata changes to common images/fonts, using full-page reload with
+application `beforeunload` protection. Image/font detection uses path, size and
+modification time rather than repeated binary reads; same-size edits with a
+preserved modification time are not detected. Manifest edits remain excluded.
 Watch is not part of the manifest or packaged defaults, enables no DevTools,
 adds no dependency or development server, and stops with the development
-window. Watch is available in public alpha.64; alpha.63 does not implement it.
+window. Text watching is available in public alpha.64/65; alpha.63 does not
+implement it. Image/font watching is source-only, not in public alpha.65.
 
 The command contract is defined in docs/cli/command-contract.md.
 

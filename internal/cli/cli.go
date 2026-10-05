@@ -287,7 +287,7 @@ func printDoctor(writer io.Writer, result doctor.Result) {
 func runProject(args []string, dependencies Dependencies) int {
 	flags, options := newFlagSet("run", dependencies.Stderr)
 	debug := flags.Bool("debug", false, "enable WebView2 development tools and context menus")
-	watch := flags.Bool("watch", false, "reload after stable HTML, CSS and JavaScript edits")
+	watch := flags.Bool("watch", false, "reload after stable web asset edits, including images and fonts")
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
