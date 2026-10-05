@@ -10,9 +10,9 @@
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.66 tag CI 37317775399 passed basic checkout-free packaging; unauthenticated public download bytes, sizes and hashes matched the CI and GitHub digests, and the extracted public CLI reported `0.5.10-alpha.66`. Packaged-app launch, native UI and OS interaction were not run against these published bytes; the native watch/UI evidence remains the historical alpha.65 result and is not upgraded to alpha.66. Prior alpha.62/63/64 receipts remain historical; see release.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.66 tag CI 37317775399 passed basic checkout-free packaging; unauthenticated public downloads matched CI and GitHub digests. The later exact-public-CLI follow-up generated, built and inspected one isolated text-editor, launched its public-host-identical EXE, restored and saved a draft, and checked post-save no-resurrection. This adds bounded native evidence, not a fresh repetition of the full required command sequence. Prior release receipts remain historical; see alpha66-public-native.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
-| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Historical alpha.65 evidence: the exact public alpha.65 CLI/host passed two HTML/CSS/JS automatic reloads, canceled-input preservation, later retry and normal close using `scripts/dev-reload-smoke.ts` in watch mode without debug/cache override. Private profile and HTTPS origin were retained; receipt and hashes are in release.md. That native result is not upgraded to the alpha.66 published bytes. Historical alpha.62/64 reload and earlier failures remain below |
+| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | The exact public alpha.66 CLI/host passed HTML/CSS/JS reloads, image/font rendered changes, canceled-input preservation, retry and normal close using the existing native watch smoke with debug off and private profile/HTTPS origin preserved. Normal/debug diagnostic isolation also passed. See alpha66-public-native.md. Earlier alpha.65 and alpha.62/64 results remain historical |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
@@ -35,6 +35,19 @@ published afterward from those verified assets, recorded in
 startup, installer, watch or draft interaction ran against these CI bytes,
 and no public download or adoption result is claimed here. Tag receipts are in
 [the alpha.66 tag evidence](alpha66-tag-evidence.md).
+
+## Alpha.66 Public Native Follow-Up: 2026-10-05
+
+A later local step ran the existing native smoke scripts against the exact
+downloaded public alpha.66 bytes: text-editor draft write/restore/clear, the
+`run --watch` reload smoke (HTML/CSS/JS plus image/font) and the
+development-diagnostics smoke all exited 0. One manual packaged-window check
+recovered and saved a draft and passed post-save no-resurrection on the same
+profile and unchanged host hash. No GUI close or residual-process claim is
+made, and installer, folder-browser, hosted-verifier, stress, performance and
+external adoption were not run. The required beta checks above are unchanged
+and beta stays held. See
+[the alpha.66 public native follow-up](alpha66-public-native.md).
 
 ## Source-Only Local Candidate: 2026-10-05
 

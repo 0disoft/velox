@@ -67,14 +67,18 @@ smoke for tag `v0.5.10-alpha.66` at source `842fead` with Go 1.26.0. The same
 four assets were published without a second producer run. ZIP SHA-256:
 `3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`.
 Unauthenticated public downloads matched the CI artifact checksums; the release
-manifest, SPDX, provenance and the public CLI version were checked. This
-publication verified artifact identity only; no native UI, startup, installer,
+manifest, SPDX, provenance and the public CLI version were checked. At
+publication, verification covered artifact identity only; no native UI, startup, installer,
 watch, draft or public native/picker interaction ran against these published
 bytes. The prior alpha.65 unsigned preview remains a historical record, and its
 exact-public-native watch and starter-picker evidence is not upgraded to
 alpha.66. The earlier alpha.62 public-download verification run `35079337819`
 and its native lifecycle evidence also remain separate historical records. See
 the [release record](docs/ops/release.md) for exact scope and retained failures.
+A later local follow-up ran the existing native smoke scripts against these
+exact downloaded bytes; see
+[the alpha.66 public native follow-up](docs/ops/alpha66-public-native.md). It
+adds no installer, folder-browser, hosted-verifier, stress or adoption evidence.
 Beta remains held under the product workflow checklist.
 
 Source version: `0.5.10-alpha.66` (published unsigned prerelease). The four

@@ -543,6 +543,18 @@ interaction ran against these published bytes. It is
 `same-repository-public-download` evidence with `externalUserAttempt: false`;
 receipts are in [the alpha.66 publication record](docs/ops/alpha66-publication.md).
 
+Alpha.66 public native follow-up (2026-10-05): a later local step ran the
+existing text-editor draft, dev-reload watch (HTML/CSS/JS plus image/font) and
+development-diagnostics scripts against the exact downloaded public bytes,
+plus one manual packaged-window draft/save/recovery check. Every script run
+exited 0; the manual check passed post-save no-resurrection on the same
+profile and unchanged host hash. No normal GUI close or no-residual-process
+claim is made. Installer, folder-browser, hosted-verifier, stress, performance
+and external adoption were not run. Evidence stays `same-repository` with
+`externalUserAttempt: false`. See the
+[alpha.66 public native follow-up](docs/ops/alpha66-public-native.md) and the
+[publication record](docs/ops/alpha66-publication.md).
+
 The previous public preview was `v0.5.10-alpha.65`, source
 `c8f618bd94e48cb7c01d61aa0e65e3bc7116875c`. Root-module tests/vet and all
 12 Bun template cases passed locally before tagging. Tag CI `37298703202`

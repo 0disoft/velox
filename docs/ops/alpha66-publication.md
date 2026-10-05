@@ -1,5 +1,10 @@
 # Alpha.66 Publication: 2026-10-05
 
+> Follow-up (2026-10-05): a later local step ran the existing native smoke
+> scripts and one manual packaged-window check against these exact downloaded
+> public bytes. This does not change the publication's artifact-identity scope;
+> see [the alpha.66 public native follow-up](alpha66-public-native.md).
+
 This is the publication record for unsigned prerelease `v0.5.10-alpha.66`. It
 records the public release identity, the reused tag-CI assets, the narrow
 unauthenticated public download checks, and the scopes deliberately not run.
