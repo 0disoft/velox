@@ -22,6 +22,24 @@ dependencies and runner/job scheduling are unchanged; workflow changes only
 correct the generated release description. Scope and skipped-check boundaries
 are in `docs/ops/alpha66-preparation.md`.
 
+Alpha.66 tag CI (hosted, 2026-10-05): the prepared source `842fead` and
+annotated tag `v0.5.10-alpha.66` were pushed in sequence and triggered one
+alpha-evidence run 37317775399 (attempt 1), which passed the reproducible
+unsigned producer and checkout-free consumer jobs with Go 1.26.0 on Windows
+amd64. The producer ran release-contract tests, two release builds, evidence
+generation and bundle upload; the consumer checked out no source and invoked
+only `velox.exe`. The release ZIP is 5,903,850 bytes, SHA-256
+`3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`, both
+consumer app ZIPs hashed
+`0ee5221c541312848255165c2dc8b0b1ef97bf157d4e17d4b33c7919f694fa33`, and the
+three checksum entries, 16 manifest artifacts, 17 SPDX members and the
+provenance subject/source/invocation `37317775399/1` were checked against the
+ZIP. The publication job was skipped, so alpha.66 is not published and public
+alpha.65 is unchanged. No native UI, startup, installer, watch, draft or
+public-download interaction ran against these CI bytes, and those are not
+upgraded from the earlier local results. Receipts are in
+`docs/ops/alpha66-tag-evidence.md`.
+
 Alpha.65 source candidate `11efd69` (source-only, 2026-10-05): local source
 `11efd69a7dfeda04ec84e31b804b6af68cc29bad` was clean at build time and kept the
 `0.5.10-alpha.65` string, but its bytes differ from the public alpha.65

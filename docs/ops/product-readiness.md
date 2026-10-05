@@ -23,6 +23,18 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Alpha.66 Tag CI: 2026-10-05
+
+The prepared source `842fead` and annotated tag `v0.5.10-alpha.66` were
+pushed in sequence, and one alpha-evidence run
+[37317775399](https://github.com/0disoft/velox/actions/runs/37317775399)
+passed the reproducible producer and checkout-free consumer jobs with Go
+1.26.0 on `windows-2025`. The publication job was skipped, so alpha.66 is not
+published and the current public preview stays `0.5.10-alpha.65`. No native
+UI, startup, installer, watch or draft interaction ran against these CI bytes,
+and no public download or adoption result is claimed. Receipts are in
+[the alpha.66 tag evidence](alpha66-tag-evidence.md).
+
 ## Source-Only Local Candidate: 2026-10-05
 
 Local source `11efd69a7dfeda04ec84e31b804b6af68cc29bad` was clean at build time and kept

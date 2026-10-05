@@ -76,6 +76,13 @@ Beta remains held under the product workflow checklist.
 Source version: `0.5.10-alpha.66` (not published); the public preview above
 remains `v0.5.10-alpha.65` until an alpha.66 release is published.
 
+[Tag CI 37317775399](https://github.com/0disoft/velox/actions/runs/37317775399)
+built reproducible unsigned producer evidence and a checkout-free consumer
+smoke for tag `v0.5.10-alpha.66` at source `842fead` with Go 1.26.0, but
+skipped publication. Alpha.66 remains unpublished and the public alpha.65
+release above is unchanged. Details are in
+[the tag evidence](docs/ops/alpha66-tag-evidence.md).
+
 ## Headline Metrics
 
 1. End-to-end cold build time.

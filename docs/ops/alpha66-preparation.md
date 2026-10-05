@@ -2,16 +2,19 @@
 
 ## Identity
 
-This records local preparation of version `0.5.10-alpha.66`. It is not
-published: there is no alpha.66 tag, release, hosted run, or publication, and
-no matching alpha.66 distribution bundle, digests, or hosted evidence exists
-yet. The current public preview remains the unsigned prerelease
-`v0.5.10-alpha.65`.
+This is the historical local preparation record for version
+`0.5.10-alpha.66`, written before the tag push. At preparation time it was
+not published: there was no alpha.66 tag, release, hosted run, or publication,
+and no matching alpha.66 distribution bundle, digests, or hosted evidence
+existed yet. The tag and hosted evidence were added afterward; see
+[the alpha.66 tag evidence](alpha66-tag-evidence.md). The current public
+preview remains the unsigned prerelease `v0.5.10-alpha.65`, and alpha.66 is
+still not published.
 
 - Source version: `0.5.10-alpha.66` (not published).
 - Public preview: `0.5.10-alpha.65` (published unsigned prerelease).
-- No alpha.66 artifacts: no release bundle, checksums, SBOM, provenance,
-  public download, or hosted evidence.
+- At preparation time, no alpha.66 artifacts existed: no release bundle,
+  checksums, SBOM, provenance, public download, or hosted evidence.
 - Only the version string changed, so a locally compiled CLI reports
   `0.5.10-alpha.66`.
 
@@ -71,9 +74,10 @@ Locally run results on the shared checkout at the prepared version:
   contained no control escapes. Workflow triggers, jobs, commands and permissions
   are unchanged; only generated release prose changes.
 
-No alpha.66 distribution bundle, digest, hosted run, or
-publication is claimed. The prepared version was exercised only through a
-locally compiled CLI, not a shipped alpha.66 distribution.
+At preparation time, no alpha.66 distribution bundle, digest, hosted run, or
+publication was asserted. The prepared version was exercised only through a
+locally compiled CLI, not a shipped alpha.66 distribution. Hosted tag evidence
+was added later and is recorded separately.
 
 ## Release Boundary
 

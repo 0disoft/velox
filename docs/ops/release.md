@@ -84,13 +84,32 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.66 Tag CI: 2026-10-05
+
+The owner approved a batched push of prepared source `842fead` and the
+annotated tag `v0.5.10-alpha.66`. Remote main and the peeled tag both matched
+`842fead0c889e9f161c2567a91c8d0fd4c2ca260`. The tag push triggered exactly one
+alpha-evidence run, [37317775399](https://github.com/0disoft/velox/actions/runs/37317775399)
+attempt 1, which passed the reproducible unsigned producer job and the
+checkout-free consumer smoke with Go 1.26.0 on `windows-2025`. The publication
+job was skipped, so alpha.66 is not published and public alpha.65 is unchanged.
+The release ZIP is 5,903,850 bytes, SHA-256
+`3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`; both
+consumer app ZIPs hashed
+`0ee5221c541312848255165c2dc8b0b1ef97bf157d4e17d4b33c7919f694fa33`. These
+Go 1.26.0 CI bytes differ from the prior local Go 1.27.1 candidates and are not
+upgraded to the earlier local native results. The receipt, exact hashes and
+skipped native/public boundaries are in
+[the alpha.66 tag evidence](alpha66-tag-evidence.md).
+
 ## Alpha.66 Local Preparation: 2026-10-05
 
-The source version is prepared at `0.5.10-alpha.66`, and this preparation is
-not published. The current public preview remains `v0.5.10-alpha.65`; no
-alpha.66 tag, release, hosted run, or publication exists. No matching alpha.66
-distribution bundle, digests, or hosted evidence exists yet, although a locally
-run `go run ./cmd/velox version --json` reports the prepared version.
+This historical preparation preceded the tag CI above. At that point the
+source version was `0.5.10-alpha.66`, not published, with no alpha.66 tag,
+distribution bundle, digests or hosted evidence. The locally run
+`go run ./cmd/velox version --json` reported the prepared version. Tag CI has
+since produced the matching distribution artifacts; publication is still
+pending, and the current public preview remains `v0.5.10-alpha.65`.
 
 The prepared release scope is the feature slices implemented after the
 alpha.65 publication: image and font asset detection in
