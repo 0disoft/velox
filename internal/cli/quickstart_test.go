@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/0disoft/velox/internal/doctor"
+	"github.com/0disoft/velox/internal/runner"
 )
 
 func TestQuickstartCLISequence(t *testing.T) {
@@ -34,7 +35,7 @@ func TestQuickstartCLISequence(t *testing.T) {
 			return doctor.WindowsVersion{Major: 10, Build: doctor.MinimumWindowsClientBuild}
 		},
 		WebView2VersionProbe: func() (string, error) { return "123.0.0.0", nil },
-		HostLauncher: func(_ string, config string, _ bool, _, _ io.Writer) (int, error) {
+		HostLauncher: func(_ string, config string, _ runner.Options, _, _ io.Writer) (int, error) {
 			launchedConfig = config
 			_, err := os.Stat(config)
 			return 0, err

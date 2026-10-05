@@ -5,9 +5,10 @@ import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 
 type State = { html: string; js: string; css: string; origin: string };
-type Message = { id?: number; error?: { message: string }; result?: { result?: { value?: State } } };
+type Message = { id?: number; method?: string; params?: { type?: string }; error?: { message: string }; result?: { result?: { value?: State | string } } };
 const root = resolve(import.meta.dir, "..");
 const release = resolve(root, process.env.VELOX_RELOAD_RELEASE_DIR ?? "dist/release/velox-windows-x64");
+const watch = process.env.VELOX_RELOAD_WATCH === "1";
 const manifest = JSON.parse(await readFile(join(release, "release-manifest.json"), "utf8"));
 const hashes: Record<string, string> = {};
 for (const file of ["velox.exe", "velox-host.exe"]) {
@@ -44,9 +45,10 @@ await new Promise<void>((resolve, reject) => server.close(error => error ? rejec
 const result: {
   version: string; hashes: Record<string, string>; startedAtUtc: string; finishedAtUtc?: string;
   before?: State; cycles: { phase: string; ignoreCache: false; observed?: State; passed: boolean }[];
+  mode: string; canceledReloadPreservedInput?: boolean; normalCloseExitCode?: number | null;
   passed: boolean; error?: string; cleanupExitCode?: number | null;
-} = { version: manifest.releaseVersion, hashes, startedAtUtc: new Date().toISOString(), cycles: [], passed: false };
-const child = spawn(join(release, "velox.exe"), ["run", "--config", join(project, "velox.json"), "--debug", "--json"], {
+} = { mode: watch ? "watch-with-debug-off" : "manual-debug", version: manifest.releaseVersion, hashes, startedAtUtc: new Date().toISOString(), cycles: [], passed: false };
+const child = spawn(join(release, "velox.exe"), ["run", "--config", join(project, "velox.json"), watch ? "--watch" : "--debug", "--json"], {
   cwd: root, env: { ...process.env, VELOX_DATA_DIR: join(work, "profile"),
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-address=127.0.0.1 --remote-debugging-port=" + port },
   stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
@@ -56,6 +58,7 @@ child.on("error", error => { spawnError = error; });
 for (const stream of [child.stdout, child.stderr]) stream.on("data", bytes => { output = (output + bytes.toString()).slice(-32768); });
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const pending = new Map<number, (message: Message) => void>();
+let beforeUnloadOpen = false;
 try {
   let target: { webSocketDebuggerUrl: string } | undefined;
   const deadline = Date.now() + 20000;
@@ -77,6 +80,7 @@ try {
   });
   ws.onmessage = event => {
     const message: Message = JSON.parse(String(event.data));
+    if (message.method === "Page.javascriptDialogOpening" && message.params?.type === "beforeunload") beforeUnloadOpen = true;
     if (message.id && pending.has(message.id)) {
       pending.get(message.id)!(message);
       pending.delete(message.id);
@@ -96,7 +100,7 @@ try {
       expression: '(()=>{const n=document.getElementById("reload-proof");return n?{html:n.dataset.phase,js:n.textContent,css:getComputedStyle(n).color,origin:location.origin}:null})()',
       returnByValue: true,
     });
-    return response.result?.result?.value;
+    return response.result?.result?.value as State | undefined;
   };
   const matches = (value: State | undefined, phase: typeof phases[number]) =>
     value?.html === phase.name && value.js === phase.name && value.css === phase.color;
@@ -115,11 +119,42 @@ try {
   for (const phase of phases.slice(1)) {
     await change(phase);
     // This regression must pass without a test-side cache override or hard reload.
-    await call("Page.reload", { ignoreCache: false });
+    if (!watch) await call("Page.reload", { ignoreCache: false });
     const observed = await observe(phase, result.before!.origin);
     const passed = matches(observed, phase) && observed?.origin === result.before!.origin;
     result.cycles.push({ phase: phase.name, ignoreCache: false, observed, passed });
     if (!passed) throw Error("Normal reload failed: " + phase.name);
+  }
+  if (watch) {
+    await call("Page.enable");
+    // Trusted input gives beforeunload the same sticky activation as editing
+    // the real textarea. No test-side navigation or cache override is used.
+    await call("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 300, button: "left", clickCount: 1 });
+    await call("Input.dispatchMouseEvent", { type: "mouseReleased", x: 200, y: 300, button: "left", clickCount: 1 });
+    await call("Input.insertText", { text: "watch protection" });
+    const blocked = { name: "after-cancel", color: "rgb(30, 140, 160)" };
+    await change(blocked);
+    const deadline = Date.now() + 8000;
+    while (!beforeUnloadOpen && Date.now() < deadline) await wait(100);
+    if (!beforeUnloadOpen) throw Error("Watch reload did not obtain beforeunload consent");
+    await call("Page.handleJavaScriptDialog", { accept: false });
+    const old = await state();
+    const editor = await call("Runtime.evaluate", { expression: 'document.querySelector("#editor").value', returnByValue: true });
+    result.canceledReloadPreservedInput = matches(old, phases[2]) && editor.result?.result?.value === "watch protection";
+    if (!result.canceledReloadPreservedInput) throw Error("Canceled reload discarded input");
+    await call("Runtime.evaluate", { expression: '(()=>{const e=document.querySelector("#editor");e.value="";e.dispatchEvent(new Event("input",{bubbles:true}));})()' });
+    await wait(1200);
+    const retry = { name: "after-retry", color: "rgb(30, 140, 160)" };
+    await change(retry);
+    const observed = await observe(retry, result.before!.origin);
+    const passed = matches(observed, retry) && observed?.origin === result.before!.origin;
+    result.cycles.push({ phase: retry.name, ignoreCache: false, observed, passed });
+    if (!passed) throw Error("Watch did not recover after canceled reload");
+    await call("Page.close");
+    const closeDeadline = Date.now() + 10000;
+    while (child.exitCode === null && Date.now() < closeDeadline) await wait(100);
+    result.normalCloseExitCode = child.exitCode;
+    if (child.exitCode !== 0) throw Error("Watch process did not exit normally");
   }
   for (const [file, digest] of Object.entries(hashes)) {
     if (createHash("sha256").update(await readFile(join(release, file))).digest("hex") !== digest) throw Error("Artifact changed during test");
@@ -133,6 +168,8 @@ try {
     const stop = spawnSync("taskkill.exe", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true, encoding: "utf8" });
     result.cleanupExitCode = stop.status;
     if (stop.status !== 0) result.passed = false;
+  } else if (watch && child.exitCode === 0) {
+    result.cleanupExitCode = 0;
   } else {
     result.passed = false;
   }

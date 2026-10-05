@@ -13,6 +13,7 @@ type fakeWebView struct {
 	dispatches []func()
 	destroyed  int
 	sequence   []string
+	scripts    []string
 }
 
 func (f *fakeWebView) Run() {
@@ -50,7 +51,7 @@ func (f *fakeWebView) SetHtml(string) {}
 
 func (f *fakeWebView) Init(string) {}
 
-func (f *fakeWebView) Eval(string) {}
+func (f *fakeWebView) Eval(script string) { f.scripts = append(f.scripts, script) }
 
 func (f *fakeWebView) Bind(string, interface{}) error { return nil }
 
@@ -102,5 +103,30 @@ func TestRuntimeReportsBrowserProcessID(t *testing.T) {
 	}
 	if processID != 42 {
 		t.Fatalf("BrowserProcessID() = %d, want 42", processID)
+	}
+}
+
+func TestWatchReloadIsOptInCoalescedAndDroppedAfterRun(t *testing.T) {
+	view := &fakeWebView{}
+	runtime := &Runtime{view: view}
+	runtime.requestWatchReload()
+	if len(view.dispatches) != 0 {
+		t.Fatal("reload queued while watch off")
+	}
+	runtime.watchRunning.Store(true)
+	runtime.requestWatchReload()
+	runtime.requestWatchReload()
+	if len(view.dispatches) != 1 {
+		t.Fatal("duplicate reload queued")
+	}
+	view.drainOne(t)
+	if len(view.scripts) != 1 || view.scripts[0] != watchReloadScript || view.destroyed != 0 {
+		t.Fatal("reload bypassed browser protection")
+	}
+	runtime.requestWatchReload()
+	runtime.watchRunning.Store(false)
+	view.drainOne(t)
+	if len(view.scripts) != 1 {
+		t.Fatal("reload evaluated after watch stopped")
 	}
 }

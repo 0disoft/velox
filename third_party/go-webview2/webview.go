@@ -93,6 +93,8 @@ type WindowOptions struct {
 type WebViewOptions struct {
 	Window unsafe.Pointer
 	Debug  bool
+	// DevelopmentCache bypasses cache without enabling development tools.
+	DevelopmentCache bool
 
 	// DataPath specifies the datapath for the WebView2 runtime to use for the
 	// browser instance.
@@ -233,7 +235,7 @@ func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 		destroyBeforeReturn(w)
 		return nil, err
 	}
-	if err := chromium.ConfigureDevelopmentCache(options.Debug); err != nil {
+	if err := chromium.ConfigureDevelopmentCache(options.Debug || options.DevelopmentCache); err != nil {
 		destroyBeforeReturn(w)
 		return nil, err
 	}

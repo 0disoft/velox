@@ -283,6 +283,7 @@ func printDoctor(writer io.Writer, result doctor.Result) {
 func runProject(args []string, dependencies Dependencies) int {
 	flags, options := newFlagSet("run", dependencies.Stderr)
 	debug := flags.Bool("debug", false, "enable WebView2 development tools and context menus")
+	watch := flags.Bool("watch", false, "reload after stable HTML, CSS and JavaScript edits")
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
@@ -307,7 +308,7 @@ func runProject(args []string, dependencies Dependencies) int {
 	if options.json {
 		hostStderr = io.Discard
 	}
-	result, err := runner.Execute(plan, *debug, dependencies.HostLauncher, hostStdout, hostStderr)
+	result, err := runner.Execute(plan, runner.Options{Debug: *debug, Watch: *watch}, dependencies.HostLauncher, hostStdout, hostStderr)
 	if err != nil {
 		var hostExit *runner.HostExitError
 		if errors.As(err, &hostExit) {

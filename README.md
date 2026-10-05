@@ -109,7 +109,7 @@ Explicitly deferred:
 
 - Native application backends and plugins.
 - Filesystem, shell, process, and sidecar APIs.
-- Frontend bundling, hot reload, and a development server.
+- Frontend bundling, state-preserving hot module replacement, and a development server.
 - Automatic updates and repair, machine-wide or elevation-requiring installs,
   MSI/MSIX packaging, and code signing automation.
 - macOS, Linux, ARM64, and multi-window support.
@@ -156,6 +156,13 @@ velox build --config .\velox.json --out .\dist --json
 velox inspect .\dist\dev.velox.hello.zip --json
 velox version --json
 ```
+
+The current source checkout also supports `velox run --watch --config velox.json`:
+stable HTML/CSS/JavaScript saves trigger full-page reloads without enabling
+DevTools. This source-only addition requires a newly built CLI/host pair;
+the published alpha.63 bundle does not include it yet. App `beforeunload`
+handlers can cancel a reload. Normal `run` and packaged apps do not start a
+watcher. Fonts/images and manifest changes are not auto-reloaded.
 
 `build` produces `dist/<app-id>/`, `dist/<app-id>.zip`, and a deterministic
 `build-result.json` inside the portable directory and archive. The host bytes

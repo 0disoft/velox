@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/0disoft/velox/internal/doctor"
+	"github.com/0disoft/velox/internal/runner"
 )
 
 func TestBuildCancellationUsesPackagingErrorContract(t *testing.T) {
@@ -352,7 +353,7 @@ func TestRunJSONContractAndTemporaryConfigCleanup(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	exitCode := Run([]string{"run", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
 		Stdout: &stdout, Stderr: &stderr, HostPath: host,
-		HostLauncher: func(hostPath, runtimeConfig string, _ bool, childStdout, childStderr io.Writer) (int, error) {
+		HostLauncher: func(hostPath, runtimeConfig string, _ runner.Options, childStdout, childStderr io.Writer) (int, error) {
 			configPath = runtimeConfig
 			if childStdout != io.Discard || childStderr != io.Discard {
 				t.Fatal("JSON mode exposed child output streams")
@@ -376,7 +377,7 @@ func TestRunPreservesHostExitCode(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	exitCode := Run([]string{"run", "--config", config, "--out", filepath.Join(root, "dist"), "--json"}, Dependencies{
 		Stdout: &stdout, Stderr: &stderr, HostPath: host,
-		HostLauncher: func(hostPath, runtimeConfig string, _ bool, childStdout, childStderr io.Writer) (int, error) {
+		HostLauncher: func(hostPath, runtimeConfig string, _ runner.Options, childStdout, childStderr io.Writer) (int, error) {
 			return 5, nil
 		},
 	})

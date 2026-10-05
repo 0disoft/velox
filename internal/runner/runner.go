@@ -12,7 +12,12 @@ import (
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
-type Launcher func(hostPath, configPath string, debug bool, stdout, stderr io.Writer) (int, error)
+type Options struct {
+	Debug bool
+	Watch bool
+}
+
+type Launcher func(hostPath, configPath string, options Options, stdout, stderr io.Writer) (int, error)
 
 type Result struct {
 	ExitCode int `json:"exitCode"`
@@ -26,7 +31,7 @@ func (err *HostExitError) Error() string {
 	return fmt.Sprintf("host exited with code %d", err.Code)
 }
 
-func Execute(plan buildplan.Plan, debug bool, launcher Launcher, stdout, stderr io.Writer) (result Result, resultErr error) {
+func Execute(plan buildplan.Plan, options Options, launcher Launcher, stdout, stderr io.Writer) (result Result, resultErr error) {
 	if launcher == nil {
 		launcher = Launch
 	}
@@ -54,7 +59,7 @@ func Execute(plan buildplan.Plan, debug bool, launcher Launcher, stdout, stderr 
 		return Result{}, fmt.Errorf("write temporary runtime config: %w", errors.Join(writeErr, closeErr))
 	}
 
-	exitCode, launchErr := launcher(snapshot.HostPath, configPath, debug, stdout, stderr)
+	exitCode, launchErr := launcher(snapshot.HostPath, configPath, options, stdout, stderr)
 	if launchErr != nil {
 		return Result{ExitCode: exitCode}, launchErr
 	}
@@ -64,16 +69,19 @@ func Execute(plan buildplan.Plan, debug bool, launcher Launcher, stdout, stderr 
 	return Result{ExitCode: 0}, nil
 }
 
-func hostCommand(hostPath, configPath string, debug bool) *exec.Cmd {
+func hostCommand(hostPath, configPath string, options Options) *exec.Cmd {
 	args := []string{"--config", configPath}
-	if debug {
+	if options.Debug {
 		args = append(args, "--debug")
+	}
+	if options.Watch {
+		args = append(args, "--watch")
 	}
 	return exec.Command(hostPath, args...)
 }
 
-func Launch(hostPath, configPath string, debug bool, stdout, stderr io.Writer) (int, error) {
-	command := hostCommand(hostPath, configPath, debug)
+func Launch(hostPath, configPath string, options Options, stdout, stderr io.Writer) (int, error) {
+	command := hostCommand(hostPath, configPath, options)
 	command.Stdin = nil
 	command.Stdout = stdout
 	command.Stderr = stderr

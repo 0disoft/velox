@@ -16,7 +16,7 @@ import (
 func TestExecuteProvidesValidTemporaryConfigAndRemovesIt(t *testing.T) {
 	plan := runnerPlan(t)
 	var observedPath string
-	result, err := Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
+	result, err := Execute(plan, Options{}, func(hostPath, configPath string, _ Options, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		if filepath.Dir(configPath) != plan.Snapshot().Manifest.ProjectRoot {
 			t.Fatalf("config outside project root: %s", configPath)
@@ -44,7 +44,7 @@ func TestExecuteProvidesValidTemporaryConfigAndRemovesIt(t *testing.T) {
 func TestExecutePreservesHostExitCodeAndCleansConfig(t *testing.T) {
 	plan := runnerPlan(t)
 	var observedPath string
-	result, err := Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
+	result, err := Execute(plan, Options{}, func(hostPath, configPath string, _ Options, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		return 5, nil
 	}, io.Discard, io.Discard)
@@ -60,7 +60,7 @@ func TestExecutePreservesHostExitCodeAndCleansConfig(t *testing.T) {
 func TestExecuteCleansConfigWhenHostCannotStart(t *testing.T) {
 	plan := runnerPlan(t)
 	var observedPath string
-	result, err := Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
+	result, err := Execute(plan, Options{}, func(hostPath, configPath string, _ Options, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		return 6, errors.New("start failed")
 	}, io.Discard, io.Discard)
@@ -81,7 +81,7 @@ func TestExecuteCleansConfigWhenLauncherPanics(t *testing.T) {
 				t.Fatalf("panic = %v, want launcher panic", recovered)
 			}
 		}()
-		_, _ = Execute(plan, false, func(hostPath, configPath string, _ bool, stdout, stderr io.Writer) (int, error) {
+		_, _ = Execute(plan, Options{}, func(hostPath, configPath string, _ Options, stdout, stderr io.Writer) (int, error) {
 			observedPath = configPath
 			panic("launcher panic")
 		}, io.Discard, io.Discard)

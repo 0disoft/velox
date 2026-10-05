@@ -71,9 +71,9 @@ compatibility. Doctor is read-only.
 
 ### velox run
 
-Launch the prebuilt host against the source asset directory for a manual smoke
-run. It does not start a development server, watcher, bundler, or hot-reload
-process.
+Launch the prebuilt host against the source asset directory. Default runs do
+not start a watcher; no run starts a development server, bundler or hot module
+replacement process.
 
 - Validate the same project, asset, target, and bundled-host contracts as build.
 - Create a unique runtime configuration beside the project manifest so relative
@@ -82,6 +82,26 @@ process.
 - Close child stdin, wait for the host, and preserve its non-zero exit code.
 - Suppress child output in JSON mode so stdout remains one JSON document.
 - Do not copy source assets or create build output.
+- `--debug` explicitly enables development tools and cache bypass.
+- `--watch` independently enables full-page reload after source HTML, HTM,
+  CSS, JS or MJS contents settle for 500 ms, sampled every 500 ms. The entry
+  file is always included. Additions and deletions count; reverted edits do
+  not. Font/image and manifest edits are outside the watch scope.
+- Watch is default-off and is passed as a host argument, not stored in the
+  manifest, runtime configuration, profile, build report or ZIP. It does not
+  enable DevTools; cache bypass is confined to the development WebView.
+- Watch validates the asset boundary, refuses links/reparse points, and limits
+  watched text to 64 MiB and the asset tree to 10,000 files. Unsafe, unreadable
+  or missing-entry intermediate states suppress reload and are retried.
+- Reload follows normal browser navigation and the application's
+  `beforeunload` protection. Canceling preserves the current page and waits
+  for a subsequent edit; this is not state-preserving HMR. Navigation resets
+  document-scoped native targets exactly as manual reload does.
+- Closing the development window stops and joins the watch loop. Existing
+  app identity, profile and single-instance behavior are unchanged; close a
+  running app with the same identity/profile before starting a watched run.
+- This source addition needs a matching newly built CLI/host pair; it is not
+  included in the currently published alpha.63 binaries.
 
 ### velox build
 

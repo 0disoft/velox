@@ -33,6 +33,7 @@ func run(args []string) int {
 	flags.SetOutput(os.Stderr)
 	configPath := flags.String("config", configDefault, "path to the external runtime configuration")
 	debug := flags.Bool("debug", false, "enable WebView2 development tools")
+	watch := flags.Bool("watch", false, "reload after stable development asset edits")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -96,9 +97,13 @@ func run(args []string) int {
 		AssetRoot:               cfg.AssetRoot,
 		EntryPath:               cfg.EntryPath,
 		Debug:                   *debug,
-		PolicyBlocked:           audit.record,
-		StartupPhase:            timeline.Mark,
-		ShutdownPhase:           shutdownTimeline.Mark,
+		Watch:                   *watch,
+		WatchError: func(error) {
+			fmt.Fprintln(os.Stderr, "velox-host: watch paused for unreadable or unsafe assets; retrying")
+		},
+		PolicyBlocked: audit.record,
+		StartupPhase:  timeline.Mark,
+		ShutdownPhase: shutdownTimeline.Mark,
 	}, func(phase string) error {
 		if audit.enabled {
 			audit.markIPCReady(phase)

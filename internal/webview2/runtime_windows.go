@@ -3,6 +3,7 @@
 package webview2
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/0disoft/velox/internal/clipboard"
+	"github.com/0disoft/velox/internal/devwatch"
 	"github.com/0disoft/velox/internal/externalurl"
 	"github.com/0disoft/velox/internal/fileopen"
 	"github.com/0disoft/velox/internal/ipc"
@@ -27,6 +29,10 @@ type Runtime struct {
 	shutdownPhase func(name string)
 	closeOnce     sync.Once
 	fixedSize     bool
+	watcher       *devwatch.Watcher
+	watchError    func(error)
+	watchRunning  atomic.Bool
+	reloadQueued  atomic.Bool
 }
 
 func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
@@ -40,6 +46,13 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
+	var watcher *devwatch.Watcher
+	if config.Watch {
+		watcher, err = devwatch.New(config.AssetRoot, config.EntryPath)
+		if err != nil {
+			return nil, fmt.Errorf("initialize development watch: %w", err)
+		}
+	}
 
 	var documentGeneration atomic.Uint64
 	var runtime *Runtime
@@ -49,6 +62,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	}
 	view, createErr := webview.NewWithOptionsAndError(webview.WebViewOptions{
 		Debug:                   config.Debug,
+		DevelopmentCache:        config.Watch,
 		DataPath:                config.DataPath,
 		BrowserExecutableFolder: config.BrowserExecutableFolder,
 		AutoFocus:               true,
@@ -98,7 +112,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime = &Runtime{view: view, shutdownPhase: config.ShutdownPhase, fixedSize: config.FixedSize}
+	runtime = &Runtime{view: view, shutdownPhase: config.ShutdownPhase, fixedSize: config.FixedSize, watcher: watcher, watchError: config.WatchError}
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
 		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
 	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
@@ -207,9 +221,45 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 }
 
 func (r *Runtime) Run() {
+	if r.watcher != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan struct{})
+		r.watchRunning.Store(true)
+		go func() {
+			defer close(done)
+			r.watcher.Run(ctx, r.requestWatchReload, r.watchError)
+		}()
+		defer func() {
+			r.watchRunning.Store(false)
+			cancel()
+			<-done
+		}()
+	}
 	r.view.Run()
 	r.markShutdown("run-loop-exited")
 }
+
+// Keep reload on the UI thread and use normal browser navigation, so the
+// application's beforeunload handler can veto it. Never force window teardown.
+func (r *Runtime) requestWatchReload() {
+	if !r.watchRunning.Load() || !r.reloadQueued.CompareAndSwap(false, true) {
+		return
+	}
+	r.view.Dispatch(func() {
+		defer r.reloadQueued.Store(false)
+		if !r.watchRunning.Load() || (r.dispatcher != nil && r.dispatcher.IsClosing()) {
+			return
+		}
+		r.view.Eval(watchReloadScript)
+	})
+}
+
+const watchReloadScript = `(() => {
+  if (window.__veloxWatchReloadPending) return;
+  window.__veloxWatchReloadPending = true;
+  window.location.reload();
+  setTimeout(() => { window.__veloxWatchReloadPending = false; }, 1000);
+})()`
 
 func (r *Runtime) Terminate() {
 	r.view.Terminate()

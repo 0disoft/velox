@@ -22,6 +22,17 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Source Development Watch: 2026-10-05
+
+Source-only `run --watch` adds debounced development reload, independent of
+`--debug`, with no packaged/default watch loop. Detector, CLI/runner and UI
+dispatch tests passed. A native private-profile run observed two consecutive
+HTML/CSS/JS updates, real `beforeunload` cancellation preserving input, a
+successful subsequent edit and normal close. The same-toolchain host grew
+115 KiB (about 2.5%); no production performance claim is made. Published
+alpha.63 artifacts are unchanged. Scope and evidence are in
+[the watch record](development-watch.md).
+
 ## File Notes Public-Runtime Package: 2026-10-05
 
 Follow-up: an isolated File Notes identity built with public alpha.63 passed

@@ -46,6 +46,8 @@ type Config struct {
 	AssetRoot               string
 	EntryPath               string
 	Debug                   bool
+	Watch                   bool
+	WatchError              func(error)
 	PolicyBlocked           func(kind string)
 	StartupPhase            func(name string)
 	ShutdownPhase           func(name string)
