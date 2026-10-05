@@ -1,5 +1,11 @@
 # Development Watch: 2026-10-05
 
+Follow-up: the exact alpha.64 local candidate repeated the native watch test
+successfully with debug off, canceled-input preservation, subsequent reload
+and normal close. Its current hashes and version boundary are recorded in
+[the candidate receipt](alpha64-candidate.md). The earlier hashes below remain
+the original source-integration evidence.
+
 ## Scope
 
 Source-only `velox run --watch` samples entry/HTML/HTM/CSS/JS/MJS content every

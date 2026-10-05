@@ -163,6 +163,9 @@ DevTools. This source-only addition requires a newly built CLI/host pair;
 the published alpha.63 bundle does not include it yet. App `beforeunload`
 handlers can cancel a reload. Normal `run` and packaged apps do not start a
 watcher. Fonts/images and manifest changes are not auto-reloaded.
+Local candidate verification and extraction instructions are in
+[the alpha.64 candidate receipt](docs/ops/alpha64-candidate.md); it is not a
+published release download.
 
 `build` produces `dist/<app-id>/`, `dist/<app-id>.zip`, and a deterministic
 `build-result.json` inside the portable directory and archive. The host bytes

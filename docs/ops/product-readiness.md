@@ -24,6 +24,11 @@ with a mock and label the gate complete.
 
 ## Source Development Watch: 2026-10-05
 
+The local alpha.64 candidate at source `82d2485` passed two matching builds,
+outside-checkout consumer packaging/startup, and exact-candidate native watch
+reload/cancellation/retry/normal close. It remains unsigned and unpublished;
+see [the alpha.64 candidate receipt](alpha64-candidate.md).
+
 Source version is now `0.5.10-alpha.64`; the current public preview remains
 `0.5.10-alpha.63`. The four completed package/installer/watch commits were
 batched to remote main at `588c751279cde7b8ba1d12572665000607778e27` before

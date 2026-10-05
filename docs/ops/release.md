@@ -93,6 +93,13 @@ test fixtures are aligned to `0.5.10-alpha.64`, including development watch.
 The public prerelease remains alpha.63. No alpha.64 tag, hosted release run,
 publication or beta promotion is included in this authorization.
 
+The clean source commit `82d248513c4fdac82ad3984a8bf0c90e209b7a77` now has
+two byte-identical local candidate builds, sidecars and outside-checkout
+consumer verification. Candidate ZIP SHA-256 is
+`37b81f0aad32d7188b7f5e9ee11a6c99ea7bc73c0b66c9a60627b2e62dd1a2cf`.
+Native source/packaged startup and exact-candidate development watch passed.
+Paths, toolchain, checks and omissions are in [the candidate receipt](alpha64-candidate.md).
+
 ## Alpha.63 Published Preview: 2026-10-05
 
 The current unsigned prerelease is
