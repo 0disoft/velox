@@ -269,6 +269,19 @@ implement it. Image/font watching is source-only, not in public alpha.65.
 
 The command contract is defined in docs/cli/command-contract.md.
 
+Source-only `run --debug` also reports bounded metadata-only JavaScript
+diagnostics to local stderr. It uses one private debug binding behind the
+existing trusted-origin gate, with fixed error categories and known startup
+asset-relative locations only. Error messages, stacks, rejection reasons,
+console bodies and document contents are not read; unknown and Promise
+locations remain unavailable. No diagnostic listener, inventory or binding
+is installed under normal/watch-only/packaged defaults, and no background
+worker, file persistence or upload is added. IPC v1 and permissions are
+unchanged. Explicit `--debug --json` permits host stderr while preserving
+one JSON stdout envelope; ordinary JSON mode still suppresses child output.
+Public alpha.65 does not include this extension. See
+[the diagnostic record](../ops/development-diagnostics.md).
+
 ### Window Close
 
 After initialization, title-bar close and Alt+F4 request browser-owned closure.

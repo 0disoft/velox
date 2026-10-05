@@ -102,9 +102,19 @@ replacement process.
   asset containment remains identical to packaged applications.
 - Remove the temporary configuration after normal or unsuccessful host exit.
 - Close child stdin, wait for the host, and preserve its non-zero exit code.
-- Suppress child output in JSON mode so stdout remains one JSON document.
+- Suppress child stdout in JSON mode so stdout remains one JSON document.
+  Child stderr is also suppressed unless `--debug` is explicitly enabled.
 - Do not copy source assets or create build output.
 - `--debug` explicitly enables development tools and cache bypass.
+  The source checkout additionally installs top-level metadata-only error
+  diagnostics: fixed `uncaught-error`/`unhandled-rejection` categories,
+  known startup asset relative path, line and column. Unknown sources and
+  Promise rejection locations become `<unknown>:0:0`; no messages, stacks,
+  rejection reasons or console bodies are read. Native attempts are capped
+  at 20 per host run, including invalid requests. `--debug --json` forwards
+  host stderr while retaining one stdout envelope. Normal, watch-only and
+  packaged defaults install no diagnostic listeners or binding. This
+  diagnostics extension is source-only, not in published alpha.65.
 - `--watch` independently enables full-page reload after source HTML, HTM,
   CSS, JS or MJS contents settle for 500 ms, sampled every 500 ms. The entry
   file is always included. The source checkout also watches image extensions

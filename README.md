@@ -185,6 +185,10 @@ The source checkout additionally watches common image/font assets by path,
 size and modification time without repeatedly reading binary contents.
 Same-size binary edits with a preserved modification time are not detected;
 manifest changes and unlisted asset formats remain outside the watch scope.
+Source-only `run --debug` also emits bounded JavaScript error metadata to
+local stderr, including with `--json`; messages and rejection contents are
+not collected. Default runs install no diagnostic channel. Scope, privacy
+and native receipts are in [Development Diagnostics](docs/ops/development-diagnostics.md).
 Local candidate verification and extraction instructions are in
 [the alpha.64 candidate receipt](docs/ops/alpha64-candidate.md); it is not a
 published release download. Use the public release linked above for published bytes.

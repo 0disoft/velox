@@ -8,6 +8,22 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Development diagnostics (source-only, 2026-10-05): scoped devdiagnostic,
+WebView2, CLI, runner and host tests/vet passed. Six Bun listener cases cover
+same-origin path/query removal, untouched error/rejection contents, rejected
+remote/credential/file sources, frames, missing binding, storm bounds and
+failing bridge suppression. Native normal/debug `run --json` both passed
+with one stdout envelope and close/cleanup exit 0. Default mode had no
+diagnostic binding or output; debug recorded actual error/rejection metadata
+without secret bodies, URL tokens or forged absolute paths. An invalid
+extra-field request plus a 50-call storm confirmed the 20-attempt budget.
+The same-toolchain host grew 6,656 bytes. Source/public bytes and the known
+unknown-location limitation are in `docs/ops/development-diagnostics.md`.
+No public IPC/permission, DB/schema, dependency or CI change is included.
+JSON stderr forwarding changes only with explicit debug. Hosted stress,
+installer and production performance checks were not repeated for this
+development-only extension; no public release or beta promotion occurred.
+
 Image/font development watch (source-only, 2026-10-05): scoped devwatch,
 runner, CLI and WebView2 tests/vet passed. Detector cases cover all supported
 extensions including uppercase forms, metadata-only same-size edits, stable

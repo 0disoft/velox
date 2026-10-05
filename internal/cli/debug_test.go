@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"testing"
 
@@ -32,6 +33,31 @@ func TestRunDebugIsExplicitAndForwarded(t *testing.T) {
 		})
 		if code != 0 || !called {
 			t.Fatalf("run failed: exit=%d called=%t output=%s", code, called, &output)
+		}
+	}
+}
+
+func TestRunDebugJSONKeepsStdoutJSONAndForwardsOnlyOptInStderr(t *testing.T) {
+	for _, debug := range []bool{false, true} {
+		_, config, host := cliFixture(t)
+		args := []string{"run", "--config", config, "--json"}
+		if debug {
+			args = append(args, "--debug")
+		}
+		var stdout, stderr bytes.Buffer
+		code := Run(args, Dependencies{
+			HostPath: host, Stdout: &stdout, Stderr: &stderr,
+			HostLauncher: func(_, _ string, _ runner.Options, childOut, childErr io.Writer) (int, error) {
+				if childOut != io.Discard || (childErr == io.Discard) == debug {
+					t.Fatal("incorrect child output forwarding")
+				}
+				_, _ = io.WriteString(childOut, "not JSON")
+				_, _ = io.WriteString(childErr, "velox-debug: uncaught-error app.js:3:4\n")
+				return 0, nil
+			},
+		})
+		if code != 0 || !json.Valid(stdout.Bytes()) || (stderr.Len() > 0) != debug {
+			t.Fatalf("debug=%t code=%d stdout=%q stderr=%q", debug, code, stdout.String(), stderr.String())
 		}
 	}
 }

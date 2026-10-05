@@ -169,6 +169,10 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, fmt.Errorf("bind native invocation bridge: %w", err)
 	}
 	view.Init(ipc.BridgeSource())
+	if err := installDevelopmentDiagnostics(view, config.Debug, config.AssetRoot, config.DebugOutput, runtime.dispatcher.IsClosing); err != nil {
+		destroyBeforeRun(view)
+		return nil, errors.New("initialize development diagnostics failed")
+	}
 	if err := view.Bind("__veloxReady", onReady); err != nil {
 		destroyBeforeRun(view)
 		return nil, fmt.Errorf("bind ready marker: %w", err)

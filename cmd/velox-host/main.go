@@ -97,6 +97,7 @@ func run(args []string) int {
 		AssetRoot:               cfg.AssetRoot,
 		EntryPath:               cfg.EntryPath,
 		Debug:                   *debug,
+		DebugOutput:             os.Stderr,
 		Watch:                   *watch,
 		WatchError: func(error) {
 			fmt.Fprintln(os.Stderr, "velox-host: watch paused for unreadable or unsafe assets; retrying")

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -46,6 +47,7 @@ type Config struct {
 	AssetRoot               string
 	EntryPath               string
 	Debug                   bool
+	DebugOutput             io.Writer
 	Watch                   bool
 	WatchError              func(error)
 	PolicyBlocked           func(kind string)

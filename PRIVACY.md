@@ -6,6 +6,19 @@ The Velox CLI and native host do not send telemetry, crash reports, analytics,
 or automatic update requests. The build path reads the project manifest,
 static assets, and prebuilt host, then writes local build outputs.
 
+The source checkout's explicit `run --debug` mode adds local metadata-only
+JavaScript diagnostics on stderr. They contain a fixed error category,
+known startup asset-relative filename and bounded line/column numbers.
+Unknown sources and Promise rejection locations are replaced by an unknown
+marker; error messages, stacks, rejection reasons, console bodies, document
+contents and network responses are not read. URL credentials, queries and
+fragments are not retained. Relative filenames can reveal application
+structure, so review logs before sharing them. At most 20 native attempts
+are handled per host run, including invalid requests. Velox creates no
+diagnostic logfile or upload; a caller can redirect stderr to a local file.
+Normal, watch-only and packaged defaults install no diagnostic listener or
+binding. This extension is not in the public alpha.65 release.
+
 ## Local Runtime Data
 
 The installed WebView2 Runtime can store cookies, cache, local storage,
