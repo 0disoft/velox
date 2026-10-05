@@ -8,7 +8,7 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
-Folder-browser starter (source-only, 2026-10-05): scoped initializer/CLI tests
+Folder-browser starter (initial source-only step, 2026-10-05): scoped initializer/CLI tests
 cover generation, both native templates' flag forms, exact permissions,
 escaped names, asset inventory and conflict preservation. The folder starter's
 six Bun cases plus the text editor's six cases passed, covering literal text,
@@ -25,7 +25,7 @@ were not repeated: native implementation and dependencies are unchanged.
 These are mock/local packaging results, not a new public release.
 No IPC/schema/DB/host/dependency/workflow or version change is included.
 
-Text-editor starter (source-only, 2026-10-05):
+Text-editor starter (initial source-only step, 2026-10-05):
 `go test ./internal/initializer ./internal/cli ./tests/hygiene` and scoped vet
 passed. `bun test internal/initializer/text_editor.test.ts` passed six cases
 covering save-target reuse, cancellation/error preservation, discard/open/new,
@@ -424,7 +424,28 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.64`, source
+The current public preview is `v0.5.10-alpha.65`, source
+`c8f618bd94e48cb7c01d61aa0e65e3bc7116875c`. Root-module tests/vet and all
+12 Bun template cases passed locally before tagging. Tag CI `37298703202`
+passed reproducible unsigned builds and basic checkout-free consumer
+packaging. Its four assets were reused for publication without a second
+producer. Unauthenticated downloads matched CI and GitHub digests, checksum,
+manifest/SPDX files, ZIP/CRC, provenance source/run and the public CLI version.
+ZIP SHA-256:
+`7f837fe69ff4ec9efcf528c97c63ea1d3dc010ba2a7d75d2eb824a1ff372c42b`
+(5,896,489 bytes). Both templates passed public-CLI generation, exact
+permissions/inventory, validate/doctor, portable plus Setup packaging and
+inspection. The exact public CLI/host also passed native watch reload,
+canceled-input preservation, retry and normal close/cleanup with debug off
+and a private profile. Host/Setup sizes are unchanged from alpha.64, but
+their hashes differ; the CLI grew 47,104 bytes. Maintainer-confirmed text
+saving and Korean folder preview used local source-generated apps with
+the alpha.64 host before publication, not alpha.65 public-byte native dialogs.
+No hosted native template interactions, installer execution, full stress or
+beta promotion occurred. This is same-repository-public-download evidence,
+with `externalUserAttempt: false`; receipts are in `docs/ops/release.md`.
+
+The previous public preview was `v0.5.10-alpha.64`, source
 `10202571236801451fa697ade15f0e7a799a77ad`. Tag CI `37286184342` passed
 reproducible builds and checkout-free consumer packaging. Its verified four
 assets were reused for publication without a second producer run.

@@ -154,7 +154,18 @@ Historical preview `v0.5.10-alpha.2` was published from exact commit
 and passed the no-checkout consumer gates. This is technical distribution
 evidence and not a human attempt.
 
-The current published unsigned preview is `v0.5.10-alpha.64` from exact source
+The current published unsigned preview is `v0.5.10-alpha.65` from exact source
+`c8f618bd94e48cb7c01d61aa0e65e3bc7116875c`. Tag CI `37298703202` passed;
+its four assets were reused without a second producer. Public downloads
+matched ZIP SHA-256
+`7f837fe69ff4ec9efcf528c97c63ea1d3dc010ba2a7d75d2eb824a1ff372c42b`
+and metadata. Both native starters passed public-CLI packaging; the exact
+public CLI/host passed native watch reload/cancel/retry/close. Local generated
+apps using the alpha.64 host also received maintainer confirmation for saving
+and Korean folder preview. That is separate manual evidence, not a public-byte
+native template check or adoption claim. Beta remains held; see `docs/ops/release.md`.
+
+The previous published unsigned preview was `v0.5.10-alpha.64` from exact source
 `10202571236801451fa697ade15f0e7a799a77ad`. Tag CI `37286184342` passed;
 its artifacts were reused for publication without a second producer. Exact
 public downloads matched ZIP SHA-256

@@ -150,7 +150,7 @@ the following; keep the rest of your manifest:
 }
 ```
 
-The source checkout also offers a native text-editor starter:
+The published alpha.65 also offers a native text-editor starter:
 
 ```sh
 velox init my-editor --template text-editor
@@ -158,13 +158,13 @@ velox run --config my-editor/velox.json --watch
 velox build --config my-editor/velox.json --installer
 ```
 
-This template option is not in public alpha.64; use a newly built source CLI
-with a matching release bundle. The generated manifest requests only
+Use the alpha.65 CLI with its matching release bundle; alpha.64 does not
+include template selection. The generated manifest requests only
 `file.open` and `file.save`. Initial Save after Open selects a destination;
 later Save reuses that page's save target. This small starter has no draft
 storage or recovery. Omitting `--template` retains the basic starter.
 
-For a read-only folder browser, use the source checkout's second native starter:
+For a read-only folder browser, use the second native starter:
 
 ```sh
 velox init my-browser --template folder-browser
@@ -172,7 +172,7 @@ velox run --config my-browser/velox.json --watch
 velox build --config my-browser/velox.json
 ```
 
-Like text-editor, this option is not in public alpha.64. It requests only
+Like text-editor, this option ships in public alpha.65. It requests only
 `folder.read` and `folder.readText`. Select a folder, refresh its immediate
 entries, select a file for a readonly UTF-8 preview, and release the folder
 when done. Subdirectories are listed but not navigable. No clipboard, write

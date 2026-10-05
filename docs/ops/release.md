@@ -84,6 +84,64 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.65 Published Preview: 2026-10-05
+
+Unsigned prerelease `v0.5.10-alpha.65` ships the text-editor and folder-browser
+`init --template` starters from source
+`c8f618bd94e48cb7c01d61aa0e65e3bc7116875c`. Main and the annotated tag were
+pushed together. [Tag CI 37298703202](https://github.com/0disoft/velox/actions/runs/37298703202)
+passed reproducible unsigned producer builds and basic checkout-free consumer
+packaging with Go 1.26.0 on `windows-2025`. Both consumer app ZIP hashes were
+`29c9136005c8706d4cb237d4c2f3de824ef7230ebccb0cb7cff99400491bf26e`.
+
+`gh release create` reused that run's four verified assets without a second
+producer; release ID `403616613`, `draft: false`, `prerelease: true`,
+`--latest=false`. CommandCode DeepSeek 4.1 Flash/high drafted release notes
+and receipt paragraphs, checked against the source and observed evidence.
+
+| Public asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `velox-windows-x64.zip` | 5,896,489 | `7f837fe69ff4ec9efcf528c97c63ea1d3dc010ba2a7d75d2eb824a1ff372c42b` |
+| `checksums.sha256` | 279 | `c708ef8eb8793b600f7c9adc0a2dc057b87395c6919543957b7d90bd13ac960d` |
+| `velox-windows-x64.spdx.json` | 9,618 | `3d141251d0a0f59e872044bdd3e55ccc9ab0e90032c1e13722459026a8b11658` |
+| `velox-windows-x64.intoto.jsonl` | 744 | `7fc2f59913ec59ca09447848da8585ff0978e31862bbb4720c837df14fae8cb0` |
+
+All four public URLs were downloaded without authentication headers; their
+hashes matched the CI assets and GitHub digests. Three checksum entries,
+16 manifest artifacts, 17 SPDX file digests, ZIP/CRC, version/target and
+provenance source/run `37298703202/1` passed. Host/Setup PE headers are unsigned
+Windows GUI (2). No publisher signature or authenticated attestation is claimed.
+
+The extracted public CLI reported alpha.65. Each native template passed
+`init`, exact permission/asset inventory, `validate`, `doctor`, portable plus
+Setup packaging, and `inspect`. For the generated names `text-editor` and
+`folder-browser`, web inventories were 8 files / 13,701 bytes and 7 files /
+12,675 bytes; generated display names affect those sizes. Setup was not executed.
+Receipt: `.cache/alpha65-public-template-check/result.json`.
+
+The host remains 4,407,808 bytes and Setup 3,574,784 bytes, the same sizes as
+alpha.64, but their hashes changed. Runtime source is unchanged except for the
+release version. CLI size is 4,542,464 bytes, an increase of 47,104 bytes.
+CLI SHA-256 `24424c8c199eff1435d1bc5e8447159df7d6adfb53682451d04ff2046d2dd8af`;
+host SHA-256 `22779ec47413bb4582ccaf6ae23ad709694a283c138db8231475542398ca48b0`.
+
+The exact public CLI/host passed native `run --watch` with debug off using
+`scripts/dev-reload-smoke.ts`: two HTML/CSS/JS reload cycles, real
+`beforeunload` cancellation preserving input, subsequent retry and normal
+close/cleanup with exit 0. HTTPS origin and a private profile were retained,
+with no test-side reload/cache override. Receipt:
+`.cache/normal-reload-1791197916010/result.json`. Public files are in
+`.cache/alpha65-public-assets/` and `.cache/alpha65-public-extracted/`.
+
+Before publication, the maintainer confirmed a real Save as text save in
+`My Editor` and Korean `sample.txt` preview in `My Browser`. Those local
+source-generated apps used the unchanged alpha.64 host, not alpha.65 public
+bytes. This is separate manual evidence, not external adoption or a hosted
+native-template check. Prior alpha.64 records remain below. No installer
+execution, hosted native template interactions, full stress/permission matrix,
+performance comparison or beta promotion was performed. IPC/schema/DB/host
+behavior/dependency/workflow contracts are unchanged.
+
 ## Alpha.64 Published Preview: 2026-10-05
 
 The owner authorized publishing `v0.5.10-alpha.64` as an unsigned prerelease,
@@ -389,8 +447,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.64` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.64`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.65` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.65`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, signing, and publication remain separate maintainer

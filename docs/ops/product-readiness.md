@@ -3,15 +3,15 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
-- Public preview: `0.5.10-alpha.64` (published unsigned prerelease)
+- Public preview: `0.5.10-alpha.65` (published unsigned prerelease)
 
 ## Required Beta Checks
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.64 tag CI 37286184342 passed checkout-free packaging; unauthenticated public download identities and exact-public-CLI native watched run passed locally. Packaged-app launch was not repeated for these CI bytes. Prior alpha.62/63 receipts remain historical; see release.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.65 tag CI 37298703202 passed basic checkout-free packaging; unauthenticated public download identities, both starter packaging paths and exact-public-CLI native watched run passed locally. Packaged-app launch was not repeated for these CI bytes. Prior alpha.62/63/64 receipts remain historical; see release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
-| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Exact public alpha.64 CLI/host passed two HTML/CSS/JS automatic reloads, canceled-input preservation, later retry and normal close using `scripts/dev-reload-smoke.ts` in watch mode without debug/cache override. Private profile and HTTPS origin were retained; receipt and hashes are in release.md. Historical alpha.62 manual reload and earlier failures remain below |
+| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Exact public alpha.65 CLI/host passed two HTML/CSS/JS automatic reloads, canceled-input preservation, later retry and normal close using `scripts/dev-reload-smoke.ts` in watch mode without debug/cache override. Private profile and HTTPS origin were retained; receipt and hashes are in release.md. Historical alpha.62/64 reload and earlier failures remain below |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
@@ -21,6 +21,23 @@ files and a private profile for validation; never overwrite a user's files.
 Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
+
+## Alpha.65 Publication: 2026-10-05
+
+Unsigned prerelease `v0.5.10-alpha.65` ships both native starter templates
+from source `c8f618b` after tag CI `37298703202` passed. The same four assets
+were reused with no second producer; all public downloads matched the
+recorded digests. Public-CLI generation, portable/Setup packaging and
+inspection passed for both templates. Exact public-byte native watch
+reload/cancel/retry/normal close passed separately.
+
+The maintainer confirmed a real Save as text save and Korean folder-file
+preview in source-generated `My Editor`/`My Browser` apps using the alpha.64
+host before publication. That manual evidence does not cover alpha.65 public
+native dialogs or external adoption. No installer execution, hosted native
+template interaction, full stress/permission matrix or beta promotion is
+claimed. Full hashes and receipts are in
+[the release record](release.md#alpha65-published-preview-2026-10-05).
 
 ## Alpha.64 Publication: 2026-10-05
 
@@ -38,10 +55,11 @@ outside-checkout consumer packaging/startup, and exact-candidate native watch
 reload/cancellation/retry/normal close. It remains unsigned and unpublished;
 see [the alpha.64 candidate receipt](alpha64-candidate.md).
 
-Source version is now `0.5.10-alpha.64`; the current public preview remains
+At that source-candidate step, the version was `0.5.10-alpha.64`; the public preview remained
 `0.5.10-alpha.63`. The four completed package/installer/watch commits were
 batched to remote main at `588c751279cde7b8ba1d12572665000607778e27` before
-candidate preparation. No alpha.64 tag or publication has been authorized.
+candidate preparation. Alpha.64 publication was subsequently authorized
+separately, as recorded above.
 
 Source-only `run --watch` adds debounced development reload, independent of
 `--debug`, with no packaged/default watch loop. Detector, CLI/runner and UI

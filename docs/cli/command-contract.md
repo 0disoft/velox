@@ -37,8 +37,8 @@ Create a minimal manifest and dependency-free static web example.
   with only `file.open` and `file.save`. `--template folder-browser` creates a
   read-only folder starter with only `folder.read` and `folder.readText`.
   Unknown templates exit 2 with
-  `USAGE_INVALID` and write nothing. This option is source-only and not included
-  in the public alpha.64 release.
+  `USAGE_INVALID` and write nothing. This option ships in public alpha.65;
+  alpha.64 does not include template selection.
 - Derive a conservative `dev.velox.<directory>` application ID and display name
   from the target directory.
 - Preflight every planned path and refuse the operation if any generated file
