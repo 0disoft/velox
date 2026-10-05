@@ -113,9 +113,9 @@ func TestPublicPreviewResultSchemaKeepsSameRepositoryEvidenceNonExternal(t *test
 func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	checks := map[string][]string{
 		"README.md": {
-			"v0.5.10-alpha.63",
-			"37224406021",
-			"19205e691e79dcddaeeb414cbbeb4cb055e59344d85dabfd5f7bfe5ea99b27ca",
+			"v0.5.10-alpha.64",
+			"37286184342",
+			"010478c5eea256ae1892fec5c186f61ae133db0542327677cf14f28b21744c35",
 		},
 		"VALIDATION.md": {
 			"The current public preview is",
@@ -124,15 +124,15 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 		},
 		"docs/ops/release.md": {
 			"unsigned developer previews",
-			"v0.5.10-alpha.63",
-			"37224406021",
+			"v0.5.10-alpha.64",
+			"37286184342",
 			"34584656621",
 			"34453983275",
 			"intermittent failure remains unexplained",
 		},
 		"docs/product/03-risk-register.md": {
 			"Public verifier run 35079337819",
-			"Current preview `v0.5.10-alpha.63`",
+			"Current preview `v0.5.10-alpha.64`",
 		},
 	}
 	for relative, required := range checks {
@@ -152,7 +152,7 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	readiness := readNormalized(t, repositoryPath("docs", "ops", "product-readiness.md"))
 	for _, marker := range []string{
 		"- Status: Alpha active; beta not approved",
-		"- Public preview: `0.5.10-alpha.63` (published unsigned prerelease)",
+		"- Public preview: `0.5.10-alpha.64` (published unsigned prerelease)",
 	} {
 		if !strings.Contains(readiness, marker) {
 			t.Errorf("published channel is not synchronized: missing %q", marker)

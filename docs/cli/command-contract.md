@@ -100,8 +100,8 @@ replacement process.
 - Closing the development window stops and joins the watch loop. Existing
   app identity, profile and single-instance behavior are unchanged; close a
   running app with the same identity/profile before starting a watched run.
-- This source addition needs a matching newly built CLI/host pair; it is not
-  included in the currently published alpha.63 binaries.
+- Watch is available in published alpha.64 and needs its matching CLI/host
+  pair. Earlier alpha.63 binaries do not implement this option.
 
 ### velox build
 

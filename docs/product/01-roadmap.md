@@ -154,11 +154,13 @@ Historical preview `v0.5.10-alpha.2` was published from exact commit
 and passed the no-checkout consumer gates. This is technical distribution
 evidence and not a human attempt.
 
-The current published unsigned preview is `v0.5.10-alpha.62` from exact source
-`02c9acb5035014d9e29a0eb5881a3cf5310f5d6d` after publication run
-`35079091056` passed. Public verifier run `35079337819` matched ZIP SHA-256
-`10137ca603c5ba7f765d58f9e93fc78683f328aebad77659fd63e01367265871`
-and passed the public-download gates. Full candidate evidence stays in
+The current published unsigned preview is `v0.5.10-alpha.64` from exact source
+`10202571236801451fa697ade15f0e7a799a77ad`. Tag CI `37286184342` passed;
+its artifacts were reused for publication without a second producer. Exact
+public downloads matched ZIP SHA-256
+`010478c5eea256ae1892fec5c186f61ae133db0542327677cf14f28b21744c35`
+and metadata; the downloaded CLI/host passed native watch reload/cancel/retry.
+Prior alpha.62 Public verifier run `35079337819` remains historical. Full evidence stays in
 `docs/ops/release.md`; the separate local File Notes 0.1.1 ZIP is not a public
 release.
 

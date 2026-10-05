@@ -3,15 +3,15 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
-- Public preview: `0.5.10-alpha.63` (published unsigned prerelease)
+- Public preview: `0.5.10-alpha.64` (published unsigned prerelease)
 
 ## Required Beta Checks
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.63 tag CI 37224406021 passed checkout-free builds; unauthenticated public downloads and metadata/version checks passed locally. Native launch was not repeated for these bytes. Prior alpha.62 public verification run 35079337819 remains historical; exact sources and digests are recorded in release.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.64 tag CI 37286184342 passed checkout-free packaging; unauthenticated public download identities and exact-public-CLI native watched run passed locally. Packaged-app launch was not repeated for these CI bytes. Prior alpha.62/63 receipts remain historical; see release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
-| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | On 2026-09-22, public alpha.62 passed two consecutive normal HTML/CSS/JS reloads via `scripts/dev-reload-smoke.ts` (public CLI `4d41f9c8706c29a5131f9d74da68689a7d9f466aae51182d0103e2e2fc6510b1`, host `651a9d87d16eee5687f4a1072226e3f9209a6ece438c0672e6c30e6680037679`, same origin, private profile, test process cleanup status 0). Historical alpha.53/54 passes and failures remain recorded below |
+| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Exact public alpha.64 CLI/host passed two HTML/CSS/JS automatic reloads, canceled-input preservation, later retry and normal close using `scripts/dev-reload-smoke.ts` in watch mode without debug/cache override. Private profile and HTTPS origin were retained; receipt and hashes are in release.md. Historical alpha.62 manual reload and earlier failures remain below |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
@@ -21,6 +21,15 @@ files and a private profile for validation; never overwrite a user's files.
 Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
+
+## Alpha.64 Publication: 2026-10-05
+
+Unsigned prerelease `v0.5.10-alpha.64` was published from source `1020257`
+after tag CI `37286184342` passed. The same run's artifacts were reused, with
+no second producer. All four public downloads matched recorded hashes and
+metadata; exact public-byte watch auto-reload/cancel/retry/normal close passed.
+No beta promotion or broader stress/permission matrix is claimed. Full source,
+toolchain, hash and skipped-check boundaries are in [the release record](release.md#alpha64-published-preview-2026-10-05).
 
 ## Source Development Watch: 2026-10-05
 

@@ -2,8 +2,12 @@
 
 ## Identity
 
+This is the historical local candidate receipt, not the published payload.
+Alpha.64 has since been published from source `1020257` with Go 1.26.0 CI
+bytes; see [the publication record](release.md#alpha64-published-preview-2026-10-05).
+
 - Source: `82d248513c4fdac82ad3984a8bf0c90e209b7a77`, clean at build time.
-- Version: `0.5.10-alpha.64`; public preview remains alpha.63.
+- Version: `0.5.10-alpha.64`; public preview at candidate build time was alpha.63.
 - Toolchain: Go 1.27.1, Windows amd64, `-buildvcs=false`, `-trimpath`, `-s -w`;
   host and Setup also use `-H windowsgui`.
 - Candidate root: `dist/candidates/alpha64-82d2485/`.

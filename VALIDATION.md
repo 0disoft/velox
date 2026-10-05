@@ -389,7 +389,21 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.63`, source
+The current public preview is `v0.5.10-alpha.64`, source
+`10202571236801451fa697ade15f0e7a799a77ad`. Tag CI `37286184342` passed
+reproducible builds and checkout-free consumer packaging. Its verified four
+assets were reused for publication without a second producer run.
+Unauthenticated public downloads matched all checksum/manifest/SPDX digests
+and provenance source/run. ZIP SHA-256:
+`010478c5eea256ae1892fec5c186f61ae133db0542327677cf14f28b21744c35`
+(5,876,352 bytes). The downloaded alpha.64 CLI/host passed actual native
+automatic HTML/CSS/JS reload with debug off, canceled-input preservation,
+subsequent retry and normal close in a copied File Notes/private-profile test.
+This is automated public-byte verification, not maintainer/manual testing.
+No additional hosted stress, installer execution or beta promotion occurred;
+see `docs/ops/release.md` for the byte identities and scope.
+
+The previous public preview was `v0.5.10-alpha.63`, source
 `fce9955bdb355fd1b1a377dec277a60727c4ad39`. Tag CI `37224406021` passed
 reproducible builds and checkout-free consumer checks; its four verified
 assets were published without a second producer run. Unauthenticated public

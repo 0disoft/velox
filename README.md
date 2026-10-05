@@ -51,17 +51,19 @@ an immutable public release without a source checkout or consumer toolchain.
 Report ordinary failures with the [bug report template](https://github.com/0disoft/velox/issues/new?template=bug-report.md);
 report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
-The current unsigned preview is [v0.5.10-alpha.63](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.63),
-from commit `fce9955bdb355fd1b1a377dec277a60727c4ad39`. It adds optional
-EXE branding, per-user installers, permission-gated native text/folder and
-clipboard operations, desktop window/tray controls, and declaration-only
-TypeScript bridge types. Portable static apps remain the default.
-[Tag CI 37224406021](https://github.com/0disoft/velox/actions/runs/37224406021)
+The current unsigned preview is [v0.5.10-alpha.64](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.64),
+from commit `10202571236801451fa697ade15f0e7a799a77ad`. It adds opt-in
+`run --watch` automatic development reload while retaining EXE branding,
+per-user installers, native text/folder/clipboard operations, desktop controls
+and declaration-only TypeScript bridge types. Portable static apps remain the default.
+[Tag CI 37286184342](https://github.com/0disoft/velox/actions/runs/37286184342)
 passed reproducible builds and checkout-free consumer checks. The same assets
 were published without a second producer run. ZIP SHA-256:
-`19205e691e79dcddaeeb414cbbeb4cb055e59344d85dabfd5f7bfe5ea99b27ca`.
+`010478c5eea256ae1892fec5c186f61ae133db0542327677cf14f28b21744c35`.
 Unauthenticated public downloads matched the CI artifact checksums; release
 manifest, SPDX, provenance and the public CLI version were checked locally.
+The exact downloaded CLI/host passed native auto-reload, canceled-input
+preservation, retry and normal close with debug off and a private profile.
 The prior alpha.62 public-download verification run `35079337819` and its
 native lifecycle evidence remain separate historical records. See the
 [release record](docs/ops/release.md) for exact scope and retained failures.
@@ -157,15 +159,14 @@ velox inspect .\dist\dev.velox.hello.zip --json
 velox version --json
 ```
 
-The alpha.64 source candidate supports `velox run --watch --config velox.json`:
+The published alpha.64 supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves trigger full-page reloads without enabling
-DevTools. This source-only addition requires a newly built CLI/host pair;
-the published alpha.63 bundle does not include it yet. App `beforeunload`
+DevTools. Keep the downloaded CLI/host pair together. App `beforeunload`
 handlers can cancel a reload. Normal `run` and packaged apps do not start a
 watcher. Fonts/images and manifest changes are not auto-reloaded.
 Local candidate verification and extraction instructions are in
 [the alpha.64 candidate receipt](docs/ops/alpha64-candidate.md); it is not a
-published release download.
+published release download. Use the public release linked above for published bytes.
 
 `build` produces `dist/<app-id>/`, `dist/<app-id>.zip`, and a deterministic
 `build-result.json` inside the portable directory and archive. The host bytes
@@ -247,7 +248,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.63`.
+`0.5.10-alpha.64`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

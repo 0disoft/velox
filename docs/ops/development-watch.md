@@ -1,5 +1,10 @@
 # Development Watch: 2026-10-05
 
+Watch is now published in alpha.64. The exact unauthenticated public download
+passed native auto-reload/canceled-input preservation/retry/normal close with
+debug off; source/run, public hashes and the native receipt are in
+[the release record](release.md#alpha64-published-preview-2026-10-05).
+
 Follow-up: the exact alpha.64 local candidate repeated the native watch test
 successfully with debug off, canceled-input preservation, subsequent reload
 and normal close. Its current hashes and version boundary are recorded in
@@ -8,7 +13,7 @@ the original source-integration evidence.
 
 ## Scope
 
-Source-only `velox run --watch` samples entry/HTML/HTM/CSS/JS/MJS content every
+`velox run --watch` samples entry/HTML/HTM/CSS/JS/MJS content every
 500 ms and emits once after a 500 ms quiet period. It uses bounded content
 hashing, shared safe asset traversal and no external dependency. The host
 owns the loop only during an explicit watched run and joins it on exit.

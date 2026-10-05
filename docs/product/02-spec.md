@@ -249,7 +249,7 @@ The source checkout adds opt-in `run --watch` for stable HTML/CSS/JavaScript
 edits, using full-page reload with application `beforeunload` protection.
 Watch is not part of the manifest or packaged defaults, enables no DevTools,
 adds no dependency or development server, and stops with the development
-window. The public alpha.63 CLI/host does not yet contain this source addition.
+window. Watch is available in public alpha.64; alpha.63 does not implement it.
 
 The command contract is defined in docs/cli/command-contract.md.
 

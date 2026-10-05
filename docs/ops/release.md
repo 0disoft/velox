@@ -84,14 +84,64 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.64 Published Preview: 2026-10-05
+
+The owner authorized publishing `v0.5.10-alpha.64` as an unsigned prerelease,
+not beta. The remaining two commits and annotated tag were pushed together;
+remote main and the peeled tag matched `10202571236801451fa697ade15f0e7a799a77ad`.
+[Tag CI 37286184342](https://github.com/0disoft/velox/actions/runs/37286184342)
+passed reproducible release builds and checkout-free consumer packaging with
+Go 1.26.0 on `windows-2025`. The consumer's two app ZIP hashes matched
+`c46d96df68dccb5c4becd8c34ccd2b7a3a021bda631b1199193ece11997f97f8`.
+
+Verified artifacts from that run were published through `gh release create`
+without a second producer or publication workflow. Release ID `403530744`,
+`draft: false`, `prerelease: true`, and `--latest=false`. Release notes were
+drafted by CommandCode DeepSeek 4.1 Flash/high and checked against the code
+and exact CI receipts before publication.
+
+| Public asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `velox-windows-x64.zip` | 5,876,352 | `010478c5eea256ae1892fec5c186f61ae133db0542327677cf14f28b21744c35` |
+| `checksums.sha256` | 279 | `73d22226d01e5a437486c92123b5e5f41e78ff9671b1abfaadad2f274ad60319` |
+| `velox-windows-x64.spdx.json` | 9,618 | `d476d707b0366198fb88ffb6ebc97743fc4c883923b4614931d936ee965cdca9` |
+| `velox-windows-x64.intoto.jsonl` | 744 | `c61d9b67ce8868172fd5f45edb913757401df371faadc861772ab5c190425b74` |
+
+All four exact public URLs were downloaded without authentication headers;
+their hashes matched the verified CI assets and GitHub's reported digests.
+Three checksum entries, 16 manifest artifacts, 17 SPDX file digests, ZIP/CRC,
+version/target, provenance source and invocation `37286184342/1` passed.
+The extracted public CLI reported alpha.64. Host/Setup PE headers are unsigned
+Windows GUI (2); no publisher identity or authenticated attestation is claimed.
+
+The exact downloaded binaries also passed native `run --watch` with debug off:
+two HTML/CSS/JS auto-reload cycles retained the HTTPS origin, real
+`beforeunload` cancellation preserved trusted test input, another edit retried
+successfully, and normal close/cleanup returned 0. No test-side reload/cache
+override or residual candidate browser process was observed.
+CLI SHA-256 `4337138b571f9197b0986e78c16cd564f3ae24ce93e164624c7f2843e2ede0a3`;
+host SHA-256 `ae5cd1bdd78b19743aebdfa80bb15e91e3f7b01b992e02aab6414e29eb0b151d`.
+Receipt `.cache/normal-reload-1791190634658/result.json`; public files are under
+`dist/releases/alpha64-37286184342/public/` and `public-extracted/`.
+
+These Go 1.26.0 CI bytes differ from the Go 1.27.1 local candidate at `82d2485`.
+The test used copied assets and a private profile, not an existing installed
+app. No additional hosted stress, installer execution, complete native file
+permission/recovery matrix, production performance comparison or manual
+maintainer check was repeated. API/DB/CI/dependency contracts are unchanged
+by this publication record; beta remains held.
+
 ## Alpha.64 Source Candidate: 2026-10-05
+
+Historical preparation record; the subsequent publication is recorded above.
 
 The owner approved one batched main push of four verified commits and local
 alpha.64 candidate preparation. Remote main was confirmed at
 `588c751279cde7b8ba1d12572665000607778e27`. Source version and current-version
 test fixtures are aligned to `0.5.10-alpha.64`, including development watch.
-The public prerelease remains alpha.63. No alpha.64 tag, hosted release run,
-publication or beta promotion is included in this authorization.
+At that preparation step, the public prerelease remained alpha.63. No alpha.64
+tag, hosted release run, publication or beta promotion was included in that
+authorization; the subsequent publication used a separate approval.
 
 The clean source commit `82d248513c4fdac82ad3984a8bf0c90e209b7a77` now has
 two byte-identical local candidate builds, sidecars and outside-checkout
@@ -102,7 +152,7 @@ Paths, toolchain, checks and omissions are in [the candidate receipt](alpha64-ca
 
 ## Alpha.63 Published Preview: 2026-10-05
 
-The current unsigned prerelease is
+The previous unsigned prerelease was
 [`v0.5.10-alpha.63`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.63),
 source `fce9955bdb355fd1b1a377dec277a60727c4ad39`. Its annotated tag was pushed
 and its peeled remote SHA matched this source. The owner explicitly approved
@@ -339,8 +389,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.63` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.63`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.64` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.64`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, signing, and publication remain separate maintainer
