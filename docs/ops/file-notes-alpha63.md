@@ -63,6 +63,40 @@ native permission interaction, stress matrix or second reproducibility build
 was performed. Existing source/interaction evidence retains its original
 version boundary. No API, DB, dependency, CI or release-channel change.
 
+## Isolated Installer Follow-Up: 2026-10-05
+
+The owner subsequently reported that the packaged File Notes app worked.
+The installer follow-up used the public alpha.63 CLI with a disposable app ID,
+`dev.velox.installer-smoke-d70655675121`, and name suffix `Installer Smoke`.
+All 14 File Notes web assets matched the source; the original manifest,
+application installation and user profile were not modified. This is not an
+execution of the original `dev.velox.filenotes-setup.exe` bytes above.
+
+- Two builds produced identical test Setup bytes, SHA-256
+  `0b40474871722e9a210bcab46b2c00badc01fb5edac0e91b5a878e83b8fc3c8a`.
+- Silent per-user install, installed-directory inspection, actual Start Menu
+  shortcut launch and uninstall registration checks passed.
+- The native window caption was `Velox File Notes - Installer Smoke`.
+  Native close completed with host exit 0 and browser exit. This shortcut
+  check does not claim a DOM readiness marker or manual rendered-content test.
+- Actual removal cleared the installation directory, shortcut and HKCU
+  uninstall registration. The disposable document was unchanged.
+- All 167 profile files, including five IndexedDB files and a synthetic
+  preservation marker, had identical SHA-256 values before and after removal.
+  Actual saved-draft restoration was not exercised. The retained test profile
+  was moved into the owned cache receipt directory after this comparison;
+  the temporary removal helper was cleaned up.
+
+Command: `node scripts/installer-smoke.mjs --cli dist/releases/alpha63-37224406021/public-extracted/velox.exe --example examples/file-notes`.
+Receipt: `.cache/installer-smoke-84f0b364-64af-4c97-81a9-d70655675121/result.json`,
+SHA-256 `5711ab5585073e58e50d3b8063cfeca097825ddcbfe3f211077da1e240a3c19d`.
+The script now accepts explicit CLI/example paths and uses a unique identity.
+Earlier benchmark-driven shortcut attempts timed out and were cleaned up;
+the passing run used normal shortcut launch and native window close instead.
+No performance or benchmark-readiness claim follows from those attempts.
+Node syntax and source/copy asset-hash checks passed. Runtime, API, DB,
+dependencies, CI and release versions are unchanged; no publication occurred.
+
 ## Use
 
 Extract the whole portable ZIP before running `dev.velox.filenotes.exe`, and

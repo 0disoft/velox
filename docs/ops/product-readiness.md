@@ -24,6 +24,12 @@ with a mock and label the gate complete.
 
 ## File Notes Public-Runtime Package: 2026-10-05
 
+Follow-up: an isolated File Notes identity built with public alpha.63 passed
+actual install, Start Menu shortcut launch, native close and removal. The
+document and all 167 profile files (including five IndexedDB files) were
+unchanged by removal. This does not execute the original File Notes Setup
+bytes or establish actual draft restoration; see the package receipt below.
+
 File Notes 0.4.0 was packaged locally with the verified public alpha.63 CLI,
 including portable ZIP and opt-in Setup, in a separate output folder. The
 old beta.20 output, application identity/version, 14 web assets and three
