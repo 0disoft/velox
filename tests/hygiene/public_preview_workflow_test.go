@@ -146,8 +146,8 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	}
 
 	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-alpha.63"`) {
-		t.Fatal("published preview version is not alpha.63")
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.64"`) {
+		t.Fatal("source candidate version is not alpha.64")
 	}
 	readiness := readNormalized(t, repositoryPath("docs", "ops", "product-readiness.md"))
 	for _, marker := range []string{

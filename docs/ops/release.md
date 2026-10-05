@@ -84,6 +84,15 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.64 Source Candidate: 2026-10-05
+
+The owner approved one batched main push of four verified commits and local
+alpha.64 candidate preparation. Remote main was confirmed at
+`588c751279cde7b8ba1d12572665000607778e27`. Source version and current-version
+test fixtures are aligned to `0.5.10-alpha.64`, including development watch.
+The public prerelease remains alpha.63. No alpha.64 tag, hosted release run,
+publication or beta promotion is included in this authorization.
+
 ## Alpha.63 Published Preview: 2026-10-05
 
 The current unsigned prerelease is

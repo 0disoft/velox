@@ -24,6 +24,11 @@ with a mock and label the gate complete.
 
 ## Source Development Watch: 2026-10-05
 
+Source version is now `0.5.10-alpha.64`; the current public preview remains
+`0.5.10-alpha.63`. The four completed package/installer/watch commits were
+batched to remote main at `588c751279cde7b8ba1d12572665000607778e27` before
+candidate preparation. No alpha.64 tag or publication has been authorized.
+
 Source-only `run --watch` adds debounced development reload, independent of
 `--debug`, with no packaged/default watch loop. Detector, CLI/runner and UI
 dispatch tests passed. A native private-profile run observed two consecutive

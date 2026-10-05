@@ -157,7 +157,7 @@ velox inspect .\dist\dev.velox.hello.zip --json
 velox version --json
 ```
 
-The current source checkout also supports `velox run --watch --config velox.json`:
+The alpha.64 source candidate supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves trigger full-page reloads without enabling
 DevTools. This source-only addition requires a newly built CLI/host pair;
 the published alpha.63 bundle does not include it yet. App `beforeunload`
