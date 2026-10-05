@@ -8,6 +8,27 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.65 source candidate `11efd69` (source-only, 2026-10-05): local source
+`11efd69a7dfeda04ec84e31b804b6af68cc29bad` was clean at build time and kept the
+`0.5.10-alpha.65` string, but its bytes differ from the public alpha.65
+prerelease. CLI, host and Setup were built once with Go 1.27.1
+(`-buildvcs=false -trimpath -s -w`, host/Setup GUI); the candidate ZIP is
+6,863,300 bytes, SHA-256
+`7e57f3d18015923ee69873b8baa55516b788666ab78dcc3d714c8dd4596278dc`. The
+release ZIP was extracted outside the checkout and only its prebuilt CLI
+passed init/validate/build --installer/inspect for the text-editor and
+folder-browser templates, with both extracted packaged EXEs byte-matching the
+candidate host and each generated project's root `velox.d.ts` matching the shipped
+types. Runtime permissions stay exactly `file.open`/`file.save` and
+`folder.read`/`folder.readText`. A packaged text-editor native Save used an
+isolated profile: automated exact readback was 44 UTF-8 bytes, the draft
+cleared, relaunch did not resurrect it and no candidate-owned process
+remained. Scoped Go tests/vet and 23 Bun cases plus prior draft/diagnostics/
+watch evidence were reused instead of broad repeats. No installer execution,
+hosted stress, benchmark, signing or publication was performed; absence is not
+a pass. Full hashes, manual-save notes and boundaries are in
+`docs/ops/source-candidate-11efd69.md`.
+
 Text-editor draft recovery (source-only, 2026-10-05): initializer/CLI/hygiene
 Go tests and scoped initializer/CLI vet passed; 23 Bun cases passed across
 draft storage, text-editor and folder-browser. Storage cases cover transaction

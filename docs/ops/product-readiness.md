@@ -22,6 +22,21 @@ Record failures and denied operations, not only successful paths. A failed or
 unverified required check keeps beta held. Do not replace a real interaction
 with a mock and label the gate complete.
 
+## Source-Only Local Candidate: 2026-10-05
+
+Local source `11efd69a7dfeda04ec84e31b804b6af68cc29bad` was clean at build time and kept
+the `0.5.10-alpha.65` string, but this source candidate's bytes differ from the
+public alpha.65 prerelease. Build, both-template generation/packaging/
+inspection, and a packaged text-editor native Save passed: a manual OS save to
+the specified `recovered-draft.txt` with automated exact 44-byte readback,
+draft clear, clean relaunch without resurrection and no residual candidate
+process. Both extracted packaged EXEs byte-match the candidate host and the
+generated project's root `velox.d.ts` matches the shipped types. Scoped Go/Bun
+tests and prior host-bounded native evidence were reused rather than repeated
+broadly. The public alpha.65 evidence above and the beta-held status are
+unchanged; no push, release, tag, hosted run or publication is claimed. See
+[the source candidate receipt](source-candidate-11efd69.md).
+
 ## Alpha.65 Publication: 2026-10-05
 
 Unsigned prerelease `v0.5.10-alpha.65` ships both native starter templates
