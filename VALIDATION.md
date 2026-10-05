@@ -34,8 +34,9 @@ consumer app ZIPs hashed
 `0ee5221c541312848255165c2dc8b0b1ef97bf157d4e17d4b33c7919f694fa33`, and the
 three checksum entries, 16 manifest artifacts, 17 SPDX members and the
 provenance subject/source/invocation `37317775399/1` were checked against the
-ZIP. The publication job was skipped, so alpha.66 is not published and public
-alpha.65 is unchanged. No native UI, startup, installer, watch, draft or
+ZIP. The publication job was skipped in that CI run, so at that step alpha.66
+was not yet published and public alpha.65 was unchanged; publication followed
+separately and is recorded below. No native UI, startup, installer, watch, draft or
 public-download interaction ran against these CI bytes, and those are not
 upgraded from the earlier local results. Receipts are in
 `docs/ops/alpha66-tag-evidence.md`.
@@ -526,7 +527,23 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.65`, source
+The current public preview is `v0.5.10-alpha.66`, source
+`842fead0c889e9f161c2567a91c8d0fd4c2ca260`. Tag CI `37317775399` (attempt 1)
+passed reproducible unsigned producer builds and a basic checkout-free
+consumer smoke with Go 1.26.0. Its four verified assets were published as an
+unsigned prerelease without a second producer, a tag move or a hosted public
+verifier dispatch. Unauthenticated public downloads matched the CI and GitHub
+digests; the three checksum entries, release manifest, SPDX, provenance
+`37317775399/1`, ZIP/CRC and the extracted public CLI version
+`0.5.10-alpha.66` were checked. ZIP SHA-256:
+`3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`
+(5,903,850 bytes). This verifies public artifact identity and the public CLI
+version only; no native UI, startup, installer, watch, draft or public native
+interaction ran against these published bytes. It is
+`same-repository-public-download` evidence with `externalUserAttempt: false`;
+receipts are in [the alpha.66 publication record](docs/ops/alpha66-publication.md).
+
+The previous public preview was `v0.5.10-alpha.65`, source
 `c8f618bd94e48cb7c01d61aa0e65e3bc7116875c`. Root-module tests/vet and all
 12 Bun template cases passed locally before tagging. Tag CI `37298703202`
 passed reproducible unsigned builds and basic checkout-free consumer

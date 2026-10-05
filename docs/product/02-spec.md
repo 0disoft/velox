@@ -239,17 +239,18 @@ Public alpha.65 adds `init --template basic|text-editor|folder-browser`. Basic r
 the unchanged permission-free default. Text-editor scaffolds a dependency-free
 native file editor with only `file.open`/`file.save`, page-scoped save reuse,
 discard/close protection and local licensed icons. It bundles no font and adds
-no draft storage, host code or background process. This template selection is
+no host code or background process. The original alpha.65 starter had no
+draft storage. This template selection is
 available in the published alpha.65 CLI; alpha.64 does not include it.
 
-The source text-editor template additionally stores one bounded local
-IndexedDB draft and offers Restore/Discard on startup. It persists only
+The published alpha.66 text-editor template additionally stores one bounded
+local IndexedDB draft and offers Restore/Discard on startup. It persists only
 schema version, filename, unsaved text and update time, never native paths,
 save targets, permissions or saved baselines. Restored documents remain dirty
 and require a fresh save selection. Writes debounce for 300 ms, serialize
 with clears and report success only after commit. Storage failure leaves
-editing and unsaved-change protection intact. This is source-only and does
-not alter public alpha.65, existing generated projects or the host. See
+editing and unsaved-change protection intact. Existing generated projects are
+not upgraded and the host is unchanged. See
 [the recovery record](../ops/text-editor-drafts.md).
 
 Folder-browser reuses the existing example's immediate folder listing and
@@ -267,19 +268,20 @@ subfolder navigation, write permission, monitoring, font or host dependency.
 
 All listed M1 commands are currently implemented.
 
-The source checkout supports opt-in `run --watch` for stable HTML/CSS/JavaScript
+The published alpha.66 supports opt-in `run --watch` for stable HTML/CSS/JavaScript
 edits and metadata changes to common images/fonts, using full-page reload with
 application `beforeunload` protection. Image/font detection uses path, size and
 modification time rather than repeated binary reads; same-size edits with a
 preserved modification time are not detected. Manifest edits remain excluded.
 Watch is not part of the manifest or packaged defaults, enables no DevTools,
 adds no dependency or development server, and stops with the development
-window. Text watching is available in public alpha.64/65; alpha.63 does not
-implement it. Image/font watching is source-only, not in public alpha.65.
+window. Text watching is available in public alpha.64 and later; alpha.63 does
+not implement it. Image/font watching is not in public alpha.65; it ships in
+alpha.66.
 
 The command contract is defined in docs/cli/command-contract.md.
 
-Source-only `run --debug` also reports bounded metadata-only JavaScript
+Published alpha.66 `run --debug` also reports bounded metadata-only JavaScript
 diagnostics to local stderr. It uses one private debug binding behind the
 existing trusted-origin gate, with fixed error categories and known startup
 asset-relative locations only. Error messages, stacks, rejection reasons,
@@ -289,7 +291,7 @@ is installed under normal/watch-only/packaged defaults, and no background
 worker, file persistence or upload is added. IPC v1 and permissions are
 unchanged. Explicit `--debug --json` permits host stderr while preserving
 one JSON stdout envelope; ordinary JSON mode still suppresses child output.
-Public alpha.65 does not include this extension. See
+Public alpha.65 did not include this extension; it ships in alpha.66. See
 [the diagnostic record](../ops/development-diagnostics.md).
 
 ### Window Close

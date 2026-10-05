@@ -84,6 +84,46 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.66 Published Preview: 2026-10-05
+
+Unsigned prerelease `v0.5.10-alpha.66` ships the image/font `run --watch`
+extension, opt-in metadata-only `run --debug` diagnostics and bounded local
+IndexedDB draft recovery from source
+`842fead0c889e9f161c2567a91c8d0fd4c2ca260`. Main and the annotated tag were
+pushed together. [Tag CI 37317775399](https://github.com/0disoft/velox/actions/runs/37317775399)
+(attempt 1) passed reproducible unsigned producer builds and a basic
+checkout-free consumer smoke with Go 1.26.0 on `windows-2025`. Both consumer
+app ZIP hashes were
+`0ee5221c541312848255165c2dc8b0b1ef97bf157d4e17d4b33c7919f694fa33`.
+
+`gh release create --prerelease --verify-tag --latest=false` reused that run's
+four verified assets without a second producer, a tag move or a hosted public
+verifier dispatch; release ID `403770595`, `draft: false`, `prerelease: true`,
+published `2026-10-05T13:56:59Z`. Release notes reused the committed
+`alpha-evidence.yml` publication template with the release channel,
+compatibility floor and ZIP digest resolved. CommandCode DeepSeek 4.1
+Flash/high drafted the documentation updates, checked against observed evidence.
+
+| Public asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `velox-windows-x64.zip` | 5,903,850 | `3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc` |
+| `checksums.sha256` | 279 | `f20db6a79ad78170d83360b4b067d1024ca20220eaaae40c76c15c381728dd72` |
+| `velox-windows-x64.spdx.json` | 9,618 | `196d958fbd52c8c68a10d75a7da7d9c6896fbb15ac5dbdb8b2fd46a2f3c26938` |
+| `velox-windows-x64.intoto.jsonl` | 744 | `951fabec910eadb00d92a94fed0fa358ea328a39868fe846aee558410d3fe1c2` |
+
+All four public URLs were downloaded without authentication headers; their
+bytes, sizes and hashes matched the CI assets and the GitHub metadata digests.
+Three checksum entries, 16 manifest artifacts, 17 SPDX file digests, ZIP/CRC,
+version/target and provenance source/run `37317775399/1` passed. The extracted
+public CLI reported `0.5.10-alpha.66`. The executables are unsigned, and the
+SPDX and provenance files are not authenticated attestations. This publication
+verified artifact identity only: no native UI, startup, installer, `run --watch`,
+draft recovery, multi-template packaging, hosted public verifier, performance,
+stress or installer execution ran against these published bytes. The prior
+implementation and local native evidence is retained but not upgraded to
+alpha.66. No API, database, dependency or runner/job-scheduling change is
+included. See [the alpha.66 publication record](alpha66-publication.md).
+
 ## Alpha.66 Tag CI: 2026-10-05
 
 The owner approved a batched push of prepared source `842fead` and the
@@ -92,7 +132,8 @@ annotated tag `v0.5.10-alpha.66`. Remote main and the peeled tag both matched
 alpha-evidence run, [37317775399](https://github.com/0disoft/velox/actions/runs/37317775399)
 attempt 1, which passed the reproducible unsigned producer job and the
 checkout-free consumer smoke with Go 1.26.0 on `windows-2025`. The publication
-job was skipped, so alpha.66 is not published and public alpha.65 is unchanged.
+job was skipped in that run; publication followed separately afterward and is
+recorded above, and at that CI step public alpha.65 was unchanged.
 The release ZIP is 5,903,850 bytes, SHA-256
 `3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`; both
 consumer app ZIPs hashed
@@ -108,8 +149,10 @@ This historical preparation preceded the tag CI above. At that point the
 source version was `0.5.10-alpha.66`, not published, with no alpha.66 tag,
 distribution bundle, digests or hosted evidence. The locally run
 `go run ./cmd/velox version --json` reported the prepared version. Tag CI has
-since produced the matching distribution artifacts; publication is still
-pending, and the current public preview remains `v0.5.10-alpha.65`.
+since produced the matching distribution artifacts; publication was still
+pending at that step, and the public preview then remained
+`v0.5.10-alpha.65`. Alpha.66 was published later from those verified assets;
+see the published section above.
 
 The prepared release scope is the feature slices implemented after the
 alpha.65 publication: image and font asset detection in
@@ -494,8 +537,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.65` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.65`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.66` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.66`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, signing, and publication remain separate maintainer

@@ -113,26 +113,26 @@ func TestPublicPreviewResultSchemaKeepsSameRepositoryEvidenceNonExternal(t *test
 func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	checks := map[string][]string{
 		"README.md": {
-			"v0.5.10-alpha.65",
-			"37298703202",
-			"7f837fe69ff4ec9efcf528c97c63ea1d3dc010ba2a7d75d2eb824a1ff372c42b",
+			"v0.5.10-alpha.66",
+			"37317775399",
+			"3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc",
 		},
 		"VALIDATION.md": {
-			"The current public preview is",
+			"The current public preview is `v0.5.10-alpha.66`",
 			"same-repository-public-download",
 			"externalUserAttempt: false",
 		},
 		"docs/ops/release.md": {
 			"unsigned developer previews",
-			"v0.5.10-alpha.65",
-			"37298703202",
+			"v0.5.10-alpha.66",
+			"37317775399",
 			"34584656621",
 			"34453983275",
 			"intermittent failure remains unexplained",
 		},
 		"docs/product/03-risk-register.md": {
 			"Public verifier run 35079337819",
-			"Current preview `v0.5.10-alpha.65`",
+			"Current preview `v0.5.10-alpha.66`",
 		},
 	}
 	for relative, required := range checks {
@@ -148,7 +148,7 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	readiness := readNormalized(t, repositoryPath("docs", "ops", "product-readiness.md"))
 	for _, marker := range []string{
 		"- Status: Alpha active; beta not approved",
-		"- Public preview: `0.5.10-alpha.65` (published unsigned prerelease)",
+		"- Public preview: `0.5.10-alpha.66` (published unsigned prerelease)",
 	} {
 		if !strings.Contains(readiness, marker) {
 			t.Errorf("published channel is not synchronized: missing %q", marker)
@@ -156,20 +156,20 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	}
 }
 
-func TestAlpha66SourcePreparationKeepsPublishedAlpha65(t *testing.T) {
+func TestAlpha66PublicationKeepsPreparationHistorical(t *testing.T) {
 	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
 	if !strings.Contains(version, `const Version = "0.5.10-alpha.66"`) {
-		t.Fatal("prepared source version is not alpha.66")
+		t.Fatal("published source version is not alpha.66")
 	}
 	for _, relative := range []string{"README.md", "docs/ops/product-readiness.md"} {
 		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
-		if !strings.Contains(doc, "Source version: `0.5.10-alpha.66` (not published)") {
-			t.Errorf("%s does not distinguish the prepared source version", relative)
+		if !strings.Contains(doc, "Source version: `0.5.10-alpha.66` (published unsigned prerelease)") {
+			t.Errorf("%s does not identify the published source version", relative)
 		}
 	}
 	preparation := readNormalized(t, repositoryPath("docs", "ops", "alpha66-preparation.md"))
 	if !strings.Contains(preparation, "not published") {
-		t.Fatal("alpha.66 preparation must not claim publication")
+		t.Fatal("historical alpha.66 preparation must retain its unpublished boundary")
 	}
 }
 

@@ -1,5 +1,10 @@
 # Development Diagnostics: 2026-10-05
 
+> Follow-up: opt-in `run --debug` metadata diagnostics now ship in the
+> published alpha.66 prerelease. The source-only evidence below is historical;
+> its local hashes are not the alpha.66 public release bytes. See
+> [the alpha.66 publication record](alpha66-publication.md).
+
 ## Source-only Scope
 
 Explicit `run --debug` enables fixed `uncaught-error`/`unhandled-rejection`

@@ -12,7 +12,8 @@
   from the prior local Go `1.27.1` candidate builds.
 - Release ZIP: `velox-windows-x64.zip`, 5,903,850 bytes, SHA-256
   `3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`.
-- Not published. The tag run dispatched no publication; see Public Status.
+- Not published at this tag-CI step. The tag run dispatched no publication;
+  publication followed separately, recorded in Public Status below.
 
 The single tag push triggered one `alpha-evidence` workflow run on attempt 1;
 no rerun or additional workflow dispatch was requested in this step.
@@ -83,13 +84,20 @@ window startup, installer execution, `run --watch` or draft recovery against
 these CI bytes. The earlier local source and native results are not upgraded
 to this CI output.
 
-## Public Status
+## Public Status (At That Time, Historical)
 
-- GitHub `/releases/tags/v0.5.10-alpha.66` returns HTTP 404, recorded in
-  `publication-state.json` (`releaseLookup: "HTTP 404"`, `published: false`).
-- The current public preview remains `v0.5.10-alpha.65`; its published hashes
-  and run IDs are unchanged.
-- Four byte-identical copies of the verified assets are staged flat under
-  `dist/candidates/alpha66-ci-37317775399/publication/` for a later
-  publication step. They can be published later without a rerun or rebuild
-  once authorized. No publish or rebuild was performed for this record.
+- At this tag-CI step, GitHub `/releases/tags/v0.5.10-alpha.66` returned
+  HTTP 404, recorded in `publication-state.json` (`releaseLookup: "HTTP 404"`,
+  `published: false`).
+- At that time the public preview remained `v0.5.10-alpha.65`; its published
+  hashes and run IDs were unchanged. Alpha.66 was published later from these
+  exact verified assets; see
+  [the alpha.66 publication record](alpha66-publication.md).
+- Four byte-identical copies of the verified assets were staged flat under
+  `dist/candidates/alpha66-ci-37317775399/publication/` for the later
+  publication step. They were published later without a rerun or rebuild. No
+  publish or rebuild was performed for this tag-evidence record.
+
+Publication followed with no second producer: the tag was not moved and the CI
+run was not rerun. The
+[publication record](alpha66-publication.md) carries the released hashes.

@@ -37,8 +37,8 @@ Create a minimal manifest and dependency-free static web example.
   with only `file.open` and `file.save`. `--template folder-browser` creates a
   read-only folder starter with only `folder.read` and `folder.readText`.
   Unknown templates exit 2 with
-  `USAGE_INVALID` and write nothing. This option ships in public alpha.65;
-  alpha.64 does not include template selection.
+  `USAGE_INVALID` and write nothing. This option ships in public alpha.65 and
+  later, including the current alpha.66; alpha.64 does not include template selection.
 - Derive a conservative `dev.velox.<directory>` application ID and display name
   from the target directory.
 - Preflight every planned path and refuse the operation if any generated file
@@ -59,10 +59,10 @@ The text-editor starter includes New/Open/Save/Save as, document-scoped native
 save-target reuse, a discard dialog, close protection and IME-aware keyboard
 actions. The first Save after Open still prompts for a save target. It includes
 four local Lucide icons and their license, but no bundled font, find or preview.
-Public alpha.65 includes no draft storage or recovery. Its assets add no
-runtime dependency or host code.
+Public alpha.65 had no draft storage or recovery; alpha.66 adds it. Its assets
+add no runtime dependency or host code.
 
-Source-only text-editor generation also includes `drafts.js` and a
+Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only
 `schemaVersion`, `name`, `text` and `updatedAt`, with a 2 MiB UTF-8 text limit.
 Writes debounce for 300 ms and serialize with clears; success is reported
@@ -70,7 +70,7 @@ only after transaction completion. Restored text is dirty and has no save
 target, so its first Save reselects a destination. Storage errors preserve
 editing and unsaved-change protection. No native path, token, saved-text
 baseline or permission is persisted. This affects newly generated projects,
-not existing projects or public alpha.65; host, IPC and permissions are unchanged.
+not existing projects; host, IPC and permissions are unchanged.
 
 The folder-browser starter provides folder selection, immediate-entry listing,
 explicit refresh, readonly UTF-8 file preview and folder release. It reuses
@@ -117,7 +117,7 @@ replacement process.
   Child stderr is also suppressed unless `--debug` is explicitly enabled.
 - Do not copy source assets or create build output.
 - `--debug` explicitly enables development tools and cache bypass.
-  The source checkout additionally installs top-level metadata-only error
+  Alpha.66 additionally installs top-level metadata-only error
   diagnostics: fixed `uncaught-error`/`unhandled-rejection` categories,
   known startup asset relative path, line and column. Unknown sources and
   Promise rejection locations become `<unknown>:0:0`; no messages, stacks,
@@ -125,10 +125,10 @@ replacement process.
   at 20 per host run, including invalid requests. `--debug --json` forwards
   host stderr while retaining one stdout envelope. Normal, watch-only and
   packaged defaults install no diagnostic listeners or binding. This
-  diagnostics extension is source-only, not in published alpha.65.
+  diagnostics extension is not in published alpha.65; it ships in alpha.66.
 - `--watch` independently enables full-page reload after source HTML, HTM,
   CSS, JS or MJS contents settle for 500 ms, sampled every 500 ms. The entry
-  file is always included. The source checkout also watches image extensions
+  file is always included. Alpha.66 also watches image extensions
   PNG/APNG/JPG/JPEG/GIF/WebP/AVIF/BMP/ICO/SVG and font extensions
   WOFF/WOFF2/TTF/OTF/EOT, case-insensitively, by path, size and modification
   time only. Binary contents are not repeatedly read or counted in the text
@@ -148,9 +148,9 @@ replacement process.
 - Closing the development window stops and joins the watch loop. Existing
   app identity, profile and single-instance behavior are unchanged; close a
   running app with the same identity/profile before starting a watched run.
-- Watch is available in published alpha.64 and needs its matching CLI/host
-  pair. Earlier alpha.63 binaries do not implement this option.
-  Image/font watching is source-only and not in published alpha.65.
+- Watch is available in published alpha.64 and later and needs its matching
+  CLI/host pair. Earlier alpha.63 binaries do not implement this option.
+  Image/font watching is not in published alpha.65; it ships in alpha.66.
 
 ### velox build
 

@@ -133,9 +133,9 @@ flag does not change packaged configuration, native permissions, or origin polic
 
 ## 7. Grant a native permission
 
-Sections 7 and 8 describe current-source additions, not the published
-alpha.62 bundle. Use them once your chosen release includes these features;
-the first six sections remain the public-release path.
+Sections 7 and 8 ship in the current published alpha.66 release; only the
+historical alpha.62 bundle lacked these features. The first six sections remain
+the baseline public-release path.
 
 New bundles' `velox init` writes `velox.json`, three web assets (`web/index.html`,
 `web/style.css`, `web/app.js`), and a root `velox.d.ts`. The generated manifest
@@ -150,7 +150,7 @@ the following; keep the rest of your manifest:
 }
 ```
 
-The published alpha.65 also offers a native text-editor starter:
+The published alpha.66 also offers a native text-editor starter:
 
 ```sh
 velox init my-editor --template text-editor
@@ -158,17 +158,17 @@ velox run --config my-editor/velox.json --watch
 velox build --config my-editor/velox.json --installer
 ```
 
-Use the alpha.65 CLI with its matching release bundle; alpha.64 does not
-include template selection. The generated manifest requests only
+Use the alpha.66 CLI with its matching release bundle; alpha.65 added template
+selection and alpha.64 did not include it. The generated manifest requests only
 `file.open` and `file.save`. Initial Save after Open selects a destination;
-later Save reuses that page's save target. The public alpha.65 starter has no
-draft storage or recovery. Omitting `--template` retains the basic starter.
+later Save reuses that page's save target. Omitting `--template` retains the
+basic starter.
 
-New text-editor projects generated from the source checkout store one local
-IndexedDB draft after a 300 ms typing pause and offer Restore/Discard on
-relaunch. Restore keeps the document unsaved; the next Save selects a new
-destination because file paths and save permissions are never persisted.
-This is not included in public alpha.65 and does not update existing projects.
+New text-editor projects generated with alpha.66 store one local IndexedDB
+draft after a 300 ms typing pause and offer Restore/Discard on relaunch.
+Restore keeps the document unsaved; the next Save selects a new destination
+because file paths and save permissions are never persisted. Alpha.65 had no
+draft storage or recovery, and existing generated projects are not upgraded.
 Draft storage failure is reported without disabling editing or bypassing
 unsaved-change protection. Abrupt exit can lose edits not yet committed to
 IndexedDB. See [the verification record](ops/text-editor-drafts.md).
@@ -181,7 +181,7 @@ velox run --config my-browser/velox.json --watch
 velox build --config my-browser/velox.json
 ```
 
-Like text-editor, this option ships in public alpha.65. It requests only
+Like text-editor, this option ships in the published alpha.66 release. It requests only
 `folder.read` and `folder.readText`. Select a folder, refresh its immediate
 entries, select a file for a readonly UTF-8 preview, and release the folder
 when done. Subdirectories are listed but not navigable. No clipboard, write

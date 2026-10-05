@@ -1,15 +1,21 @@
 # Alpha.66 Local Preparation: 2026-10-05
 
+> Follow-up: the three feature slices prepared here now ship in the published
+> alpha.66 prerelease, so the source-only evidence below is historical. These
+> preparation hashes are not the alpha.66 public release bytes. See
+> [the alpha.66 publication record](alpha66-publication.md).
+
 ## Identity
 
 This is the historical local preparation record for version
 `0.5.10-alpha.66`, written before the tag push. At preparation time it was
 not published: there was no alpha.66 tag, release, hosted run, or publication,
 and no matching alpha.66 distribution bundle, digests, or hosted evidence
-existed yet. The tag and hosted evidence were added afterward; see
-[the alpha.66 tag evidence](alpha66-tag-evidence.md). The current public
-preview remains the unsigned prerelease `v0.5.10-alpha.65`, and alpha.66 is
-still not published.
+existed yet. The tag, hosted evidence and publication were added afterward; see
+[the alpha.66 tag evidence](alpha66-tag-evidence.md) and
+[the alpha.66 publication record](alpha66-publication.md). At that time the
+public preview remained the unsigned prerelease `v0.5.10-alpha.65`, and
+alpha.66 was not published.
 
 - Source version: `0.5.10-alpha.66` (not published).
 - Public preview: `0.5.10-alpha.65` (published unsigned prerelease).

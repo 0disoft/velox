@@ -3,16 +3,16 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
-- Public preview: `0.5.10-alpha.65` (published unsigned prerelease)
-- Source version: `0.5.10-alpha.66` (not published)
+- Public preview: `0.5.10-alpha.66` (published unsigned prerelease)
+- Source version: `0.5.10-alpha.66` (published unsigned prerelease)
 
 ## Required Beta Checks
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.65 tag CI 37298703202 passed basic checkout-free packaging; unauthenticated public download identities, both starter packaging paths and exact-public-CLI native watched run passed locally. Packaged-app launch was not repeated for these CI bytes. Prior alpha.62/63/64 receipts remain historical; see release.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.66 tag CI 37317775399 passed basic checkout-free packaging; unauthenticated public download bytes, sizes and hashes matched the CI and GitHub digests, and the extracted public CLI reported `0.5.10-alpha.66`. Packaged-app launch, native UI and OS interaction were not run against these published bytes; the native watch/UI evidence remains the historical alpha.65 result and is not upgraded to alpha.66. Prior alpha.62/63/64 receipts remain historical; see release.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
-| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Exact public alpha.65 CLI/host passed two HTML/CSS/JS automatic reloads, canceled-input preservation, later retry and normal close using `scripts/dev-reload-smoke.ts` in watch mode without debug/cache override. Private profile and HTTPS origin were retained; receipt and hashes are in release.md. Historical alpha.62/64 reload and earlier failures remain below |
+| Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | Historical alpha.65 evidence: the exact public alpha.65 CLI/host passed two HTML/CSS/JS automatic reloads, canceled-input preservation, later retry and normal close using `scripts/dev-reload-smoke.ts` in watch mode without debug/cache override. Private profile and HTTPS origin were retained; receipt and hashes are in release.md. That native result is not upgraded to the alpha.66 published bytes. Historical alpha.62/64 reload and earlier failures remain below |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
@@ -29,10 +29,11 @@ The prepared source `842fead` and annotated tag `v0.5.10-alpha.66` were
 pushed in sequence, and one alpha-evidence run
 [37317775399](https://github.com/0disoft/velox/actions/runs/37317775399)
 passed the reproducible producer and checkout-free consumer jobs with Go
-1.26.0 on `windows-2025`. The publication job was skipped, so alpha.66 is not
-published and the current public preview stays `0.5.10-alpha.65`. No native
-UI, startup, installer, watch or draft interaction ran against these CI bytes,
-and no public download or adoption result is claimed. Receipts are in
+1.26.0 on `windows-2025`. That CI run skipped publication; alpha.66 was
+published afterward from those verified assets, recorded in
+[the alpha.66 publication record](alpha66-publication.md). No native UI,
+startup, installer, watch or draft interaction ran against these CI bytes,
+and no public download or adoption result is claimed here. Tag receipts are in
 [the alpha.66 tag evidence](alpha66-tag-evidence.md).
 
 ## Source-Only Local Candidate: 2026-10-05
@@ -153,8 +154,8 @@ Full scope, hashes and preserved logs are in
 Source version is aligned to `0.5.10-alpha.63`, replacing the `0.5.10-beta.20`
 development string. This is a source-only candidate: it is not tagged or
 published, and no alpha.63 release artifact, bundle or checksum exists yet. The
-status line stays "Alpha active; beta not approved"; the current public preview
-remains `v0.5.10-alpha.62` and its recorded verification stays valid.
+status line stays "Alpha active; beta not approved"; the public preview then
+remained `v0.5.10-alpha.62` and its recorded verification stayed valid.
 
 Cached `beta.20` CLI/host bundles and the prior verification records are not
 alpha.63 artifacts. Matching binaries must be rebuilt at the new version before

@@ -1,5 +1,10 @@
 # Text-editor Draft Recovery: 2026-10-05
 
+> Follow-up: text-editor draft recovery now ships in the published alpha.66
+> prerelease. The source-only evidence below is historical; its local hashes
+> are not the alpha.66 public release bytes. See
+> [the alpha.66 publication record](alpha66-publication.md).
+
 ## Source-only Scope
 
 New `init --template text-editor` projects include local IndexedDB draft

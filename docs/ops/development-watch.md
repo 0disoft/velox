@@ -1,5 +1,10 @@
 # Development Watch: 2026-10-05
 
+> Follow-up: metadata-only image/font watching now ships in the published
+> alpha.66 prerelease. The source-only evidence below is historical; its local
+> hashes are not the alpha.66 public release bytes. See
+> [the alpha.66 publication record](alpha66-publication.md).
+
 Watch is now published in alpha.64. The exact unauthenticated public download
 passed native auto-reload/canceled-input preservation/retry/normal close with
 debug off; source/run, public hashes and the native receipt are in

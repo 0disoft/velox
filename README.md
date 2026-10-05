@@ -51,37 +51,35 @@ an immutable public release without a source checkout or consumer toolchain.
 Report ordinary failures with the [bug report template](https://github.com/0disoft/velox/issues/new?template=bug-report.md);
 report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
-The current unsigned preview is [v0.5.10-alpha.65](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.65),
-from commit `c8f618bd94e48cb7c01d61aa0e65e3bc7116875c`. It adds
-`init --template text-editor|folder-browser` while retaining opt-in
-`run --watch` automatic development reload, EXE branding,
-per-user installers, native text/folder/clipboard operations, desktop controls
-and declaration-only TypeScript bridge types. Portable static apps remain the default.
-[Tag CI 37298703202](https://github.com/0disoft/velox/actions/runs/37298703202)
-passed reproducible builds and checkout-free consumer checks. The same assets
-were published without a second producer run. ZIP SHA-256:
-`7f837fe69ff4ec9efcf528c97c63ea1d3dc010ba2a7d75d2eb824a1ff372c42b`.
-Unauthenticated public downloads matched the CI artifact checksums; release
-manifest, SPDX, provenance and the public CLI version were checked locally.
-The exact downloaded CLI/host passed native auto-reload, canceled-input
-preservation, retry and normal close with debug off and a private profile.
-Both starters passed public-CLI generation and portable/Setup packaging.
-Maintainer-confirmed saving and Korean preview used local generated apps
-with the alpha.64 host, not alpha.65 public-byte native dialogs.
-The prior alpha.62 public-download verification run `35079337819` and its
-native lifecycle evidence remain separate historical records. See the
-[release record](docs/ops/release.md) for exact scope and retained failures.
-Beta remains held under the product workflow checklist.
-
-Source version: `0.5.10-alpha.66` (not published); the public preview above
-remains `v0.5.10-alpha.65` until an alpha.66 release is published.
-
+The current unsigned preview is [v0.5.10-alpha.66](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.66),
+from commit `842fead0c889e9f161c2567a91c8d0fd4c2ca260`. It adds image and font
+asset detection to `run --watch`, opt-in metadata-only `run --debug` JavaScript
+diagnostics, and bounded local IndexedDB draft recovery for newly generated
+`init --template text-editor` projects, while retaining the alpha.65 text-editor
+and folder-browser `init --template` starters, opt-in `run --watch` automatic
+development reload, EXE branding, per-user installers, native
+text/folder/clipboard operations, desktop controls and declaration-only
+TypeScript bridge types. Existing generated projects are not upgraded.
+Portable static apps remain the default.
 [Tag CI 37317775399](https://github.com/0disoft/velox/actions/runs/37317775399)
 built reproducible unsigned producer evidence and a checkout-free consumer
-smoke for tag `v0.5.10-alpha.66` at source `842fead` with Go 1.26.0, but
-skipped publication. Alpha.66 remains unpublished and the public alpha.65
-release above is unchanged. Details are in
-[the tag evidence](docs/ops/alpha66-tag-evidence.md).
+smoke for tag `v0.5.10-alpha.66` at source `842fead` with Go 1.26.0. The same
+four assets were published without a second producer run. ZIP SHA-256:
+`3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`.
+Unauthenticated public downloads matched the CI artifact checksums; the release
+manifest, SPDX, provenance and the public CLI version were checked. This
+publication verified artifact identity only; no native UI, startup, installer,
+watch, draft or public native/picker interaction ran against these published
+bytes. The prior alpha.65 unsigned preview remains a historical record, and its
+exact-public-native watch and starter-picker evidence is not upgraded to
+alpha.66. The earlier alpha.62 public-download verification run `35079337819`
+and its native lifecycle evidence also remain separate historical records. See
+the [release record](docs/ops/release.md) for exact scope and retained failures.
+Beta remains held under the product workflow checklist.
+
+Source version: `0.5.10-alpha.66` (published unsigned prerelease). The four
+public asset identities and the narrow verification scope are in
+[the alpha.66 publication record](docs/ops/alpha66-publication.md).
 
 ## Headline Metrics
 
@@ -173,38 +171,40 @@ velox inspect .\dist\dev.velox.hello.zip --json
 velox version --json
 ```
 
-The published alpha.65 includes two opt-in native starters:
+The published alpha.66 includes the two opt-in native starters introduced in
+alpha.65:
 
 ```sh
 velox init my-editor --template text-editor
 velox init my-browser --template folder-browser
 ```
 
-Text-editor requests only `file.open`/`file.save`; public alpha.65 has no draft recovery.
-Folder-browser requests only `folder.read`/`folder.readText` for immediate
-listing and readonly UTF-8 preview, with no recursion or writes. Both use
-local licensed icons, without a bundled font or new host dependency. Omitting
-`--template` keeps the permission-free basic starter.
+Text-editor requests only `file.open`/`file.save`. Folder-browser requests only
+`folder.read`/`folder.readText` for immediate listing and readonly UTF-8
+preview, with no recursion or writes. Both use local licensed icons, without a
+bundled font or new host dependency. Omitting `--template` keeps the
+permission-free basic starter. Alpha.65 had no draft recovery; it ships in
+alpha.66.
 
-The source checkout additionally offers local IndexedDB draft recovery for
-newly generated text editors. Restore recovers unsaved text, not file paths or
-save permissions; the next Save selects a destination again. Existing generated
-projects and public alpha.65 are unchanged. See the
+Published alpha.66 includes local IndexedDB draft recovery for newly generated
+text editors. Restore recovers unsaved text, not file paths or save
+permissions; the next Save selects a destination again. Existing generated
+projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
-The published preview supports `velox run --watch --config velox.json`:
-stable HTML/CSS/JavaScript saves trigger full-page reloads without enabling
+The published alpha.66 supports `velox run --watch --config velox.json`:
+stable HTML/CSS/JavaScript saves and common image/font path, size and
+modification-time changes trigger full-page reloads without enabling
 DevTools. Keep the downloaded CLI/host pair together. App `beforeunload`
 handlers can cancel a reload. Normal `run` and packaged apps do not start a
-watcher. Public alpha.65 does not watch fonts/images or manifest changes.
-The source checkout additionally watches common image/font assets by path,
-size and modification time without repeatedly reading binary contents.
-Same-size binary edits with a preserved modification time are not detected;
-manifest changes and unlisted asset formats remain outside the watch scope.
-Source-only `run --debug` also emits bounded JavaScript error metadata to
-local stderr, including with `--json`; messages and rejection contents are
-not collected. Default runs install no diagnostic channel. Scope, privacy
-and native receipts are in [Development Diagnostics](docs/ops/development-diagnostics.md).
+watcher. Alpha.65 watched only text, not fonts/images or manifest changes;
+alpha.66 adds metadata-only image/font watching. Same-size binary edits with a
+preserved modification time are not detected; manifest changes and unlisted
+asset formats remain outside the watch scope. Published alpha.66 `run --debug`
+also emits bounded JavaScript error metadata to local stderr, including with
+`--json`; messages and rejection contents are not collected. Default runs
+install no diagnostic channel. Scope, privacy and native receipts are in
+[Development Diagnostics](docs/ops/development-diagnostics.md).
 Local candidate verification and extraction instructions are in
 [the alpha.64 candidate receipt](docs/ops/alpha64-candidate.md); it is not a
 published release download. Use the public release linked above for published bytes.
@@ -289,7 +289,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.65`.
+`0.5.10-alpha.66`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 
