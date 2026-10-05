@@ -17,6 +17,8 @@ import (
 
 var invalidSlug = regexp.MustCompile(`[^a-z0-9-]+`)
 
+var ErrUnknownTemplate = errors.New("template must be basic or text-editor")
+
 type Result struct {
 	Directory string   `json:"directory"`
 	AppID     string   `json:"appId"`
@@ -50,6 +52,13 @@ type plannedFile struct {
 }
 
 func Create(directory string) (Result, error) {
+	return CreateFromTemplate(directory, "basic")
+}
+
+func CreateFromTemplate(directory, template string) (Result, error) {
+	if template != "basic" && template != "text-editor" {
+		return Result{}, ErrUnknownTemplate
+	}
 	if strings.TrimSpace(directory) == "" {
 		directory = "."
 	}
@@ -87,6 +96,9 @@ func Create(directory string) (Result, error) {
 	manifest.Assets.Root, manifest.Assets.Entry = "web", "index.html"
 	manifest.Window.Width, manifest.Window.Height = 960, 640
 	manifest.Security.Permissions = []string{}
+	if template == "text-editor" {
+		manifest.Security.Permissions = []string{"file.open", "file.save"}
+	}
 	manifestData, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
 		return Result{}, fmt.Errorf("encode project manifest: %w", err)
@@ -96,10 +108,12 @@ func Create(directory string) (Result, error) {
 	files := []plannedFile{
 		{path: "velox.json", data: manifestData},
 		{path: "velox.d.ts", data: []byte(bridgetypes.Declaration())},
-		{path: "web/index.html", data: []byte(indexHTML(name))},
-		{path: "web/style.css", data: []byte(styleCSS)},
-		{path: "web/app.js", data: []byte(appJS)},
 	}
+	webFiles, err := templateFiles(template, name)
+	if err != nil {
+		return Result{}, err
+	}
+	files = append(files, webFiles...)
 	for _, file := range files {
 		_, statErr := os.Lstat(filepath.Join(absolute, filepath.FromSlash(file.path)))
 		if statErr == nil {

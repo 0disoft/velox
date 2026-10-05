@@ -284,6 +284,38 @@ func TestUsageFailureHonorsJSONAnywhere(t *testing.T) {
 	}
 }
 
+func TestInitTextEditorAndTemplateErrors(t *testing.T) {
+	for _, form := range []int{0, 1, 2} {
+		target := filepath.Join(t.TempDir(), "editor")
+		args := []string{"init", target, "--template", "text-editor", "--json"}
+		if form == 1 {
+			args = []string{"init", "--template", "text-editor", "--json", target}
+		} else if form == 2 {
+			args = []string{"init", target, "--template=text-editor", "--quiet", "--json"}
+		}
+		var stdout, stderr bytes.Buffer
+		if code := Run(args, Dependencies{Stdout: &stdout, Stderr: &stderr}); code != 0 || stderr.Len() != 0 {
+			t.Fatalf("form %d: code=%d stdout=%s stderr=%s", form, code, stdout.String(), stderr.String())
+		}
+		if !strings.Contains(stdout.String(), "web/save.svg") {
+			t.Fatalf("template files absent: %s", stdout.String())
+		}
+	}
+	for _, template := range []string{"unknown", ""} {
+		target := filepath.Join(t.TempDir(), "editor")
+		var stdout, stderr bytes.Buffer
+		if code := Run([]string{"init", target, "--template=" + template, "--json"}, Dependencies{Stdout: &stdout, Stderr: &stderr}); code != 2 {
+			t.Fatalf("unknown template: code=%d stdout=%s", code, stdout.String())
+		}
+		if !strings.Contains(stdout.String(), "USAGE_INVALID") {
+			t.Fatalf("wrong error: %s", stdout.String())
+		}
+		if _, err := os.Stat(target); !os.IsNotExist(err) {
+			t.Fatal("invalid template created project")
+		}
+	}
+}
+
 func TestInitJSONContract(t *testing.T) {
 	target := filepath.Join(t.TempDir(), "sample-app")
 	var stdout, stderr bytes.Buffer

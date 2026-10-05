@@ -8,6 +8,24 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor starter (source-only, 2026-10-05):
+`go test ./internal/initializer ./internal/cli ./tests/hygiene` and scoped vet
+passed. `bun test internal/initializer/text_editor.test.ts` passed six cases
+covering save-target reuse, cancellation/error preservation, discard/open/new,
+pending-operation guards, IME/shortcuts and absent-bridge behavior. Edge mock
+checks passed at 960/360 widths in light/dark modes with long names, loaded
+icons and no horizontal overflow. CommandCode DeepSeek 4.1 Flash/high supplied
+the visual specification and documentation draft, checked against implementation.
+The final generated project had 8 web assets / 13,697 bytes; portable ZIP and
+Setup packaging passed using unchanged public alpha.64 host bytes. Native CDP
+confirmed the bridge and enabled Open control, then a synthetic ready marker
+closed the host with exit 0. This is not a native file-dialog/save test.
+Earlier exit tests lacked the template's ready signal, and a native screenshot
+timed out; those attempts were cleaned up, not counted as passes. Final visual
+evidence is mock-browser only. Actual file selection/write, installation,
+hosted CI, performance benchmarking and publication were not repeated.
+No IPC/schema/DB/host/dependency/workflow or version change is included.
+
 Portable consumer summary: `go test ./cmd/velox-consumer-summary` covers schema
 validation, nested/single-file input, duplicate IDs, nearest-rank statistics,
 missing/excess/failed samples, mixed release digests, hosted process-evidence

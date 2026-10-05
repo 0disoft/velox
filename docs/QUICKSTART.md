@@ -150,6 +150,20 @@ the following; keep the rest of your manifest:
 }
 ```
 
+The source checkout also offers a native text-editor starter:
+
+```sh
+velox init my-editor --template text-editor
+velox run --config my-editor/velox.json --watch
+velox build --config my-editor/velox.json --installer
+```
+
+This template option is not in public alpha.64; use a newly built source CLI
+with a matching release bundle. The generated manifest requests only
+`file.open` and `file.save`. Initial Save after Open selects a destination;
+later Save reuses that page's save target. This small starter has no draft
+storage or recovery. Omitting `--template` retains the basic starter.
+
 `app.info` enables `window.velox.invoke("app.getInfo")`; `file.save` enables
 `window.velox.saveText`, `saveTextAs`, and `saveTextTo`. Each permission is
 independent and enforced by the host. See the

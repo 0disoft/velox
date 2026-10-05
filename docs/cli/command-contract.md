@@ -32,6 +32,11 @@ portable output is unchanged.
 
 Create a minimal manifest and dependency-free static web example.
 
+- `--template basic` is the default and keeps the existing output and empty
+  permissions. `--template text-editor` creates the native text-editor starter
+  with only `file.open` and `file.save`. Unknown templates exit 2 with
+  `USAGE_INVALID` and write nothing. This option is source-only and not included
+  in the public alpha.64 release.
 - Derive a conservative `dev.velox.<directory>` application ID and display name
   from the target directory.
 - Preflight every planned path and refuse the operation if any generated file
@@ -42,10 +47,17 @@ Create a minimal manifest and dependency-free static web example.
   with `/// <reference path="../velox.d.ts" />`, a type-checking hint only.
 - Keep the declaration at the project root; do not copy it into the `web` asset
   directory or add it to generated application assets.
-- Grant no native permission, install no TypeScript, and compile or run no
-  example.
+- Grant no native permission for the basic template, install no TypeScript,
+  and compile or run no example. The text-editor template explicitly declares
+  its two file permissions in the generated manifest.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
+
+The text-editor starter includes New/Open/Save/Save as, document-scoped native
+save-target reuse, a discard dialog, close protection and IME-aware keyboard
+actions. The first Save after Open still prompts for a save target. It includes
+four local Lucide icons and their license, but no bundled font, draft storage,
+recovery, find or preview. Its assets add no runtime dependency or host code.
 
 ### velox validate
 

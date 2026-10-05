@@ -235,6 +235,13 @@ as passed; `docs/ops/product-readiness.md` owns the remaining checks.
 
 ### CLI
 
+The source checkout adds `init --template basic|text-editor`. Basic remains
+the unchanged permission-free default. Text-editor scaffolds a dependency-free
+native file editor with only `file.open`/`file.save`, page-scoped save reuse,
+discard/close protection and local licensed icons. It bundles no font and adds
+no draft storage, host code or background process. This template selection is
+not yet in the published alpha.64 CLI.
+
 - init
 - validate
 - doctor

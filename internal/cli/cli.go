@@ -161,10 +161,11 @@ func runInit(args []string, dependencies Dependencies) int {
 	flags.SetOutput(dependencies.Stderr)
 	jsonOutput := flags.Bool("json", false, "emit one JSON document")
 	quiet := flags.Bool("quiet", false, "suppress successful human output")
+	template := flags.String("template", "basic", "project template: basic or text-editor")
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(reorderPositionalArgs(args)); err != nil {
+	if err := flags.Parse(reorderPositionalArgs(args, "template")); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -177,8 +178,11 @@ func runInit(args []string, dependencies Dependencies) int {
 	if flags.NArg() == 1 {
 		directory = flags.Arg(0)
 	}
-	result, err := initializer.Create(directory)
+	result, err := initializer.CreateFromTemplate(directory, *template)
 	if err != nil {
+		if errors.Is(err, initializer.ErrUnknownTemplate) {
+			return emitFailure(dependencies, "init", *jsonOutput, 2, "USAGE_INVALID", "Unknown project template.", err)
+		}
 		return emitFailure(dependencies, "init", *jsonOutput, 6, "INIT_FAILED", "Project initialization failed.", err)
 	}
 	if *jsonOutput {
@@ -681,19 +685,25 @@ func jsonRequested(args []string) bool {
 	return false
 }
 
-func reorderPositionalArgs(args []string) []string {
+func reorderPositionalArgs(args []string, valueFlags ...string) []string {
 	ordered := make([]string, 0, len(args))
-	for _, arg := range args {
+	positional := make([]string, 0, len(args))
+	for index := 0; index < len(args); index++ {
+		arg := args[index]
 		if strings.HasPrefix(arg, "-") {
 			ordered = append(ordered, arg)
+			for _, name := range valueFlags {
+				if (arg == "--"+name || arg == "-"+name) && index+1 < len(args) {
+					index++
+					ordered = append(ordered, args[index])
+					break
+				}
+			}
+		} else {
+			positional = append(positional, arg)
 		}
 	}
-	for _, arg := range args {
-		if !strings.HasPrefix(arg, "-") {
-			ordered = append(ordered, arg)
-		}
-	}
-	return ordered
+	return append(ordered, positional...)
 }
 
 func printUsage(writer io.Writer) {

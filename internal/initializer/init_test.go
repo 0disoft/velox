@@ -50,6 +50,69 @@ func TestCreateWritesDependencyFreeProject(t *testing.T) {
 	}
 }
 
+func TestCreateTextEditorTemplate(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "my-editor")
+	result, err := CreateFromTemplate(target, "text-editor")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := manifest.Load(filepath.Join(target, "velox.json"))
+	if err != nil || !reflect.DeepEqual(config.Security.Permissions, []string{"file.open", "file.save"}) {
+		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
+	}
+	assets, err := assettree.Scan(filepath.Join(target, "web"))
+	if err != nil || len(assets.Files) != 8 || len(result.Files) != 10 {
+		t.Fatalf("unexpected inventory: %+v %+v %v", result.Files, assets, err)
+	}
+	for _, relative := range result.Files {
+		data, err := os.ReadFile(filepath.Join(target, filepath.FromSlash(relative)))
+		if err != nil || len(data) == 0 {
+			t.Fatalf("empty or missing %s: %v", relative, err)
+		}
+	}
+	index, err := os.ReadFile(filepath.Join(target, "web", "index.html"))
+	if err != nil || strings.Contains(string(index), "{{APP_NAME}}") || !strings.Contains(string(index), "My Editor") {
+		t.Fatalf("app name not substituted: %v", err)
+	}
+}
+
+func TestTextEditorEscapesNameAndPreservesConflictingIcon(t *testing.T) {
+	files, err := templateFiles("text-editor", `<script>alert("name")</script>`)
+	if err != nil || strings.Contains(string(files[0].data), `<script>alert`) || !strings.Contains(string(files[0].data), "&lt;script&gt;") {
+		t.Fatalf("unsafe app name: %v", err)
+	}
+	target := t.TempDir()
+	if err := os.Mkdir(filepath.Join(target, "web"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(target, "web", "save.svg")
+	if err := os.WriteFile(path, []byte("keep"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CreateFromTemplate(target, "text-editor"); err == nil {
+		t.Fatal("expected icon conflict")
+	}
+	if _, err := os.Stat(filepath.Join(target, "velox.json")); !os.IsNotExist(err) {
+		t.Fatal("partial manifest remained")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil || string(data) != "keep" {
+		t.Fatalf("user icon changed: %q %v", data, err)
+	}
+}
+
+func TestUnknownTemplateWritesNothing(t *testing.T) {
+	for _, template := range []string{"", "unknown", "TEXT-EDITOR", "../text-editor"} {
+		target := filepath.Join(t.TempDir(), "new-editor")
+		if _, err := CreateFromTemplate(target, template); err != ErrUnknownTemplate {
+			t.Fatalf("template %q: %v", template, err)
+		}
+		if _, err := os.Stat(target); !os.IsNotExist(err) {
+			t.Fatalf("unknown template created target: %v", err)
+		}
+	}
+}
+
 func TestCreateRefusesDeclarationConflictWithoutPartialWrites(t *testing.T) {
 	target := t.TempDir()
 	path := filepath.Join(target, "velox.d.ts")
