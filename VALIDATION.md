@@ -8,6 +8,19 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Source candidate `9dfcb8b` preparation (2026-10-06): compiled the CLI once
+with Go 1.27.1 and reused manifest-checked public alpha.66 host/Setup bytes.
+Two packaging runs matched, without claiming independent recompilation.
+An outside-checkout prebuilt consumer passed init/validate/build --installer/
+inspect for all four templates. Generated hosts/types matched bundled inputs;
+tray packaging repeated identically. All 16 release-manifest entries, three
+sidecar checksums, 17 SPDX SHA-256 entries and provenance source/ZIP identity
+passed. Releasebundle/releaseevidence/hygiene Go tests passed. Prior matching
+tray native bytes/manual confirmation and unchanged implementation tests were
+reused; no installer execution, hosted/performance/stress or native-watch
+repeat occurred. No version, push, tag, release, API/IPC, DB/schema, dependency
+or CI change. See `docs/ops/source-candidate-9dfcb8b.md` for exact identity.
+
 Tray starter manual follow-up (2026-10-06): the maintainer confirmed hide,
 restore, visible bell-button notification and tray Quit all worked in the
 replacement diagnostic window. The diagnostic process exited 0; the owned

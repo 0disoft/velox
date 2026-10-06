@@ -84,6 +84,19 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Source Candidate `9dfcb8b`: 2026-10-06
+
+The next preview's source scope is locally packaged: manifest-change notices
+in development watch, stderr notices alongside JSON output and the tray-app
+starter. The version remains `0.5.10-alpha.66`; these are local candidate
+CLI/ZIP bytes, not the public alpha.66 release. The Go 1.27.1 CLI reuses the
+unchanged public Go 1.26.0 host and Setup. Two packaging runs matched; an
+outside-checkout prebuilt consumer generated, packaged and inspected all four
+templates. Installers were generated, not executed. Sidecar checksums, SPDX
+digests and unsigned provenance identity passed. No version/tag, push, hosted
+job or publication occurred. Exact hashes, reused native evidence and skipped
+checks are in [the source candidate record](source-candidate-9dfcb8b.md).
+
 ## Alpha.66 Published Preview: 2026-10-05
 
 Unsigned prerelease `v0.5.10-alpha.66` ships the image/font `run --watch`
