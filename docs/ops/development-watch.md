@@ -34,6 +34,48 @@ suppression remains unchanged. Normal runs and packaged apps have no additional
 manifest loop; no host source, IPC, DB/schema, dependency or CI change is made.
 This extension is not in published alpha.66 and includes no version bump.
 
+Native follow-up used the source CLI from `5b7dda3` built once with Go 1.27.1,
+`-buildvcs=false -trimpath -ldflags='-s -w'`, alongside the unchanged public
+alpha.66 host and its matching metadata. The isolated File Notes project and
+private profile passed with `--watch`, without `--debug` or `--json`, so normal
+stderr notices were visible. The test used CDP through a loopback-only port;
+no test-side reload/navigation or cache override was issued.
+
+The three manifest phases were a valid app name/window width/permission edit,
+invalid JSON, and corrected valid settings. Exactly two restart notices and
+one error appeared, with no repeated diagnostics during each observation
+window. Every phase retained the same document marker, exact unsaved text
+`manifest watch unsaved text`, dirty status, origin, and runtime-config digest
+`442ffd5e757427eeb0e2f510dbadcec2e5ee2db9eb322637dcc92b454a579a7f`.
+No browser dialog opened. Clearing only the isolated editor for normal close
+returned CLI and cleanup exit 0; the temporary runtime file was removed.
+This is automated native/CDP evidence, not a new manual confirmation.
+
+The first attempt attached before editor initialization and failed its input
+baseline; it cleaned up with exit 0. Adding an explicit readiness wait fixed
+the fixture without changing production code.
+Failed receipt: `.cache/manifest-watch-1791277219369/result.json`.
+Passed receipt: `.cache/manifest-watch-1791277257382/result.json`.
+Local source CLI SHA-256:
+`c43b15fe70c37f20d04e5bccc1daa12d8b7fb942a3d118b94b36ebe926e2b54e`.
+Unchanged public host SHA-256:
+`7cf4c80d614ff1ba4f942c39dbfd42865b59146d5f5c089b4c5fa0be3c850beb`.
+The CLI is not a public alpha.66 release artifact even though its version
+string remains alpha.66. No installer, hosted stress or performance/size
+benchmark was repeated for this verification-only follow-up.
+
+To repeat, place the source CLI, compatible host and matching `velox-host.json`
+in `.cache/manifest-watch-bin`, or select the directory with
+`VELOX_MANIFEST_WATCH_BIN_DIR`, then run:
+
+```sh
+bun run scripts/manifest-watch-smoke.ts
+```
+
+The script owns only its copied fixture, private profile and child process,
+and force-cleans the child process tree if normal close fails. Results and
+logs remain under its timestamped `.cache/manifest-watch-*` directory.
+
 ## Image/Font Source Extension: 2026-10-05
 
 The source checkout now includes common image/font metadata in the existing

@@ -26,6 +26,23 @@ updated. Native UI, release/installer, hosted stress and performance/size
 measurements were not repeated for this CLI-only change. Public alpha.66
 remains unchanged; no version bump, publication or beta promotion occurred.
 
+Manifest watch native follow-up (2026-10-06): the source CLI from `5b7dda3`
+was built with Go 1.27.1 and paired with the unchanged public alpha.66 host.
+`bun run scripts/manifest-watch-smoke.ts` passed in an isolated File Notes
+project/profile with watch on and debug off. A valid name/size/permission edit,
+invalid JSON, then corrected settings emitted exactly two restart notices and
+one error. All three phases retained the document marker, unsaved editor text,
+origin and runtime-config SHA-256; no browser dialog opened. Normal close
+returned CLI/cleanup exit 0 and removed the temporary runtime configuration.
+The first attempt failed its dirty-editor baseline before initialization;
+waiting for editor readiness fixed the fixture without a product change.
+This is native/CDP automation, not a new human confirmation. Hashes, receipts
+and the repeatable command are in `docs/ops/development-watch.md`. Existing
+unit/vet results were reused; script bundling, hygiene and diff checks passed.
+Release/installer, hosted stress and performance/size benchmarks were not
+repeated for this verification-only follow-up. No runtime/API/IPC, DB/schema,
+dependency, CI, version or public-release change is included.
+
 Alpha.66 local preparation (2026-10-05): source version is
 `0.5.10-alpha.66`, not published; public alpha.65 evidence is preserved.
 Version-dependent buildplan, builder, CLI, inspector, runner, host metadata,
