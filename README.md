@@ -242,6 +242,7 @@ The composer sends info/warning/error messages only on explicit submission;
 Windows can suppress balloon display. It includes one local licensed bell
 icon, no bundled font, history, scheduler or additional host code. The basic
 starter and existing generated projects are unchanged.
+Scope and verification are in the [tray starter record](docs/ops/tray-app-starter.md).
 
 The published alpha.66 supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves and common image/font path, size and

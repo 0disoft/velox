@@ -92,7 +92,7 @@ success/failure and displays error codes without raw native details. Its limit
 matches the host's 255 UTF-16 units and control-character rules. Hide/restore/
 quit use the existing host-owned tray menu; accepted requests do not guarantee
 Windows will display the balloon. It includes a local licensed Lucide bell
-icon and no browser fallback, history, persistence, timer, font or dependency.
+icon and no browser fallback, message history/storage, timer, font or dependency.
 Other starters and the basic output are unchanged.
 
 ### velox validate

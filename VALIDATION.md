@@ -8,6 +8,23 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Tray starter UI/native follow-up (2026-10-06): the source CLI from `83e78c1`
+generated/validated/built/inspected the starter with only `notification.show`.
+Five web assets total 8,387 bytes; the packaged EXE is byte-identical to the
+unchanged public alpha.66 host. Edge/Playwright light/dark checks at 620x480
+and 360x540 passed without horizontal overflow, with a fixed 40x40 rendered
+bell button, Space activation, literal text retention and focus return. Mock
+bridge UI evidence is separate from the packaged native/CDP run: one real
+notification request was accepted, a second invocation retained the same
+document/text, and normal close/cleanup returned 0 with no owned process
+remaining. The first native screenshot timeout was force-cleaned; an
+intermediate file-URL preview showed blank masks. A loopback HTTP fixture
+fixed rendering without product changes; both earlier receipts are retained.
+Source/public hashes, repeat command and skipped manual tray/OS-balloon,
+installer/stress/performance checks are in `docs/ops/tray-app-starter.md`.
+Implementation Go/vet/Bun results were reused; final hygiene/diff checks passed.
+No host/public IPC, DB/schema, dependency, CI, version or public release change.
+
 Tray starter implementation (source-only, 2026-10-06): initializer/CLI tests
 and scoped vet passed, plus four Bun cases for explicit submission, UTF-16/
 control-character bounds, duplicate-request suppression, failure recovery,

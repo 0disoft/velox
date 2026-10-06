@@ -45,7 +45,7 @@ separate from the licenses above and must be reviewed before a public release.
 
 ## Lucide Starter Icons
 
-The CLI embeds file-plus, folder-open, save, save-all, refresh-cw and x from
+The CLI embeds file-plus, folder-open, save, save-all, refresh-cw, x and bell from
 <https://github.com/lucide-icons/lucide>. Generated native starter projects retain
 the complete notice in `web/icons-license.txt`.
 
