@@ -1,6 +1,10 @@
 # Tray App Starter: 2026-10-06
 
-This is a source-only `init --template tray-app` addition, not part of the
+> Follow-up: this starter ships in alpha.67. The implementation/native records
+> below retain their original source-CLI/alpha.66-host identities; see
+> [alpha67-publication.md](alpha67-publication.md) for public-byte boundaries.
+
+This was a source-only `init --template tray-app` addition, not part of the
 published alpha.66 CLI. Basic output and existing generated projects are
 unchanged. The CLI embeds five static assets and the existing declaration;
 consumer generation/build still require no compiler or frontend dependencies.

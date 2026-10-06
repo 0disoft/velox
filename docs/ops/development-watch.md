@@ -18,6 +18,10 @@ the original source-integration evidence.
 
 ## Manifest Notices: 2026-10-06
 
+> Follow-up: manifest notices and their JSON-mode stderr path ship in alpha.67.
+> The source-CLI/native receipts below are historical, not exact-public-alpha.67
+> repetitions. See [alpha67-publication.md](alpha67-publication.md).
+
 The source CLI now observes the selected manifest during `run --watch`, including
 custom `--config` paths. It polls content every 500 ms and waits for a 500 ms
 quiet period before parsing the captured bytes with the existing manifest

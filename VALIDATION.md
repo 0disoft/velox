@@ -8,6 +8,19 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.67 publication (2026-10-06): source `cb801f5` and annotated tag were
+pushed together. Tag CI `37471273685/1` passed independent reproducible
+producer builds and a basic checkout-free consumer smoke with Go 1.26.0.
+The four verified files were reused for unsigned prerelease publication
+without another producer, tag move or public-verifier dispatch. Unauthenticated
+downloads matched CI and GitHub digests; three checksum entries, 16 manifest
+artifacts, 17 SPDX SHA-256 entries and provenance source/run identity passed.
+The CI-extracted CLI reported alpha.67 and matched the public ZIP's bytes.
+No new native UI, startup, watch, draft, picker, tray/balloon, installer,
+performance/stress or external-adoption check ran against these public bytes.
+Evidence remains `same-repository-public-download` with `externalUserAttempt: false`.
+Exact identities and skipped checks are in `docs/ops/alpha67-publication.md`.
+
 Alpha.67 local artifact follow-up (2026-10-06): clean source `4d73cfb` produced
 matching-version CLI, GUI host and GUI Setup with Go 1.27.1. Two packaging
 runs from those binaries matched. All four outside-checkout prebuilt consumer
@@ -668,7 +681,13 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.66`, source
+The current public preview is `v0.5.10-alpha.67`, source
+`cb801f5bf3014b31a2a544d97bb0fe95d33ff270`; tag CI `37471273685/1` and
+public-byte checks passed. ZIP SHA-256:
+`fcb5e807682df028515f95d40146235b29d3ed7de32d41c09f00b1d4cf9afead`.
+See [alpha67-publication.md](docs/ops/alpha67-publication.md).
+
+The previous public preview is `v0.5.10-alpha.66`, source
 `842fead0c889e9f161c2567a91c8d0fd4c2ca260`. Tag CI `37317775399` (attempt 1)
 passed reproducible unsigned producer builds and a basic checkout-free
 consumer smoke with Go 1.26.0. Its four verified assets were published as an

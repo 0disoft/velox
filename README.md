@@ -51,7 +51,18 @@ an immutable public release without a source checkout or consumer toolchain.
 Report ordinary failures with the [bug report template](https://github.com/0disoft/velox/issues/new?template=bug-report.md);
 report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
-The current unsigned preview is [v0.5.10-alpha.66](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.66),
+The current unsigned preview is [v0.5.10-alpha.67](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.67),
+from source `cb801f5bf3014b31a2a544d97bb0fe95d33ff270`. It adds restart-required
+manifest-watch notices, stderr notices alongside JSON output, and the opt-in
+tray-app starter. [Tag CI 37471273685](https://github.com/0disoft/velox/actions/runs/37471273685)
+passed reproducible producer builds and basic checkout-free consumer packaging.
+Its four files were published without another producer, then downloaded
+without authentication and matched against CI and GitHub digests. ZIP SHA-256:
+`fcb5e807682df028515f95d40146235b29d3ed7de32d41c09f00b1d4cf9afead`.
+No native/UI/installer/stress or adoption claim is added for these public bytes;
+see [the alpha.67 publication record](docs/ops/alpha67-publication.md).
+
+The previous unsigned preview is [v0.5.10-alpha.66](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.66),
 from commit `842fead0c889e9f161c2567a91c8d0fd4c2ca260`. It adds image and font
 asset detection to `run --watch`, opt-in metadata-only `run --debug` JavaScript
 diagnostics, and bounded local IndexedDB draft recovery for newly generated
@@ -81,10 +92,12 @@ exact downloaded bytes; see
 adds no installer, folder-browser, hosted-verifier, stress or adoption evidence.
 Beta remains held under the product workflow checklist.
 
-Source version: `0.5.10-alpha.67` (local candidate; not published). Local
-preparation is recorded in [alpha67-preparation.md](docs/ops/alpha67-preparation.md).
-The public preview remains alpha.66; its four asset identities and scope are in
-[the alpha.66 publication record](docs/ops/alpha66-publication.md).
+Source version: `0.5.10-alpha.67` (published unsigned prerelease). Public asset
+identities and scope are in [alpha67-publication.md](docs/ops/alpha67-publication.md).
+The [local preparation](docs/ops/alpha67-preparation.md) retains different
+Go 1.27.1 hashes; it is not the public Go 1.26.0 bundle.
+The earlier [alpha.66 publication record](docs/ops/alpha66-publication.md)
+retains that version's asset identities and verification boundaries.
 
 ## Headline Metrics
 
@@ -108,7 +121,7 @@ smaller build and runtime surface.
 
 ## Current Product Boundary
 
-Supported in the published alpha.66 preview:
+Supported in the published alpha.67 preview:
 
 - Windows x64.
 - Static web assets.
@@ -137,7 +150,7 @@ Explicitly deferred:
 
 ## Capabilities and Permissions
 
-The table covers the published alpha.66 preview. Native script capabilities
+The table covers the published alpha.67 preview. Native script capabilities
 are separate opt-ins in `security.permissions`; manifest settings and CLI
 flags need no script permission.
 
@@ -230,8 +243,7 @@ permissions; the next Save selects a destination again. Existing generated
 projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
-The source CLI also provides an opt-in tray starter, not yet in the public
-alpha.66 download:
+The published alpha.67 CLI provides an opt-in tray starter:
 
 ```sh
 velox init my-tray --template tray-app
@@ -245,28 +257,29 @@ icon, no bundled font, history, scheduler or additional host code. The basic
 starter and existing generated projects are unchanged.
 Scope and verification are in the [tray starter record](docs/ops/tray-app-starter.md).
 
-The published alpha.66 supports `velox run --watch --config velox.json`:
+The published alpha.67 supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves and common image/font path, size and
 modification-time changes trigger full-page reloads without enabling
 DevTools. Keep the downloaded CLI/host pair together. App `beforeunload`
 handlers can cancel a reload. Normal `run` and packaged apps do not start a
 watcher. Alpha.65 watched only text, not fonts/images or manifest changes;
 alpha.66 adds metadata-only image/font watching. Same-size binary edits with a
-preserved modification time are not detected; manifest changes and unlisted
-asset formats remain outside the watch scope. Published alpha.66 `run --debug`
+preserved modification time are not detected; unlisted asset formats remain
+outside the reload scope. Manifest changes produce restart notices as below.
+Published alpha.66 and later `run --debug`
 also emits bounded JavaScript error metadata to local stderr, including with
 `--json`; messages and rejection contents are not collected. Default runs
 install no diagnostic channel. Scope, privacy and native receipts are in
 [Development Diagnostics](docs/ops/development-diagnostics.md).
 
-The source CLI additionally detects stable edits to the selected manifest in
+The published alpha.67 CLI detects stable edits to the selected manifest in
 `run --watch`. Valid edits print a restart-required notice; invalid or unreadable
 settings print a nonfatal error. The running app, permissions and original
 asset directory stay unchanged until a manual restart. Normal runs and packaged
 apps start no manifest watcher. Manifest notices and nonfatal validation errors
 also reach stderr with `--json`, while stdout remains one JSON envelope.
 Host stderr stays suppressed in JSON mode unless `--debug` is explicitly
-enabled. This extension is not in the public alpha.66 download;
+enabled. Alpha.66 did not include this extension;
 see [Development Watch](docs/ops/development-watch.md#manifest-notices-2026-10-06).
 
 Local candidate verification and extraction instructions are in
@@ -354,7 +367,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.66`.
+`0.5.10-alpha.67`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

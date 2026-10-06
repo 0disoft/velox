@@ -1,5 +1,9 @@
 # Alpha.67 Local Preparation: 2026-10-06
 
+> Follow-up: alpha.67 was subsequently published from tag source `cb801f5`.
+> This local Go 1.27.1 preparation and its hashes remain historical, not the
+> public Go 1.26.0 release bytes. See [alpha67-publication.md](alpha67-publication.md).
+
 ## Identity
 
 - Source version: `0.5.10-alpha.67` (local candidate; not published).

@@ -154,7 +154,15 @@ Historical preview `v0.5.10-alpha.2` was published from exact commit
 and passed the no-checkout consumer gates. This is technical distribution
 evidence and not a human attempt.
 
-The current published unsigned preview is `v0.5.10-alpha.66` from exact source
+The current published unsigned preview is `v0.5.10-alpha.67` from exact source
+`cb801f5bf3014b31a2a544d97bb0fe95d33ff270`. Tag CI `37471273685` passed
+reproducible producer and basic checkout-free consumer packaging. Its four
+assets were reused for publication; unauthenticated downloads matched ZIP
+SHA-256 `fcb5e807682df028515f95d40146235b29d3ed7de32d41c09f00b1d4cf9afead`
+and GitHub digests. No public-native, installer, stress or adoption check was
+added. Beta remains held; see [alpha67-publication.md](../ops/alpha67-publication.md).
+
+The previous published unsigned preview is `v0.5.10-alpha.66` from exact source
 `842fead0c889e9f161c2567a91c8d0fd4c2ca260`. Tag CI `37317775399` passed;
 its four assets were reused for publication without a second producer. Public
 downloads matched ZIP SHA-256
@@ -167,9 +175,9 @@ in that follow-up. Beta remains held; see
 [the publication record](../ops/alpha66-publication.md) and
 [the public native follow-up](../ops/alpha66-public-native.md).
 
-The source CLI also reports manifest changes during `run --watch` without
-restarting or reconfiguring the running app. This is not in public alpha.66;
-its separate source-CLI/public-host evidence is in
+Published alpha.67 reports manifest changes during `run --watch` without
+restarting or reconfiguring the running app. Alpha.66 did not include this;
+the earlier source-CLI/public-host implementation evidence is in
 [Development Watch](../ops/development-watch.md#manifest-notices-2026-10-06).
 
 The previous published unsigned preview was `v0.5.10-alpha.65` from exact source

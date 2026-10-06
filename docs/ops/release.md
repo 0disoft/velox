@@ -84,7 +84,26 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.67 Published Preview: 2026-10-06
+
+Unsigned prerelease `v0.5.10-alpha.67` ships manifest-watch restart notices,
+stderr notices alongside JSON output and the opt-in tray-app starter from
+`cb801f5bf3014b31a2a544d97bb0fe95d33ff270`.
+[Tag CI 37471273685](https://github.com/0disoft/velox/actions/runs/37471273685)
+attempt 1 passed two independent producer builds and a basic checkout-free
+consumer smoke with Go 1.26.0 on `windows-2025`. Its four verified files were
+published without another hosted build or tag move. All four unauthenticated
+public downloads matched CI and GitHub metadata digests. ZIP SHA-256:
+`fcb5e807682df028515f95d40146235b29d3ed7de32d41c09f00b1d4cf9afead`,
+5,910,481 bytes. These are not the prior local Go 1.27.1 candidate bytes.
+No new native UI, installer, watch/draft, performance, stress, adoption or
+beta claim follows; exact identities and scope are in
+[alpha67-publication.md](alpha67-publication.md).
+
 ## Alpha.67 Local Preparation: 2026-10-06
+
+This historical local step preceded the tag CI and publication above; its
+Go 1.27.1 artifact hashes are not the published Go 1.26.0 hashes.
 
 The source version is now `0.5.10-alpha.67`, a local candidate that is not
 published. The scope groups manifest-watch notices, their JSON-mode stderr
@@ -565,8 +584,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.66` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.66`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.67` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.67`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, signing, and publication remain separate maintainer

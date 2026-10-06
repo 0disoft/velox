@@ -133,7 +133,7 @@ flag does not change packaged configuration, native permissions, or origin polic
 
 ## 7. Grant a native permission
 
-Sections 7 and 8 ship in the current published alpha.66 release; only the
+Sections 7 and 8 ship in the current published alpha.67 release; only the
 historical alpha.62 bundle lacked these features. The first six sections remain
 the baseline public-release path.
 
@@ -150,7 +150,7 @@ the following; keep the rest of your manifest:
 }
 ```
 
-The published alpha.66 also offers a native text-editor starter:
+The published alpha.67 retains the native text-editor starter:
 
 ```sh
 velox init my-editor --template text-editor
@@ -158,13 +158,13 @@ velox run --config my-editor/velox.json --watch
 velox build --config my-editor/velox.json --installer
 ```
 
-Use the alpha.66 CLI with its matching release bundle; alpha.65 added template
+Use the alpha.67 CLI with its matching release bundle; alpha.65 added template
 selection and alpha.64 did not include it. The generated manifest requests only
 `file.open` and `file.save`. Initial Save after Open selects a destination;
 later Save reuses that page's save target. Omitting `--template` retains the
 basic starter.
 
-New text-editor projects generated with alpha.66 store one local IndexedDB
+New text-editor projects generated with alpha.66 and later store one local IndexedDB
 draft after a 300 ms typing pause and offer Restore/Discard on relaunch.
 Restore keeps the document unsaved; the next Save selects a new destination
 because file paths and save permissions are never persisted. Alpha.65 had no
@@ -181,11 +181,23 @@ velox run --config my-browser/velox.json --watch
 velox build --config my-browser/velox.json
 ```
 
-Like text-editor, this option ships in the published alpha.66 release. It requests only
+Like text-editor, this option ships in the published alpha.67 release. It requests only
 `folder.read` and `folder.readText`. Select a folder, refresh its immediate
 entries, select a file for a readonly UTF-8 preview, and release the folder
 when done. Subdirectories are listed but not navigable. No clipboard, write
 or background monitoring permission is added.
+
+Alpha.67 adds an opt-in tray notification starter:
+
+```sh
+velox init my-tray --template tray-app
+velox run --config my-tray/velox.json
+```
+
+It requests only `notification.show`. The existing tray menu supplies hide,
+restore and quit. Separately, `run --watch --json` now reports manifest changes
+as restart-required notices on stderr while stdout stays one result envelope.
+It does not restart or reconfigure the app; packaged defaults have no watcher.
 
 `app.info` enables `window.velox.invoke("app.getInfo")`; `file.save` enables
 `window.velox.saveText`, `saveTextAs`, and `saveTextTo`. Each permission is

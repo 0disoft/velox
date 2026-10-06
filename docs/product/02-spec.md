@@ -268,14 +268,14 @@ subfolder navigation, write permission, monitoring, font or host dependency.
 
 All listed M1 commands are currently implemented.
 
-The published alpha.66 supports opt-in `run --watch` for stable HTML/CSS/JavaScript
+The published alpha.67 supports opt-in `run --watch` for stable HTML/CSS/JavaScript
 edits and metadata changes to common images/fonts, using full-page reload with
 application `beforeunload` protection. Image/font detection uses path, size and
 modification time rather than repeated binary reads; same-size edits with a
-preserved modification time are not detected. Published alpha.66 excludes
-manifest edits. The source CLI now reports stable manifest edits as requiring
+preserved modification time are not detected. Alpha.66 excluded manifest
+edits. Published alpha.67 reports stable manifest edits as requiring
 a restart, without restarting, reloading or changing the running app. Invalid
-or unreadable manifests produce nonfatal stderr diagnostics; this source-only
+or unreadable manifests produce nonfatal stderr diagnostics; this extension
 extension uses a bounded, link-rejecting read and stops with the host.
 Watch is not part of the manifest or packaged defaults, enables no DevTools,
 adds no dependency or development server, and stops with the development
@@ -285,8 +285,8 @@ alpha.66.
 
 The command contract is defined in docs/cli/command-contract.md.
 
-The source CLI additionally provides `init --template tray-app`, not included
-in public alpha.66. This opt-in starter uses only `notification.show` with
+Published alpha.67 provides `init --template tray-app`, which alpha.66 did not
+include. This opt-in starter uses only `notification.show` with
 existing tray, single-instance, placement and title-bar settings. It sends
 notifications only after user submission, leaves visibility policy to Windows,
 and adds no host capability, background worker, scheduler, history or font.

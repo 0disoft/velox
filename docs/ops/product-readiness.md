@@ -3,14 +3,20 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
-- Public preview: `0.5.10-alpha.66` (published unsigned prerelease)
-- Source version: `0.5.10-alpha.67` (local candidate; not published)
+- Public preview: `0.5.10-alpha.67` (published unsigned prerelease)
+- Source version: `0.5.10-alpha.67` (published unsigned prerelease)
+
+Alpha.67 tag CI `37471273685` passed reproducible producer and basic checkout-
+free consumer packaging; its four verified assets were published and matched
+by unauthenticated public downloads. Exact hashes and boundaries are in
+[alpha67-publication.md](alpha67-publication.md). The older workflow evidence
+below is retained separately, not relabeled for the new published binaries.
 
 ## Required Beta Checks
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.66 tag CI 37317775399 passed basic checkout-free packaging; unauthenticated public downloads matched CI and GitHub digests. The later exact-public-CLI follow-up generated, built and inspected one isolated text-editor, launched its public-host-identical EXE, restored and saved a draft, and checked post-save no-resurrection. This adds bounded native evidence, not a fresh repetition of the full required command sequence. Prior release receipts remain historical; see alpha66-public-native.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.67 tag CI 37471273685 passed basic checkout-free packaging; four public downloads matched CI and GitHub digests. No native launch or public picker/draft behavior check ran against these bytes. Earlier alpha.66 native follow-up remains historical; see alpha67-publication.md and alpha66-public-native.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | The exact public alpha.66 CLI/host passed HTML/CSS/JS reloads, image/font rendered changes, canceled-input preservation, retry and normal close using the existing native watch smoke with debug off and private profile/HTTPS origin preserved. Normal/debug diagnostic isolation also passed. See alpha66-public-native.md. Earlier alpha.65 and alpha.62/64 results remain historical |
 | Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
