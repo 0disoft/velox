@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-06",
+  "removedTargets": 525,
+  "removedBytes": 5914707978,
+  "categories": [
+    {
+      "category": "repo-cache",
+      "targets": 329,
+      "bytes": 4530832448
+    },
+    {
+      "category": "repo-dist",
+      "targets": 32,
+      "bytes": 851734373
+    },
+    {
+      "category": "temp",
+      "targets": 164,
+      "bytes": 532141157
+    }
+  ],
+  "failures": 0,
+  "skipped": 0,
+  "textPreservation": {
+    "files": 539,
+    "originalBytes": 2275144,
+    "archiveBytes": 1131008,
+    "sha256": "7dfe5e6568e49885e793faa66114cccdcc9cde5b48a8c3bd1c4bfd068419cbc5"
+  },
+  "observedDriveFreeBefore": 227366625280,
+  "observedDriveFreeAfter": 233360371712,
+  "retained": [
+    "source and Git history",
+    "Pixi development environment",
+    "alpha.66 public bundle and receipts",
+    "current File Notes build",
+    "latest editor and its profile",
+    "recent native verification receipts",
+    "received Linux verification ZIP",
+    "installed app data"
+  ],
+  "validation": [
+    "resolved paths confined to repository artifact roots or Velox-prefixed Temp roots",
+    "no tracked files or registered worktrees in deletion targets",
+    "no reparse points or embedded Git checkouts in deletion targets",
+    "active-process protection before and during removal",
+    "all 539 preserved text files compared by SHA-256",
+    "retained-path existence",
+    "Git source status unchanged"
+  ],
+  "runtimeChanges": false,
+  "apiChanges": false,
+  "databaseChanges": false,
+  "dependencyChanges": false,
+  "workflowChanges": false,
+  "releaseBinariesRebuilt": false,
+  "hostedWorkflowDispatched": false
+}
