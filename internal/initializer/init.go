@@ -62,7 +62,8 @@ func Create(directory string) (Result, error) {
 }
 
 func CreateFromTemplate(directory, template string) (Result, error) {
-	if template != "basic" && template != "text-editor" && template != "folder-browser" && template != "tray-app" {
+	definition, found := findTemplate(template)
+	if !found {
 		return Result{}, ErrUnknownTemplate
 	}
 	if strings.TrimSpace(directory) == "" {
@@ -101,13 +102,8 @@ func CreateFromTemplate(directory, template string) (Result, error) {
 	manifest.App.ID, manifest.App.Name, manifest.App.Version = appID, name, "0.1.0"
 	manifest.Assets.Root, manifest.Assets.Entry = "web", "index.html"
 	manifest.Window.Width, manifest.Window.Height = 960, 640
-	manifest.Security.Permissions = []string{}
-	if template == "text-editor" {
-		manifest.Security.Permissions = []string{"file.open", "file.save"}
-	} else if template == "folder-browser" {
-		manifest.Security.Permissions = []string{"folder.read", "folder.readText"}
-	} else if template == "tray-app" {
-		manifest.Security.Permissions = []string{"notification.show"}
+	manifest.Security.Permissions = definition.Permissions
+	if template == "tray-app" {
 		manifest.App.SingleInstance = true
 		manifest.Window.Width, manifest.Window.Height = 620, 480
 		manifest.Window.MinWidth, manifest.Window.MinHeight = 360, 400

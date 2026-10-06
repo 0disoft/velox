@@ -26,7 +26,28 @@ An opt-in `build --installer` flag also packages a per-user Windows Setup
 executable. It is a build flag, not a separate command, and the default
 portable output is unchanged.
 
+The source CLI additionally implements the read-only `templates` command;
+it is not included in the published alpha.67 CLI.
+
 ## MVP Commands
+
+### velox templates
+
+List built-in starters in stable order: `basic`, `text-editor`,
+`folder-browser`, `tray-app`. Each entry shows its purpose, the native
+permissions written by `init`, and a ready-to-run generation command.
+
+- No project, host or runtime is required. No files are read or written and
+  no network, native API or application is invoked.
+- Accept only `--json`, `--quiet` and `--help`; positional arguments and
+  unsupported options exit 2 with `USAGE_INVALID`.
+- `--quiet` suppresses successful human output; `--json` takes precedence
+  over it and emits one schema-version-1 envelope with command `templates`.
+- The JSON result is `{ "templates": [...] }`. Each entry has `name`,
+  `description`, `permissions` (an array, empty for `basic`), and `initCommand`.
+  Descriptions are informational; names and permissions identify the template.
+- Listing and project generation share the initializer's permission catalog.
+  Listing does not grant any permission or modify template defaults.
 
 ### velox init [directory]
 
@@ -266,7 +287,7 @@ Command-specific options must be added to this document before implementation
 is considered stable.
 
 `doctor`, `run`, `validate`, and `build` share the project options above.
-`init`, `inspect`, and `version` expose only their command-specific subset;
+`init`, `templates`, `inspect`, and `version` expose only their command-specific subset;
 unsupported options fail instead of being silently ignored.
 
 ## Configuration Precedence

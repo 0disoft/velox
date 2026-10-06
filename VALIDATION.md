@@ -8,6 +8,17 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Template catalog command (2026-10-07): the source CLI adds read-only
+`templates` with human/JSON/quiet/help output and usage errors. Its four
+entries share permissions with project generation. Initializer and CLI Go
+tests and scoped `go vet` passed, including catalog/generation agreement,
+independent catalog values, JSON envelope and an unchanged empty working
+directory. `go run ./cmd/velox templates` displayed all four generation
+commands; `git diff --check` passed. No host/IPC API, DB/schema, dependency
+or CI change. Native UI, host rebuild/size measurement and release checks
+were skipped because only CLI/initializer code and documentation changed.
+No push or publication; public alpha.67 does not include this command.
+
 Alpha.67 publication (2026-10-06): source `cb801f5` and annotated tag were
 pushed together. Tag CI `37471273685/1` passed independent reproducible
 producer builds and a basic checkout-free consumer smoke with Go 1.26.0.

@@ -142,6 +142,8 @@ func Run(args []string, dependencies Dependencies) int {
 		return runInspect(args[1:], dependencies)
 	case "init":
 		return runInit(args[1:], dependencies)
+	case "templates":
+		return runTemplates(args[1:], dependencies)
 	case "doctor":
 		return runDoctor(args[1:], dependencies)
 	case "run":
@@ -707,5 +709,5 @@ func reorderPositionalArgs(args []string, valueFlags ...string) []string {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: velox <init|validate|doctor|run|build|inspect|version> [options]")
+	fmt.Fprintln(writer, "Usage: velox <init|templates|validate|doctor|run|build|inspect|version> [options]")
 }
