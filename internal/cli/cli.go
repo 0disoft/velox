@@ -164,6 +164,14 @@ func runInit(args []string, dependencies Dependencies) int {
 	jsonOutput := flags.Bool("json", false, "emit one JSON document")
 	quiet := flags.Bool("quiet", false, "suppress successful human output")
 	template := flags.String("template", "basic", "project template: basic, text-editor, folder-browser or tray-app")
+	flags.Usage = func() {
+		fmt.Fprintln(flags.Output(), "Usage: velox init [directory] [options]")
+		fmt.Fprintln(flags.Output(), "Create a dependency-free starter project. Directory defaults to .; template defaults to basic.")
+		fmt.Fprintln(flags.Output(), "\nExample: velox init my-editor --template text-editor")
+		fmt.Fprintln(flags.Output(), "Run 'velox templates' for starter purposes, permissions, and generation commands.")
+		fmt.Fprintln(flags.Output(), "\nOptions:")
+		flags.PrintDefaults()
+	}
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
@@ -709,5 +717,23 @@ func reorderPositionalArgs(args []string, valueFlags ...string) []string {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: velox <init|templates|validate|doctor|run|build|inspect|version> [options]")
+	fmt.Fprintln(writer, `Usage: velox <init|templates|validate|doctor|run|build|inspect|version> [options]
+
+Commands:
+  init [directory]  Create a starter project (default template: basic).
+  templates         List starters, permissions, and generation commands.
+  validate          Check the manifest, assets, and bundled host.
+  doctor            Check Windows, WebView2, project, and bundled host.
+  run               Launch the app from source; --watch reloads on change.
+  build             Package a portable app; --installer also builds an installer.
+  inspect <path>    Validate a portable directory or ZIP without executing it.
+  version           Report the release and supported contracts.
+
+Examples:
+  velox templates
+  velox init my-editor --template text-editor
+  velox run --config my-editor/velox.json
+  velox build --config my-editor/velox.json
+
+Run 'velox <command> --help' for detailed options.`)
 }

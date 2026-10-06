@@ -8,6 +8,18 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+CLI help discovery (2026-10-07): source top-level help now lists command
+purposes and generation/run/build examples. Init help points to `templates`
+and retains its flag list. CLI Go tests and scoped `go vet` passed, including
+help aliases, stdout/stderr and exit-code preservation, silent JSON help,
+and no project creation. Actual `go run ./cmd/velox --help` and
+`go run ./cmd/velox init --help` both exited 0 with the expected text;
+`git diff --check` passed. README and command contract distinguish these
+source-only additions from public alpha.67. Host/IPC API, DB/schema,
+dependencies, repository hygiene and CI are unchanged. Native UI, host
+rebuild and release checks were skipped for this help/documentation change.
+No version bump, push or publication.
+
 Template catalog command (2026-10-07): the source CLI adds read-only
 `templates` with human/JSON/quiet/help output and usage errors. Its four
 entries share permissions with project generation. Initializer and CLI Go

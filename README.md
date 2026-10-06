@@ -212,6 +212,25 @@ target, host-contract, runtime-contract, IPC-contract, file-size, and SHA-256 ag
 building. Consumer builds never invoke Go, C++, Node.js, Pixi, or a package
 manager.
 
+Use top-level and command-specific help to find available options:
+
+```sh
+velox --help
+velox init --help
+```
+
+The source CLI also lists each starter's purpose, permissions, and generation
+command without creating files or launching a host:
+
+```sh
+velox templates
+velox templates --json
+```
+
+`templates` and the expanded help text are source-only; public
+`v0.5.10-alpha.67` retains the older help and does not include `templates`.
+Use the published generation commands below with that release.
+
 ```powershell
 velox init .\hello --json
 velox validate --config .\velox.json --json

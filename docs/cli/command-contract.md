@@ -29,6 +29,14 @@ portable output is unchanged.
 The source CLI additionally implements the read-only `templates` command;
 it is not included in the published alpha.67 CLI.
 
+Source CLI `help`, `--help` and `-h` include command descriptions, generation/
+run/build examples and a pointer to `velox <command> --help`. Successful
+top-level help remains on stdout; missing or unknown commands print usage
+on stderr and exit 2. `init --help` adds defaults, a generation example and
+`velox templates` discovery before its flag list on stderr. It exits 0
+without creating a project. As before, subcommand help requested with
+`--json` exits 0 with no output. Expanded help is not in published alpha.67.
+
 ## MVP Commands
 
 ### velox templates
