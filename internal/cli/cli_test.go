@@ -285,7 +285,7 @@ func TestUsageFailureHonorsJSONAnywhere(t *testing.T) {
 }
 
 func TestInitNativeTemplatesAndTemplateErrors(t *testing.T) {
-	for _, template := range []string{"text-editor", "folder-browser"} {
+	for _, template := range []string{"text-editor", "folder-browser", "tray-app"} {
 		for _, form := range []int{0, 1, 2} {
 			target := filepath.Join(t.TempDir(), "editor")
 			args := []string{"init", target, "--template", template, "--json"}
@@ -301,6 +301,8 @@ func TestInitNativeTemplatesAndTemplateErrors(t *testing.T) {
 			marker := "web/save.svg"
 			if template == "folder-browser" {
 				marker = "web/refresh-cw.svg"
+			} else if template == "tray-app" {
+				marker = "web/bell.svg"
 			}
 			if !strings.Contains(stdout.String(), marker) {
 				t.Fatalf("template files absent: %s", stdout.String())

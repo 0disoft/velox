@@ -285,6 +285,13 @@ alpha.66.
 
 The command contract is defined in docs/cli/command-contract.md.
 
+The source CLI additionally provides `init --template tray-app`, not included
+in public alpha.66. This opt-in starter uses only `notification.show` with
+existing tray, single-instance, placement and title-bar settings. It sends
+notifications only after user submission, leaves visibility policy to Windows,
+and adds no host capability, background worker, scheduler, history or font.
+Default/basic and existing generated projects remain unchanged.
+
 Published alpha.66 `run --debug` also reports bounded metadata-only JavaScript
 diagnostics to local stderr. It uses one private debug binding behind the
 existing trusted-origin gate, with fixed error categories and known startup

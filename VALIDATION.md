@@ -8,6 +8,18 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Tray starter implementation (source-only, 2026-10-06): initializer/CLI tests
+and scoped vet passed, plus four Bun cases for explicit submission, UTF-16/
+control-character bounds, duplicate-request suppression, failure recovery,
+literal text retention and missing bridge without browser fallback. Go cases
+cover exact `notification.show` permission/default settings, seven-file/five-
+asset inventory, escaped app names, preserved conflicting icons, unchanged
+basic output and all CLI template argument forms. UI/native checks are pending
+at this implementation step, not claimed as passes. README, CLI contract and
+product spec identify the starter as source-only. No host/API/IPC, DB/schema,
+dependency, CI, version or release change is included. Existing host tray
+behavior is reused; no new scheduler, background worker, shortcut or font.
+
 JSON manifest-watch output (source-only, 2026-10-06): focused runner/CLI tests,
 scoped vet, hygiene and diff checks passed. Debug-off/on CLI tests observe
 manifest error/recovery notices on stderr while stdout parses as one success

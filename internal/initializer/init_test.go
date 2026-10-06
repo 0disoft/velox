@@ -123,6 +123,55 @@ func TestCreateFolderBrowserTemplate(t *testing.T) {
 	}
 }
 
+func TestCreateTrayAppTemplate(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "my-tray")
+	result, err := CreateFromTemplate(target, "tray-app")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := manifest.Load(filepath.Join(target, "velox.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(config.Security.Permissions, []string{"notification.show"}) || !config.App.SingleInstance ||
+		!config.Window.Tray || !config.Window.RememberState || !config.Window.FollowSystemTheme || config.Window.ActivationShortcut != "" {
+		t.Fatalf("unexpected tray defaults: %+v", config.Manifest)
+	}
+	if config.Window.Width != 620 || config.Window.Height != 480 || config.Window.MinWidth != 360 || config.Window.MinHeight != 400 {
+		t.Fatalf("unexpected window dimensions: %+v", config.Window)
+	}
+	want := []string{"velox.json", "velox.d.ts", "web/index.html", "web/style.css", "web/app.js", "web/bell.svg", "web/icons-license.txt"}
+	if !reflect.DeepEqual(result.Files, want) {
+		t.Fatalf("unexpected file inventory: %v", result.Files)
+	}
+	assets, err := assettree.Scan(filepath.Join(target, "web"))
+	if err != nil || len(assets.Files) != 5 {
+		t.Fatalf("unexpected web assets: %+v %v", assets, err)
+	}
+	files, err := templateFiles("tray-app", `<img src=x>`)
+	if err != nil || strings.Contains(string(files[0].data), `<img src=x>`) || !strings.Contains(string(files[0].data), "&lt;img src=x&gt;") {
+		t.Fatalf("unsafe app name: %v", err)
+	}
+	conflict := t.TempDir()
+	if err := os.Mkdir(filepath.Join(conflict, "web"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	icon := filepath.Join(conflict, "web", "bell.svg")
+	if err := os.WriteFile(icon, []byte("keep"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CreateFromTemplate(conflict, "tray-app"); err == nil {
+		t.Fatal("expected icon conflict")
+	}
+	if _, err := os.Stat(filepath.Join(conflict, "velox.json")); !os.IsNotExist(err) {
+		t.Fatal("partial manifest remained")
+	}
+	data, err := os.ReadFile(icon)
+	if err != nil || string(data) != "keep" {
+		t.Fatalf("user icon changed: %q %v", data, err)
+	}
+}
+
 func TestTextEditorEscapesNameAndPreservesConflictingIcon(t *testing.T) {
 	files, err := templateFiles("text-editor", `<script>alert("name")</script>`)
 	if err != nil || strings.Contains(string(files[0].data), `<script>alert`) || !strings.Contains(string(files[0].data), "&lt;script&gt;") {

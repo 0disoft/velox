@@ -39,6 +39,11 @@ Create a minimal manifest and dependency-free static web example.
   Unknown templates exit 2 with
   `USAGE_INVALID` and write nothing. This option ships in public alpha.65 and
   later, including the current alpha.66; alpha.64 does not include template selection.
+- The source CLI also supports `--template tray-app` with only
+  `notification.show`. It enables `app.singleInstance`, `window.tray`,
+  `window.rememberState` and `window.followSystemTheme`, uses a 620x480 window
+  with 360x400 logical minimums, and reserves no activation shortcut.
+  This starter is not in the published alpha.66 CLI.
 - Derive a conservative `dev.velox.<directory>` application ID and display name
   from the target directory.
 - Preflight every planned path and refuse the operation if any generated file
@@ -51,7 +56,7 @@ Create a minimal manifest and dependency-free static web example.
   directory or add it to generated application assets.
 - Grant no native permission for the basic template, install no TypeScript,
   and compile or run no example. Each native template explicitly declares
-  its respective two permissions in the generated manifest.
+  only the permissions listed above in the generated manifest.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
 
@@ -79,6 +84,16 @@ cancellation retains the current view; unsupported reads clear the preview;
 expired tokens clear both panes. It includes three local licensed icons but
 no subfolder navigation, clipboard, writes, monitoring, bundled font or new
 dependency. Folder-browser does not change the basic or text-editor template.
+
+The source-only tray starter includes a message composer, kind selector,
+bounded count and explicit Send action. It calls only the existing
+`notification.show` method, blocks duplicate submissions, preserves text on
+success/failure and displays error codes without raw native details. Its limit
+matches the host's 255 UTF-16 units and control-character rules. Hide/restore/
+quit use the existing host-owned tray menu; accepted requests do not guarantee
+Windows will display the balloon. It includes a local licensed Lucide bell
+icon and no browser fallback, history, persistence, timer, font or dependency.
+Other starters and the basic output are unchanged.
 
 ### velox validate
 

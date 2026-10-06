@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//go:embed text-editor/* folder-browser/*
+//go:embed text-editor/* folder-browser/* tray-app/*
 var templateAssets embed.FS
 
 func templateFiles(template, name string) ([]plannedFile, error) {
@@ -21,6 +21,8 @@ func templateFiles(template, name string) ([]plannedFile, error) {
 	names := []string{"index.html", "style.css", "app.js", "drafts.js", "file-plus.svg", "folder-open.svg", "save.svg", "save-all.svg", "icons-license.txt"}
 	if template == "folder-browser" {
 		names = []string{"index.html", "style.css", "app.js", "folder-open.svg", "refresh-cw.svg", "x.svg", "icons-license.txt"}
+	} else if template == "tray-app" {
+		names = []string{"index.html", "style.css", "app.js", "bell.svg", "icons-license.txt"}
 	}
 	files := make([]plannedFile, 0, len(names))
 	for _, filename := range names {

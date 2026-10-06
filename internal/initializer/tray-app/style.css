@@ -1,0 +1,41 @@
+:root {
+  color-scheme: light dark;
+  font: 16px/1.5 "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
+  letter-spacing: 0;
+  --background: #fff; --surface: #f6f8fa; --text: #1f2328;
+  --muted: #57606a; --line: #d0d7de; --accent: #1a7f37;
+  color: var(--text); background: var(--background);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+header { padding: 14px 20px; border-bottom: 1px solid var(--line); }
+h1 { margin: 0; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+main { flex: 1; width: min(100%, 500px); margin: 0 auto; padding: 16px 20px; }
+form { display: grid; gap: 14px; }
+.field { min-width: 0; display: grid; gap: 6px; }
+label { font-weight: 600; overflow-wrap: anywhere; }
+select, textarea { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--background); color: inherit; font: inherit; }
+select { height: 40px; }
+textarea { height: clamp(96px, 30vh, 220px); resize: vertical; line-height: 1.6; }
+.message-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+output { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+button { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 40px; padding: 0; border: 1px solid var(--line); border-radius: 4px; color: var(--accent); background: var(--background); cursor: pointer; }
+#send-notification img { display: none; }
+#send-notification::before { content: ""; width: 20px; height: 20px; background: currentColor; mask: url("bell.svg") center / contain no-repeat; }
+button:hover:not(:disabled) { border-color: var(--accent); background: var(--surface); }
+select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled, select:disabled, textarea:disabled { cursor: not-allowed; opacity: .6; }
+footer { padding: 10px 20px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+@media (prefers-color-scheme: dark) {
+  :root { --background: #16191d; --surface: #25292e; --text: #e6edf3; --muted: #a1a8b1; --line: #444b54; --accent: #51c574; }
+}
+@media (max-width: 400px) {
+  header, main, footer { padding-inline: 12px; }
+}
+@media (forced-colors: active) {
+  :root { --background: Canvas; --surface: Canvas; --text: CanvasText; --muted: CanvasText; --line: ButtonText; --accent: Highlight; }
+  select, textarea { background: Field; color: FieldText; }
+  button { background: ButtonFace; color: ButtonText; }
+  #send-notification::before { display: none; }
+  #send-notification img { display: block; }
+}

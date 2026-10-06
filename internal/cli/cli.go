@@ -161,7 +161,7 @@ func runInit(args []string, dependencies Dependencies) int {
 	flags.SetOutput(dependencies.Stderr)
 	jsonOutput := flags.Bool("json", false, "emit one JSON document")
 	quiet := flags.Bool("quiet", false, "suppress successful human output")
-	template := flags.String("template", "basic", "project template: basic, text-editor or folder-browser")
+	template := flags.String("template", "basic", "project template: basic, text-editor, folder-browser or tray-app")
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}

@@ -17,7 +17,7 @@ import (
 
 var invalidSlug = regexp.MustCompile(`[^a-z0-9-]+`)
 
-var ErrUnknownTemplate = errors.New("template must be basic, text-editor or folder-browser")
+var ErrUnknownTemplate = errors.New("template must be basic, text-editor, folder-browser or tray-app")
 
 type Result struct {
 	Directory string   `json:"directory"`
@@ -29,17 +29,23 @@ type Result struct {
 type manifestFile struct {
 	SchemaVersion int `json:"schemaVersion"`
 	App           struct {
-		ID      string `json:"id"`
-		Name    string `json:"name"`
-		Version string `json:"version"`
+		ID             string `json:"id"`
+		Name           string `json:"name"`
+		Version        string `json:"version"`
+		SingleInstance bool   `json:"singleInstance,omitempty"`
 	} `json:"app"`
 	Assets struct {
 		Root  string `json:"root"`
 		Entry string `json:"entry"`
 	} `json:"assets"`
 	Window struct {
-		Width  int `json:"width"`
-		Height int `json:"height"`
+		Width             int  `json:"width"`
+		Height            int  `json:"height"`
+		MinWidth          int  `json:"minWidth,omitempty"`
+		MinHeight         int  `json:"minHeight,omitempty"`
+		Tray              bool `json:"tray,omitempty"`
+		RememberState     bool `json:"rememberState,omitempty"`
+		FollowSystemTheme bool `json:"followSystemTheme,omitempty"`
 	} `json:"window"`
 	Security struct {
 		Permissions []string `json:"permissions"`
@@ -56,7 +62,7 @@ func Create(directory string) (Result, error) {
 }
 
 func CreateFromTemplate(directory, template string) (Result, error) {
-	if template != "basic" && template != "text-editor" && template != "folder-browser" {
+	if template != "basic" && template != "text-editor" && template != "folder-browser" && template != "tray-app" {
 		return Result{}, ErrUnknownTemplate
 	}
 	if strings.TrimSpace(directory) == "" {
@@ -100,6 +106,12 @@ func CreateFromTemplate(directory, template string) (Result, error) {
 		manifest.Security.Permissions = []string{"file.open", "file.save"}
 	} else if template == "folder-browser" {
 		manifest.Security.Permissions = []string{"folder.read", "folder.readText"}
+	} else if template == "tray-app" {
+		manifest.Security.Permissions = []string{"notification.show"}
+		manifest.App.SingleInstance = true
+		manifest.Window.Width, manifest.Window.Height = 620, 480
+		manifest.Window.MinWidth, manifest.Window.MinHeight = 360, 400
+		manifest.Window.Tray, manifest.Window.RememberState, manifest.Window.FollowSystemTheme = true, true, true
 	}
 	manifestData, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {

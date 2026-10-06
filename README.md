@@ -229,6 +229,20 @@ permissions; the next Save selects a destination again. Existing generated
 projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
+The source CLI also provides an opt-in tray starter, not yet in the public
+alpha.66 download:
+
+```sh
+velox init my-tray --template tray-app
+```
+
+It grants only `notification.show` and enables the existing host tray menu,
+single-instance behavior, remembered placement and system-themed title bar.
+The composer sends info/warning/error messages only on explicit submission;
+Windows can suppress balloon display. It includes one local licensed bell
+icon, no bundled font, history, scheduler or additional host code. The basic
+starter and existing generated projects are unchanged.
+
 The published alpha.66 supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves and common image/font path, size and
 modification-time changes trigger full-page reloads without enabling
