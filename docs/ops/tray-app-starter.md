@@ -84,6 +84,10 @@ resolvable by Node and Edge available, run:
 
 ```sh
 node scripts/tray-app-smoke.mjs
+# Visible handoff after the document and Message input are ready; 10-minute limit.
+node scripts/tray-app-smoke.mjs --manual
+# Check the same visible launch/readiness path, then close without manual actions.
+node scripts/tray-app-smoke.mjs --manual-check
 ```
 
 The script uses timestamped copied/generated fixtures, a private profile,
@@ -91,10 +95,40 @@ loopback preview/CDP ports, and its own child processes. It closes the preview
 server/browser and cleans the owned native child tree on failure; receipts
 and screenshots remain in its `.cache/tray-starter-*` directory.
 
+## Manual Follow-Up
+
+- The first manual launch showed a blank window. It used a hidden child launch
+  without document-readiness inspection; its exact failure cause is unresolved.
+  The owned process was force-cleaned. Receipt:
+  `.cache/tray-manual-20261006-session1/result.json`.
+- A visible replacement with `--debug`, an isolated profile and loopback CDP
+  loaded the real Message input and bell. A follow-up CDP query and visually
+  inspected `current.png` confirmed the rendered UI. The initial diagnostic
+  query raced navigation and remains a failed query in `diagnostic.json`;
+  it is not relabeled a readiness pass.
+- The maintainer subsequently confirmed hide, restore, bell-button notification
+  display and tray Quit all worked. The replacement process exited 0. The owned
+  host and both launch supervisors were absent in the subsequent process check.
+  These manual observations are distinct from automated notification acceptance.
+- `--manual` launches the GUI without the hidden-child flag and waits for the
+  ready document plus visible input before announcing readiness. It does not
+  submit a notification or populate the input. Quit ends the run; timeout/failure
+  cleans the owned process tree. A successful script exit covers automated
+  readiness/cleanup only, not manual observations. Receipt `manualChecks` stays
+  pending until the maintainer's separate report is recorded.
+- `--manual-check` passed without `--debug`, using the same CLI/host/static asset
+  hashes listed above, with visible input and normal close/cleanup exit 0.
+  Receipt: `.cache/tray-starter-1791290560741/result.json`. This mode performs
+  no manual tray or native notification action.
+- The default automated run passed after the tool change, including real
+  notification acceptance, single-instance document preservation and normal
+  close/cleanup. Receipt: `.cache/tray-starter-1791290651692/result.json`.
+  `go test ./tests/hygiene`, Node syntax and `git diff --check` also passed.
+
 ## Not Repeated
 
-No manual tray hide/restore/quit check, OS balloon visibility confirmation,
-installer execution, hosted stress, startup/performance benchmark or external
-user attempt was performed. Existing host tray behavior is reused unchanged.
+No installer execution, hosted stress, startup/performance benchmark or external
+user attempt was performed in this follow-up. Existing host tray behavior is
+reused unchanged; the initial blank-window cause remains unconfirmed.
 No new host/public IPC, DB/schema, dependency, CI, version, publication or beta
 promotion is included.

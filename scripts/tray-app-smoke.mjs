@@ -9,6 +9,12 @@ import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
+const args = process.argv.slice(2);
+if (args.length > 1 || args.some(arg => !["--manual", "--manual-check"].includes(arg))) {
+  throw Error("Usage: node scripts/tray-app-smoke.mjs [--manual|--manual-check]");
+}
+const manual = args.length === 1;
+const manualCheck = args[0] === "--manual-check";
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const bin = resolve(root, process.env.VELOX_TRAY_STARTER_BIN_DIR ?? ".cache/manifest-watch-bin");
 const work = join(root, ".cache", "tray-starter-" + Date.now());
@@ -33,7 +39,7 @@ const built = runCLI(["build", "--config", configPath, "--out", output, "--json"
 runCLI(["inspect", join(output, manifest.app.id + ".zip"), "--json"]);
 const exe = join(output, manifest.app.id, manifest.app.id + ".exe");
 if (digest(await readFile(exe)) !== hashes.host) throw Error("Generated app modified the host");
-const result = { startedAtUtc: new Date().toISOString(), hashes, generatedFiles: generated.files,
+const result = { startedAtUtc: new Date().toISOString(), mode: args[0] ?? "automated", hashes, generatedFiles: generated.files,
   build: built, views: [], native: {}, passed: false };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 let preview, previewServer, nativeBrowser, child;
@@ -98,7 +104,7 @@ try {
   await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   const env = { ...process.env, VELOX_DATA_DIR: join(work, "profile"),
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-address=127.0.0.1 --remote-debugging-port=" + port };
-  child = spawn(exe, [], { cwd: root, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+  child = spawn(exe, [], { cwd: root, env, windowsHide: !manual, stdio: ["ignore", "pipe", "pipe"] });
   child.on("error", error => { spawnError = error; });
   child.stdout.on("data", bytes => { stdout = (stdout + bytes.toString()).slice(-32768); });
   child.stderr.on("data", bytes => { stderr = (stderr + bytes.toString()).slice(-32768); });
@@ -119,19 +125,38 @@ try {
   const page = nativeBrowser.contexts().flatMap(context => context.pages()).find(page => page.url().includes(".app.invalid"));
   if (!page) throw Error("Missing native page");
   await page.waitForFunction(() => document.documentElement.dataset.velox === "ready");
-  await page.evaluate(() => { window.__trayDocument = "same-document"; });
-  await page.getByRole("textbox", { name: "Message", exact: true }).fill("Velox tray starter verification.");
-  await page.getByRole("button", { name: "Send notification" }).click();
-  await page.getByRole("status").filter({ hasText: "Request accepted." }).waitFor();
-  result.native.requestAccepted = true;
-  // The second invocation uses the exact same isolated app/profile identity.
-  const second = spawnSync(exe, [], { cwd: root, env, windowsHide: true, encoding: "utf8", timeout: 10000 });
-  if (second.error || second.status !== 0 || child.exitCode !== null) throw Error("Single-instance activation failed");
-  const retained = await page.evaluate(() => ({ marker: window.__trayDocument, text: document.querySelector("#message").value }));
-  if (retained.marker !== "same-document" || retained.text !== "Velox tray starter verification.") throw Error("Second launch replaced the document");
-  result.native.singleInstanceRetainedDocument = true;
-  const session = await page.context().newCDPSession(page);
-  await session.send("Page.close");
+  await page.getByRole("textbox", { name: "Message", exact: true }).waitFor({ state: "visible" });
+  result.native.inputVisible = true;
+  if (manual) {
+    result.native.manualChecks = manualCheck ? "not-performed" : "pending-user-observation";
+    result.native.screenshot = join(work, "native-manual-ready.png");
+    await page.screenshot({ path: result.native.screenshot });
+    await writeFile(join(work, "result.json"), JSON.stringify(result, null, 2));
+    if (!manualCheck) {
+      console.log("manual-tray-ready=" + exe);
+      console.log("manual-tray-receipt=" + join(work, "result.json"));
+      const deadline = Date.now() + 600000;
+      while (child.exitCode === null && child.signalCode === null && Date.now() < deadline) await wait(100);
+      if (child.signalCode !== null) throw Error("Manual tray process terminated by signal " + child.signalCode);
+      if (child.exitCode === null) throw Error("Manual tray check timed out after 10 minutes");
+    }
+  } else {
+    await page.evaluate(() => { window.__trayDocument = "same-document"; });
+    await page.getByRole("textbox", { name: "Message", exact: true }).fill("Velox tray starter verification.");
+    await page.getByRole("button", { name: "Send notification" }).click();
+    await page.getByRole("status").filter({ hasText: "Request accepted." }).waitFor();
+    result.native.requestAccepted = true;
+    // The second invocation uses the exact same isolated app/profile identity.
+    const second = spawnSync(exe, [], { cwd: root, env, windowsHide: true, encoding: "utf8", timeout: 10000 });
+    if (second.error || second.status !== 0 || child.exitCode !== null) throw Error("Single-instance activation failed");
+    const retained = await page.evaluate(() => ({ marker: window.__trayDocument, text: document.querySelector("#message").value }));
+    if (retained.marker !== "same-document" || retained.text !== "Velox tray starter verification.") throw Error("Second launch replaced the document");
+    result.native.singleInstanceRetainedDocument = true;
+  }
+  if (child.exitCode === null) {
+    const session = await page.context().newCDPSession(page);
+    await session.send("Page.close");
+  }
   const closeDeadline = Date.now() + 10000;
   while (child.exitCode === null && Date.now() < closeDeadline) await wait(100);
   result.native.closeExitCode = child.exitCode;
@@ -144,7 +169,7 @@ try {
   await preview?.close().catch(() => {});
   if (previewServer) await new Promise(resolve => previewServer.close(resolve));
   await nativeBrowser?.close().catch(() => {});
-  if (child?.pid && child.exitCode === null) {
+  if (child?.pid && child.exitCode === null && child.signalCode === null) {
     const stop = spawnSync("taskkill.exe", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true, encoding: "utf8" });
     result.native.cleanupExitCode = stop.status;
     result.passed = false;

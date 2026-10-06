@@ -8,6 +8,20 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Tray starter manual follow-up (2026-10-06): the maintainer confirmed hide,
+restore, visible bell-button notification and tray Quit all worked in the
+replacement diagnostic window. The diagnostic process exited 0; the owned
+host/supervisor processes were absent afterward. The first launch produced a
+blank window and was force-cleaned, not accepted. Its cause is unresolved.
+The smoke tool now has visible `--manual` and readiness-only `--manual-check`
+modes, requiring a ready document and visible Message input before handoff.
+Automated readiness/cleanup is separate from the maintainer's report; details
+and retained failed receipts are in `docs/ops/tray-app-starter.md`.
+The default native/CDP smoke, `--manual-check`, `go test ./tests/hygiene`,
+Node syntax check and `git diff --check` passed. The default run also retained
+notification acceptance and single-instance document preservation checks.
+No host/public IPC, DB/schema, dependency, CI, version or release change.
+
 Tray starter UI/native follow-up (2026-10-06): the source CLI from `83e78c1`
 generated/validated/built/inspected the starter with only `notification.show`.
 Five web assets total 8,387 bytes; the packaged EXE is byte-identical to the
