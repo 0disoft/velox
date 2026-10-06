@@ -108,9 +108,9 @@ func (w *manifestWatch) run(ctx context.Context, stderr io.Writer, initialErr er
 	}
 }
 
-// Host diagnostics and manifest notices share stderr during a watched run.
+// Separate host and watch outputs share a lock when they reach the same writer.
 type synchronizedWriter struct {
-	mu sync.Mutex
+	mu *sync.Mutex
 	io.Writer
 }
 

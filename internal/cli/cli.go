@@ -312,7 +312,7 @@ func runProject(args []string, dependencies Dependencies) int {
 	if options.json && !*debug {
 		hostStderr = io.Discard
 	}
-	result, err := runner.Execute(plan, runner.Options{Debug: *debug, Watch: *watch}, dependencies.HostLauncher, hostStdout, hostStderr)
+	result, err := runner.Execute(plan, runner.Options{Debug: *debug, Watch: *watch}, dependencies.HostLauncher, hostStdout, hostStderr, dependencies.Stderr)
 	if err != nil {
 		var hostExit *runner.HostExitError
 		if errors.As(err, &hostExit) {

@@ -148,7 +148,7 @@ func TestExecuteWatchNoticesDoNotRestartOrChangeRuntimeConfig(t *testing.T) {
 			t.Fatalf("runtime config changed: err=%v", err)
 		}
 		return 5, nil
-	}, io.Discard, output)
+	}, io.Discard, output, output)
 	if result.ExitCode != 5 || err == nil || launches != 1 {
 		t.Fatalf("result=%+v err=%v launches=%d", result, err, launches)
 	}

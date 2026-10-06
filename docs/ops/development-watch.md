@@ -29,8 +29,9 @@ Same-size/time content edits are detected; reverting a pending edit cancels it.
 No manifest edit triggers page reload, host restart or runtime reconfiguration.
 The original asset watcher and permissions continue unchanged until the user
 restarts. The CLI serializes host and manifest stderr writes and cancels/joins
-its manifest loop on host exit, including failure. Existing JSON stderr
-suppression remains unchanged. Normal runs and packaged apps have no additional
+its manifest loop on host exit, including failure. CLI manifest notices/errors
+also reach stderr in JSON mode; host stderr remains suppressed unless debug
+is enabled. Normal runs and packaged apps have no additional
 manifest loop; no host source, IPC, DB/schema, dependency or CI change is made.
 This extension is not in published alpha.66 and includes no version bump.
 
@@ -75,6 +76,44 @@ bun run scripts/manifest-watch-smoke.ts
 The script owns only its copied fixture, private profile and child process,
 and force-cleans the child process tree if normal close fails. Results and
 logs remain under its timestamped `.cache/manifest-watch-*` directory.
+
+## JSON Output Follow-Up: 2026-10-06
+
+The source runner separates CLI manifest-watch output from child stderr.
+`run --watch --json` emits restart notices and nonfatal manifest errors to
+stderr with debug off; stdout remains one result envelope. Ordinary host
+stderr is still discarded unless `--debug` is enabled. The two output paths
+share a lock when directed to the same writer, and watcher cancellation/join
+still completes before the result is emitted. Host options and runtime config
+are unchanged. This is source-only, not a public alpha.66 release change.
+
+Focused runner/CLI tests and vet passed. CLI tests cover debug off/on, invalid
+manifest recovery, exact JSON parsing, suppressed child stdout and host
+diagnostics visible only with debug. Existing normal JSON cases remain covered.
+
+The updated native smoke passed with the unchanged public alpha.66 host:
+
+```sh
+bun run scripts/manifest-watch-smoke.ts --json
+```
+
+Valid manifest edits, invalid JSON and corrected settings retained the same
+document marker, exact unsaved editor text, origin and runtime-config digest.
+Exactly two restart notices and one error reached stderr. Stdout parsed as
+one successful `run` envelope, no browser dialog opened, and normal close and
+cleanup both returned 0 with the temporary config removed. Debug was off.
+This native run did not deliberately generate a host diagnostic; host-log
+suppression is proven by the CLI launcher tests, not upgraded from that run.
+
+Receipt: `.cache/manifest-watch-1791280485300/result.json`.
+Local source CLI SHA-256:
+`254e23959defc1312a1681b10e16b56766e0841fe8981b1b0467b407537b908e`.
+The public host remains
+`7cf4c80d614ff1ba4f942c39dbfd42865b59146d5f5c089b4c5fa0be3c850beb`.
+The earlier non-JSON receipt and hashes above are preserved as a separate
+source snapshot. No host/public IPC, DB/schema, dependency, CI or version
+change is included. No release/installer, hosted stress or performance/size
+benchmark was repeated for this CLI-only output change.
 
 ## Image/Font Source Extension: 2026-10-05
 

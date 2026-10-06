@@ -6,6 +6,7 @@ import { resolve, join } from "node:path";
 
 const root = resolve(import.meta.dir, "..");
 const bin = resolve(root, process.env.VELOX_MANIFEST_WATCH_BIN_DIR ?? ".cache/manifest-watch-bin");
+const json = process.argv.includes("--json");
 const hashes: Record<string, string> = {};
 const sha256 = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 for (const file of ["velox.exe", "velox-host.exe"]) hashes[file] = sha256(await readFile(join(bin, file)));
@@ -39,9 +40,10 @@ const result: {
   before?: State; cycles: { phase: string; observed: State; runtimeConfigSHA256: string }[];
   noticeCount?: number; errorCount?: number; closeExitCode?: number | null; cleanupExitCode?: number | null;
   temporaryConfigRemoved?: boolean; dialogCount?: number; passed: boolean; error?: string; finishedAtUtc?: string;
-} = { mode: "source-cli-watch-with-debug-off", hashes, hostVersion: metadata.releaseVersion,
+  envelopeOK?: boolean;
+} = { mode: json ? "source-cli-watch-json-with-debug-off" : "source-cli-watch-with-debug-off", hashes, hostVersion: metadata.releaseVersion,
   startedAtUtc: new Date().toISOString(), cycles: [], passed: false };
-const child = spawn(join(bin, "velox.exe"), ["run", "--config", configPath, "--watch"], {
+const child = spawn(join(bin, "velox.exe"), ["run", "--config", configPath, "--watch", ...(json ? ["--json"] : [])], {
   cwd: root, env: { ...process.env, VELOX_DATA_DIR: join(work, "profile"),
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-address=127.0.0.1 --remote-debugging-port=" + port },
   stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
@@ -152,6 +154,11 @@ try {
   while (child.exitCode === null && Date.now() < closeDeadline) await wait(100);
   result.closeExitCode = child.exitCode;
   if (child.exitCode !== 0) throw Error("CLI did not close normally");
+  if (json) {
+    const envelope = JSON.parse(stdout);
+    result.envelopeOK = envelope.ok === true && envelope.command === "run" && envelope.result.exitCode === 0;
+    if (!result.envelopeOK) throw Error("Stdout did not contain one successful run envelope");
+  }
   result.temporaryConfigRemoved = !(await readdir(project)).includes(runtimeFiles[0]);
   if (!result.temporaryConfigRemoved) throw Error("Temporary config remained");
   for (const [file, digest] of Object.entries(hashes)) {

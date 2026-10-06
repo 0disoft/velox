@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"sync"
 
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/runtimeconfig"
@@ -32,7 +33,7 @@ func (err *HostExitError) Error() string {
 	return fmt.Sprintf("host exited with code %d", err.Code)
 }
 
-func Execute(plan buildplan.Plan, options Options, launcher Launcher, stdout, stderr io.Writer) (result Result, resultErr error) {
+func Execute(plan buildplan.Plan, options Options, launcher Launcher, stdout, stderr, watchStderr io.Writer) (result Result, resultErr error) {
 	if launcher == nil {
 		launcher = Launch
 	}
@@ -64,13 +65,20 @@ func Execute(plan buildplan.Plan, options Options, launcher Launcher, stdout, st
 		if stderr == nil {
 			stderr = io.Discard
 		}
-		stderr = &synchronizedWriter{Writer: stderr}
+		if watchStderr == nil {
+			watchStderr = io.Discard
+		}
+		mu := &sync.Mutex{}
+		if stderr != io.Discard {
+			stderr = &synchronizedWriter{mu: mu, Writer: stderr}
+		}
+		watchStderr = &synchronizedWriter{mu: mu, Writer: watchStderr}
 		watcher, watchErr := newManifestWatch(snapshot.Manifest.ConfigPath)
 		ctx, cancel := context.WithCancel(context.Background())
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			watcher.run(ctx, stderr, watchErr)
+			watcher.run(ctx, watchStderr, watchErr)
 		}()
 		defer func() {
 			cancel()

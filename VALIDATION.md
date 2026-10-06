@@ -8,6 +8,22 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+JSON manifest-watch output (source-only, 2026-10-06): focused runner/CLI tests,
+scoped vet, hygiene and diff checks passed. Debug-off/on CLI tests observe
+manifest error/recovery notices on stderr while stdout parses as one success
+envelope; injected host stdout is suppressed and injected host diagnostics
+appear only with debug enabled. The runner now separates watch and host stderr,
+retaining a shared output lock and joined cleanup without changing host flags.
+The native smoke's new `--json` mode passed with a local source CLI and the
+unchanged public alpha.66 host: two notices/one error, retained unsaved text,
+document/origin/config digest, no dialogs, one successful stdout envelope,
+close/cleanup exit 0 and temporary-config removal. It did not inject a native
+host diagnostic; that suppression result belongs to the launcher tests.
+README, CLI contract and `docs/ops/development-watch.md` record the behavior
+and hashes. No public IPC, DB/schema, dependency, CI, version or release change
+is included; installer, hosted stress and performance/size checks were not
+repeated for this CLI-only change.
+
 Developer documentation refresh (2026-10-06): README capability/permission
 rows were checked against IPC tables, manifest settings and example manifests;
 all 19 referenced local documentation/example targets exist. Hygiene tests and

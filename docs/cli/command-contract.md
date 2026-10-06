@@ -115,6 +115,8 @@ replacement process.
 - Close child stdin, wait for the host, and preserve its non-zero exit code.
 - Suppress child stdout in JSON mode so stdout remains one JSON document.
   Child stderr is also suppressed unless `--debug` is explicitly enabled.
+  Source CLI manifest-watch notices use a separate stderr path; `--watch --json`
+  reports them even with debug off, without forwarding ordinary host logs.
 - Do not copy source assets or create build output.
 - `--debug` explicitly enables development tools and cache bypass.
   Alpha.66 additionally installs top-level metadata-only error
@@ -142,8 +144,9 @@ replacement process.
   Repeated unchanged errors are suppressed and subsequent edits are retried.
   Manifest edits never reload, restart or reconfigure the running host; the
   existing asset watcher continues against the original asset directory.
-  The CLI stops and joins this additional loop when the host exits. Existing
-  JSON-mode stderr suppression still applies unless `--debug` is enabled.
+  The CLI stops and joins this additional loop when the host exits. These
+  CLI notices/errors reach stderr even in JSON mode; only host stderr retains
+  its suppression unless `--debug` is enabled. Stdout stays one JSON envelope.
   This notice-only extension is source-only, not in published alpha.66.
 - Watch is default-off and is passed as a host argument, not stored in the
   manifest, runtime configuration, profile, build report or ZIP. It does not

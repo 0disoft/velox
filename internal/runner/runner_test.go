@@ -32,7 +32,7 @@ func TestExecuteProvidesValidTemporaryConfigAndRemovesIt(t *testing.T) {
 			t.Fatalf("asset root = %q, want %q", resolved.AssetRoot, plan.Snapshot().Manifest.AssetRoot)
 		}
 		return 0, nil
-	}, io.Discard, io.Discard)
+	}, io.Discard, io.Discard, io.Discard)
 	if err != nil || result.ExitCode != 0 {
 		t.Fatalf("result=%+v err=%v", result, err)
 	}
@@ -47,7 +47,7 @@ func TestExecutePreservesHostExitCodeAndCleansConfig(t *testing.T) {
 	result, err := Execute(plan, Options{}, func(hostPath, configPath string, _ Options, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		return 5, nil
-	}, io.Discard, io.Discard)
+	}, io.Discard, io.Discard, io.Discard)
 	var exitError *HostExitError
 	if result.ExitCode != 5 || !errors.As(err, &exitError) || exitError.Code != 5 {
 		t.Fatalf("result=%+v err=%v", result, err)
@@ -63,7 +63,7 @@ func TestExecuteCleansConfigWhenHostCannotStart(t *testing.T) {
 	result, err := Execute(plan, Options{}, func(hostPath, configPath string, _ Options, stdout, stderr io.Writer) (int, error) {
 		observedPath = configPath
 		return 6, errors.New("start failed")
-	}, io.Discard, io.Discard)
+	}, io.Discard, io.Discard, io.Discard)
 	if result.ExitCode != 6 || err == nil {
 		t.Fatalf("result=%+v err=%v", result, err)
 	}
@@ -84,7 +84,7 @@ func TestExecuteCleansConfigWhenLauncherPanics(t *testing.T) {
 		_, _ = Execute(plan, Options{}, func(hostPath, configPath string, _ Options, stdout, stderr io.Writer) (int, error) {
 			observedPath = configPath
 			panic("launcher panic")
-		}, io.Discard, io.Discard)
+		}, io.Discard, io.Discard, io.Discard)
 	}()
 	if _, err := os.Stat(observedPath); !os.IsNotExist(err) {
 		t.Fatalf("temporary config remained after launcher panic: %v", err)

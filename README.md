@@ -247,8 +247,10 @@ The source CLI additionally detects stable edits to the selected manifest in
 `run --watch`. Valid edits print a restart-required notice; invalid or unreadable
 settings print a nonfatal error. The running app, permissions and original
 asset directory stay unchanged until a manual restart. Normal runs and packaged
-apps start no manifest watcher. JSON mode retains its stderr suppression unless
-`--debug` is enabled. This extension is not in the public alpha.66 download;
+apps start no manifest watcher. Manifest notices and nonfatal validation errors
+also reach stderr with `--json`, while stdout remains one JSON envelope.
+Host stderr stays suppressed in JSON mode unless `--debug` is explicitly
+enabled. This extension is not in the public alpha.66 download;
 see [Development Watch](docs/ops/development-watch.md#manifest-notices-2026-10-06).
 
 Local candidate verification and extraction instructions are in
