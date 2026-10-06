@@ -34,7 +34,7 @@ The executables remain unsigned and the provenance remains unauthenticated
 metadata.
 
 [Velox v0.5.10-alpha.40](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.40)
-is the previous unsigned developer preview from commit
+is a historical unsigned developer preview from commit
 `d206fe4ef1be9df198d86809742ef480549344b8`. Tag evidence
 [run 34214224962](https://github.com/0disoft/velox/actions/runs/34214224962),
 publication [run 34214445883](https://github.com/0disoft/velox/actions/runs/34214445883),
@@ -107,14 +107,14 @@ smaller build and runtime surface.
 
 ## Current Product Boundary
 
-Supported by the MVP design:
+Supported in the published alpha.66 preview:
 
 - Windows x64.
 - Static web assets.
 - One top-level window.
 - Portable directory and deterministic ZIP output.
-- Minimal versioned JSON IPC for application information and basic window
-  lifecycle.
+- Permission-checked JSON IPC for application information, window controls,
+  selected text files/folders, clipboard text and confirmed HTTPS links.
 - Non-interactive CLI operation and machine-readable output.
 - Optional per-application executable branding: an icon and a version
   resource written into a staged host copy on build; without it the build
@@ -126,11 +126,44 @@ Supported by the MVP design:
 Explicitly deferred:
 
 - Native application backends and plugins.
-- Filesystem, shell, process, and sidecar APIs.
+- Arbitrary-path filesystem access, recursive directory access or monitoring,
+  shell, process, and sidecar APIs. Selected text-file and immediate-folder
+  access are supported through the opt-in capabilities below.
 - Frontend bundling, state-preserving hot module replacement, and a development server.
 - Automatic updates and repair, machine-wide or elevation-requiring installs,
   MSI/MSIX packaging, and code signing automation.
 - macOS, Linux, ARM64, and multi-window support.
+
+## Capabilities and Permissions
+
+The table covers the published alpha.66 preview. Native script capabilities
+are separate opt-ins in `security.permissions`; manifest settings and CLI
+flags need no script permission.
+
+| Capability | Permission or setting | Example |
+| --- | --- | --- |
+| App information and basic window lifecycle | `app.info` / `window.basic` | [Deskboard](examples/deskboard) |
+| Native window caption | `window.title` | [File Notes](examples/file-notes) |
+| Open/save selected UTF-8 files, up to 2 MiB; session-only save target | `file.open` / `file.save` | [Reader](examples/file-reader), [Saver](examples/file-saver), [File Notes](examples/file-notes) |
+| Immediate entries in a selected local folder | `folder.read`; also `folder.readText` for UTF-8 contents | [Folder browser](examples/folder-browser), also opts into `clipboard.write` |
+| Plain-text clipboard; native approval per read request | Independent `clipboard.write` / `clipboard.read` | [Clipboard](examples/clipboard) |
+| Confirmed external HTTPS links | `external.open` | [IPC contract](docs/architecture/04-ipc-v1.md) |
+| Taskbar flashing | `window.attention` | [Window attention](examples/window-attention) |
+| Taskbar progress | `window.progress` | [Taskbar progress](examples/taskbar-progress) |
+| Transient tray balloon; Windows may suppress display | `notification.show` and `window.tray: true` | [Tray notification](examples/tray-notification) |
+| Single instance per app identity | `app.singleInstance: true` | [File Notes](examples/file-notes) |
+| Tray show/hide/quit and remembered placement | `window.tray: true` / `window.rememberState: true` | [File Notes](examples/file-notes) |
+| Activation shortcut for the existing window | `window.activationShortcut` | [Activation shortcut](examples/window-activation-shortcut) |
+| Minimum window size | `window.minWidth` / `window.minHeight` | [File Notes](examples/file-notes) |
+| Topmost, fixed-size and system-themed native title bar | `window.alwaysOnTop` / `window.resizable: false` / `window.followSystemTheme: true` | [Topmost](examples/window-always-on-top), [Fixed size](examples/window-fixed-size), [System theme](examples/window-system-theme) |
+| App icon/EXE metadata and optional per-user installer | `branding` / `build --installer` | [Manifest schema](schema/velox-v1.schema.json), [Installer guide](docs/ops/windows-installer.md) |
+
+The generated `text-editor` starter requests only `file.open`/`file.save`;
+the `folder-browser` starter requests only `folder.read`/`folder.readText`.
+Repository examples may opt into additional permissions. These selected-file
+and folder capabilities do not grant arbitrary paths, restart-persistent file
+access, recursive traversal or folder writes. Clipboard history and monitoring
+are not provided.
 
 ## Documentation
 
@@ -209,6 +242,15 @@ also emits bounded JavaScript error metadata to local stderr, including with
 `--json`; messages and rejection contents are not collected. Default runs
 install no diagnostic channel. Scope, privacy and native receipts are in
 [Development Diagnostics](docs/ops/development-diagnostics.md).
+
+The source CLI additionally detects stable edits to the selected manifest in
+`run --watch`. Valid edits print a restart-required notice; invalid or unreadable
+settings print a nonfatal error. The running app, permissions and original
+asset directory stay unchanged until a manual restart. Normal runs and packaged
+apps start no manifest watcher. JSON mode retains its stderr suppression unless
+`--debug` is enabled. This extension is not in the public alpha.66 download;
+see [Development Watch](docs/ops/development-watch.md#manifest-notices-2026-10-06).
+
 Local candidate verification and extraction instructions are in
 [the alpha.64 candidate receipt](docs/ops/alpha64-candidate.md); it is not a
 published release download. Use the public release linked above for published bytes.
@@ -240,7 +282,8 @@ WebView2 environment. It keeps every operation user-initiated and does not add
 or imply a Velox native capability.
 
 `examples/file-notes` is a UTF-8 Markdown editor using bounded native dialogs
-under only `file.open` and `file.save`, with session-only connected saving,
+under `file.open` and `file.save`, plus `window.title` for its native caption,
+with session-only connected saving,
 external-change conflict protection, IndexedDB draft recovery and unsaved-change
 protection. Restored drafts require fresh save selection; no file path or write
 grant is persisted.

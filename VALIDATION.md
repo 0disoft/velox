@@ -8,6 +8,17 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Developer documentation refresh (2026-10-06): README capability/permission
+rows were checked against IPC tables, manifest settings and example manifests;
+all 19 referenced local documentation/example targets exist. Hygiene tests and
+diff checks passed. The roadmap now names public alpha.66 using the existing
+publication/native records, while keeping alpha.65/64 evidence historical.
+Source-only manifest-watch notices are separated from the published download.
+CommandCode DeepSeek 4.1 Flash/high drafted the table wording; names and paths
+were checked locally. No runtime/API/IPC, DB/schema, dependency, runner, CI or
+release change was made. Native, build, performance and release checks were
+not repeated for documentation-only edits.
+
 Manifest watch notices (source-only, 2026-10-06): scoped manifest, devwatch,
 runner, CLI and hygiene tests passed, as did scoped vet and diff checks.
 Fresh verbose manifest/runner tests passed without skips, including captured

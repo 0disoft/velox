@@ -154,7 +154,25 @@ Historical preview `v0.5.10-alpha.2` was published from exact commit
 and passed the no-checkout consumer gates. This is technical distribution
 evidence and not a human attempt.
 
-The current published unsigned preview is `v0.5.10-alpha.65` from exact source
+The current published unsigned preview is `v0.5.10-alpha.66` from exact source
+`842fead0c889e9f161c2567a91c8d0fd4c2ca260`. Tag CI `37317775399` passed;
+its four assets were reused for publication without a second producer. Public
+downloads matched ZIP SHA-256
+`3e1bc83cc8ee31e8feb4870a5b4fa26a4f992a5e22754d0625de891394cfacdc`
+and the release metadata. The later exact-public-byte native follow-up covers
+watch reload/cancel/retry, image/font edits, development diagnostics and editor
+draft recovery, plus a separate manual packaged-editor save/recovery check.
+Installer, folder-browser, hosted-verifier and stress checks were not included
+in that follow-up. Beta remains held; see
+[the publication record](../ops/alpha66-publication.md) and
+[the public native follow-up](../ops/alpha66-public-native.md).
+
+The source CLI also reports manifest changes during `run --watch` without
+restarting or reconfiguring the running app. This is not in public alpha.66;
+its separate source-CLI/public-host evidence is in
+[Development Watch](../ops/development-watch.md#manifest-notices-2026-10-06).
+
+The previous published unsigned preview was `v0.5.10-alpha.65` from exact source
 `c8f618bd94e48cb7c01d61aa0e65e3bc7116875c`. Tag CI `37298703202` passed;
 its four assets were reused without a second producer. Public downloads
 matched ZIP SHA-256
@@ -165,7 +183,7 @@ apps using the alpha.64 host also received maintainer confirmation for saving
 and Korean folder preview. That is separate manual evidence, not a public-byte
 native template check or adoption claim. Beta remains held; see `docs/ops/release.md`.
 
-The previous published unsigned preview was `v0.5.10-alpha.64` from exact source
+An earlier published unsigned preview was `v0.5.10-alpha.64` from exact source
 `10202571236801451fa697ade15f0e7a799a77ad`. Tag CI `37286184342` passed;
 its artifacts were reused for publication without a second producer. Exact
 public downloads matched ZIP SHA-256
