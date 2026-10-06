@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,6 +58,24 @@ func Execute(plan buildplan.Plan, options Options, launcher Launcher, stdout, st
 	closeErr := configFile.Close()
 	if writeErr != nil || closeErr != nil {
 		return Result{}, fmt.Errorf("write temporary runtime config: %w", errors.Join(writeErr, closeErr))
+	}
+
+	if options.Watch {
+		if stderr == nil {
+			stderr = io.Discard
+		}
+		stderr = &synchronizedWriter{Writer: stderr}
+		watcher, watchErr := newManifestWatch(snapshot.Manifest.ConfigPath)
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			watcher.run(ctx, stderr, watchErr)
+		}()
+		defer func() {
+			cancel()
+			<-done
+		}()
 	}
 
 	exitCode, launchErr := launcher(snapshot.HostPath, configPath, options, stdout, stderr)

@@ -272,7 +272,11 @@ The published alpha.66 supports opt-in `run --watch` for stable HTML/CSS/JavaScr
 edits and metadata changes to common images/fonts, using full-page reload with
 application `beforeunload` protection. Image/font detection uses path, size and
 modification time rather than repeated binary reads; same-size edits with a
-preserved modification time are not detected. Manifest edits remain excluded.
+preserved modification time are not detected. Published alpha.66 excludes
+manifest edits. The source CLI now reports stable manifest edits as requiring
+a restart, without restarting, reloading or changing the running app. Invalid
+or unreadable manifests produce nonfatal stderr diagnostics; this source-only
+extension uses a bounded, link-rejecting read and stops with the host.
 Watch is not part of the manifest or packaged defaults, enables no DevTools,
 adds no dependency or development server, and stops with the development
 window. Text watching is available in public alpha.64 and later; alpha.63 does

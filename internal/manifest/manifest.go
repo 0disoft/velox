@@ -81,6 +81,15 @@ func Load(path string) (Resolved, error) {
 	if err != nil {
 		return Resolved{}, fmt.Errorf("read manifest: %w", err)
 	}
+	return Parse(absPath, data)
+}
+
+// Parse validates a captured manifest without reopening a file that may change.
+func Parse(path string, data []byte) (Resolved, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return Resolved{}, fmt.Errorf("resolve manifest path: %w", err)
+	}
 
 	decoder := json.NewDecoder(strings.NewReader(string(data)))
 	decoder.DisallowUnknownFields()

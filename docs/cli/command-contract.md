@@ -134,7 +134,17 @@ replacement process.
   time only. Binary contents are not repeatedly read or counted in the text
   budget. Additions, deletions and renames count; reverted text contents do
   not. Same-size binary edits with preserved modification times cannot be
-  detected. Manifest changes and other asset formats remain outside the scope.
+  detected. Other asset formats remain outside the reload scope.
+- The source CLI additionally watches the selected project manifest (including
+  a custom `--config` path) by content every 500 ms with a 500 ms quiet period.
+  A stable valid edit emits a restart-required notice to stderr; an invalid,
+  missing, unreadable, linked or over-1-MiB manifest emits a nonfatal error.
+  Repeated unchanged errors are suppressed and subsequent edits are retried.
+  Manifest edits never reload, restart or reconfigure the running host; the
+  existing asset watcher continues against the original asset directory.
+  The CLI stops and joins this additional loop when the host exits. Existing
+  JSON-mode stderr suppression still applies unless `--debug` is enabled.
+  This notice-only extension is source-only, not in published alpha.66.
 - Watch is default-off and is passed as a host argument, not stored in the
   manifest, runtime configuration, profile, build report or ZIP. It does not
   enable DevTools; cache bypass is confined to the development WebView.

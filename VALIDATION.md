@@ -8,6 +8,24 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Manifest watch notices (source-only, 2026-10-06): scoped manifest, devwatch,
+runner, CLI and hygiene tests passed, as did scoped vet and diff checks.
+Fresh verbose manifest/runner tests passed without skips, including captured
+byte parsing, custom config paths, same-size/time edits, quiet-period debounce,
+reverted edits, invalid JSON/schema recovery, missing/oversized/link rejection
+and cancellation. A runner test with a fake host launcher observed the real
+CLI polling loop: invalid input emitted a nonfatal error, corrected input
+emitted a restart notice, the launcher ran once, runtime config bytes stayed
+unchanged, host exit code 5 was preserved and the loop was joined on return.
+This is automated CLI evidence, not native GUI or manual preservation evidence.
+Normal runs and packaged apps start no manifest loop. The internal parser is
+shared; no public API/IPC, DB/schema, dependency or CI change is included.
+Runner changes are limited to opt-in observation, serialized stderr output
+and loop cleanup. Contracts/spec and `docs/ops/development-watch.md` were
+updated. Native UI, release/installer, hosted stress and performance/size
+measurements were not repeated for this CLI-only change. Public alpha.66
+remains unchanged; no version bump, publication or beta promotion occurred.
+
 Alpha.66 local preparation (2026-10-05): source version is
 `0.5.10-alpha.66`, not published; public alpha.65 evidence is preserved.
 Version-dependent buildplan, builder, CLI, inspector, runner, host metadata,

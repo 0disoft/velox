@@ -16,6 +16,24 @@ and normal close. Its current hashes and version boundary are recorded in
 [the candidate receipt](alpha64-candidate.md). The earlier hashes below remain
 the original source-integration evidence.
 
+## Manifest Notices: 2026-10-06
+
+The source CLI now observes the selected manifest during `run --watch`, including
+custom `--config` paths. It polls content every 500 ms and waits for a 500 ms
+quiet period before parsing the captured bytes with the existing manifest
+validator. Valid edits print a restart-required notice. Invalid edits and
+missing/unreadable files print a nonfatal error; repeated unchanged errors are
+suppressed. Links/reparse points and reads exceeding 1 MiB are refused.
+Same-size/time content edits are detected; reverting a pending edit cancels it.
+
+No manifest edit triggers page reload, host restart or runtime reconfiguration.
+The original asset watcher and permissions continue unchanged until the user
+restarts. The CLI serializes host and manifest stderr writes and cancels/joins
+its manifest loop on host exit, including failure. Existing JSON stderr
+suppression remains unchanged. Normal runs and packaged apps have no additional
+manifest loop; no host source, IPC, DB/schema, dependency or CI change is made.
+This extension is not in published alpha.66 and includes no version bump.
+
 ## Image/Font Source Extension: 2026-10-05
 
 The source checkout now includes common image/font metadata in the existing

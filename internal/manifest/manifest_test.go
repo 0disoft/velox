@@ -7,6 +7,21 @@ import (
 	"testing"
 )
 
+func TestParseValidatesCapturedBytesWithoutReopeningFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "velox.json")
+	writeTestFile(t, path, `{`)
+	data := []byte(`{"schemaVersion":1,"app":{"id":"com.example.captured","name":"Captured","version":"1"}}`)
+	got, err := Parse(path, data)
+	if err != nil || got.App.Name != "Captured" || got.ConfigPath != path || got.AssetRoot != filepath.Join(filepath.Dir(path), "web") {
+		t.Fatalf("resolved=%+v err=%v", got, err)
+	}
+	for _, invalid := range []string{`{`, string(data) + `{}`, strings.Replace(string(data), `"schemaVersion":1`, `"schemaVersion":9`, 1)} {
+		if _, err := Parse(path, []byte(invalid)); err == nil {
+			t.Fatalf("accepted invalid captured manifest: %s", invalid)
+		}
+	}
+}
+
 func TestLoadAppliesDocumentedDefaults(t *testing.T) {
 	root := t.TempDir()
 	writeTestFile(t, filepath.Join(root, "web", "index.html"), "ok")
