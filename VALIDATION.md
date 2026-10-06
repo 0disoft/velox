@@ -8,6 +8,20 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.67 local artifact follow-up (2026-10-06): clean source `4d73cfb` produced
+matching-version CLI, GUI host and GUI Setup with Go 1.27.1. Two packaging
+runs from those binaries matched. All four outside-checkout prebuilt consumer
+template checks passed, as did 16 manifest entries, three sidecar checksums,
+17 SPDX file SHA-256 entries and unsigned provenance identity. The exact native
+tray smoke initially failed input visibility with hidden GUI startup; visible
+manual-check and default automated startup after removing that fixture flag
+passed readiness, native notification acceptance, single-instance preservation
+and normal close. No owned process remained. The failed receipt is retained.
+No new manual alpha.67 observation, installer execution, manifest-watch native
+repeat, hosted/performance/stress, signing, push, tag or publication is claimed.
+No API/IPC, DB/schema, dependency or CI change. Exact artifact identity and
+boundaries are in `docs/ops/alpha67-preparation.md`.
+
 Alpha.67 version preparation (2026-10-06): source version and version-dependent
 fixtures now identify `0.5.10-alpha.67`. Source/public documentation and hygiene
 checks keep alpha.67 local/unpublished while preserving public alpha.66 and

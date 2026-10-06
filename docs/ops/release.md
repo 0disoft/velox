@@ -89,8 +89,15 @@ the repository-owned public-preview workflow instead of advancing that pin.
 The source version is now `0.5.10-alpha.67`, a local candidate that is not
 published. The scope groups manifest-watch notices, their JSON-mode stderr
 path and the tray-app starter. Public alpha.66 remains unchanged. No tag,
-push, hosted build or publication is included. Matching artifact results will
-follow the version commit; see [alpha67-preparation.md](alpha67-preparation.md).
+push, hosted build or publication is included. Source `4d73cfb` now has a local
+Go 1.27.1 CLI/GUI host/GUI Setup bundle: 6,868,107-byte ZIP, SHA-256
+`15403133e1638a1621ab1d81e12b0643226b674010007b7ba538d8ae24b65723`.
+Repeated packaging, four-template outside-checkout consumer checks and unsigned
+sidecar verification passed. Native tray readiness/notification acceptance/
+single-instance/normal-close checks passed after removing the hidden GUI launch
+flag from the smoke fixture; its initial visibility timeout is retained as a
+failure. Exact hashes, receipts and skipped checks are in
+[alpha67-preparation.md](alpha67-preparation.md).
 
 ## Source Candidate `9dfcb8b`: 2026-10-06
 

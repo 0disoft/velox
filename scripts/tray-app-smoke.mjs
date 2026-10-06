@@ -104,7 +104,8 @@ try {
   await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   const env = { ...process.env, VELOX_DATA_DIR: join(work, "profile"),
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-address=127.0.0.1 --remote-debugging-port=" + port };
-  child = spawn(exe, [], { cwd: root, env, windowsHide: !manual, stdio: ["ignore", "pipe", "pipe"] });
+  // Hidden startup can leave the native WebView2 page without a visible layout.
+  child = spawn(exe, [], { cwd: root, env, windowsHide: false, stdio: ["ignore", "pipe", "pipe"] });
   child.on("error", error => { spawnError = error; });
   child.stdout.on("data", bytes => { stdout = (stdout + bytes.toString()).slice(-32768); });
   child.stderr.on("data", bytes => { stderr = (stderr + bytes.toString()).slice(-32768); });

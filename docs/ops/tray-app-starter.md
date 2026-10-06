@@ -127,6 +127,11 @@ and screenshots remain in its `.cache/tray-starter-*` directory.
 
 ## Not Repeated
 
+Later alpha.67 fixture follow-up: automated GUI startup also runs without the
+hidden-child flag. Its prior visibility timeout and subsequent passing exact
+alpha.67 receipts are retained in [alpha67-preparation.md](alpha67-preparation.md).
+The earlier manual observations above remain tied to their alpha.66 host bytes.
+
 No installer execution, hosted stress, startup/performance benchmark or external
 user attempt was performed in this follow-up. Existing host tray behavior is
 reused unchanged; the initial blank-window cause remains unconfirmed.
