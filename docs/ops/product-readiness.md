@@ -4,7 +4,7 @@
 - Decision: ADR 0019
 - Owner: Project maintainer
 - Public preview: `0.5.10-alpha.66` (published unsigned prerelease)
-- Source version: `0.5.10-alpha.66` (published unsigned prerelease)
+- Source version: `0.5.10-alpha.67` (local candidate; not published)
 
 ## Required Beta Checks
 

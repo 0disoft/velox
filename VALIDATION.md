@@ -8,6 +8,15 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.67 version preparation (2026-10-06): source version and version-dependent
+fixtures now identify `0.5.10-alpha.67`. Source/public documentation and hygiene
+checks keep alpha.67 local/unpublished while preserving public alpha.66 and
+its historical records. Artifact identity follows the version commit in
+`docs/ops/alpha67-preparation.md`. No API/IPC, DB/schema, dependency, CI, tag,
+push or publication is included.
+Buildplan/builder/CLI/inspector/runner/releasebundle/releaseevidence/hygiene Go
+tests and `git diff --check` passed for this version change.
+
 Source candidate `9dfcb8b` preparation (2026-10-06): compiled the CLI once
 with Go 1.27.1 and reused manifest-checked public alpha.66 host/Setup bytes.
 Two packaging runs matched, without claiming independent recompilation.

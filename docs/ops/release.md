@@ -84,6 +84,14 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.67 Local Preparation: 2026-10-06
+
+The source version is now `0.5.10-alpha.67`, a local candidate that is not
+published. The scope groups manifest-watch notices, their JSON-mode stderr
+path and the tray-app starter. Public alpha.66 remains unchanged. No tag,
+push, hosted build or publication is included. Matching artifact results will
+follow the version commit; see [alpha67-preparation.md](alpha67-preparation.md).
+
 ## Source Candidate `9dfcb8b`: 2026-10-06
 
 The next preview's source scope is locally packaged: manifest-change notices

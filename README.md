@@ -81,8 +81,9 @@ exact downloaded bytes; see
 adds no installer, folder-browser, hosted-verifier, stress or adoption evidence.
 Beta remains held under the product workflow checklist.
 
-Source version: `0.5.10-alpha.66` (published unsigned prerelease). The four
-public asset identities and the narrow verification scope are in
+Source version: `0.5.10-alpha.67` (local candidate; not published). Local
+preparation is recorded in [alpha67-preparation.md](docs/ops/alpha67-preparation.md).
+The public preview remains alpha.66; its four asset identities and scope are in
 [the alpha.66 publication record](docs/ops/alpha66-publication.md).
 
 ## Headline Metrics

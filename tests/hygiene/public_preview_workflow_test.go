@@ -157,19 +157,34 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 }
 
 func TestAlpha66PublicationKeepsPreparationHistorical(t *testing.T) {
-	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-alpha.66"`) {
-		t.Fatal("published source version is not alpha.66")
-	}
 	for _, relative := range []string{"README.md", "docs/ops/product-readiness.md"} {
 		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
-		if !strings.Contains(doc, "Source version: `0.5.10-alpha.66` (published unsigned prerelease)") {
-			t.Errorf("%s does not identify the published source version", relative)
+		if !strings.Contains(doc, "alpha66-publication.md") {
+			t.Errorf("%s does not retain the alpha.66 publication record", relative)
 		}
 	}
 	preparation := readNormalized(t, repositoryPath("docs", "ops", "alpha66-preparation.md"))
 	if !strings.Contains(preparation, "not published") {
 		t.Fatal("historical alpha.66 preparation must retain its unpublished boundary")
+	}
+}
+
+func TestAlpha67PreparationKeepsPublicPreviewUnchanged(t *testing.T) {
+	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.67"`) {
+		t.Fatal("prepared source version is not alpha.67")
+	}
+	for _, relative := range []string{"README.md", "docs/ops/product-readiness.md"} {
+		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
+		if !strings.Contains(doc, "Source version: `0.5.10-alpha.67` (local candidate; not published)") {
+			t.Errorf("%s does not separate prepared source from the public preview", relative)
+		}
+	}
+	preparation := readNormalized(t, repositoryPath("docs", "ops", "alpha67-preparation.md"))
+	for _, marker := range []string{"0.5.10-alpha.67", "not published", "Public preview: `0.5.10-alpha.66`"} {
+		if !strings.Contains(preparation, marker) {
+			t.Errorf("alpha.67 preparation lacks %q", marker)
+		}
 	}
 }
 
