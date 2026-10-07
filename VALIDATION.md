@@ -18,7 +18,11 @@ composing key events, clears state on blur and ignores late composition-end
 events after close. 24 Bun tests, initializer/CLI Go tests, scoped vet and
 Edge mock-native empty-query/document, late-IME, dark and forced-color checks
 passed. A corrected portable test app built and inspected with unchanged
-public alpha.67 host bytes. Corrected native manual confirmation is pending.
+public alpha.67 host bytes. In the manual follow-up, the maintainer reported
+that the corrected find bar now closes in response to the empty-query
+Escape/X check. The corrected test process (PID 38496) was absent afterward.
+This is an overall manual close confirmation, not an instrumented native
+IME event trace or separate assertion for every keyboard/composition case.
 Command contract updated; `git diff --check` passed. No host/IPC API,
 DB/storage schema, permission, dependency, repository-hygiene or CI change.
 No host rebuild/performance check, version bump, push or publication.
