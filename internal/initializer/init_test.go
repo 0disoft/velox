@@ -61,7 +61,7 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
-	if err != nil || len(assets.Files) != 9 || len(result.Files) != 11 {
+	if err != nil || len(assets.Files) != 14 || len(result.Files) != 16 {
 		t.Fatalf("unexpected inventory: %+v %+v %v", result.Files, assets, err)
 	}
 	for _, relative := range result.Files {
@@ -76,6 +76,9 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 	}
 	if !strings.Contains(string(index), `src="drafts.js"`) || !strings.Contains(string(index), `id="recovery-dialog"`) {
 		t.Fatal("draft storage or recovery dialog is not delivered")
+	}
+	if !strings.Contains(string(index), `src="find.js"`) || !strings.Contains(string(index), `id="find-case"`) {
+		t.Fatal("find module or match-case control is not delivered")
 	}
 }
 

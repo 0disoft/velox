@@ -27,6 +27,8 @@
   let draftWrites = Promise.resolve();
   const native = typeof window.velox?.invoke === "function" &&
     typeof window.velox?.saveTextAs === "function" && typeof window.velox?.saveTextTo === "function";
+  const finder = window.EditorFind.attach(document, editor,
+    () => busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open);
 
   function isDirty() { return recovered || editor.value !== savedText; }
 
@@ -39,6 +41,7 @@
     document.title = `${dirty ? "* " : ""}${name} - ${appName}`;
     buttons.forEach((button, index) => { button.disabled = blocked || (index > 0 && !native); });
     editor.readOnly = blocked;
+    finder.refresh();
   }
 
   function writeDraft(snapshot, revision) {
@@ -175,8 +178,9 @@
     draftRevision++;
     draftPending = true;
     draftState.textContent = "Saving draft...";
+    finder.refresh();
   });
-  editor.addEventListener("compositionend", () => { composing = false; scheduleDraft(); });
+  editor.addEventListener("compositionend", () => { composing = false; scheduleDraft(); finder.refresh(); });
   recoveryDialog.addEventListener("cancel", (event) => { event.preventDefault(); });
   recoveryDialog.addEventListener("close", async () => {
     if (recoveryCandidate === null) return;
@@ -217,8 +221,14 @@
     event.returnValue = "";
   });
   window.addEventListener("keydown", (event) => {
-    if (event.defaultPrevented || composing || event.isComposing || event.keyCode === 229 ||
-        !event.ctrlKey || event.altKey || event.metaKey) return;
+    if (event.defaultPrevented || composing || event.isComposing || event.keyCode === 229) return;
+    if (finder.handleKey(event)) return;
+    if (!event.ctrlKey || event.altKey || event.metaKey) return;
+    if (event.code === "KeyF" && !event.shiftKey) {
+      event.preventDefault();
+      if (!event.repeat) finder.show();
+      return;
+    }
     const index = event.code === "KeyN" && !event.shiftKey ? 0 :
       event.code === "KeyO" && !event.shiftKey ? 1 : event.code === "KeyS" ? event.shiftKey ? 3 : 2 : -1;
     if (index < 0) return;

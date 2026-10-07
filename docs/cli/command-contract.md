@@ -96,12 +96,23 @@ Create a minimal manifest and dependency-free static web example.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
 
-The text-editor starter includes New/Open/Save/Save as, document-scoped native
+The published alpha.67 text-editor starter includes New/Open/Save/Save as, document-scoped native
 save-target reuse, a discard dialog, close protection and IME-aware keyboard
 actions. The first Save after Open still prompts for a save target. It includes
 four local Lucide icons and their license, but no bundled font, find or preview.
 Public alpha.65 had no draft storage or recovery; alpha.66 adds it. Its assets
 add no runtime dependency or host code.
+
+The source text-editor starter additionally includes a hidden-by-default
+find bar: Ctrl+F, Enter/Shift+Enter navigation, Escape to close, match count
+and a Match case checkbox. Search is literal, Unicode case-insensitive by
+default, non-overlapping and wraps at the ends using original UTF-16 offsets.
+Only an open find bar searches text; navigation scrolls the selected match
+into view. IME and modal/busy guards remain active. Search state is memory-only
+and never changes document text, native save targets or draft records.
+Four additional licensed icons and `find.js` are included, with no new
+permission, dependency, host code, regex UI, replace or preview. This affects
+newly generated projects only and is not in public alpha.67.
 
 Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only

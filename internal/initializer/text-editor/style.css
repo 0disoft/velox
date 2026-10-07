@@ -34,15 +34,28 @@ nav { display: flex; gap: 4px; padding: 6px 12px; border-bottom: 1px solid var(-
 button { font: inherit; color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; cursor: pointer; }
 button:hover:not(:disabled) { background: var(--surface); }
 button:disabled { opacity: .5; cursor: not-allowed; }
-button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 nav button { width: 40px; height: 40px; flex: 0 0 40px; padding: 0; border-color: transparent; display: grid; place-items: center; }
-nav button img { display: none; }
-nav button::before { content: ""; width: 20px; height: 20px; background: currentColor; mask: var(--icon) center / contain no-repeat; }
+nav button img, .icon-button img { display: none; }
+nav button::before, .icon-button::before { content: ""; width: 20px; height: 20px; background: currentColor; mask: var(--icon) center / contain no-repeat; }
 #new-document { --icon: url("file-plus.svg"); }
 #open-document { --icon: url("folder-open.svg"); }
 #save-document { --icon: url("save.svg"); }
 #save-as-document { --icon: url("save-all.svg"); }
-main { min-height: 0; min-width: 0; display: flex; }
+#find-document { --icon: url("search.svg"); }
+#find-previous { --icon: url("chevron-up.svg"); }
+#find-next { --icon: url("chevron-down.svg"); }
+#find-close { --icon: url("x.svg"); }
+main { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+#editor { grid-row: 2; }
+#find-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
+#find-bar[hidden] { display: none; }
+#find-input { width: 100%; min-width: 0; height: 36px; padding: 6px 8px; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+.find-actions { display: flex; gap: 4px; }
+.find-actions .icon-button { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
+.find-case { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.find-case input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+#find-count { min-width: 90px; font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
 textarea { width: 100%; min-height: 0; resize: none; border: 0; padding: 20px; color: inherit; background: var(--bg); font: 400 18px/1.6 "Segoe UI", "Malgun Gothic", system-ui, sans-serif; letter-spacing: 0; tab-size: 2; }
 footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 footer p { margin: 0; overflow-wrap: anywhere; }
@@ -57,9 +70,10 @@ dialog h2 { font-size: 18px; margin: 0 0 20px; }
   .document-identity { text-align: left; }
   textarea { padding: 12px; }
   nav { padding-inline: 8px; }
+  #find-bar { padding-inline: 12px; }
 }
 @media (forced-colors: active) {
-  nav button { border-color: ButtonText; }
-  nav button::before { display: none; }
-  nav button img { display: block; }
+  nav button, .icon-button { border-color: ButtonText; }
+  nav button::before, .icon-button::before { display: none; }
+  nav button img, .icon-button img { display: block; }
 }

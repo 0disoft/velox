@@ -8,6 +8,25 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor starter find (2026-10-07): new source-CLI editor generation adds
+a hidden find bar, literal case-toggle search, counts, wraparound navigation
+and IME-safe shortcuts. Initializer/CLI Go tests, scoped vet and 21 Bun
+editor/draft tests passed, including original UTF-16 offsets, 2 MiB dense
+matches, replacement/recovery, save preservation and draft authority.
+Generated delivery includes 14 web assets and the same two root files.
+Playwright Edge mock-native checks passed at 960x640 and 320x560, plus dark
+and forced-color modes: selection, wrapped long-text scrolling, keyboard
+focus, no overflow, loaded icons, no native calls during find and unchanged
+persisted draft text. Screenshots were inspected. The owned browser/server
+closed; local receipts are under `.cache/find-ui/` and are not committed.
+`git diff --check` passed. This is browser/mocked-native evidence, not a
+manual Windows host/picker check. Native UI, host size/startup measurement
+and release checks were skipped for the web-only starter change. Product
+specification, command contract and icon notices updated; host/IPC API,
+DB/storage schema, permissions, dependencies, repository hygiene and CI
+unchanged. No version bump, push or publication; public alpha.67 and
+existing generated projects are unchanged.
+
 Init next-step guidance (2026-10-07): successful human init output includes
 run/build commands for the generated manifest, labeled and literally quoted
 for PowerShell on Windows or POSIX shells elsewhere. CLI Go tests and scoped

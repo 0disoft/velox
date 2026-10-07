@@ -3,17 +3,22 @@ import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
 
 const source = await readFile(new URL("./text-editor/app.js", import.meta.url), "utf8");
+const findSource = await readFile(new URL("./text-editor/find.js", import.meta.url), "utf8");
 const tick = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 
 async function harness(native = true, options: { draft?: unknown; load?: Promise<unknown> } = {}) {
   const nodes = new Map<string, any>();
   function node(id: string) {
     if (!nodes.has(id)) nodes.set(id, {
-      value: "", textContent: "", dataset: {}, disabled: false, open: false, returnValue: "",
+      value: "", textContent: "", dataset: {}, disabled: false, open: false, returnValue: "", hidden: true, checked: false,
+      selectionStart: 0, selectionEnd: 0,
       listeners: {},
       addEventListener(event: string, fn: Function) { this.listeners[event] = fn; },
       click() { if (!this.disabled) this.listeners.click?.(); },
-      focus() {}, showModal() { this.open = true; },
+      focus() { document.activeElement = this; }, select() {},
+      setAttribute(name: string, value: string) { this[name] = value; },
+      setSelectionRange(start: number, end: number) { this.selectionStart = start; this.selectionEnd = end; },
+      showModal() { this.open = true; },
       close(value: string) { this.open = false; this.returnValue = value; this.listeners.close?.(); },
     });
     return nodes.get(id);
@@ -57,6 +62,7 @@ async function harness(native = true, options: { draft?: unknown; load?: Promise
     saveTextTo: (text: string, target: number) => record("to", { text, target }),
   };
   const document: any = { title: "Editor", querySelector: node };
+  runInNewContext(findSource, { document, window });
   runInNewContext(source, { document, window, setTimeout: (fn: Function) => { timers.set(++timerID, fn); return timerID; }, clearTimeout: (id: number) => timers.delete(id) });
   await tick();
   return {
@@ -284,4 +290,100 @@ test("IME defers drafts until composition ends and rapid edits coalesce", async 
   await ui.flushDraft();
   expect(ui.draftCalls).toHaveLength(1);
   expect(ui.storedDraft().text).toBe("\ud55c\uae00 text");
+});
+
+test("find wraps literal matches and case toggle does not touch save or drafts", async () => {
+  const ui = await harness();
+  ui.edit("Text text TEXT [x] \ud55c\uae00");
+  await ui.flushDraft();
+  const writes = ui.draftCalls.length;
+  await ui.click("find");
+  expect(ui.node("#find-bar").hidden).toBe(false);
+  expect(ui.document.activeElement).toBe(ui.node("#find-input"));
+  const input = ui.node("#find-input");
+  input.value = "text";
+  input.listeners.input();
+  expect(ui.node("#find-count").textContent).toBe("1 / 3");
+  expect(ui.node("#editor").selectionStart).toBe(0);
+  ui.node("#find-next").click();
+  expect(ui.node("#editor").selectionStart).toBe(5);
+  ui.node("#find-previous").click();
+  ui.node("#find-previous").click();
+  expect(ui.node("#find-count").textContent).toBe("3 / 3");
+  ui.node("#find-case").checked = true;
+  ui.node("#find-case").listeners.change();
+  expect(ui.node("#find-count").textContent).toBe("1 / 1");
+  expect(ui.node("#editor").selectionStart).toBe(5);
+  input.value = "[x]"; input.listeners.input();
+  expect(ui.node("#editor").selectionStart).toBe(15);
+  expect(ui.node("#editor").selectionEnd).toBe(18);
+  input.value = "missing"; input.listeners.input();
+  expect(ui.node("#find-count").textContent).toBe("0 / 0");
+  expect(ui.node("#find-next").disabled).toBe(true);
+  expect(ui.node("#editor").value).toBe("Text text TEXT [x] \ud55c\uae00");
+  expect(ui.calls).toEqual([]);
+  expect(ui.draftCalls).toHaveLength(writes);
+  expect(ui.node("#save-state").dataset.dirty).toBe("true");
+});
+
+test("find shortcuts preserve IME and modal guards, Enter moves and Escape restores editor focus", async () => {
+  const ui = await harness(false);
+  ui.edit("\ud55c\uae00 \ud55c\uae00");
+  const key = { ctrlKey: true, code: "KeyF", preventDefault() {} };
+  ui.listeners.keydown({ ...key, isComposing: true });
+  ui.listeners.keydown({ ...key, keyCode: 229 });
+  ui.listeners.keydown({ ...key, repeat: true });
+  expect(ui.node("#find-bar").hidden).toBe(true);
+  ui.listeners.keydown(key);
+  const input = ui.node("#find-input");
+  input.value = "\ud55c\uae00"; input.listeners.input();
+  expect(ui.node("#find-count").textContent).toBe("1 / 2");
+  input.listeners.compositionstart();
+  input.value = "\ud55c"; input.listeners.input();
+  ui.listeners.keydown({ key: "Escape", target: input, preventDefault() {} });
+  expect(ui.node("#find-bar").hidden).toBe(false);
+  expect(ui.node("#find-count").textContent).toBe("1 / 2");
+  input.value = "\ud55c\uae00"; input.listeners.compositionend();
+  ui.listeners.keydown({ key: "Enter", target: input, preventDefault() {} });
+  expect(ui.node("#editor").selectionStart).toBe(3);
+  ui.listeners.keydown({ key: "Enter", shiftKey: true, target: input, preventDefault() {} });
+  expect(ui.node("#editor").selectionStart).toBe(0);
+  ui.listeners.keydown({ key: "Escape", target: input, preventDefault() {} });
+  expect(ui.node("#find-bar").hidden).toBe(true);
+  expect(ui.document.activeElement).toBe(ui.node("#editor"));
+  await ui.click("new");
+  ui.listeners.keydown(key);
+  expect(ui.node("#find-bar").hidden).toBe(true);
+});
+
+test("find refreshes after editor changes, recovery and document replacement", async () => {
+  const ui = await harness(true, { draft: { name: "draft.txt", text: "keep keep" } });
+  await ui.click("find");
+  expect(ui.node("#find-bar").hidden).toBe(true);
+  ui.node("#recovery-dialog").close("recover"); await tick();
+  await ui.click("find");
+  const input = ui.node("#find-input");
+  input.value = "keep"; input.listeners.input();
+  expect(ui.node("#find-count").textContent).toBe("1 / 2");
+  ui.edit("keep");
+  expect(ui.node("#find-count").textContent).toBe("0 / 1");
+  await ui.click("save");
+  expect(ui.calls[0].method).toBe("as");
+  ui.setOpen({ name: "new.txt", text: "nothing", cancelled: false });
+  await ui.click("open");
+  expect(ui.node("#find-count").textContent).toBe("0 / 0");
+  expect(ui.node("#find-next").disabled).toBe(true);
+});
+
+test("find returns original UTF-16 offsets, literal non-overlapping results and bounded dense state", () => {
+  const context: any = {};
+  runInNewContext(findSource, context);
+  const find = context.EditorFind.find;
+  expect(find("aaaa", "aa")).toEqual({ count: 2, index: 1, start: 0, length: 2 });
+  expect(find("[x] .* [x]", "[x]")).toEqual({ count: 2, index: 1, start: 0, length: 3 });
+  expect(find("\u0130 Text \ud83d\ude42 text", "text")).toEqual({ count: 2, index: 1, start: 2, length: 4 });
+  expect(find("\ud83d\ude42\n\ud55c\uae00", "\ud55c\uae00").start).toBe(3);
+  expect(find("text", "").count).toBe(0);
+  const text = "x".repeat(2 << 20);
+  expect(find(text, "x", text.length - 2)).toEqual({ count: text.length, index: text.length, start: text.length - 1, length: 1 });
 });

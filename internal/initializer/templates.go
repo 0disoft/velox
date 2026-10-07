@@ -18,7 +18,7 @@ func templateFiles(template, name string) ([]plannedFile, error) {
 			{path: "web/app.js", data: []byte(appJS)},
 		}, nil
 	}
-	names := []string{"index.html", "style.css", "app.js", "drafts.js", "file-plus.svg", "folder-open.svg", "save.svg", "save-all.svg", "icons-license.txt"}
+	names := []string{"index.html", "style.css", "app.js", "drafts.js", "find.js", "file-plus.svg", "folder-open.svg", "save.svg", "save-all.svg", "search.svg", "chevron-up.svg", "chevron-down.svg", "x.svg", "icons-license.txt"}
 	if template == "folder-browser" {
 		names = []string{"index.html", "style.css", "app.js", "folder-open.svg", "refresh-cw.svg", "x.svg", "icons-license.txt"}
 	} else if template == "tray-app" {

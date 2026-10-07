@@ -262,6 +262,12 @@ permissions; the next Save selects a destination again. Existing generated
 projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
+New source-CLI text-editor projects also include document finding: Ctrl+F,
+previous/next matches, a match count, Match case and Escape to close.
+Search is literal with wraparound and does not change the document or draft.
+This web-only addition is not in public alpha.67 and does not upgrade existing
+projects. There is no replace action, preview, new permission or dependency.
+
 The published alpha.67 CLI provides an opt-in tray starter:
 
 ```sh

@@ -1,5 +1,5 @@
 Lucide Icons: https://github.com/lucide-icons/lucide
-Vendored icons: file-plus, folder-open, save, save-all.
+Vendored icons: file-plus, folder-open, save, save-all, search, chevron-up, chevron-down, x.
 
 ISC License
 

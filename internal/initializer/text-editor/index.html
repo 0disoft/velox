@@ -7,6 +7,7 @@
     <title>{{APP_NAME}}</title>
     <link rel="stylesheet" href="style.css">
     <script src="drafts.js" defer></script>
+    <script src="find.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -22,8 +23,19 @@
       <button id="open-document" type="button" aria-label="Open" title="Open" aria-keyshortcuts="Control+O"><img src="folder-open.svg" width="20" height="20" alt=""></button>
       <button id="save-document" type="button" aria-label="Save" title="Save" aria-keyshortcuts="Control+S"><img src="save.svg" width="20" height="20" alt=""></button>
       <button id="save-as-document" type="button" aria-label="Save as" title="Save as" aria-keyshortcuts="Control+Shift+S"><img src="save-all.svg" width="20" height="20" alt=""></button>
+      <button id="find-document" class="icon-button" type="button" aria-label="Find in document" title="Find in document" aria-keyshortcuts="Control+F" aria-controls="find-bar" aria-expanded="false"><img src="search.svg" width="20" height="20" alt=""></button>
     </nav>
     <main>
+      <div id="find-bar" role="search" aria-label="Find in document" hidden>
+        <input id="find-input" type="search" aria-label="Find text" placeholder="Find" autocomplete="off" spellcheck="false" aria-describedby="find-count">
+        <div class="find-actions">
+          <button id="find-previous" class="icon-button" type="button" aria-label="Previous match" title="Previous match"><img src="chevron-up.svg" width="20" height="20" alt=""></button>
+          <button id="find-next" class="icon-button" type="button" aria-label="Next match" title="Next match"><img src="chevron-down.svg" width="20" height="20" alt=""></button>
+          <button id="find-close" class="icon-button" type="button" aria-label="Close find" title="Close find"><img src="x.svg" width="20" height="20" alt=""></button>
+        </div>
+        <label class="find-case"><input id="find-case" type="checkbox">Match case</label>
+        <span id="find-count" role="status" aria-live="polite"></span>
+      </div>
       <textarea id="editor" aria-label="Text document" spellcheck="true" autocomplete="off"></textarea>
     </main>
     <footer><p id="status" role="status" aria-live="polite">Ready.</p><p id="draft-state" role="status" aria-live="polite">Checking draft...</p></footer>

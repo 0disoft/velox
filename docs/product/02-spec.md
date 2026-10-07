@@ -253,6 +253,16 @@ editing and unsaved-change protection intact. Existing generated projects are
 not upgraded and the host is unchanged. See
 [the recovery record](../ops/text-editor-drafts.md).
 
+The source text-editor starter also offers opt-in document finding with
+literal non-overlapping matches, previous/next wraparound, match counts and
+a case-sensitivity checkbox. Ctrl+F opens the initially hidden bar; Enter and
+Shift+Enter move between matches and Escape returns focus to the editor.
+Search uses original UTF-16 selection offsets and respects IME composition
+and modal/busy states. It changes neither document text nor persisted drafts,
+save targets or permissions. It adds only web assets to newly generated
+projects, not host code, dependencies, replacement or preview. Public
+alpha.67 and existing generated projects are unchanged.
+
 Folder-browser reuses the existing example's immediate folder listing and
 readonly text preview with only `folder.read` and `folder.readText`. It omits
 the example's clipboard operation, uses local licensed icons and adds no
