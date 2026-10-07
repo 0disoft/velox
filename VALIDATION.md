@@ -8,6 +8,19 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.68 local candidate (2026-10-07): clean source `f6c4081` produced a
+Go 1.27.1 CLI, GUI host and GUI Setup. Two packaging runs from the same
+binaries matched; independent recompilation was not tested. Outside-checkout
+prebuilt consumers passed version/templates and all four starters'
+init/validate/build --installer/inspect, with repeated portable ZIP hashes
+and generated host/type identity checks. All 16 manifest artifacts, three
+sidecar checksums, 17 SPDX file SHA-256 entries, source/ZIP provenance and
+PE subsystem checks passed. Host hash/size stayed identical to the recorded
+alpha.67 local candidate; CLI grew 21 KiB. No native UI, installer execution,
+startup/memory comparison, hosted stress, signing, push, tag or publication.
+No host/IPC API, DB/schema, permissions, dependency or CI change. Exact
+hashes and receipt paths are in `docs/ops/alpha68-preparation.md`.
+
 Alpha.68 version preparation (2026-10-07): source version and dependent
 fixtures identify `0.5.10-alpha.68` as a local unpublished candidate while
 public alpha.67 and historical release records remain unchanged. Buildplan,

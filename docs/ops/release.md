@@ -89,7 +89,12 @@ the repository-owned public-preview workflow instead of advancing that pin.
 Source `0.5.10-alpha.68` groups template discovery, CLI guidance and
 text-editor find in a local candidate; it is not published. Public alpha.67
 and its asset identities are unchanged. No push, tag or hosted publication
-is included. See [alpha68-preparation.md](alpha68-preparation.md).
+is included. Clean source `f6c4081` produced a local Go 1.27.1 candidate;
+repeated packaging, four-template outside-checkout consumer builds, sidecars
+and PE subsystem checks passed. ZIP SHA-256:
+`863af52303eecb8c52f75df439c413f9785c76c2dc3e953ffc067a0dc05ec90b`,
+6,877,478 bytes. Native UI and installer execution were not repeated.
+See [alpha68-preparation.md](alpha68-preparation.md).
 
 ## Alpha.67 Published Preview: 2026-10-06
 
