@@ -95,6 +95,9 @@ Beta remains held under the product workflow checklist.
 Source version: `0.5.10-alpha.68` (local candidate; not published).
 The candidate groups template discovery, CLI guidance and text-editor find;
 see [alpha68-preparation.md](docs/ops/alpha68-preparation.md).
+Its [tag CI 37628664660](docs/ops/alpha68-tag-evidence.md) passed independent
+reproducible builds and basic checkout-free consumer packaging; publication
+was skipped. Those Go 1.26.0 bytes differ from the local Go 1.27.1 candidate.
 Public alpha.67 asset identities and scope remain in
 [alpha67-publication.md](docs/ops/alpha67-publication.md).
 The [local preparation](docs/ops/alpha67-preparation.md) retains different

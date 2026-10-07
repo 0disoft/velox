@@ -1,5 +1,10 @@
 # Alpha.68 Local Preparation: 2026-10-07
 
+> Follow-up: source `5ffedc8` and its annotated alpha.68 tag were subsequently
+> pushed. Tag CI `37628664660/1` passed with Go 1.26.0 and skipped publication;
+> see [alpha68-tag-evidence.md](alpha68-tag-evidence.md). The local Go 1.27.1
+> hashes and no-push boundaries below describe the earlier preparation step.
+
 ## Identity
 
 - Source version: `0.5.10-alpha.68` (local candidate; not published).

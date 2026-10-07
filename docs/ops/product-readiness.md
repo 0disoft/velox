@@ -7,8 +7,13 @@
 - Source version: `0.5.10-alpha.68` (local candidate; not published)
 
 Alpha.68 groups template discovery, CLI guidance and text-editor find in a
-local candidate only; see [alpha68-preparation.md](alpha68-preparation.md).
-The public channel and beta decision are unchanged.
+candidate; see [alpha68-preparation.md](alpha68-preparation.md). Tag CI
+`37628664660/1` subsequently passed two independent release builds and basic
+checkout-free consumer packaging with Go 1.26.0. Downloaded assets passed
+checksum, manifest, SPDX, provenance and PE subsystem verification; the publish
+job was skipped. See [alpha68-tag-evidence.md](alpha68-tag-evidence.md).
+The public channel and beta decision are unchanged. This run adds no native
+UI or installer interaction evidence against those CI bytes.
 
 Alpha.67 tag CI `37471273685` passed reproducible producer and basic checkout-
 free consumer packaging; its four verified assets were published and matched

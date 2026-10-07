@@ -158,6 +158,10 @@ The source version is `0.5.10-alpha.68` (local candidate; not published).
 It groups template discovery, expanded CLI help, shell-quoted next-step hints
 and text-editor find with the empty-query close fix. Existing generated apps
 are unchanged; see [alpha68-preparation.md](../ops/alpha68-preparation.md).
+Tag CI `37628664660/1` passed independent release builds and basic checkout-
+free consumer packaging; downloaded evidence matched. Publication was skipped
+and public alpha.67 remains unchanged; see
+[alpha68-tag-evidence.md](../ops/alpha68-tag-evidence.md).
 
 The current published unsigned preview is `v0.5.10-alpha.67` from exact source
 `cb801f5bf3014b31a2a544d97bb0fe95d33ff270`. Tag CI `37471273685` passed

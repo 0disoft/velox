@@ -84,6 +84,19 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.68 Tag CI: 2026-10-07
+
+Source `5ffedc8` and annotated tag `v0.5.10-alpha.68` were pushed atomically.
+[Run 37628664660](https://github.com/0disoft/velox/actions/runs/37628664660)
+attempt 1 passed two independent producer builds and basic checkout-free
+consumer packaging with Go 1.26.0. Downloaded assets passed manifest,
+checksum, SPDX, provenance, CLI version and PE subsystem checks. ZIP SHA-256:
+`b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8`,
+5,923,846 bytes. Publication was skipped; public alpha.67 stays unchanged.
+No native UI or installer execution ran against these bytes. Verified files
+are staged for later publication without another producer; see
+[alpha68-tag-evidence.md](alpha68-tag-evidence.md).
+
 ## Alpha.68 Local Preparation: 2026-10-07
 
 Source `0.5.10-alpha.68` groups template discovery, CLI guidance and

@@ -8,6 +8,19 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.68 tag CI (2026-10-07): verified source `5ffedc8` and annotated tag
+were pushed atomically and their remote SHAs matched. Run `37628664660/1`
+passed releasebundle/releaseevidence/hygiene tests, two independent release
+builds and basic checkout-free init/validate/doctor/build twice/inspect.
+Downloaded CI artifacts passed 16 manifest entries, 17 SPDX SHA-256 entries,
+three sidecar checksums, source/run/ZIP provenance identity, exact CLI version,
+PE subsystems and Go 1.26.0 clean-source metadata. The binaries are unsigned;
+the publication job was skipped and GitHub's alpha.68 release lookup returned
+HTTP 404. Public alpha.67 remains unchanged. No native UI, installer execution,
+watch/find/draft native repeat, performance/stress or beta promotion. No new
+API/IPC, DB/schema, permission, dependency, hygiene or CI workflow change.
+Full identity and receipts: `docs/ops/alpha68-tag-evidence.md`.
+
 Alpha.68 local candidate (2026-10-07): clean source `f6c4081` produced a
 Go 1.27.1 CLI, GUI host and GUI Setup. Two packaging runs from the same
 binaries matched; independent recompilation was not tested. Outside-checkout
