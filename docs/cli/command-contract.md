@@ -110,6 +110,10 @@ default, non-overlapping and wraps at the ends using original UTF-16 offsets.
 Only an open find bar searches text; navigation scrolls the selected match
 into view. IME and modal/busy guards remain active. Search state is memory-only
 and never changes document text, native save targets or draft records.
+The close button also dismisses an empty query or document and cancels pending
+find-input composition. Escape closes once its key event is no longer
+composing, including legacy key-code-229 events. Late composition-end events
+cannot move selection or return focus to a closed find bar.
 Four additional licensed icons and `find.js` are included, with no new
 permission, dependency, host code, regex UI, replace or preview. This affects
 newly generated projects only and is not in public alpha.67.

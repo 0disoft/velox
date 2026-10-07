@@ -221,8 +221,9 @@
     event.returnValue = "";
   });
   window.addEventListener("keydown", (event) => {
-    if (event.defaultPrevented || composing || event.isComposing || event.keyCode === 229) return;
+    if (event.defaultPrevented || composing || event.isComposing) return;
     if (finder.handleKey(event)) return;
+    if (event.keyCode === 229) return;
     if (!event.ctrlKey || event.altKey || event.metaKey) return;
     if (event.code === "KeyF" && !event.shiftKey) {
       event.preventDefault();

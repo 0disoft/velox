@@ -78,7 +78,7 @@
       controls();
     }
     function move(backwards = false) {
-      if (blocked() || composing || !input.value) return;
+      if (bar.hidden || blocked() || composing || !input.value) return;
       const result = find(editor.value, input.value, current, backwards, matchCase.checked);
       current = result.start;
       total = result.count;
@@ -103,40 +103,47 @@
       input.select();
     }
     function hide() {
-      if (composing) return;
       bar.hidden = true;
+      composing = false;
       if (mirror) { mirror.remove(); mirror = mirrorText = null; }
       controls();
       editor.focus({ preventScroll: true });
     }
     function changed() {
+      if (bar.hidden) { refresh(); return; }
       current = -1;
       if (blocked() || composing) { refresh(); return; }
       move();
       if (!input.value) { total = ordinal = 0; controls(); }
+    }
+    function handleKey(event) {
+      if (event.defaultPrevented || bar.hidden || blocked()) return false;
+      if (event.isComposing) return true;
+      if (event.key === "Escape" && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault(); hide(); return true;
+      }
+      if (composing || event.keyCode === 229) return true;
+      if (event.ctrlKey || event.altKey || event.metaKey) return false;
+      if (event.key === "Enter" && event.target === input) {
+        event.preventDefault();
+        if (!event.repeat) move(event.shiftKey);
+        return true;
+      }
+      return false;
     }
     toggle.addEventListener("click", show);
     previous.addEventListener("click", () => move(true));
     next.addEventListener("click", () => move());
     close.addEventListener("click", hide);
     input.addEventListener("input", changed);
+    input.addEventListener("keydown", handleKey, { capture: true });
+    input.addEventListener("blur", () => { composing = false; controls(); });
     matchCase.addEventListener("change", changed);
     input.addEventListener("compositionstart", () => { composing = true; controls(); });
     input.addEventListener("compositionend", () => { composing = false; changed(); });
     controls();
     return Object.freeze({
-      refresh, show,
-      handleKey(event) {
-        if (composing) return true;
-        if (bar.hidden || blocked() || event.ctrlKey || event.altKey || event.metaKey) return false;
-        if (event.key === "Escape") { event.preventDefault(); hide(); return true; }
-        if (event.key === "Enter" && event.target === input) {
-          event.preventDefault();
-          if (!event.repeat) move(event.shiftKey);
-          return true;
-        }
-        return false;
-      },
+      refresh, show, handleKey,
     });
   }
 

@@ -340,7 +340,9 @@ test("find shortcuts preserve IME and modal guards, Enter moves and Escape resto
   expect(ui.node("#find-count").textContent).toBe("1 / 2");
   input.listeners.compositionstart();
   input.value = "\ud55c"; input.listeners.input();
-  ui.listeners.keydown({ key: "Escape", target: input, preventDefault() {} });
+  ui.listeners.keydown({ ctrlKey: true, code: "KeyS", target: input, preventDefault() {} });
+  expect(ui.calls).toEqual([]);
+  ui.listeners.keydown({ key: "Escape", isComposing: true, target: input, preventDefault() {} });
   expect(ui.node("#find-bar").hidden).toBe(false);
   expect(ui.node("#find-count").textContent).toBe("1 / 2");
   input.value = "\ud55c\uae00"; input.listeners.compositionend();
@@ -386,4 +388,54 @@ test("find returns original UTF-16 offsets, literal non-overlapping results and 
   expect(find("text", "").count).toBe(0);
   const text = "x".repeat(2 << 20);
   expect(find(text, "x", text.length - 2)).toEqual({ count: text.length, index: text.length, start: text.length - 1, length: 1 });
+});
+
+test("explicit close cancels pending find composition instead of trapping the bar", async () => {
+  const ui = await harness();
+  ui.edit("\ud55c\uae00");
+  await ui.click("find");
+  const input = ui.node("#find-input");
+  input.listeners.compositionstart();
+  input.value = "\ud55c"; input.listeners.input();
+  ui.node("#find-close").click();
+  expect(ui.node("#find-bar").hidden).toBe(true);
+  expect(ui.document.activeElement).toBe(ui.node("#editor"));
+  input.listeners.compositionend();
+  expect(ui.node("#find-bar").hidden).toBe(true);
+  expect(ui.document.activeElement).toBe(ui.node("#editor"));
+  await ui.click("find");
+  expect(ui.node("#find-bar").hidden).toBe(false);
+});
+
+test("Escape closes stale IME state but not an actual composing key event", async () => {
+  const ui = await harness(false);
+  await ui.click("find");
+  const input = ui.node("#find-input");
+  input.listeners.compositionstart();
+  ui.listeners.keydown({ key: "Escape", keyCode: 229, isComposing: true, target: input, preventDefault() {} });
+  expect(ui.node("#find-bar").hidden).toBe(false);
+  ui.listeners.keydown({ key: "Escape", keyCode: 229, isComposing: false, target: input, preventDefault() {} });
+  expect(ui.node("#find-bar").hidden).toBe(true);
+  expect(ui.document.activeElement).toBe(ui.node("#editor"));
+});
+
+test("empty query and empty document can close by button or input Escape without changing text", async () => {
+  for (const text of ["", "\ud55c\uae00"]) {
+    const ui = await harness(false);
+    ui.edit(text);
+    await ui.click("find");
+    ui.node("#find-input").listeners.compositionstart();
+    ui.node("#find-close").click();
+    expect(ui.node("#find-bar").hidden).toBe(true);
+    await ui.click("find");
+    const input = ui.node("#find-input");
+    input.listeners.compositionstart();
+    input.listeners.blur();
+    let prevented = false;
+    input.listeners.keydown({ key: "Escape", target: input, preventDefault() { prevented = true; } });
+    expect(prevented).toBe(true);
+    expect(ui.node("#find-bar").hidden).toBe(true);
+    expect(ui.node("#editor").value).toBe(text);
+    expect(ui.document.activeElement).toBe(ui.node("#editor"));
+  }
 });

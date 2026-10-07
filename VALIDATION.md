@@ -8,6 +8,21 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor find close fix (2026-10-07): the maintainer confirmed that a saved
+native file reopened and search worked, but reported Escape and X failing
+with an empty query. Two mocked tests reproduced close failures with stale
+find-input IME state before the fix; the precise native event sequence was
+not captured. The fix uses a text input and capture-phase key handling,
+permits explicit close despite pending query composition, honors actual
+composing key events, clears state on blur and ignores late composition-end
+events after close. 24 Bun tests, initializer/CLI Go tests, scoped vet and
+Edge mock-native empty-query/document, late-IME, dark and forced-color checks
+passed. A corrected portable test app built and inspected with unchanged
+public alpha.67 host bytes. Corrected native manual confirmation is pending.
+Command contract updated; `git diff --check` passed. No host/IPC API,
+DB/storage schema, permission, dependency, repository-hygiene or CI change.
+No host rebuild/performance check, version bump, push or publication.
+
 Text-editor starter find (2026-10-07): new source-CLI editor generation adds
 a hidden find bar, literal case-toggle search, counts, wraparound navigation
 and IME-safe shortcuts. Initializer/CLI Go tests, scoped vet and 21 Bun
