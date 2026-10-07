@@ -8,6 +8,30 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor position UI (2026-10-08): source generation delivers the cached
+position helper and a footer for logical line, grapheme column and selection
+count. Selection-only refresh does not reread text; larger edits debounce
+80 ms and segment in 4096-grapheme chunks. IME defers indexing, cancellation
+preserves the previous completed index, and unavailable indexing leaves text
+untouched. Footer cursor changes are not live announcements.
+44 Bun position/editor/replace/draft tests, initializer/CLI Go tests and vet,
+and `git diff --check` passed. Edge mock-native checks passed for typing,
+backward grapheme selection, replace/Undo, Open/New, recovery, IME pending
+status and a 66,000-grapheme document. At 960x640 and 320x560, including dark
+and forced-color modes, controls/icons loaded with no overflow or footer
+overlap; desktop/mobile screenshots were inspected. Owned browser/server
+closed. Generation delivers 18 web assets plus two root files.
+Build with installer and ZIP inspection passed using the unchanged public
+alpha.68 host, SHA-256
+`2654d1551f889b46241fe58ba5e51eefd0547ad617566187a0602cf6c9fd0b65`.
+Receipts/screenshots are under `.cache/position-ui/` and are not committed.
+README, CLI contract and product specification updated. Native Windows manual
+interaction remains unverified for this UI; host rebuild/startup/size and
+full release checks were skipped because host bytes are unchanged. No host/IPC
+API, native permission, DB/storage schema, dependency, repository-hygiene or
+CI runner change. No version bump, push or publication; public alpha.68 and
+existing generated apps are unchanged.
+
 Text-editor position index (2026-10-07): an unused source helper indexes
 logical LF line starts and extended grapheme boundaries using built-in
 `Intl.Segmenter`, with an ASCII fast path. Cursor/selection queries use binary

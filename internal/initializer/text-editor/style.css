@@ -64,6 +64,7 @@ main { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minm
 textarea { width: 100%; min-height: 0; resize: none; border: 0; padding: 20px; color: inherit; background: var(--bg); font: 400 18px/1.6 "Segoe UI", "Malgun Gothic", system-ui, sans-serif; letter-spacing: 0; tab-size: 2; }
 footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 footer p { margin: 0; overflow-wrap: anywhere; }
+#cursor-position { min-width: 150px; max-width: 100%; font-variant-numeric: tabular-nums; }
 dialog { max-width: min(400px, calc(100vw - 32px)); border: 1px solid var(--line); border-radius: 8px; padding: 20px; background: var(--bg); color: inherit; }
 dialog::backdrop { background: rgb(0 0 0 / .45); }
 dialog h2 { font-size: 18px; margin: 0 0 20px; }

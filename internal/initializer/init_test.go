@@ -61,7 +61,7 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
-	if err != nil || len(assets.Files) != 17 || len(result.Files) != 19 {
+	if err != nil || len(assets.Files) != 18 || len(result.Files) != 20 {
 		t.Fatalf("unexpected inventory: %+v %+v %v", result.Files, assets, err)
 	}
 	for _, relative := range result.Files {
@@ -82,6 +82,9 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 	}
 	if !strings.Contains(string(index), `id="replace-row"`) || !strings.Contains(string(index), `id="replace-undo"`) {
 		t.Fatal("replace controls are not delivered")
+	}
+	if !strings.Contains(string(index), `src="positions.js"`) || !strings.Contains(string(index), `id="cursor-position"`) {
+		t.Fatal("position module or status is not delivered")
 	}
 }
 

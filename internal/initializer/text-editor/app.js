@@ -25,6 +25,7 @@
   let draftRevision = 0;
   let draftPending = false;
   let draftWrites = Promise.resolve();
+  const positions = window.EditorPosition.attach(document, editor, () => composing);
   const native = typeof window.velox?.invoke === "function" &&
     typeof window.velox?.saveTextAs === "function" && typeof window.velox?.saveTextTo === "function";
   const finder = window.EditorFind.attach(document, editor,
@@ -43,6 +44,7 @@
     buttons.forEach((button, index) => { button.disabled = blocked || (index > 0 && !native); });
     editor.readOnly = blocked;
     finder.refresh();
+    positions.update();
   }
 
   function writeDraft(snapshot, revision) {
@@ -182,8 +184,9 @@
     draftPending = true;
     draftState.textContent = "Saving draft...";
     finder.refresh();
+    positions.update();
   });
-  editor.addEventListener("compositionend", () => { composing = false; scheduleDraft(); finder.refresh(); });
+  editor.addEventListener("compositionend", () => { composing = false; scheduleDraft(); finder.refresh(); positions.update(); });
   recoveryDialog.addEventListener("cancel", (event) => { event.preventDefault(); });
   recoveryDialog.addEventListener("close", async () => {
     if (recoveryCandidate === null) return;

@@ -4,6 +4,7 @@ import { runInNewContext } from "node:vm";
 
 const source = await readFile(new URL("./text-editor/app.js", import.meta.url), "utf8");
 const findSource = await readFile(new URL("./text-editor/find.js", import.meta.url), "utf8");
+const positionSource = await readFile(new URL("./text-editor/positions.js", import.meta.url), "utf8");
 const tick = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 
 async function harness(native = true, options: { draft?: unknown; load?: Promise<unknown> } = {}) {
@@ -17,7 +18,7 @@ async function harness(native = true, options: { draft?: unknown; load?: Promise
       click() { if (!this.disabled) this.listeners.click?.(); },
       focus() { document.activeElement = this; }, select() {},
       setAttribute(name: string, value: string) { this[name] = value; },
-      setSelectionRange(start: number, end: number) { this.selectionStart = start; this.selectionEnd = end; },
+      setSelectionRange(start: number, end: number, direction = "none") { this.selectionStart = start; this.selectionEnd = end; this.selectionDirection = direction; this.listeners.select?.(); },
       showModal() { this.open = true; },
       close(value: string) { this.open = false; this.returnValue = value; this.listeners.close?.(); },
     });
@@ -36,6 +37,8 @@ async function harness(native = true, options: { draft?: unknown; load?: Promise
   const timers = new Map<number, Function>();
   let timerID = 0;
   const window: any = { addEventListener: (event: string, fn: Function) => { listeners[event] = fn; } };
+  window.setTimeout = (fn: Function) => { timers.set(++timerID, fn); return timerID; };
+  window.clearTimeout = (id: number) => timers.delete(id);
   window.EditorDrafts = {
     async load() { return options.load ? await options.load : storedDraft; },
     async save(snapshot: any) {
@@ -61,7 +64,8 @@ async function harness(native = true, options: { draft?: unknown; load?: Promise
     saveTextAs: (text: string, name: string) => record("as", { text, name }),
     saveTextTo: (text: string, target: number) => record("to", { text, target }),
   };
-  const document: any = { title: "Editor", querySelector: node };
+  const document: any = { title: "Editor", querySelector: node, addEventListener() {} };
+  runInNewContext(positionSource, { document, window, Intl });
   runInNewContext(findSource, { document, window, TextEncoder });
   runInNewContext(source, { document, window, setTimeout: (fn: Function) => { timers.set(++timerID, fn); return timerID; }, clearTimeout: (id: number) => timers.delete(id) });
   await tick();
@@ -585,4 +589,41 @@ test("replacement of a restored draft stays dirty and undo survives rejected exp
   expect(ui.storedDraft().text).toBe("aa aa");
   await ui.click("save");
   expect(ui.calls.at(-1).method).toBe("as");
+});
+
+test("position updates through find, replace, undo, open and new without extra native calls", async () => {
+  const ui = await harness();
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 1, Col 1");
+  ui.edit("\ud55c\n\ud83d\ude42\ud55c");
+  ui.node("#editor").setSelectionRange(0, 5, "backward");
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 1, Col 1 | Selected 4");
+  replaceFields(ui, "\ud55c", "abc");
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 1, Col 2 | Selected 1");
+  ui.node("#replace-all").click();
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 1, Col 4 | Selected 3");
+  ui.node("#replace-undo").click();
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 1, Col 2 | Selected 1");
+  expect(ui.calls).toEqual([]);
+  await ui.click("save");
+  ui.setOpen({ cancelled: false, name: "next.txt", text: "next\nline" });
+  await ui.click("open");
+  ui.node("#editor").setSelectionRange(9, 9);
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 2, Col 5");
+  await ui.click("new");
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 1, Col 1");
+});
+
+test("position defers composition and refreshes after draft recovery", async () => {
+  const ui = await harness(true, { draft: { name: "draft.txt", text: "\u1112\u1161\u11ab\n\ud83d\udc69\u200d\ud83d\udcbb" } });
+  ui.node("#recovery-dialog").close("recover"); await tick();
+  ui.node("#editor").setSelectionRange(9, 9);
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 2, Col 2");
+  ui.node("#editor").listeners.compositionstart();
+  ui.edit("\ud55c\uae00");
+  expect(ui.node("#cursor-position").textContent).toBe("Ln ..., Col ...");
+  ui.node("#editor").listeners.compositionend();
+  expect(ui.node("#cursor-position").textContent).toBe("Ln 1, Col 3");
+  await ui.flushDraft();
+  expect(ui.storedDraft().text).toBe("\ud55c\uae00");
+  expect(ui.calls).toEqual([]);
 });

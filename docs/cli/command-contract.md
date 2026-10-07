@@ -139,6 +139,22 @@ licensed Lucide icons are delivered; no new permission, storage schema,
 dependency or host code is added. Public alpha.68 has no replacement UI and
 existing generated projects are unchanged.
 
+Source text-editor generation also delivers `positions.js` and a non-live
+footer label: `Ln X, Col Y`, plus `Selected N` for nonempty selections. Lines
+are one-based logical LF lines, not visual wraps; columns and selections count
+extended graphemes with built-in `Intl.Segmenter`. Tabs and newlines each count
+as one. A backward selection uses its start as the active caret endpoint.
+Line starts and grapheme boundaries are cached per text version and queried
+with binary search; selection-only refresh does not reread the document.
+Edits above 64 Ki UTF-16 units debounce for 80 ms and segment in 4096-grapheme
+chunks with `Ln ..., Col ...` while pending. IME composition defers rebuilding.
+Text above 2 Mi UTF-16 units or a failed index shows `Position unavailable`
+without modifying text or changing save/draft state. This UTF-16 indexing cap
+does not replace the existing 2 MiB UTF-8 file/draft limit. The generated
+starter now has 18 web assets plus two root files. Public alpha.68 and
+existing generated projects are unchanged; no native permission, dependency,
+host code or storage schema is added.
+
 Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only
 `schemaVersion`, `name`, `text` and `updatedAt`, with a 2 MiB UTF-8 text limit.

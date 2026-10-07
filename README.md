@@ -283,6 +283,12 @@ Changes update dirty state and drafts without changing the native save
 target. Input and output are bounded to 2 MiB UTF-8. This source-only addition
 is not in public alpha.68 and does not upgrade existing projects.
 
+Source text-editor generation also displays logical line, grapheme column
+and selected grapheme count in the footer. Combining marks, decomposed Korean
+and emoji sequences count as one character. Cursor movement reuses a cached
+index; larger edits defer and split indexing work, and IME composition waits
+until completion. This is also source-only, with no host or dependency change.
+
 The published alpha.68 CLI retains the opt-in tray starter introduced in alpha.67:
 
 ```sh

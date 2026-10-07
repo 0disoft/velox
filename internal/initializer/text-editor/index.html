@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="drafts.js" defer></script>
     <script src="find.js" defer></script>
+    <script src="positions.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -47,7 +48,11 @@
       </div>
       <textarea id="editor" aria-label="Text document" spellcheck="true" autocomplete="off"></textarea>
     </main>
-    <footer><p id="status" role="status" aria-live="polite">Ready.</p><p id="draft-state" role="status" aria-live="polite">Checking draft...</p></footer>
+    <footer>
+      <p id="status" role="status" aria-live="polite">Ready.</p>
+      <p id="draft-state" role="status" aria-live="polite">Checking draft...</p>
+      <p id="cursor-position" aria-label="Cursor position">Ln 1, Col 1</p>
+    </footer>
     <dialog id="recovery-dialog" aria-labelledby="recovery-title">
       <form method="dialog">
         <h2 id="recovery-title">Recover draft?</h2>

@@ -272,6 +272,15 @@ Direct typing and successful document replacement clear undo; Save and
 closing find preserve it. IME and busy/modal guards remain active. Public
 alpha.68 does not include this UI and existing generated apps are unchanged.
 
+Source-only text-editor position status shows one-based logical LF line and
+grapheme column, plus selected grapheme count, without live announcements on
+cursor movement. Decomposed Korean, combining marks and joined emoji use
+built-in segmentation. Cursor-only changes query a cached index; larger edits
+debounce and yield between segmentation chunks, and IME defers indexing.
+An unavailable or oversized index never alters the document or its save/draft
+state. Public alpha.68 has no position status; existing apps, native host,
+permissions, dependencies and storage schema are unchanged.
+
 Folder-browser reuses the existing example's immediate folder listing and
 readonly text preview with only `folder.read` and `folder.readText`. It omits
 the example's clipboard operation, uses local licensed icons and adds no

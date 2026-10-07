@@ -58,3 +58,78 @@ test("2 MiB ASCII and dense newline positions use the no-segmentation fast path"
   expect(create("\n".repeat(size)).at(size)).toEqual({ line: size + 1, column: 1, selected: 0 });
   expect(() => create("x".repeat(size + 1))).toThrow("document limit");
 });
+
+function uiHarness(intl: any = Intl) {
+  let text = "", reads = 0, composing = false, id = 0;
+  const timers = new Map<number, Function>();
+  const editor: any = { selectionStart: 0, selectionEnd: 0, selectionDirection: "none", listeners: {},
+    get value() { reads++; return text; }, addEventListener(event: string, fn: Function) { this.listeners[event] = fn; } };
+  const label = { textContent: "" };
+  const document: any = { querySelector: () => label, activeElement: editor, listeners: {},
+    addEventListener(event: string, fn: Function) { this.listeners[event] = fn; } };
+  const window: any = { setTimeout(fn: Function) { timers.set(++id, fn); return id; }, clearTimeout(id: number) { timers.delete(id); } };
+  runInNewContext(source, { window, Intl: intl });
+  const position = window.EditorPosition.attach(document, editor, () => composing);
+  return { label, editor, timers, position,
+    setText(value: string) { text = value; position.update(); },
+    setComposing(value: boolean) { composing = value; position.update(); },
+    reads: () => reads,
+    runOne() { const [id, fn] = timers.entries().next().value!; timers.delete(id); fn(); },
+    runAll() { let limit = 1000; while (timers.size && --limit) this.runOne(); expect(limit).toBeGreaterThan(0); },
+  };
+}
+
+test("selection-only refresh never reads document value or rebuilds index", () => {
+  const ui = uiHarness();
+  ui.setText("\ud55c\n\ud83d\ude42x");
+  const reads = ui.reads();
+  ui.editor.selectionStart = 0; ui.editor.selectionEnd = 5;
+  ui.editor.listeners.select();
+  expect(ui.label.textContent).toBe("Ln 2, Col 3 | Selected 4");
+  ui.editor.selectionDirection = "backward";
+  ui.editor.listeners.selectionchange();
+  expect(ui.label.textContent).toBe("Ln 1, Col 1 | Selected 4");
+  for (let i = 0; i < 1000; i++) ui.editor.listeners.keyup();
+  expect(ui.reads()).toBe(reads);
+});
+
+test("large edits debounce and yield, stale timers cancel and old index survives cancellation", () => {
+  const ui = uiHarness();
+  ui.setText("\ud55c");
+  ui.setText("\ud55c" + "x".repeat(64 << 10));
+  expect(ui.label.textContent).toBe("Ln ..., Col ...");
+  expect(ui.timers.size).toBe(1);
+  ui.runOne();
+  expect(ui.label.textContent).toBe("Ln ..., Col ...");
+  expect(ui.timers.size).toBe(1);
+  ui.setText("\ud55c");
+  expect(ui.label.textContent).toBe("Ln 1, Col 1");
+  expect(ui.timers.size).toBe(0);
+  ui.setText("\ud55c" + "x".repeat(64 << 10));
+  ui.runAll();
+  ui.editor.selectionEnd = (64 << 10) + 1;
+  ui.editor.selectionStart = ui.editor.selectionEnd;
+  ui.editor.listeners.select();
+  expect(ui.label.textContent).toBe("Ln 1, Col 65,538");
+  expect(ui.timers.size).toBe(0);
+});
+
+test("IME defers indexing and unavailable index never changes editor text", () => {
+  const ui = uiHarness();
+  ui.setComposing(true); ui.setText("\u1112\u1161\u11ab");
+  expect(ui.label.textContent).toBe("Ln ..., Col ...");
+  expect(ui.timers.size).toBe(0);
+  ui.setComposing(false);
+  ui.editor.selectionStart = ui.editor.selectionEnd = 3;
+  ui.editor.listeners.select();
+  expect(ui.label.textContent).toBe("Ln 1, Col 2");
+  ui.setText("x".repeat((2 << 20) + 1));
+  expect(ui.label.textContent).toBe("Position unavailable");
+  expect(ui.editor.value.length).toBe((2 << 20) + 1);
+  ui.setText("x");
+  expect(ui.label.textContent).toBe("Ln 1, Col 2");
+  const missing = uiHarness({});
+  missing.setText("\ud55c");
+  expect(missing.label.textContent).toBe("Position unavailable");
+  expect(missing.editor.value).toBe("\ud55c");
+});
