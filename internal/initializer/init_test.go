@@ -61,7 +61,7 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
-	if err != nil || len(assets.Files) != 14 || len(result.Files) != 16 {
+	if err != nil || len(assets.Files) != 17 || len(result.Files) != 19 {
 		t.Fatalf("unexpected inventory: %+v %+v %v", result.Files, assets, err)
 	}
 	for _, relative := range result.Files {
@@ -79,6 +79,9 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 	}
 	if !strings.Contains(string(index), `src="find.js"`) || !strings.Contains(string(index), `id="find-case"`) {
 		t.Fatal("find module or match-case control is not delivered")
+	}
+	if !strings.Contains(string(index), `id="replace-row"`) || !strings.Contains(string(index), `id="replace-undo"`) {
+		t.Fatal("replace controls are not delivered")
 	}
 }
 

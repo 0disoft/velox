@@ -275,6 +275,14 @@ Search is literal with wraparound and does not change the document or draft.
 This web-only addition ships in public alpha.68 and does not upgrade existing
 projects. There is no replace action, preview, new permission or dependency.
 
+The source CLI additionally generates Ctrl+H literal replace controls for
+the current match or all matches, with the target count shown before the
+action. A memory-only Undo action restores the last replacement as one
+transaction; direct typing or a successful New/Open/Restore clears it.
+Changes update dirty state and drafts without changing the native save
+target. Input and output are bounded to 2 MiB UTF-8. This source-only addition
+is not in public alpha.68 and does not upgrade existing projects.
+
 The published alpha.68 CLI retains the opt-in tray starter introduced in alpha.67:
 
 ```sh

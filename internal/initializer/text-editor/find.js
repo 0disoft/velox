@@ -63,7 +63,7 @@
     return { text: result, count, start: first, length: value.length };
   }
 
-  function attach(document, editor, blocked) {
+  function attach(document, editor, blocked, onChange = () => {}) {
     const bar = document.querySelector("#find-bar");
     const input = document.querySelector("#find-input");
     const count = document.querySelector("#find-count");
@@ -72,9 +72,17 @@
     const next = document.querySelector("#find-next");
     const close = document.querySelector("#find-close");
     const matchCase = document.querySelector("#find-case");
+    const replaceToggle = document.querySelector("#replace-document");
+    const replaceRow = document.querySelector("#replace-row");
+    const replacement = document.querySelector("#replace-input");
+    const replaceOne = document.querySelector("#replace-one");
+    const replaceAll = document.querySelector("#replace-all");
+    const undoButton = document.querySelector("#replace-undo");
     let current = -1, total = 0, ordinal = 0, lastText = "", lastQuery = "", lastCase = false, composing = false;
+    let replacementComposing = false, undoSnapshot = null;
     let mirror = null, mirrorText = null;
     bar.hidden = true;
+    replaceRow.hidden = true;
 
     function scrollMatch(start, length) {
       if (start === 0 || editor.scrollHeight <= editor.clientHeight) { editor.scrollTop = 0; return; }
@@ -99,10 +107,14 @@
 
     function controls() {
       const disabled = blocked();
-      toggle.disabled = input.disabled = matchCase.disabled = disabled;
+      toggle.disabled = replaceToggle.disabled = input.disabled = replacement.disabled = matchCase.disabled = disabled;
       previous.disabled = next.disabled = disabled || composing || !total;
+      replaceOne.disabled = replaceAll.disabled = disabled || composing || replacementComposing || !total;
+      undoButton.disabled = disabled || composing || replacementComposing || !canUndo();
       toggle.setAttribute("aria-expanded", String(!bar.hidden));
+      replaceToggle.setAttribute("aria-expanded", String(!bar.hidden && !replaceRow.hidden));
       count.textContent = input.value ? `${ordinal.toLocaleString()} / ${total.toLocaleString()}` : "";
+      replaceAll.title = `Replace all (${total.toLocaleString()})`;
     }
     function refresh() {
       if (!bar.hidden && !blocked() && !composing &&
@@ -134,9 +146,10 @@
       }
       controls();
     }
-    function show() {
-      if (blocked() || composing) return;
+    function show(withReplace = false) {
+      if (blocked() || composing || replacementComposing) return;
       bar.hidden = false;
+      replaceRow.hidden = !withReplace;
       refresh();
       input.focus();
       input.select();
@@ -144,6 +157,7 @@
     function hide() {
       bar.hidden = true;
       composing = false;
+      replacementComposing = false;
       if (mirror) { mirror.remove(); mirror = mirrorText = null; }
       controls();
       editor.focus({ preventScroll: true });
@@ -155,13 +169,55 @@
       move();
       if (!input.value) { total = ordinal = 0; controls(); }
     }
+    function canUndo() { return undoSnapshot !== null && editor.value === undoSnapshot.after; }
+    function edited() { undoSnapshot = null; controls(); }
+    function reset() { edited(); current = -1; lastText = null; refresh(); }
+    function applyReplacement(all) {
+      if (bar.hidden || replaceRow.hidden || blocked() || composing || replacementComposing) return;
+      refresh();
+      if (!total) return;
+      if (!all && current < 0) move();
+      const before = editor.value;
+      const snapshot = { before, selectionStart: editor.selectionStart, selectionEnd: editor.selectionEnd, scrollTop: editor.scrollTop };
+      let result;
+      try { result = replace(before, input.value, replacement.value, matchCase.checked, all ? null : current); }
+      catch (error) { onChange(error.message, false); return; }
+      if (!result.count || result.text === before) { onChange("Document unchanged.", false); return; }
+      undoSnapshot = { ...snapshot, after: result.text };
+      editor.value = result.text;
+      editor.setSelectionRange(result.start, result.start + result.length);
+      onChange(`Replaced ${result.count.toLocaleString()} ${result.count === 1 ? "match" : "matches"}.`);
+      if (!all) { current = result.start + result.length - 1; move(); }
+      else refresh();
+      controls();
+    }
+    function undo() {
+      if (blocked() || composing || replacementComposing || !canUndo()) return false;
+      const snapshot = undoSnapshot;
+      undoSnapshot = null;
+      editor.value = snapshot.before;
+      editor.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+      editor.scrollTop = snapshot.scrollTop;
+      onChange("Replacement undone.");
+      controls();
+      editor.focus({ preventScroll: true });
+      return true;
+    }
     function handleKey(event) {
-      if (event.defaultPrevented || bar.hidden || blocked()) return false;
+      if (event.defaultPrevented || blocked()) return false;
+      if (!event.isComposing && !composing && !replacementComposing && event.keyCode !== 229 &&
+          event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey &&
+          event.code === "KeyZ" && event.target === editor && canUndo()) {
+        event.preventDefault();
+        if (!event.repeat) undo();
+        return true;
+      }
+      if (bar.hidden) return false;
       if (event.isComposing) return true;
       if (event.key === "Escape" && !event.ctrlKey && !event.altKey && !event.metaKey) {
         event.preventDefault(); hide(); return true;
       }
-      if (composing || event.keyCode === 229) return true;
+      if (composing || replacementComposing || event.keyCode === 229) return true;
       if (event.ctrlKey || event.altKey || event.metaKey) return false;
       if (event.key === "Enter" && event.target === input) {
         event.preventDefault();
@@ -170,7 +226,16 @@
       }
       return false;
     }
-    toggle.addEventListener("click", show);
+    toggle.addEventListener("click", () => show());
+    replaceToggle.addEventListener("click", () => show(true));
+    replaceOne.addEventListener("click", () => applyReplacement(false));
+    replaceAll.addEventListener("click", () => applyReplacement(true));
+    undoButton.addEventListener("click", undo);
+    replacement.addEventListener("keydown", handleKey, { capture: true });
+    replacement.addEventListener("input", controls);
+    replacement.addEventListener("compositionstart", () => { replacementComposing = true; controls(); });
+    replacement.addEventListener("compositionend", () => { replacementComposing = false; controls(); });
+    replacement.addEventListener("blur", () => { replacementComposing = false; controls(); });
     previous.addEventListener("click", () => move(true));
     next.addEventListener("click", () => move());
     close.addEventListener("click", hide);
@@ -182,7 +247,7 @@
     input.addEventListener("compositionend", () => { composing = false; changed(); });
     controls();
     return Object.freeze({
-      refresh, show, handleKey,
+      refresh, show, handleKey, edited, reset,
     });
   }
 

@@ -24,6 +24,7 @@
       <button id="save-document" type="button" aria-label="Save" title="Save" aria-keyshortcuts="Control+S"><img src="save.svg" width="20" height="20" alt=""></button>
       <button id="save-as-document" type="button" aria-label="Save as" title="Save as" aria-keyshortcuts="Control+Shift+S"><img src="save-all.svg" width="20" height="20" alt=""></button>
       <button id="find-document" class="icon-button" type="button" aria-label="Find in document" title="Find in document" aria-keyshortcuts="Control+F" aria-controls="find-bar" aria-expanded="false"><img src="search.svg" width="20" height="20" alt=""></button>
+      <button id="replace-document" class="icon-button" type="button" aria-label="Find and replace" title="Find and replace" aria-keyshortcuts="Control+H" aria-controls="find-bar" aria-expanded="false"><img src="replace.svg" width="20" height="20" alt=""></button>
     </nav>
     <main>
       <div id="find-bar" role="search" aria-label="Find in document" hidden>
@@ -35,6 +36,14 @@
         </div>
         <label class="find-case"><input id="find-case" type="checkbox">Match case</label>
         <span id="find-count" role="status" aria-live="polite"></span>
+        <div id="replace-row" hidden>
+          <input id="replace-input" type="text" aria-label="Replacement text" placeholder="Replace with" autocomplete="off" spellcheck="false">
+          <div class="find-actions">
+            <button id="replace-one" class="icon-button" type="button" aria-label="Replace current match" title="Replace current match"><img src="replace.svg" width="20" height="20" alt=""></button>
+            <button id="replace-all" class="icon-button" type="button" aria-label="Replace all matches" title="Replace all"><img src="replace-all.svg" width="20" height="20" alt=""></button>
+            <button id="replace-undo" class="icon-button" type="button" aria-label="Undo last replacement" title="Undo last replacement"><img src="undo-2.svg" width="20" height="20" alt=""></button>
+          </div>
+        </div>
       </div>
       <textarea id="editor" aria-label="Text document" spellcheck="true" autocomplete="off"></textarea>
     </main>

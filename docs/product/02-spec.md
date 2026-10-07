@@ -263,6 +263,15 @@ save targets or permissions. It adds only web assets to newly generated
 projects, not host code, dependencies, replacement or preview. Alpha.67 did
 not include find, and existing generated projects are unchanged.
 
+Source-only Ctrl+H adds literal current/all replacement and a memory-only
+single-transaction Undo action. Match counts are visible before replacing.
+Empty replacement deletes; regex and `$` replacement tokens are literal.
+Input and output stay within 2 MiB UTF-8. Replacement/undo update dirty state
+and draft scheduling, not file paths, native save authority or permissions.
+Direct typing and successful document replacement clear undo; Save and
+closing find preserve it. IME and busy/modal guards remain active. Public
+alpha.68 does not include this UI and existing generated apps are unchanged.
+
 Folder-browser reuses the existing example's immediate folder listing and
 readonly text preview with only `folder.read` and `folder.readText`. It omits
 the example's clipboard operation, uses local licensed icons and adds no

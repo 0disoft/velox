@@ -43,6 +43,9 @@ nav button::before, .icon-button::before { content: ""; width: 20px; height: 20p
 #save-document { --icon: url("save.svg"); }
 #save-as-document { --icon: url("save-all.svg"); }
 #find-document { --icon: url("search.svg"); }
+#replace-document, #replace-one { --icon: url("replace.svg"); }
+#replace-all { --icon: url("replace-all.svg"); }
+#replace-undo { --icon: url("undo-2.svg"); }
 #find-previous { --icon: url("chevron-up.svg"); }
 #find-next { --icon: url("chevron-down.svg"); }
 #find-close { --icon: url("x.svg"); }
@@ -50,7 +53,9 @@ main { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minm
 #editor { grid-row: 2; }
 #find-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 8px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
 #find-bar[hidden] { display: none; }
-#find-input { width: 100%; min-width: 0; height: 36px; padding: 6px 8px; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+#replace-row { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+#replace-row[hidden] { display: none; }
+#find-input, #replace-input { width: 100%; min-width: 0; height: 36px; padding: 6px 8px; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
 .find-actions { display: flex; gap: 4px; }
 .find-actions .icon-button { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
 .find-case { display: flex; align-items: center; gap: 6px; font-size: 13px; }

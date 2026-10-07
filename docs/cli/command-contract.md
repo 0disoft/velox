@@ -118,6 +118,27 @@ Four additional licensed icons and `find.js` are included, with no new
 permission, dependency, host code, regex UI, replace or preview. This affects
 newly generated projects only; alpha.67 did not include find.
 
+Source generation additionally supports Ctrl+H literal replacement. An
+optional row shares the query and case toggle with find; icon actions replace
+the current match, all non-overlapping matches or undo the last replacement.
+The find count and Replace all tooltip show the target count before mutation.
+Empty query disables replace, empty replacement deletes, and regex syntax
+and replacement `$` tokens remain literal. Before/after documents are bounded
+to 2 MiB UTF-8; oversized operations leave the document and undo state intact.
+IME composition in the editor, query or replacement field and busy/modal
+guards disable mutation. Escape/X can still dismiss an empty bar.
+
+Undo stores only one before/after text snapshot, selection and scroll position
+in memory. The Undo action or Ctrl+Z with editor focus restores that transaction
+and updates dirty state against the current saved baseline. There is no
+replacement redo or multi-step replacement history. Direct editor input and
+successful New/Open/Restore clear the snapshot; Save success/cancellation
+and closing find do not. Replacement and undo use normal draft scheduling
+and never reset native save authority or save automatically. Three additional
+licensed Lucide icons are delivered; no new permission, storage schema,
+dependency or host code is added. Public alpha.68 has no replacement UI and
+existing generated projects are unchanged.
+
 Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only
 `schemaVersion`, `name`, `text` and `updatedAt`, with a 2 MiB UTF-8 text limit.

@@ -8,6 +8,31 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor replace UI (2026-10-07): source generation adds Ctrl+H and an
+optional literal replacement row with current/all/undo icon actions. The
+target count remains visible before mutation. Replacement/undo update dirty
+state and serial draft scheduling while preserving the native save target.
+One memory-only before/after snapshot restores a replacement transaction;
+editor-focused Ctrl+Z or the Undo button applies it. Direct input and successful
+New/Open/Restore clear it; Save and closing find preserve it. IME, busy/modal,
+empty-query and 2 MiB UTF-8 guards leave rejected text unchanged.
+34 Bun editor/draft/replacement tests, initializer/CLI/hygiene Go tests,
+scoped initializer/CLI vet and `git diff --check` passed. Edge mock-native
+checks passed at 960x640 and 320x560, including dark and forced-color modes:
+all/single/undo, literal tokens, native save-target retention, stored draft,
+dirty baseline after Save/Undo, IME and empty-bar close, loaded icons and no
+overflow. Desktop/mobile screenshots were inspected; owned browser/server
+closed. Generated delivery now has 17 web assets plus two root files.
+A portable test app built and inspected using unchanged public alpha.68 host
+bytes; hash matched `2654d1551f889b46241fe58ba5e51eefd0547ad617566187a0602cf6c9fd0b65`.
+Receipts/screenshots are under `.cache/replace-ui/` and are not committed.
+Product specification, CLI contract, README and icon notices updated.
+No host/IPC API, native permission, DB/storage schema, dependency,
+repository-hygiene configuration or CI change. Manual native UI/picker,
+host rebuild/size/startup measurement and release checks were skipped for
+this web-only starter change. No version bump, push or publication; public
+alpha.68 and existing generated apps are unchanged.
+
 Text-editor replacement calculation (2026-10-07): an unused source helper
 shares find's escaped literal pattern and supports validated UTF-16 single
 match positions or non-overlapping whole-document replacement. Replacement

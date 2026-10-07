@@ -28,7 +28,8 @@
   const native = typeof window.velox?.invoke === "function" &&
     typeof window.velox?.saveTextAs === "function" && typeof window.velox?.saveTextTo === "function";
   const finder = window.EditorFind.attach(document, editor,
-    () => busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open);
+    () => busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open,
+    (message, changed = true) => { status.textContent = message; render(); if (changed) scheduleDraft(); });
 
   function isDirty() { return recovered || editor.value !== savedText; }
 
@@ -127,6 +128,7 @@
     try { await clearDraft(); } catch { cleared = false; }
     name = "Untitled.txt";
     editor.value = savedText = "";
+    finder.reset();
     recovered = false;
     status.textContent = cleared ? "New document." : "New document. Draft cleanup unavailable.";
   }
@@ -139,6 +141,7 @@
     try { await clearDraft(); } catch { cleared = false; }
     name = result.name;
     editor.value = savedText = result.text;
+    finder.reset();
     recovered = false;
     status.textContent = cleared ? "File opened." : "File opened. Draft cleanup unavailable.";
   }
@@ -170,7 +173,7 @@
   buttons[1].addEventListener("click", () => requestReplacement(openDocument));
   buttons[2].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(false)); });
   buttons[3].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(true)); });
-  editor.addEventListener("input", () => { render(); if (!composing && !checkingDraft && recoveryCandidate === null) scheduleDraft(); });
+  editor.addEventListener("input", () => { finder.edited(); render(); if (!composing && !checkingDraft && recoveryCandidate === null) scheduleDraft(); });
   editor.addEventListener("compositionstart", () => {
     composing = true;
     clearTimeout(draftTimer);
@@ -187,6 +190,7 @@
     if (recoveryDialog.returnValue === "recover") {
       name = recoveryCandidate.name;
       editor.value = recoveryCandidate.text;
+      finder.reset();
       savedText = "";
       target = null;
       recovered = true;
@@ -225,9 +229,9 @@
     if (finder.handleKey(event)) return;
     if (event.keyCode === 229) return;
     if (!event.ctrlKey || event.altKey || event.metaKey) return;
-    if (event.code === "KeyF" && !event.shiftKey) {
+    if ((event.code === "KeyF" || event.code === "KeyH") && !event.shiftKey) {
       event.preventDefault();
-      if (!event.repeat) finder.show();
+      if (!event.repeat) finder.show(event.code === "KeyH");
       return;
     }
     const index = event.code === "KeyN" && !event.shiftKey ? 0 :

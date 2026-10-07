@@ -62,7 +62,7 @@ async function harness(native = true, options: { draft?: unknown; load?: Promise
     saveTextTo: (text: string, target: number) => record("to", { text, target }),
   };
   const document: any = { title: "Editor", querySelector: node };
-  runInNewContext(findSource, { document, window });
+  runInNewContext(findSource, { document, window, TextEncoder });
   runInNewContext(source, { document, window, setTimeout: (fn: Function) => { timers.set(++timerID, fn); return timerID; }, clearTimeout: (id: number) => timers.delete(id) });
   await tick();
   return {
@@ -438,4 +438,151 @@ test("empty query and empty document can close by button or input Escape without
     expect(ui.node("#editor").value).toBe(text);
     expect(ui.document.activeElement).toBe(ui.node("#editor"));
   }
+});
+
+function replaceFields(ui: any, query: string, value: string) {
+  ui.listeners.keydown({ ctrlKey: true, code: "KeyH", preventDefault() {} });
+  const input = ui.node("#find-input");
+  input.value = query; input.listeners.input();
+  ui.node("#replace-input").value = value;
+  ui.node("#replace-input").listeners.input();
+}
+
+test("replace current and all update dirty text and draft without changing native target", async () => {
+  const ui = await harness();
+  ui.edit("Text text TEXT");
+  await ui.click("save");
+  replaceFields(ui, "text", "\ud55c\uae00");
+  expect(ui.node("#replace-row").hidden).toBe(false);
+  expect(ui.node("#replace-all").title).toBe("Replace all (3)");
+  ui.node("#replace-one").click();
+  expect(ui.node("#editor").value).toBe("\ud55c\uae00 text TEXT");
+  expect(ui.node("#editor").selectionStart).toBe(3);
+  expect(ui.node("#save-state").dataset.dirty).toBe("true");
+  ui.node("#replace-all").click();
+  expect(ui.node("#editor").value).toBe("\ud55c\uae00 \ud55c\uae00 \ud55c\uae00");
+  expect(ui.node("#replace-all").disabled).toBe(true);
+  await ui.flushDraft();
+  expect(ui.storedDraft().text).toBe(ui.node("#editor").value);
+  expect(ui.calls).toHaveLength(1);
+  await ui.click("save");
+  expect(ui.calls.at(-1)).toEqual({ method: "to", params: { text: "\ud55c\uae00 \ud55c\uae00 \ud55c\uae00", target: 1 } });
+});
+
+test("replace undo is one transaction, survives close/save and tracks current saved baseline", async () => {
+  const ui = await harness();
+  ui.edit("aa aa");
+  await ui.click("save");
+  replaceFields(ui, "aa", "bb");
+  ui.node("#replace-all").click();
+  ui.node("#replace-undo").click();
+  expect(ui.node("#editor").value).toBe("aa aa");
+  expect(ui.node("#save-state").dataset.dirty).toBe("false");
+  await ui.flushDraft();
+  expect(ui.storedDraft()).toBeNull();
+  expect(ui.node("#replace-undo").disabled).toBe(true);
+  ui.node("#replace-all").click();
+  ui.setSave({ cancelled: true });
+  await ui.click("save-as");
+  expect(ui.node("#replace-undo").disabled).toBe(false);
+  ui.setSave({ cancelled: false, name: "saved.txt", target: 1 });
+  await ui.click("save");
+  ui.node("#find-close").click();
+  ui.listeners.keydown({ ctrlKey: true, code: "KeyZ", target: ui.node("#editor"), preventDefault() {} });
+  expect(ui.node("#editor").value).toBe("aa aa");
+  expect(ui.node("#save-state").dataset.dirty).toBe("true");
+  await ui.flushDraft();
+  expect(ui.storedDraft().text).toBe("aa aa");
+});
+
+test("typing and successful document replacement invalidate only replacement undo", async () => {
+  const ui = await harness();
+  ui.edit("aa");
+  replaceFields(ui, "aa", "bb");
+  ui.node("#replace-all").click();
+  ui.edit("bb typed");
+  expect(ui.node("#replace-undo").disabled).toBe(true);
+  let prevented = false;
+  ui.listeners.keydown({ ctrlKey: true, code: "KeyZ", target: ui.node("#editor"), preventDefault() { prevented = true; } });
+  expect(prevented).toBe(false);
+  ui.edit("aa"); replaceFields(ui, "aa", "bb"); ui.node("#replace-all").click();
+  await ui.click("save");
+  ui.setOpen({ cancelled: true }); await ui.click("open");
+  expect(ui.node("#replace-undo").disabled).toBe(false);
+  ui.setOpen({ cancelled: false, name: "same.txt", text: "bb" }); await ui.click("open");
+  expect(ui.node("#replace-undo").disabled).toBe(true);
+  replaceFields(ui, "bb", "aa"); ui.node("#replace-all").click();
+  await ui.click("new"); ui.node("#discard-dialog").close("discard"); await tick();
+  expect(ui.node("#replace-undo").disabled).toBe(true);
+  expect(ui.node("#find-count").textContent).toBe("0 / 0");
+});
+
+test("replace respects empty query, deletion, no-op and UTF-8 expansion rejection", async () => {
+  const ui = await harness(false);
+  ui.edit("keep keep"); await ui.flushDraft();
+  replaceFields(ui, "", "x");
+  expect(ui.node("#replace-all").disabled).toBe(true);
+  replaceFields(ui, "keep", "keep"); ui.node("#replace-all").click();
+  expect(ui.node("#replace-undo").disabled).toBe(true);
+  expect(ui.node("#status").textContent).toBe("Document unchanged.");
+  replaceFields(ui, "keep", ""); ui.node("#replace-all").click();
+  expect(ui.node("#editor").value).toBe(" ");
+  ui.node("#replace-undo").click();
+  expect(ui.node("#editor").value).toBe("keep keep");
+  replaceFields(ui, "keep", "\ud55c".repeat(400000)); ui.node("#replace-all").click();
+  expect(ui.node("#editor").value).toBe("keep keep");
+  expect(ui.node("#status").textContent).toContain("2 MiB");
+  expect(ui.calls).toEqual([]);
+});
+
+test("replace shortcut, IME, busy and modal guards preserve document", async () => {
+  const ui = await harness();
+  ui.edit("aa aa");
+  const shortcut = { ctrlKey: true, code: "KeyH", preventDefault() {} };
+  for (const guard of [{isComposing:true}, {keyCode:229}, {repeat:true}]) ui.listeners.keydown({ ...shortcut, ...guard });
+  expect(ui.node("#replace-row").hidden).toBe(true);
+  replaceFields(ui, "aa", "bb");
+  for (const id of ["#find-input", "#replace-input", "#editor"]) {
+    ui.node(id).listeners.compositionstart();
+    expect(ui.node("#replace-all").disabled).toBe(true);
+    ui.node("#replace-all").click();
+    expect(ui.node("#editor").value).toBe("aa aa");
+    ui.node(id).listeners.compositionend();
+  }
+  await ui.click("new");
+  ui.node("#replace-all").click();
+  expect(ui.node("#editor").value).toBe("aa aa");
+  ui.node("#discard-dialog").close("cancel");
+  let finish: any;
+  ui.setWait(new Promise(resolve => { finish = resolve; }));
+  ui.node("#save-document").click();
+  expect(ui.node("#replace-all").disabled).toBe(true);
+  ui.node("#replace-all").click();
+  expect(ui.node("#editor").value).toBe("aa aa");
+  finish({ cancelled: true }); await tick();
+  ui.node("#replace-all").click();
+  expect(ui.node("#editor").value).toBe("bb bb");
+  ui.node("#replace-input").listeners.compositionstart();
+  ui.node("#find-close").click();
+  ui.node("#replace-input").listeners.compositionend();
+  expect(ui.node("#find-bar").hidden).toBe(true);
+  expect(ui.document.activeElement).toBe(ui.node("#editor"));
+});
+
+test("replacement of a restored draft stays dirty and undo survives rejected expansion", async () => {
+  const ui = await harness(true, { draft: { name: "draft.txt", text: "aa aa" } });
+  ui.node("#recovery-dialog").close("recover"); await tick();
+  replaceFields(ui, "aa", "bb");
+  ui.node("#replace-all").click();
+  replaceFields(ui, "bb", "x".repeat(2 << 20));
+  ui.node("#replace-all").click();
+  expect(ui.node("#editor").value).toBe("bb bb");
+  expect(ui.node("#replace-undo").disabled).toBe(false);
+  ui.node("#replace-undo").click();
+  expect(ui.node("#editor").value).toBe("aa aa");
+  expect(ui.node("#save-state").dataset.dirty).toBe("true");
+  await ui.flushDraft();
+  expect(ui.storedDraft().text).toBe("aa aa");
+  await ui.click("save");
+  expect(ui.calls.at(-1).method).toBe("as");
 });
