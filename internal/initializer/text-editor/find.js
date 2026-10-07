@@ -1,10 +1,14 @@
 (function defineEditorFind(global) {
   "use strict";
 
+  function patternFor(query, matchCase) {
+    const literal = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(literal, matchCase ? "gu" : "giu");
+  }
+
   function find(text, query, anchor = -1, backwards = false, matchCase = false) {
     if (!query) return { count: 0, index: 0, start: -1, length: 0 };
-    const literal = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(literal, matchCase ? "gu" : "giu");
+    const pattern = patternFor(query, matchCase);
     let count = 0, first = null, last = null, selected = null, index = 0, match;
     // Search original UTF-16 positions; lowercasing can change string length.
     while ((match = pattern.exec(text)) !== null) {
@@ -22,6 +26,41 @@
       index = backwards ? count : 1;
     }
     return { count, index, start: selected?.start ?? -1, length: selected?.length ?? 0 };
+  }
+
+  function replace(text, query, value, matchCase = false, start = null) {
+    const unchanged = { text, count: 0, start: -1, length: 0 };
+    if (!query) return unchanged;
+    const maxBytes = 2 * 1024 * 1024;
+    const encoder = new TextEncoder();
+    if (text.length > maxBytes || encoder.encode(text).byteLength > maxBytes) {
+      throw new RangeError("Replacement requires a document within 2 MiB.");
+    }
+    const pattern = patternFor(query, matchCase);
+    let count = 0, removed = 0, first = -1, match;
+    if (start !== null) {
+      if (!Number.isInteger(start) || start < 0) return unchanged;
+      pattern.lastIndex = start;
+      match = pattern.exec(text);
+      if (!match || match.index !== start) return unchanged;
+      count = 1; first = start; removed = match[0].length;
+    } else {
+      while ((match = pattern.exec(text)) !== null) {
+        if (first < 0) first = match.index;
+        count++; removed += match[0].length;
+      }
+    }
+    if (!count) return unchanged;
+    // Bound expansion before allocating the result; callback keeps $ tokens literal.
+    if (text.length - removed + count * value.length > maxBytes) {
+      throw new RangeError("Replacement would exceed the 2 MiB document limit.");
+    }
+    const result = start === null ? text.replace(pattern, () => value) :
+      text.slice(0, first) + value + text.slice(first + removed);
+    if (encoder.encode(result).byteLength > maxBytes) {
+      throw new RangeError("Replacement would exceed the 2 MiB document limit.");
+    }
+    return { text: result, count, start: first, length: value.length };
   }
 
   function attach(document, editor, blocked) {
@@ -147,5 +186,5 @@
     });
   }
 
-  global.EditorFind = Object.freeze({ find, attach });
+  global.EditorFind = Object.freeze({ find, replace, attach });
 })(typeof window === "undefined" ? globalThis : window);

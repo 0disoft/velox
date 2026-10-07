@@ -8,6 +8,17 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor replacement calculation (2026-10-07): an unused source helper
+shares find's escaped literal pattern and supports validated UTF-16 single
+match positions or non-overlapping whole-document replacement. Replacement
+tokens remain literal; empty replacement deletes and empty query is a no-op.
+Input and output are bounded to 2 MiB UTF-8, with expansion checked before
+allocating output. 28 Bun editor/draft/replacement tests and
+`git diff --check` passed, including Unicode offsets, case folding, dense
+matches and rejected expansion. UI integration follows separately; public
+alpha.68 and existing generated apps are unchanged. No host/IPC API,
+permissions, DB/schema, dependency, native UI, CI or release change.
+
 Alpha.68 publication (2026-10-07): the four verified artifacts from tag CI
 `37628664660/1` were reused for unsigned prerelease publication without a
 new build, rerun, tag move or hosted public-verifier dispatch. All four
