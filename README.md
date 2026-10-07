@@ -295,6 +295,12 @@ logical position, drafts, saved state or replacement Undo. The setting lasts
 for the current window, including New/Open, but is not stored across launches.
 This source-only addition is not in public alpha.68 or existing generated apps.
 
+Source text-editor generation also has font decrease, increase and reset
+controls with a current-size readout. The editor defaults to 18px and supports
+14-28px in 2px steps; the rest of the app does not zoom. This display-only,
+session-only setting preserves text, selection, drafts, save state and Undo.
+It adds no host, dependency or storage change and is not in public alpha.68.
+
 The published alpha.68 CLI retains the opt-in tray starter introduced in alpha.67:
 
 ```sh

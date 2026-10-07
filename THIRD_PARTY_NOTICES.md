@@ -46,7 +46,8 @@ separate from the licenses above and must be reviewed before a public release.
 ## Lucide Starter Icons
 
 The CLI embeds file-plus, folder-open, save, save-all, search, chevron-up,
-chevron-down, replace, replace-all, undo-2, text-wrap, refresh-cw, x and bell from
+chevron-down, replace, replace-all, undo-2, text-wrap, a-arrow-down, a-arrow-up,
+rotate-ccw, refresh-cw, x and bell from
 <https://github.com/lucide-icons/lucide>. Generated native starter projects retain
 the complete notice in `web/icons-license.txt`.
 

@@ -289,6 +289,14 @@ It is guarded during editor IME, busy work, draft loading/recovery and modal
 dialogs. Public alpha.68 and existing generated apps remain unchanged; no
 host, permission, dependency or storage schema change is introduced.
 
+Source-only editor font controls decrease, increase or reset text size from
+the 18px default, within 14-28px in 2px steps. The rest of the app is not zoomed.
+This session-only display setting preserves document content, selection,
+logical position, save authority/state, drafts, replacement Undo and word wrap.
+It uses static CSS under the existing CSP and shares view controls' IME,
+busy/load/recovery and modal guards. Public alpha.68 and existing apps remain
+unchanged; no host, permission, dependency or storage schema change is added.
+
 Folder-browser reuses the existing example's immediate folder listing and
 readonly text preview with only `folder.read` and `folder.readText`. It omits
 the example's clipboard operation, uses local licensed icons and adds no

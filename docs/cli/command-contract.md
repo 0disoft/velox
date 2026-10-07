@@ -151,7 +151,7 @@ chunks with `Ln ..., Col ...` while pending. IME composition defers rebuilding.
 Text above 2 Mi UTF-16 units or a failed index shows `Position unavailable`
 without modifying text or changing save/draft state. This UTF-16 indexing cap
 does not replace the existing 2 MiB UTF-8 file/draft limit. The generated
-starter now has 19 web assets plus two root files. Public alpha.68 and
+starter now has 22 web assets plus two root files. Public alpha.68 and
 existing generated projects are unchanged; no native permission, dependency,
 host code or storage schema is added.
 
@@ -166,6 +166,19 @@ blocked during editor IME composition, busy work, draft loading/recovery and
 modal dialogs. The licensed local Lucide `text-wrap.svg` adds no dependency.
 Public alpha.68, existing generated apps, host APIs, permissions and storage
 schema are unchanged.
+
+Source text-editor generation adds font decrease/increase/reset buttons with
+local licensed Lucide icons and a current pixel-size readout. Default is 18px;
+the editor supports 14-28px in 2px steps with disabled controls at the bounds
+and a disabled reset at the default. Only editor text changes size, not app
+or WebView zoom. Static `data-font-size` CSS selectors avoid inline styles
+and retain the existing CSP. The action preserves text, selection direction,
+logical line/grapheme position, scroll offsets where valid, save target,
+dirty state, drafts, replacement Undo and word-wrap setting. Focus returns
+to the editor. Size lasts across New/Open within the current window but is
+not persisted after restart. The same IME, busy/load/recovery and modal guards
+as word wrap apply. No new native permission, host code, dependency or storage
+schema is added; public alpha.68 and existing generated apps are unchanged.
 
 Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only

@@ -8,6 +8,34 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor font size (2026-10-08): source generation adds decrease/increase/
+reset icon controls with a current-size readout. Default 18px, 14-28px bounds
+and 2px steps affect only the editor. Static CSS selectors preserve the CSP;
+no inline styles are needed. Setting lasts for the current window, including
+New/Open, but is not stored across launches. Display changes preserve text,
+selection direction, logical position, saved/dirty state, draft, save target,
+replacement Undo and word wrap. Bounds/default and IME/busy/load/recovery/modal
+guards disable controls appropriately.
+50 Bun editor/position/replace/draft tests, initializer/CLI Go tests and vet,
+and `git diff --check` passed. Edge mock-native checks passed for mouse and
+Enter/Space activation, actual computed sizes, min/max/reset, focus return,
+backward selection, logical position, unchanged draft and saved target reuse.
+Sixteen layout combinations covered 14px/28px, wrap off/on and desktop/mobile,
+dark/forced-color variants at 960x640 and 320x560. Icons loaded with no page
+overflow or control overlap; desktop-28px-on/mobile-28px-off screenshots were
+inspected. Owned browser/server closed. Generated delivery has 22 web assets
+plus two root files. ZIP build/inspection passed using unchanged public
+alpha.68 host bytes, SHA-256
+`2654d1551f889b46241fe58ba5e51eefd0547ad617566187a0602cf6c9fd0b65`.
+Web assets total 51,176 bytes, 3,601 above the preceding word-wrap fixture.
+Receipts/screenshots are under `.cache/font-size-ui/` and are not committed.
+README, CLI contract, product specification and icon notices updated. Native
+Windows manual interaction, installer rerun, full release/startup/host-size
+checks were skipped for this web-only change; native manual UI remains open.
+No host/IPC API, native permission, DB/storage schema, dependency, repository
+hygiene or CI runner change. No version bump, push or publication; public
+alpha.68 and existing generated apps are unchanged.
+
 Text-editor word wrap (2026-10-08): source generation adds a default-on,
 session-only Word wrap icon toggle and licensed local Lucide `text-wrap.svg`.
 Off enables horizontal scrolling; the display change preserves text,

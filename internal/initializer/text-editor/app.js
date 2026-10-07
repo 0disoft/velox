@@ -10,6 +10,8 @@
   const draftName = document.querySelector("#draft-name");
   const dialog = document.querySelector("#discard-dialog");
   const wrapButton = document.querySelector("#word-wrap");
+  const fontButtons = ["decrease", "increase", "reset"].map(id => document.querySelector(`#font-${id}`));
+  const fontLabel = document.querySelector("#font-size");
   const drafts = window.EditorDrafts;
   const buttons = ["new", "open", "save", "save-as"].map((id) => document.querySelector(`#${id}-document`));
   const appName = document.title;
@@ -27,6 +29,7 @@
   let draftPending = false;
   let draftWrites = Promise.resolve();
   let wordWrap = true;
+  let fontSize = 18;
   const positions = window.EditorPosition.attach(document, editor, () => composing);
   const native = typeof window.velox?.invoke === "function" &&
     typeof window.velox?.saveTextAs === "function" && typeof window.velox?.saveTextTo === "function";
@@ -36,8 +39,30 @@
 
   function isDirty() { return recovered || editor.value !== savedText; }
 
-  function refreshWrapControl() {
-    wrapButton.disabled = busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open;
+  function viewBlocked() {
+    return busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open;
+  }
+
+  function refreshViewControls() {
+    const blocked = viewBlocked();
+    wrapButton.disabled = blocked;
+    fontButtons[0].disabled = blocked || fontSize === 14;
+    fontButtons[1].disabled = blocked || fontSize === 28;
+    fontButtons[2].disabled = blocked || fontSize === 18;
+  }
+
+  function setFontSize(size) {
+    if (viewBlocked()) return;
+    size = Math.min(28, Math.max(14, size));
+    if (size === fontSize) return;
+    const top = editor.scrollTop, left = editor.scrollLeft;
+    fontSize = size;
+    editor.dataset.fontSize = String(size);
+    fontLabel.textContent = `${size} px`;
+    refreshViewControls();
+    editor.focus({ preventScroll: true });
+    editor.scrollTop = top;
+    editor.scrollLeft = left;
   }
 
   function render() {
@@ -49,7 +74,7 @@
     document.title = `${dirty ? "* " : ""}${name} - ${appName}`;
     buttons.forEach((button, index) => { button.disabled = blocked || (index > 0 && !native); });
     editor.readOnly = blocked;
-    refreshWrapControl();
+    refreshViewControls();
     finder.refresh();
     positions.update();
   }
@@ -176,7 +201,7 @@
     pendingAction = action;
     dialog.returnValue = "cancel";
     dialog.showModal();
-    refreshWrapControl();
+    refreshViewControls();
   }
 
   buttons[0].addEventListener("click", () => requestReplacement(newDocument));
@@ -184,7 +209,7 @@
   buttons[2].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(false)); });
   buttons[3].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(true)); });
   wrapButton.addEventListener("click", () => {
-    if (busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open) return;
+    if (viewBlocked()) return;
     const top = editor.scrollTop, left = editor.scrollLeft;
     wordWrap = !wordWrap;
     editor.wrap = wordWrap ? "soft" : "off";
@@ -194,10 +219,13 @@
     editor.scrollTop = top;
     editor.scrollLeft = left;
   });
+  fontButtons[0].addEventListener("click", () => setFontSize(fontSize - 2));
+  fontButtons[1].addEventListener("click", () => setFontSize(fontSize + 2));
+  fontButtons[2].addEventListener("click", () => setFontSize(18));
   editor.addEventListener("input", () => { finder.edited(); render(); if (!composing && !checkingDraft && recoveryCandidate === null) scheduleDraft(); });
   editor.addEventListener("compositionstart", () => {
     composing = true;
-    refreshWrapControl();
+    refreshViewControls();
     clearTimeout(draftTimer);
     draftTimer = null;
     draftRevision++;
@@ -206,7 +234,7 @@
     finder.refresh();
     positions.update();
   });
-  editor.addEventListener("compositionend", () => { composing = false; refreshWrapControl(); scheduleDraft(); finder.refresh(); positions.update(); });
+  editor.addEventListener("compositionend", () => { composing = false; refreshViewControls(); scheduleDraft(); finder.refresh(); positions.update(); });
   recoveryDialog.addEventListener("cancel", (event) => { event.preventDefault(); });
   recoveryDialog.addEventListener("close", async () => {
     if (recoveryCandidate === null) return;
@@ -239,7 +267,7 @@
   dialog.addEventListener("close", () => {
     const action = pendingAction;
     pendingAction = null;
-    refreshWrapControl();
+    refreshViewControls();
     if (dialog.returnValue === "discard" && action) void perform(action);
     else editor.focus();
   });

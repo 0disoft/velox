@@ -48,6 +48,11 @@ nav button::before, .icon-button::before { content: ""; width: 20px; height: 20p
 #replace-all { --icon: url("replace-all.svg"); }
 #replace-undo { --icon: url("undo-2.svg"); }
 #word-wrap { --icon: url("text-wrap.svg"); }
+#font-decrease { --icon: url("a-arrow-down.svg"); }
+#font-increase { --icon: url("a-arrow-up.svg"); }
+#font-reset { --icon: url("rotate-ccw.svg"); }
+.font-controls { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+#font-size { width: 48px; flex: 0 0 48px; text-align: center; font-size: 13px; font-variant-numeric: tabular-nums; }
 #find-previous { --icon: url("chevron-up.svg"); }
 #find-next { --icon: url("chevron-down.svg"); }
 #find-close { --icon: url("x.svg"); }
@@ -65,6 +70,14 @@ main { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minm
 #find-count { min-width: 90px; font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
 textarea { width: 100%; min-height: 0; resize: none; border: 0; padding: 20px; color: inherit; background: var(--bg); font: 400 18px/1.6 "Segoe UI", "Malgun Gothic", system-ui, sans-serif; letter-spacing: 0; tab-size: 2; }
 #editor[wrap="off"] { white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+#editor[data-font-size="14"] { font-size: 14px; }
+#editor[data-font-size="16"] { font-size: 16px; }
+#editor[data-font-size="18"] { font-size: 18px; }
+#editor[data-font-size="20"] { font-size: 20px; }
+#editor[data-font-size="22"] { font-size: 22px; }
+#editor[data-font-size="24"] { font-size: 24px; }
+#editor[data-font-size="26"] { font-size: 26px; }
+#editor[data-font-size="28"] { font-size: 28px; }
 footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 footer p { margin: 0; overflow-wrap: anywhere; }
 #cursor-position { min-width: 150px; max-width: 100%; font-variant-numeric: tabular-nums; }

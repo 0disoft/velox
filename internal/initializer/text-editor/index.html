@@ -27,6 +27,12 @@
       <button id="find-document" class="icon-button" type="button" aria-label="Find in document" title="Find in document" aria-keyshortcuts="Control+F" aria-controls="find-bar" aria-expanded="false"><img src="search.svg" width="20" height="20" alt=""></button>
       <button id="replace-document" class="icon-button" type="button" aria-label="Find and replace" title="Find and replace" aria-keyshortcuts="Control+H" aria-controls="find-bar" aria-expanded="false"><img src="replace.svg" width="20" height="20" alt=""></button>
       <button id="word-wrap" type="button" aria-label="Word wrap" title="Word wrap (on)" aria-controls="editor" aria-pressed="true"><img src="text-wrap.svg" width="20" height="20" alt=""></button>
+      <div class="font-controls" role="group" aria-label="Editor font size">
+        <button id="font-decrease" type="button" aria-label="Decrease editor font size" title="Decrease editor font size" aria-controls="editor"><img src="a-arrow-down.svg" width="20" height="20" alt=""></button>
+        <output id="font-size" aria-label="Editor font size" aria-live="polite">18 px</output>
+        <button id="font-increase" type="button" aria-label="Increase editor font size" title="Increase editor font size" aria-controls="editor"><img src="a-arrow-up.svg" width="20" height="20" alt=""></button>
+        <button id="font-reset" type="button" aria-label="Reset editor font size" title="Reset editor font size to 18 px" aria-controls="editor" disabled><img src="rotate-ccw.svg" width="20" height="20" alt=""></button>
+      </div>
     </nav>
     <main>
       <div id="find-bar" role="search" aria-label="Find in document" hidden>
@@ -47,7 +53,7 @@
           </div>
         </div>
       </div>
-      <textarea id="editor" aria-label="Text document" wrap="soft" spellcheck="true" autocomplete="off"></textarea>
+      <textarea id="editor" aria-label="Text document" wrap="soft" data-font-size="18" spellcheck="true" autocomplete="off"></textarea>
     </main>
     <footer>
       <p id="status" role="status" aria-live="polite">Ready.</p>
