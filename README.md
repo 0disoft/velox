@@ -51,18 +51,23 @@ an immutable public release without a source checkout or consumer toolchain.
 Report ordinary failures with the [bug report template](https://github.com/0disoft/velox/issues/new?template=bug-report.md);
 report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
-The current unsigned preview is [v0.5.10-alpha.67](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.67),
-from source `cb801f5bf3014b31a2a544d97bb0fe95d33ff270`. It adds restart-required
-manifest-watch notices, stderr notices alongside JSON output, and the opt-in
-tray-app starter. [Tag CI 37471273685](https://github.com/0disoft/velox/actions/runs/37471273685)
+The current unsigned preview is [v0.5.10-alpha.68](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.68),
+from source `5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`. It adds template
+discovery, expanded CLI help, shell-quoted init guidance and text-editor find
+with the empty-query close fix. [Tag CI 37628664660](https://github.com/0disoft/velox/actions/runs/37628664660)
 passed reproducible producer builds and basic checkout-free consumer packaging.
 Its four files were published without another producer, then downloaded
 without authentication and matched against CI and GitHub digests. ZIP SHA-256:
-`fcb5e807682df028515f95d40146235b29d3ed7de32d41c09f00b1d4cf9afead`.
+`b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8`.
 No native/UI/installer/stress or adoption claim is added for these public bytes;
-see [the alpha.67 publication record](docs/ops/alpha67-publication.md).
+see [the alpha.68 publication record](docs/ops/alpha68-publication.md).
 
-The previous unsigned preview is [v0.5.10-alpha.66](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.66),
+The previous unsigned preview, alpha.67, added manifest-watch restart notices,
+stderr notices alongside JSON output and the opt-in tray-app starter. Its
+[publication record](docs/ops/alpha67-publication.md) retains the earlier
+asset identities and verification boundaries.
+
+An earlier unsigned preview is [v0.5.10-alpha.66](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.66),
 from commit `842fead0c889e9f161c2567a91c8d0fd4c2ca260`. It adds image and font
 asset detection to `run --watch`, opt-in metadata-only `run --debug` JavaScript
 diagnostics, and bounded local IndexedDB draft recovery for newly generated
@@ -92,15 +97,12 @@ exact downloaded bytes; see
 adds no installer, folder-browser, hosted-verifier, stress or adoption evidence.
 Beta remains held under the product workflow checklist.
 
-Source version: `0.5.10-alpha.68` (local candidate; not published).
-The candidate groups template discovery, CLI guidance and text-editor find;
-see [alpha68-preparation.md](docs/ops/alpha68-preparation.md).
-Its [tag CI 37628664660](docs/ops/alpha68-tag-evidence.md) passed independent
-reproducible builds and basic checkout-free consumer packaging; publication
-was skipped. Those Go 1.26.0 bytes differ from the local Go 1.27.1 candidate.
-Public alpha.67 asset identities and scope remain in
-[alpha67-publication.md](docs/ops/alpha67-publication.md).
-The [local preparation](docs/ops/alpha67-preparation.md) retains different
+Source version: `0.5.10-alpha.68` (published unsigned prerelease).
+Public asset identities and scope are in
+[alpha68-publication.md](docs/ops/alpha68-publication.md). Its
+[tag CI](docs/ops/alpha68-tag-evidence.md) skipped publication; the verified
+files were subsequently published without another producer.
+The [local preparation](docs/ops/alpha68-preparation.md) retains different
 Go 1.27.1 hashes; it is not the public Go 1.26.0 bundle.
 The earlier [alpha.66 publication record](docs/ops/alpha66-publication.md)
 retains that version's asset identities and verification boundaries.
@@ -127,7 +129,7 @@ smaller build and runtime surface.
 
 ## Current Product Boundary
 
-Supported in the published alpha.67 preview:
+Supported in the published alpha.68 preview:
 
 - Windows x64.
 - Static web assets.
@@ -156,7 +158,7 @@ Explicitly deferred:
 
 ## Capabilities and Permissions
 
-The table covers the published alpha.67 preview. Native script capabilities
+The table covers the published alpha.68 preview. Native script capabilities
 are separate opt-ins in `security.permissions`; manifest settings and CLI
 flags need no script permission.
 
@@ -225,7 +227,7 @@ velox --help
 velox init --help
 ```
 
-The source CLI also lists each starter's purpose, permissions, and generation
+The published alpha.68 CLI also lists each starter's purpose, permissions, and generation
 command without creating files or launching a host:
 
 ```sh
@@ -233,9 +235,8 @@ velox templates
 velox templates --json
 ```
 
-`templates` and the expanded help text are source-only; public
-`v0.5.10-alpha.67` retains the older help and does not include `templates`.
-Use the published generation commands below with that release.
+`templates`, expanded help and shell-quoted init run/build hints ship in
+public alpha.68. Alpha.67 retains the older help and has no `templates` command.
 
 ```powershell
 velox init .\hello --json
@@ -268,13 +269,13 @@ permissions; the next Save selects a destination again. Existing generated
 projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
-New source-CLI text-editor projects also include document finding: Ctrl+F,
+New alpha.68 text-editor projects also include document finding: Ctrl+F,
 previous/next matches, a match count, Match case and Escape to close.
 Search is literal with wraparound and does not change the document or draft.
-This web-only addition is not in public alpha.67 and does not upgrade existing
+This web-only addition ships in public alpha.68 and does not upgrade existing
 projects. There is no replace action, preview, new permission or dependency.
 
-The published alpha.67 CLI provides an opt-in tray starter:
+The published alpha.68 CLI retains the opt-in tray starter introduced in alpha.67:
 
 ```sh
 velox init my-tray --template tray-app
@@ -288,7 +289,7 @@ icon, no bundled font, history, scheduler or additional host code. The basic
 starter and existing generated projects are unchanged.
 Scope and verification are in the [tray starter record](docs/ops/tray-app-starter.md).
 
-The published alpha.67 supports `velox run --watch --config velox.json`:
+The published alpha.68 supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves and common image/font path, size and
 modification-time changes trigger full-page reloads without enabling
 DevTools. Keep the downloaded CLI/host pair together. App `beforeunload`
@@ -303,7 +304,7 @@ also emits bounded JavaScript error metadata to local stderr, including with
 install no diagnostic channel. Scope, privacy and native receipts are in
 [Development Diagnostics](docs/ops/development-diagnostics.md).
 
-The published alpha.67 CLI detects stable edits to the selected manifest in
+The published alpha.68 CLI detects stable edits to the selected manifest in
 `run --watch`. Valid edits print a restart-required notice; invalid or unreadable
 settings print a nonfatal error. The running app, permissions and original
 asset directory stay unchanged until a manual restart. Normal runs and packaged
@@ -398,7 +399,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.67`.
+`0.5.10-alpha.68`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

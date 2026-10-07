@@ -1,5 +1,9 @@
 # Alpha.68 Tag CI Evidence: 2026-10-07
 
+> Follow-up: these exact files were subsequently published without another
+> producer; see [alpha68-publication.md](alpha68-publication.md). Public status
+> below records the earlier tag-CI step, not the current published state.
+
 ## Identity
 
 - Source: `5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`.

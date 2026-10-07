@@ -84,7 +84,23 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.68 Published Preview: 2026-10-07
+
+Unsigned prerelease `v0.5.10-alpha.68` publishes template discovery, expanded
+CLI help, shell-quoted init guidance and text-editor find/empty-query close
+from source `5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`.
+Tag CI `37628664660/1` passed two independent producer builds and basic
+checkout-free consumer packaging with Go 1.26.0. Its four verified files
+were reused without another hosted build or tag move. Unauthenticated public
+downloads matched CI and GitHub digests. ZIP SHA-256:
+`b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8`,
+5,923,846 bytes. No new native UI, installer execution, performance/stress,
+adoption or beta claim follows; see [alpha68-publication.md](alpha68-publication.md).
+
 ## Alpha.68 Tag CI: 2026-10-07
+
+This historical tag step preceded publication above; its CI bytes were
+subsequently published without another producer.
 
 Source `5ffedc8` and annotated tag `v0.5.10-alpha.68` were pushed atomically.
 [Run 37628664660](https://github.com/0disoft/velox/actions/runs/37628664660)
@@ -98,6 +114,9 @@ are staged for later publication without another producer; see
 [alpha68-tag-evidence.md](alpha68-tag-evidence.md).
 
 ## Alpha.68 Local Preparation: 2026-10-07
+
+This historical local step preceded tag CI and publication; its Go 1.27.1
+hashes are not the published Go 1.26.0 hashes.
 
 Source `0.5.10-alpha.68` groups template discovery, CLI guidance and
 text-editor find in a local candidate; it is not published. Public alpha.67
@@ -609,8 +628,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.67` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.67`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.68` is the current unsigned developer preview
+at immutable tag `v0.5.10-alpha.68`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, signing, and publication remain separate maintainer

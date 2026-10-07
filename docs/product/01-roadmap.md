@@ -154,16 +154,19 @@ Historical preview `v0.5.10-alpha.2` was published from exact commit
 and passed the no-checkout consumer gates. This is technical distribution
 evidence and not a human attempt.
 
-The source version is `0.5.10-alpha.68` (local candidate; not published).
-It groups template discovery, expanded CLI help, shell-quoted next-step hints
-and text-editor find with the empty-query close fix. Existing generated apps
-are unchanged; see [alpha68-preparation.md](../ops/alpha68-preparation.md).
-Tag CI `37628664660/1` passed independent release builds and basic checkout-
-free consumer packaging; downloaded evidence matched. Publication was skipped
-and public alpha.67 remains unchanged; see
-[alpha68-tag-evidence.md](../ops/alpha68-tag-evidence.md).
+The source and current public version is `0.5.10-alpha.68` (published unsigned
+prerelease), from `5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`. It groups
+template discovery, expanded CLI help, shell-quoted next-step hints and
+text-editor find with the empty-query close fix. Existing generated apps are
+unchanged. Tag CI `37628664660/1` passed independent release builds and basic
+checkout-free consumer packaging; its four assets were reused for publication
+without another producer. Unauthenticated downloads matched CI and GitHub
+digests, including ZIP SHA-256
+`b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8`.
+No new native, installer, stress or adoption evidence was added; beta stays
+held. See [alpha68-publication.md](../ops/alpha68-publication.md).
 
-The current published unsigned preview is `v0.5.10-alpha.67` from exact source
+The previous published unsigned preview is `v0.5.10-alpha.67` from exact source
 `cb801f5bf3014b31a2a544d97bb0fe95d33ff270`. Tag CI `37471273685` passed
 reproducible producer and basic checkout-free consumer packaging. Its four
 assets were reused for publication; unauthenticated downloads matched ZIP
@@ -171,7 +174,7 @@ SHA-256 `fcb5e807682df028515f95d40146235b29d3ed7de32d41c09f00b1d4cf9afead`
 and GitHub digests. No public-native, installer, stress or adoption check was
 added. Beta remains held; see [alpha67-publication.md](../ops/alpha67-publication.md).
 
-The previous published unsigned preview is `v0.5.10-alpha.66` from exact source
+An earlier published unsigned preview is `v0.5.10-alpha.66` from exact source
 `842fead0c889e9f161c2567a91c8d0fd4c2ca260`. Tag CI `37317775399` passed;
 its four assets were reused for publication without a second producer. Public
 downloads matched ZIP SHA-256

@@ -253,15 +253,15 @@ editing and unsaved-change protection intact. Existing generated projects are
 not upgraded and the host is unchanged. See
 [the recovery record](../ops/text-editor-drafts.md).
 
-The source text-editor starter also offers opt-in document finding with
+The published alpha.68 text-editor starter also offers opt-in document finding with
 literal non-overlapping matches, previous/next wraparound, match counts and
 a case-sensitivity checkbox. Ctrl+F opens the initially hidden bar; Enter and
 Shift+Enter move between matches and Escape returns focus to the editor.
 Search uses original UTF-16 selection offsets and respects IME composition
 and modal/busy states. It changes neither document text nor persisted drafts,
 save targets or permissions. It adds only web assets to newly generated
-projects, not host code, dependencies, replacement or preview. Public
-alpha.67 and existing generated projects are unchanged.
+projects, not host code, dependencies, replacement or preview. Alpha.67 did
+not include find, and existing generated projects are unchanged.
 
 Folder-browser reuses the existing example's immediate folder listing and
 readonly text preview with only `folder.read` and `folder.readText`. It omits
@@ -278,15 +278,19 @@ subfolder navigation, write permission, monitoring, font or host dependency.
 
 All listed M1 commands are currently implemented.
 
-The published alpha.67 supports opt-in `run --watch` for stable HTML/CSS/JavaScript
+Alpha.68 also publishes the read-only `templates` catalog, expanded command
+help and shell-quoted init run/build guidance. These commands add no native
+permission, dependency, host feature or generated-project upgrade.
+
+The published alpha.68 supports opt-in `run --watch` for stable HTML/CSS/JavaScript
 edits and metadata changes to common images/fonts, using full-page reload with
 application `beforeunload` protection. Image/font detection uses path, size and
 modification time rather than repeated binary reads; same-size edits with a
 preserved modification time are not detected. Alpha.66 excluded manifest
-edits. Published alpha.67 reports stable manifest edits as requiring
+edits. Alpha.67 and later report stable manifest edits as requiring
 a restart, without restarting, reloading or changing the running app. Invalid
 or unreadable manifests produce nonfatal stderr diagnostics; this extension
-extension uses a bounded, link-rejecting read and stops with the host.
+uses a bounded, link-rejecting read and stops with the host.
 Watch is not part of the manifest or packaged defaults, enables no DevTools,
 adds no dependency or development server, and stops with the development
 window. Text watching is available in public alpha.64 and later; alpha.63 does
@@ -295,7 +299,7 @@ alpha.66.
 
 The command contract is defined in docs/cli/command-contract.md.
 
-Published alpha.67 provides `init --template tray-app`, which alpha.66 did not
+Alpha.67 and later provide `init --template tray-app`, which alpha.66 did not
 include. This opt-in starter uses only `notification.show` with
 existing tray, single-instance, placement and title-bar settings. It sends
 notifications only after user submission, leaves visibility policy to Windows,

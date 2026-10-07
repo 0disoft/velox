@@ -4,6 +4,7 @@
 > pushed. Tag CI `37628664660/1` passed with Go 1.26.0 and skipped publication;
 > see [alpha68-tag-evidence.md](alpha68-tag-evidence.md). The local Go 1.27.1
 > hashes and no-push boundaries below describe the earlier preparation step.
+> The CI bytes were later published; see [alpha68-publication.md](alpha68-publication.md).
 
 ## Identity
 

@@ -8,6 +8,23 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.68 publication (2026-10-07): the four verified artifacts from tag CI
+`37628664660/1` were reused for unsigned prerelease publication without a
+new build, rerun, tag move or hosted public-verifier dispatch. All four
+unauthenticated public downloads matched CI sizes/SHA-256 and GitHub digests;
+the public annotated tag resolved to source `5ffedc8`. Earlier CI manifest,
+SPDX, checksum, provenance, CLI version, metadata and PE verification is
+retained, not repeated as a new native test. No native UI, startup, picker,
+find/draft/watch interaction, installer execution, performance/stress or
+independent-adoption check ran against these public bytes. Evidence remains
+`same-repository-public-download` with `externalUserAttempt: false`; beta is
+held. README, quickstart, product/CLI status, release/readiness and risk
+records now identify public alpha.68 while preserving historical records.
+No API/IPC, DB/schema, permission, dependency, hygiene or CI change. Full
+identity and receipts: `docs/ops/alpha68-publication.md`.
+Documentation follow-up hygiene Go tests, scoped vet and `git diff --check`
+passed; the current-channel test now identifies published alpha.68.
+
 Alpha.68 tag CI (2026-10-07): verified source `5ffedc8` and annotated tag
 were pushed atomically and their remote SHAs matched. Run `37628664660/1`
 passed releasebundle/releaseevidence/hygiene tests, two independent release
@@ -792,13 +809,14 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.67`, source
-`cb801f5bf3014b31a2a544d97bb0fe95d33ff270`; tag CI `37471273685/1` and
+The current public preview is `v0.5.10-alpha.68`, source
+`5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`; tag CI `37628664660/1` and
 public-byte checks passed. ZIP SHA-256:
-`fcb5e807682df028515f95d40146235b29d3ed7de32d41c09f00b1d4cf9afead`.
-See [alpha67-publication.md](docs/ops/alpha67-publication.md).
+`b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8`.
+See [alpha68-publication.md](docs/ops/alpha68-publication.md). Prior alpha.67
+identity and scope remain in [alpha67-publication.md](docs/ops/alpha67-publication.md).
 
-The previous public preview is `v0.5.10-alpha.66`, source
+An earlier public preview is `v0.5.10-alpha.66`, source
 `842fead0c889e9f161c2567a91c8d0fd4c2ca260`. Tag CI `37317775399` (attempt 1)
 passed reproducible unsigned producer builds and a basic checkout-free
 consumer smoke with Go 1.26.0. Its four verified assets were published as an

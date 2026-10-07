@@ -26,16 +26,16 @@ An opt-in `build --installer` flag also packages a per-user Windows Setup
 executable. It is a build flag, not a separate command, and the default
 portable output is unchanged.
 
-The source CLI additionally implements the read-only `templates` command;
-it is not included in the published alpha.67 CLI.
+The published alpha.68 CLI additionally implements the read-only `templates`
+command; alpha.67 did not include it.
 
-Source CLI `help`, `--help` and `-h` include command descriptions, generation/
+Published alpha.68 `help`, `--help` and `-h` include command descriptions, generation/
 run/build examples and a pointer to `velox <command> --help`. Successful
 top-level help remains on stdout; missing or unknown commands print usage
 on stderr and exit 2. `init --help` adds defaults, a generation example and
 `velox templates` discovery before its flag list on stderr. It exits 0
 without creating a project. As before, subcommand help requested with
-`--json` exits 0 with no output. Expanded help is not in published alpha.67.
+`--json` exits 0 with no output. Alpha.67 did not include the expanded help.
 
 ## MVP Commands
 
@@ -67,12 +67,12 @@ Create a minimal manifest and dependency-free static web example.
   read-only folder starter with only `folder.read` and `folder.readText`.
   Unknown templates exit 2 with
   `USAGE_INVALID` and write nothing. This option ships in public alpha.65 and
-  later, including the current alpha.66; alpha.64 does not include template selection.
-- The source CLI also supports `--template tray-app` with only
+  later, including the current alpha.68; alpha.64 does not include template selection.
+- The published CLI also supports `--template tray-app` with only
   `notification.show`. It enables `app.singleInstance`, `window.tray`,
   `window.rememberState` and `window.followSystemTheme`, uses a 620x480 window
   with 360x400 logical minimums, and reserves no activation shortcut.
-  This starter is not in the published alpha.66 CLI.
+  This starter ships in alpha.67 and later; alpha.66 did not include it.
 - Derive a conservative `dev.velox.<directory>` application ID and display name
   from the target directory.
 - Successful human output also prints run and build commands pointing to the
@@ -80,8 +80,8 @@ Create a minimal manifest and dependency-free static web example.
   quoting for the labeled shell: PowerShell on Windows, POSIX shell elsewhere.
   Apostrophes are escaped for that shell. These are instructions only; no
   command is executed, host downloaded or generated file changed. `--json`
-  and `--quiet` output are unchanged. This guidance is source-only and is not
-  in public alpha.67.
+  and `--quiet` output are unchanged. This guidance ships in public alpha.68;
+  alpha.67 did not include it.
 - Preflight every planned path and refuse the operation if any generated file
   already exists.
 - Remove only files and directories created by the failed invocation.
@@ -96,14 +96,14 @@ Create a minimal manifest and dependency-free static web example.
 - Do not install frontend dependencies.
 - Do not download a host or runtime.
 
-The published alpha.67 text-editor starter includes New/Open/Save/Save as, document-scoped native
+The published alpha.68 text-editor starter includes New/Open/Save/Save as, document-scoped native
 save-target reuse, a discard dialog, close protection and IME-aware keyboard
 actions. The first Save after Open still prompts for a save target. It includes
-four local Lucide icons and their license, but no bundled font, find or preview.
+eight local Lucide icons and their license, but no bundled font or preview.
 Public alpha.65 had no draft storage or recovery; alpha.66 adds it. Its assets
 add no runtime dependency or host code.
 
-The source text-editor starter additionally includes a hidden-by-default
+The published alpha.68 text-editor starter additionally includes a hidden-by-default
 find bar: Ctrl+F, Enter/Shift+Enter navigation, Escape to close, match count
 and a Match case checkbox. Search is literal, Unicode case-insensitive by
 default, non-overlapping and wraps at the ends using original UTF-16 offsets.
@@ -116,7 +116,7 @@ composing, including legacy key-code-229 events. Late composition-end events
 cannot move selection or return focus to a closed find bar.
 Four additional licensed icons and `find.js` are included, with no new
 permission, dependency, host code, regex UI, replace or preview. This affects
-newly generated projects only and is not in public alpha.67.
+newly generated projects only; alpha.67 did not include find.
 
 Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only
@@ -136,7 +136,7 @@ expired tokens clear both panes. It includes three local licensed icons but
 no subfolder navigation, clipboard, writes, monitoring, bundled font or new
 dependency. Folder-browser does not change the basic or text-editor template.
 
-The source-only tray starter includes a message composer, kind selector,
+The tray starter published in alpha.67 and later includes a message composer, kind selector,
 bounded count and explicit Send action. It calls only the existing
 `notification.show` method, blocks duplicate submissions, preserves text on
 success/failure and displays error codes without raw native details. Its limit
@@ -203,7 +203,7 @@ replacement process.
   budget. Additions, deletions and renames count; reverted text contents do
   not. Same-size binary edits with preserved modification times cannot be
   detected. Other asset formats remain outside the reload scope.
-- The source CLI additionally watches the selected project manifest (including
+- The published CLI additionally watches the selected project manifest (including
   a custom `--config` path) by content every 500 ms with a 500 ms quiet period.
   A stable valid edit emits a restart-required notice to stderr; an invalid,
   missing, unreadable, linked or over-1-MiB manifest emits a nonfatal error.
@@ -213,7 +213,7 @@ replacement process.
   The CLI stops and joins this additional loop when the host exits. These
   CLI notices/errors reach stderr even in JSON mode; only host stderr retains
   its suppression unless `--debug` is enabled. Stdout stays one JSON envelope.
-  This notice-only extension is source-only, not in published alpha.66.
+  This notice-only extension ships in alpha.67 and later; alpha.66 did not include it.
 - Watch is default-off and is passed as a host argument, not stored in the
   manifest, runtime configuration, profile, build report or ZIP. It does not
   enable DevTools; cache bypass is confined to the development WebView.

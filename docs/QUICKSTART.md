@@ -133,7 +133,7 @@ flag does not change packaged configuration, native permissions, or origin polic
 
 ## 7. Grant a native permission
 
-Sections 7 and 8 ship in the current published alpha.67 release; only the
+Sections 7 and 8 ship in the current published alpha.68 release; only the
 historical alpha.62 bundle lacked these features. The first six sections remain
 the baseline public-release path.
 
@@ -150,7 +150,7 @@ the following; keep the rest of your manifest:
 }
 ```
 
-The published alpha.67 retains the native text-editor starter:
+The published alpha.68 retains the native text-editor starter:
 
 ```sh
 velox init my-editor --template text-editor
@@ -158,11 +158,13 @@ velox run --config my-editor/velox.json --watch
 velox build --config my-editor/velox.json --installer
 ```
 
-Use the alpha.67 CLI with its matching release bundle; alpha.65 added template
+Use the alpha.68 CLI with its matching release bundle; alpha.65 added template
 selection and alpha.64 did not include it. The generated manifest requests only
 `file.open` and `file.save`. Initial Save after Open selects a destination;
 later Save reuses that page's save target. Omitting `--template` retains the
-basic starter.
+basic starter. Alpha.68 adds literal document find to newly generated editors
+(Ctrl+F, Match case, previous/next navigation and Escape/X to close), plus
+`velox templates` discovery and shell-quoted init next-step guidance.
 
 New text-editor projects generated with alpha.66 and later store one local IndexedDB
 draft after a 300 ms typing pause and offer Restore/Discard on relaunch.
@@ -181,7 +183,7 @@ velox run --config my-browser/velox.json --watch
 velox build --config my-browser/velox.json
 ```
 
-Like text-editor, this option ships in the published alpha.67 release. It requests only
+Like text-editor, this option ships in the published alpha.68 release. It requests only
 `folder.read` and `folder.readText`. Select a folder, refresh its immediate
 entries, select a file for a readonly UTF-8 preview, and release the folder
 when done. Subdirectories are listed but not navigable. No clipboard, write
