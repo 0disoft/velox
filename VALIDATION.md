@@ -8,6 +8,18 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor replace manual follow-up (2026-10-07): after the requested
+Ctrl+H current/all replace, Undo button/editor-focused Ctrl+Z and
+Save-then-Undo dirty-state checklist in `Velox Editor Replace Test`, the
+maintainer reported that it worked. This is overall confirmation of the
+requested scenario, not instrumented per-action assertions, disk readback
+or an IME event trace. Test PID 44860 was absent at follow-up; no normal-exit
+claim is inferred. The generated test used source replacement UI and unchanged
+public alpha.68 host bytes, not replacement UI from the public alpha.68 CLI.
+Existing automated results are reused; only `git diff --check` was rerun for
+this record. No host/IPC API, DB/schema, permission, dependency, repository
+hygiene or CI change. No version bump, push or publication.
+
 Text-editor replace UI (2026-10-07): source generation adds Ctrl+H and an
 optional literal replacement row with current/all/undo icon actions. The
 target count remains visible before mutation. Replacement/undo update dirty
