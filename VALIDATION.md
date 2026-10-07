@@ -8,6 +8,17 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor position index (2026-10-07): an unused source helper indexes
+logical LF line starts and extended grapheme boundaries using built-in
+`Intl.Segmenter`, with an ASCII fast path. Cursor/selection queries use binary
+search over cached boundaries, not repeated segmentation. Columns are
+one-based; backward selection uses its start endpoint, and selection counts
+intersected graphemes, including newline. Five Bun tests and
+`git diff --check` passed for empty/trailing lines, combining marks, Korean,
+flags/ZWJ emoji, repeated cached queries and 2 MiB ASCII/dense newlines.
+UI delivery follows separately. No host/IPC API, permission, DB/schema,
+dependency, native UI, CI, version bump or publication change.
+
 Text-editor replace manual follow-up (2026-10-07): after the requested
 Ctrl+H current/all replace, Undo button/editor-focused Ctrl+Z and
 Save-then-Undo dirty-state checklist in `Velox Editor Replace Test`, the
