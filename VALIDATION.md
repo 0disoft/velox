@@ -8,6 +8,20 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Init next-step guidance (2026-10-07): successful human init output includes
+run/build commands for the generated manifest, labeled and literally quoted
+for PowerShell on Windows or POSIX shells elsewhere. CLI Go tests and scoped
+`go vet` passed for spaces/apostrophes/shell metacharacters, JSON/quiet modes,
+failure output and byte-identical generated files. An actual source CLI init
+created a text-editor fixture under a path containing spaces, an apostrophe,
+`$`, a backtick and `&`; PowerShell AST parsing recovered the exact manifest
+argument from both printed commands without executing them.
+`git diff --check` passed. POSIX forms were unit-tested only; no Linux shell,
+native UI, host rebuild or release check ran for this CLI-output change.
+Command contract updated; host/IPC API, DB/schema, dependencies, repository
+hygiene and CI unchanged. No version bump, push or publication; this guidance
+is not in public alpha.67.
+
 CLI help discovery (2026-10-07): source top-level help now lists command
 purposes and generation/run/build examples. Init help points to `templates`
 and retains its flag list. CLI Go tests and scoped `go vet` passed, including

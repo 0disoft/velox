@@ -199,6 +199,7 @@ func runInit(args []string, dependencies Dependencies) int {
 		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "init", Result: result, Diagnostics: []Diagnostic{}})
 	} else if !*quiet {
 		fmt.Fprintf(dependencies.Stdout, "Initialized %s in %s\n", result.AppID, result.Directory)
+		printInitNextSteps(dependencies.Stdout, result.Directory, dependencies.GOOS)
 	}
 	return 0
 }

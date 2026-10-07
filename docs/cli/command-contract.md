@@ -75,6 +75,13 @@ Create a minimal manifest and dependency-free static web example.
   This starter is not in the published alpha.66 CLI.
 - Derive a conservative `dev.velox.<directory>` application ID and display name
   from the target directory.
+- Successful human output also prints run and build commands pointing to the
+  generated project's `velox.json`, with forward-slash paths and literal
+  quoting for the labeled shell: PowerShell on Windows, POSIX shell elsewhere.
+  Apostrophes are escaped for that shell. These are instructions only; no
+  command is executed, host downloaded or generated file changed. `--json`
+  and `--quiet` output are unchanged. This guidance is source-only and is not
+  in public alpha.67.
 - Preflight every planned path and refuse the operation if any generated file
   already exists.
 - Remove only files and directories created by the failed invocation.
