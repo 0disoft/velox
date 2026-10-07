@@ -154,6 +154,11 @@ Historical preview `v0.5.10-alpha.2` was published from exact commit
 and passed the no-checkout consumer gates. This is technical distribution
 evidence and not a human attempt.
 
+The source version is `0.5.10-alpha.68` (local candidate; not published).
+It groups template discovery, expanded CLI help, shell-quoted next-step hints
+and text-editor find with the empty-query close fix. Existing generated apps
+are unchanged; see [alpha68-preparation.md](../ops/alpha68-preparation.md).
+
 The current published unsigned preview is `v0.5.10-alpha.67` from exact source
 `cb801f5bf3014b31a2a544d97bb0fe95d33ff270`. Tag CI `37471273685` passed
 reproducible producer and basic checkout-free consumer packaging. Its four

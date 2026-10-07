@@ -92,8 +92,11 @@ exact downloaded bytes; see
 adds no installer, folder-browser, hosted-verifier, stress or adoption evidence.
 Beta remains held under the product workflow checklist.
 
-Source version: `0.5.10-alpha.67` (published unsigned prerelease). Public asset
-identities and scope are in [alpha67-publication.md](docs/ops/alpha67-publication.md).
+Source version: `0.5.10-alpha.68` (local candidate; not published).
+The candidate groups template discovery, CLI guidance and text-editor find;
+see [alpha68-preparation.md](docs/ops/alpha68-preparation.md).
+Public alpha.67 asset identities and scope remain in
+[alpha67-publication.md](docs/ops/alpha67-publication.md).
 The [local preparation](docs/ops/alpha67-preparation.md) retains different
 Go 1.27.1 hashes; it is not the public Go 1.26.0 bundle.
 The earlier [alpha.66 publication record](docs/ops/alpha66-publication.md)

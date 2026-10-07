@@ -170,20 +170,35 @@ func TestAlpha66PublicationKeepsPreparationHistorical(t *testing.T) {
 }
 
 func TestAlpha67PublicationKeepsPreparationHistorical(t *testing.T) {
-	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-alpha.67"`) {
-		t.Fatal("published source version is not alpha.67")
-	}
 	for _, relative := range []string{"README.md", "docs/ops/product-readiness.md"} {
 		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
-		if !strings.Contains(doc, "Source version: `0.5.10-alpha.67` (published unsigned prerelease)") {
-			t.Errorf("%s does not identify the published source version", relative)
+		if !strings.Contains(doc, "alpha67-publication.md") {
+			t.Errorf("%s does not retain the alpha.67 publication record", relative)
 		}
 	}
 	preparation := readNormalized(t, repositoryPath("docs", "ops", "alpha67-preparation.md"))
 	for _, marker := range []string{"0.5.10-alpha.67", "not published", "Public preview: `0.5.10-alpha.66`"} {
 		if !strings.Contains(preparation, marker) {
 			t.Errorf("alpha.67 preparation lacks %q", marker)
+		}
+	}
+}
+
+func TestAlpha68PreparationKeepsPublicPreviewUnchanged(t *testing.T) {
+	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.68"`) {
+		t.Fatal("local source version is not alpha.68")
+	}
+	for _, relative := range []string{"README.md", "docs/ops/product-readiness.md"} {
+		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
+		if !strings.Contains(doc, "Source version: `0.5.10-alpha.68` (local candidate; not published)") {
+			t.Errorf("%s does not identify the unpublished source version", relative)
+		}
+	}
+	preparation := readNormalized(t, repositoryPath("docs", "ops", "alpha68-preparation.md"))
+	for _, marker := range []string{"0.5.10-alpha.68", "not published", "Public preview: `0.5.10-alpha.67`"} {
+		if !strings.Contains(preparation, marker) {
+			t.Errorf("alpha.68 preparation lacks %q", marker)
 		}
 	}
 }

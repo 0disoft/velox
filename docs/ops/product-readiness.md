@@ -4,7 +4,11 @@
 - Decision: ADR 0019
 - Owner: Project maintainer
 - Public preview: `0.5.10-alpha.67` (published unsigned prerelease)
-- Source version: `0.5.10-alpha.67` (published unsigned prerelease)
+- Source version: `0.5.10-alpha.68` (local candidate; not published)
+
+Alpha.68 groups template discovery, CLI guidance and text-editor find in a
+local candidate only; see [alpha68-preparation.md](alpha68-preparation.md).
+The public channel and beta decision are unchanged.
 
 Alpha.67 tag CI `37471273685` passed reproducible producer and basic checkout-
 free consumer packaging; its four verified assets were published and matched

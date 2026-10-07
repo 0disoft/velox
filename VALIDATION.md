@@ -8,6 +8,16 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Alpha.68 version preparation (2026-10-07): source version and dependent
+fixtures identify `0.5.10-alpha.68` as a local unpublished candidate while
+public alpha.67 and historical release records remain unchanged. Buildplan,
+builder, CLI, inspector, runner, releasebundle, releaseevidence and hygiene
+Go tests and scoped `go vet` passed; `git diff --check` passed. Candidate
+identity follows the version commit in `docs/ops/alpha68-preparation.md`.
+No host/IPC API, DB/schema, permissions, dependency or CI change. Native UI,
+installer execution, performance and hosted stress were not repeated for
+this version step. No push, tag, signing or publication.
+
 Text-editor find close fix (2026-10-07): the maintainer confirmed that a saved
 native file reopened and search worked, but reported Escape and X failing
 with an empty query. Two mocked tests reproduced close failures with stale

@@ -84,6 +84,13 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.68 Local Preparation: 2026-10-07
+
+Source `0.5.10-alpha.68` groups template discovery, CLI guidance and
+text-editor find in a local candidate; it is not published. Public alpha.67
+and its asset identities are unchanged. No push, tag or hosted publication
+is included. See [alpha68-preparation.md](alpha68-preparation.md).
+
 ## Alpha.67 Published Preview: 2026-10-06
 
 Unsigned prerelease `v0.5.10-alpha.67` ships manifest-watch restart notices,
