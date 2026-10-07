@@ -30,9 +30,10 @@ header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); al
 #document-name { overflow-wrap: anywhere; }
 #save-state { font-size: 13px; color: var(--muted); }
 #save-state[data-dirty="true"] { color: var(--accent); }
-nav { display: flex; gap: 4px; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+nav { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 12px; border-bottom: 1px solid var(--line); }
 button { font: inherit; color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; cursor: pointer; }
 button:hover:not(:disabled) { background: var(--surface); }
+button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--surface); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 nav button { width: 40px; height: 40px; flex: 0 0 40px; padding: 0; border-color: transparent; display: grid; place-items: center; }
@@ -46,6 +47,7 @@ nav button::before, .icon-button::before { content: ""; width: 20px; height: 20p
 #replace-document, #replace-one { --icon: url("replace.svg"); }
 #replace-all { --icon: url("replace-all.svg"); }
 #replace-undo { --icon: url("undo-2.svg"); }
+#word-wrap { --icon: url("text-wrap.svg"); }
 #find-previous { --icon: url("chevron-up.svg"); }
 #find-next { --icon: url("chevron-down.svg"); }
 #find-close { --icon: url("x.svg"); }
@@ -62,6 +64,7 @@ main { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minm
 .find-case input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
 #find-count { min-width: 90px; font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
 textarea { width: 100%; min-height: 0; resize: none; border: 0; padding: 20px; color: inherit; background: var(--bg); font: 400 18px/1.6 "Segoe UI", "Malgun Gothic", system-ui, sans-serif; letter-spacing: 0; tab-size: 2; }
+#editor[wrap="off"] { white-space: pre; overflow-wrap: normal; overflow-x: auto; }
 footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 footer p { margin: 0; overflow-wrap: anywhere; }
 #cursor-position { min-width: 150px; max-width: 100%; font-variant-numeric: tabular-nums; }

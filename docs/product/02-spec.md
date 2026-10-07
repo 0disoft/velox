@@ -281,6 +281,14 @@ An unavailable or oversized index never alters the document or its save/draft
 state. Public alpha.68 has no position status; existing apps, native host,
 permissions, dependencies and storage schema are unchanged.
 
+Source-only Word wrap is a display toggle, on by default; when off, long lines
+scroll horizontally. It preserves text, selection direction, logical line and
+grapheme position, save target, dirty state, drafts and replacement Undo. The
+setting lasts across New/Open within the same window but not after restart.
+It is guarded during editor IME, busy work, draft loading/recovery and modal
+dialogs. Public alpha.68 and existing generated apps remain unchanged; no
+host, permission, dependency or storage schema change is introduced.
+
 Folder-browser reuses the existing example's immediate folder listing and
 readonly text preview with only `folder.read` and `folder.readText`. It omits
 the example's clipboard operation, uses local licensed icons and adds no

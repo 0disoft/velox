@@ -8,6 +8,30 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor word wrap (2026-10-08): source generation adds a default-on,
+session-only Word wrap icon toggle and licensed local Lucide `text-wrap.svg`.
+Off enables horizontal scrolling; the display change preserves text,
+selection direction, logical line/grapheme status, save target, dirty state,
+drafts and replacement Undo. IME, busy/load/recovery and modal guards apply.
+47 Bun editor/position/replace/draft tests, initializer/CLI Go tests and vet,
+and `git diff --check` passed. Edge mock-native checks verified mouse and
+Enter/Space activation, editor focus return, backward selection and logical
+position preservation, unchanged draft, saved target reuse and real horizontal
+scrolling. Both modes passed at 960x640 and 320x560 in light, dark and forced
+colors with loaded icons and no page overflow; desktop-off/mobile-on
+screenshots were inspected. Owned browser/server closed. Generated delivery
+has 19 web assets plus two root files. ZIP build/inspection passed using the
+unchanged public alpha.68 host, SHA-256
+`2654d1551f889b46241fe58ba5e51eefd0547ad617566187a0602cf6c9fd0b65`.
+Web assets total 47,575 bytes, 1,743 above the preceding position fixture.
+Receipts/screenshots are under `.cache/wrap-ui/` and are not committed.
+README, CLI contract, product specification and icon notices updated. Native
+Windows manual interaction, installer rerun and full release/startup/host-size
+checks were skipped for this web-only change; manual native UI remains open.
+No host/IPC API, native permission, DB/storage schema, dependency, repository
+hygiene or CI runner changes. No version bump, push or publication; public
+alpha.68 and existing generated apps are unchanged.
+
 Text-editor position UI (2026-10-08): source generation delivers the cached
 position helper and a footer for logical line, grapheme column and selection
 count. Selection-only refresh does not reread text; larger edits debounce

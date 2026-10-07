@@ -151,9 +151,21 @@ chunks with `Ln ..., Col ...` while pending. IME composition defers rebuilding.
 Text above 2 Mi UTF-16 units or a failed index shows `Position unavailable`
 without modifying text or changing save/draft state. This UTF-16 indexing cap
 does not replace the existing 2 MiB UTF-8 file/draft limit. The generated
-starter now has 18 web assets plus two root files. Public alpha.68 and
+starter now has 19 web assets plus two root files. Public alpha.68 and
 existing generated projects are unchanged; no native permission, dependency,
 host code or storage schema is added.
+
+Source text-editor generation adds a Word wrap icon toggle with `aria-pressed`
+and an on/off tooltip. Soft wrapping is on by default; off uses horizontal
+scrolling for long lines. The action changes display only, preserving text,
+selection direction, logical line/grapheme position, save target, dirty state,
+drafts and replacement Undo. Focus returns to the editor and scroll offsets
+are retained where the new layout permits them. The setting is retained across
+New/Open in the same window but not persisted after restart. The toggle is
+blocked during editor IME composition, busy work, draft loading/recovery and
+modal dialogs. The licensed local Lucide `text-wrap.svg` adds no dependency.
+Public alpha.68, existing generated apps, host APIs, permissions and storage
+schema are unchanged.
 
 Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only

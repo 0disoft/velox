@@ -9,6 +9,7 @@
   const recoveryDialog = document.querySelector("#recovery-dialog");
   const draftName = document.querySelector("#draft-name");
   const dialog = document.querySelector("#discard-dialog");
+  const wrapButton = document.querySelector("#word-wrap");
   const drafts = window.EditorDrafts;
   const buttons = ["new", "open", "save", "save-as"].map((id) => document.querySelector(`#${id}-document`));
   const appName = document.title;
@@ -25,6 +26,7 @@
   let draftRevision = 0;
   let draftPending = false;
   let draftWrites = Promise.resolve();
+  let wordWrap = true;
   const positions = window.EditorPosition.attach(document, editor, () => composing);
   const native = typeof window.velox?.invoke === "function" &&
     typeof window.velox?.saveTextAs === "function" && typeof window.velox?.saveTextTo === "function";
@@ -33,6 +35,10 @@
     (message, changed = true) => { status.textContent = message; render(); if (changed) scheduleDraft(); });
 
   function isDirty() { return recovered || editor.value !== savedText; }
+
+  function refreshWrapControl() {
+    wrapButton.disabled = busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open;
+  }
 
   function render() {
     const dirty = isDirty();
@@ -43,6 +49,7 @@
     document.title = `${dirty ? "* " : ""}${name} - ${appName}`;
     buttons.forEach((button, index) => { button.disabled = blocked || (index > 0 && !native); });
     editor.readOnly = blocked;
+    refreshWrapControl();
     finder.refresh();
     positions.update();
   }
@@ -169,15 +176,28 @@
     pendingAction = action;
     dialog.returnValue = "cancel";
     dialog.showModal();
+    refreshWrapControl();
   }
 
   buttons[0].addEventListener("click", () => requestReplacement(newDocument));
   buttons[1].addEventListener("click", () => requestReplacement(openDocument));
   buttons[2].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(false)); });
   buttons[3].addEventListener("click", () => { if (!dialog.open) void perform(() => saveDocument(true)); });
+  wrapButton.addEventListener("click", () => {
+    if (busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open) return;
+    const top = editor.scrollTop, left = editor.scrollLeft;
+    wordWrap = !wordWrap;
+    editor.wrap = wordWrap ? "soft" : "off";
+    wrapButton.setAttribute("aria-pressed", String(wordWrap));
+    wrapButton.title = `Word wrap (${wordWrap ? "on" : "off"})`;
+    editor.focus({ preventScroll: true });
+    editor.scrollTop = top;
+    editor.scrollLeft = left;
+  });
   editor.addEventListener("input", () => { finder.edited(); render(); if (!composing && !checkingDraft && recoveryCandidate === null) scheduleDraft(); });
   editor.addEventListener("compositionstart", () => {
     composing = true;
+    refreshWrapControl();
     clearTimeout(draftTimer);
     draftTimer = null;
     draftRevision++;
@@ -186,7 +206,7 @@
     finder.refresh();
     positions.update();
   });
-  editor.addEventListener("compositionend", () => { composing = false; scheduleDraft(); finder.refresh(); positions.update(); });
+  editor.addEventListener("compositionend", () => { composing = false; refreshWrapControl(); scheduleDraft(); finder.refresh(); positions.update(); });
   recoveryDialog.addEventListener("cancel", (event) => { event.preventDefault(); });
   recoveryDialog.addEventListener("close", async () => {
     if (recoveryCandidate === null) return;
@@ -219,6 +239,7 @@
   dialog.addEventListener("close", () => {
     const action = pendingAction;
     pendingAction = null;
+    refreshWrapControl();
     if (dialog.returnValue === "discard" && action) void perform(action);
     else editor.focus();
   });

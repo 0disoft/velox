@@ -289,6 +289,12 @@ and emoji sequences count as one character. Cursor movement reuses a cached
 index; larger edits defer and split indexing work, and IME composition waits
 until completion. This is also source-only, with no host or dependency change.
 
+The source starter also has a Word wrap icon toggle, on by default. Turn it
+off to scroll long lines horizontally without changing text, selection,
+logical position, drafts, saved state or replacement Undo. The setting lasts
+for the current window, including New/Open, but is not stored across launches.
+This source-only addition is not in public alpha.68 or existing generated apps.
+
 The published alpha.68 CLI retains the opt-in tray starter introduced in alpha.67:
 
 ```sh

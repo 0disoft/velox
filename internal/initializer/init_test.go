@@ -61,7 +61,7 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
-	if err != nil || len(assets.Files) != 18 || len(result.Files) != 20 {
+	if err != nil || len(assets.Files) != 19 || len(result.Files) != 21 {
 		t.Fatalf("unexpected inventory: %+v %+v %v", result.Files, assets, err)
 	}
 	for _, relative := range result.Files {
@@ -85,6 +85,9 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 	}
 	if !strings.Contains(string(index), `src="positions.js"`) || !strings.Contains(string(index), `id="cursor-position"`) {
 		t.Fatal("position module or status is not delivered")
+	}
+	if !strings.Contains(string(index), `id="word-wrap"`) || !strings.Contains(string(index), `wrap="soft"`) || !strings.Contains(string(index), `src="text-wrap.svg"`) {
+		t.Fatal("word-wrap toggle or default wrapping is not delivered")
 	}
 }
 
