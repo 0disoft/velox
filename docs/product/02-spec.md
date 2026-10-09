@@ -513,8 +513,14 @@ who can modify the installed asset directory.
   validation succeeds.
 - Handled failure leaves the previous successful output intact. A later build
   reconciles supported process-interrupted rename states from retained
-  `.previous` outputs before mutation. This does not claim power-loss safety or
-  atomic visibility across the directory and ZIP paths.
+  reserved `.<id>.previous` and `.<id>.zip.previous` outputs before mutation.
+  Source packaging uses leading-dot backup names to avoid valid application
+  output collisions. Legacy unprefixed `.previous` paths are preserved without
+  automatic recovery or cleanup; ownership must be verified before manual
+  migration. An incomplete final pair without reserved backups is rejected.
+  Public alpha.68 retains the old naming; the source fix is not published.
+  This does not claim power-loss safety or atomic visibility across the
+  directory and ZIP paths.
 - Paths outside the project and output roots are rejected.
 - Equivalent normalized inputs and the same Velox release produce identical
   unsigned archive bytes.

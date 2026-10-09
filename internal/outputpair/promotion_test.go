@@ -11,10 +11,10 @@ func TestRecoverInterruptedPromotionStates(t *testing.T) {
 		name  string
 		paths []string
 	}{
-		{name: "after directory backup", paths: []string{"app.previous/old.txt", "app.zip"}},
-		{name: "after directory restoration", paths: []string{"app/old.txt", "app.zip.previous"}},
-		{name: "after both backups", paths: []string{"app.previous/old.txt", "app.zip.previous"}},
-		{name: "after directory promotion", paths: []string{"app/new.txt", "app.previous/old.txt", "app.zip.previous"}},
+		{name: "after directory backup", paths: []string{".app.previous/old.txt", "app.zip"}},
+		{name: "after directory restoration", paths: []string{"app/old.txt", ".app.zip.previous"}},
+		{name: "after both backups", paths: []string{".app.previous/old.txt", ".app.zip.previous"}},
+		{name: "after directory promotion", paths: []string{"app/new.txt", ".app.previous/old.txt", ".app.zip.previous"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -29,23 +29,69 @@ func TestRecoverInterruptedPromotionStates(t *testing.T) {
 			}
 			assertExists(t, filepath.Join(directory, "old.txt"))
 			assertExists(t, archive)
-			assertMissing(t, directory+".previous")
-			assertMissing(t, archive+".previous")
+			assertMissing(t, backupPath(directory))
+			assertMissing(t, backupPath(archive))
 		})
 	}
 }
 
 func TestRecoverKeepsPublishedPairAndCleansBackups(t *testing.T) {
 	root := t.TempDir()
-	for _, path := range []string{"app/new.txt", "app.zip", "app.previous/old.txt", "app.zip.previous"} {
+	for _, path := range []string{"app/new.txt", "app.zip", ".app.previous/old.txt", ".app.zip.previous"} {
 		write(t, filepath.Join(root, path))
 	}
 	if err := Recover(filepath.Join(root, "app"), filepath.Join(root, "app.zip")); err != nil {
 		t.Fatal(err)
 	}
 	assertExists(t, filepath.Join(root, "app", "new.txt"))
-	assertMissing(t, filepath.Join(root, "app.previous"))
-	assertMissing(t, filepath.Join(root, "app.zip.previous"))
+	assertMissing(t, filepath.Join(root, ".app.previous"))
+	assertMissing(t, filepath.Join(root, ".app.zip.previous"))
+}
+
+func TestRecoverPreservesLegacyBackupPaths(t *testing.T) {
+	for _, state := range []struct {
+		name               string
+		directory, archive bool
+	}{
+		{name: "published pair", directory: true, archive: true},
+		{name: "absent pair"},
+		{name: "partial directory", directory: true},
+		{name: "partial archive", archive: true},
+	} {
+		t.Run(state.name, func(t *testing.T) {
+			root := t.TempDir()
+			directory, archive := filepath.Join(root, "app"), filepath.Join(root, "app.zip")
+			legacyDirectory, legacyArchive := directory+".previous", archive+".previous"
+			write(t, filepath.Join(legacyDirectory, "foreign.txt"))
+			write(t, legacyArchive)
+			if state.directory {
+				write(t, filepath.Join(directory, "current.txt"))
+			}
+			if state.archive {
+				write(t, archive)
+			}
+			err := Recover(directory, archive)
+			if (err != nil) != (state.directory != state.archive) {
+				t.Fatalf("Recover() = %v", err)
+			}
+			for _, path := range []string{filepath.Join(legacyDirectory, "foreign.txt"), legacyArchive} {
+				data, err := os.ReadFile(path)
+				if err != nil || string(data) != "fixture" {
+					t.Fatalf("legacy path changed: %s: %v", path, err)
+				}
+			}
+			if state.directory {
+				assertExists(t, filepath.Join(directory, "current.txt"))
+			} else {
+				assertMissing(t, directory)
+			}
+			if state.archive {
+				assertExists(t, archive)
+			} else {
+				assertMissing(t, archive)
+			}
+		})
+	}
 }
 
 func TestRecoverRejectsIncompletePairWithoutBackup(t *testing.T) {

@@ -44,8 +44,8 @@ func TestPromoteRecoversAfterRollbackCleanupFailure(t *testing.T) {
 				if !errors.Is(err, cleanupFailure) {
 					t.Fatalf("missing rollback error: %v", err)
 				}
-				assertExists(t, filepath.Join(directory+".previous", "old.txt"))
-				assertExists(t, archive+".previous")
+				assertExists(t, filepath.Join(backupPath(directory), "old.txt"))
+				assertExists(t, backupPath(archive))
 				assertExists(t, filepath.Join(directory, "new.txt"))
 				assertMissing(t, archive)
 			}
@@ -59,8 +59,8 @@ func TestPromoteRecoversAfterRollbackCleanupFailure(t *testing.T) {
 			if err != nil || string(data) != "fixture" {
 				t.Fatalf("previous archive changed: %q, %v", data, err)
 			}
-			assertMissing(t, directory+".previous")
-			assertMissing(t, archive+".previous")
+			assertMissing(t, backupPath(directory))
+			assertMissing(t, backupPath(archive))
 		})
 	}
 }

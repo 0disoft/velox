@@ -451,6 +451,14 @@ initialization.
 - build writes only to an owned staging directory until completion.
 - build removes its staging directory after a handled failure.
 - build preserves the previous successful output.
+- Source build and release-bundle promotion use reserved sibling recovery names
+  `.<id>.previous` and `.<id>.zip.previous`. Leading-dot names cannot collide
+  with valid application IDs and their portable directory/ZIP outputs.
+  Legacy unprefixed `<id>.previous` and `<id>.zip.previous` paths are never
+  automatically restored, deleted or renamed: they may be another app or old
+  recovery data. An incomplete final pair without reserved backups is rejected.
+  Verify ownership before manually migrating legacy recovery data. This source
+  fix is not in public alpha.68 and does not repair already deleted outputs.
 - Recovery can resume when directory restoration succeeded but archive restoration
   was interrupted. Windows file locks may block replacement; retained backups
   remain available for retry after the lock is released. This is process-interruption

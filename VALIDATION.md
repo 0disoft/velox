@@ -8,6 +8,27 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Output backup namespace (2026-10-10): added an actual builder A/B/A regression
+for app IDs `com.example.hello.previous` and `com.example.hello.zip.previous`
+sharing A's output root. Before the fix, the first lost B's directory and the
+second rejected A's rebuild because B's directory was treated as an archive
+backup. Both failed as expected under Windows with a fixture host.
+The shared output-pair helper now uses reserved leading-dot sibling backups,
+`.<name>.previous`, for both directories and ZIPs. Legacy unprefixed `.previous`
+paths are never automatically restored, renamed or deleted. Tests cover legacy
+data preservation for published, absent and incomplete final pairs. Existing
+interruption/rollback and Windows locked-archive cases use the new namespace.
+The A/B/A regression passed after the fix, preserving B's full scanned tree
+and exact ZIP bytes/SHA-256; B can then rebuild successfully. Outputpair,
+builder, releasebundle and CLI Go package tests, scoped vet and
+`git diff --check` passed. CLI contract and product specification updated.
+No application host/IPC API, permission, DB/schema, dependency, repository
+hygiene or CI runner changes. Native UI, full producer release/reproducibility
+and performance/size checks were skipped for this packaging-only change;
+prior bytes and measurements are not claimed for the changed CLI. No power-loss
+durability claim or automatic repair of already deleted outputs. No version
+bump, push or publication; public alpha.68 still uses the old backup names.
+
 Text-editor font size (2026-10-08): source generation adds decrease/increase/
 reset icon controls with a current-size readout. Default 18px, 14-28px bounds
 and 2px steps affect only the editor. Static CSS selectors preserve the CSP;

@@ -4,13 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // Recover reconciles process-interrupted directory/archive promotion states.
 // It intentionally makes no power-loss durability claim.
+// Legacy unprefixed .previous paths are left untouched: they may be other apps.
 func Recover(finalDirectory, finalArchive string) error {
-	backupDirectory := finalDirectory + ".previous"
-	backupArchive := finalArchive + ".previous"
+	backupDirectory := backupPath(finalDirectory)
+	backupArchive := backupPath(finalArchive)
 	finalDirectoryExists, err := validate(finalDirectory, true)
 	if err != nil {
 		return fmt.Errorf("validate output directory: %w", err)
@@ -77,8 +79,8 @@ func promote(finalDirectory, finalArchive, stageDirectory, stageArchive string, 
 	if finalDirectoryExists != finalArchiveExists {
 		return errors.New("output pair is incomplete after recovery")
 	}
-	backupDirectory := finalDirectory + ".previous"
-	backupArchive := finalArchive + ".previous"
+	backupDirectory := backupPath(finalDirectory)
+	backupArchive := backupPath(finalArchive)
 
 	if finalDirectoryExists {
 		if err := os.Rename(finalDirectory, backupDirectory); err != nil {
@@ -117,6 +119,11 @@ func promote(finalDirectory, finalArchive, stageDirectory, stageArchive string, 
 	// not turn a successful build into a false failure.
 	_ = cleanupBackups(backupDirectory, backupArchive, finalDirectoryExists, finalArchiveExists)
 	return nil
+}
+
+func backupPath(path string) string {
+	// Leading-dot names cannot be valid app IDs or their portable output names.
+	return filepath.Join(filepath.Dir(path), "."+filepath.Base(path)+".previous")
 }
 
 func validate(path string, wantDirectory bool) (bool, error) {

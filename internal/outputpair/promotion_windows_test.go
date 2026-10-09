@@ -34,14 +34,14 @@ func lockAgainstRename(t *testing.T, path string) func() {
 func TestRecoverRetriesLockedArchiveAfterDirectoryRestoration(t *testing.T) {
 	root := t.TempDir()
 	directory, archive := filepath.Join(root, "app"), filepath.Join(root, "app.zip")
-	write(t, filepath.Join(directory+".previous", "old.txt"))
-	write(t, archive+".previous")
-	unlock := lockAgainstRename(t, archive+".previous")
+	write(t, filepath.Join(backupPath(directory), "old.txt"))
+	write(t, backupPath(archive))
+	unlock := lockAgainstRename(t, backupPath(archive))
 	if err := Recover(directory, archive); err == nil {
 		t.Fatal("restored locked archive")
 	}
 	assertExists(t, filepath.Join(directory, "old.txt"))
-	assertExists(t, archive+".previous")
+	assertExists(t, backupPath(archive))
 	assertMissing(t, archive)
 	unlock()
 	if err := Recover(directory, archive); err != nil {
@@ -49,7 +49,7 @@ func TestRecoverRetriesLockedArchiveAfterDirectoryRestoration(t *testing.T) {
 	}
 	assertExists(t, filepath.Join(directory, "old.txt"))
 	assertExists(t, archive)
-	assertMissing(t, archive+".previous")
+	assertMissing(t, backupPath(archive))
 }
 
 func TestPromotePreservesPairWhenArchiveIsLocked(t *testing.T) {
@@ -76,6 +76,6 @@ func TestPromotePreservesPairWhenArchiveIsLocked(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertExists(t, filepath.Join(directory, "new.txt"))
-	assertMissing(t, directory+".previous")
-	assertMissing(t, archive+".previous")
+	assertMissing(t, backupPath(directory))
+	assertMissing(t, backupPath(archive))
 }
