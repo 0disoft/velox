@@ -103,8 +103,8 @@ func CreateFromTemplate(directory, template string) (Result, error) {
 	manifest.Assets.Root, manifest.Assets.Entry = "web", "index.html"
 	manifest.Window.Width, manifest.Window.Height = 960, 640
 	manifest.Security.Permissions = definition.Permissions
+	manifest.App.SingleInstance = template == "text-editor" || template == "tray-app"
 	if template == "tray-app" {
-		manifest.App.SingleInstance = true
 		manifest.Window.Width, manifest.Window.Height = 620, 480
 		manifest.Window.MinWidth, manifest.Window.MinHeight = 360, 400
 		manifest.Window.Tray, manifest.Window.RememberState, manifest.Window.FollowSystemTheme = true, true, true

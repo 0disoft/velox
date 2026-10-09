@@ -8,6 +8,23 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor single-instance default (2026-10-10): source generation now sets
+`app.singleInstance: true` for text-editor, reusing the existing host guard
+instead of allowing duplicate launches to write or clear one shared draft.
+Initializer tests assert this default, unchanged basic/folder-browser defaults
+and the existing tray-app default. Initializer/CLI Go tests, scoped vet,
+50 Bun editor/position/replace/draft tests and `git diff --check` passed.
+An actual source CLI init created 24 files and a manifest with the setting
+enabled. Standalone `go run ... validate` failed with `HOST_INCOMPATIBLE`
+because its temporary executable had no sibling host template; it is not
+counted as a pass. Portable build/inspection, native duplicate-launch and
+draft-preservation interaction, full release and performance/size checks
+were skipped for this manifest-generation-only change. README, CLI contract
+and product specification explain migration of existing editors and the risk
+of disabling the setting. No host/IPC API, native permission, DB/storage
+schema, dependency, repository hygiene or CI runner changes. No version bump,
+push or publication; public alpha.68 and existing generated apps are unchanged.
+
 Output backup namespace (2026-10-10): added an actual builder A/B/A regression
 for app IDs `com.example.hello.previous` and `com.example.hello.zip.previous`
 sharing A's output root. Before the fix, the first lost B's directory and the

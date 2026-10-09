@@ -253,6 +253,16 @@ editing and unsaved-change protection intact. Existing generated projects are
 not upgraded and the host is unchanged. See
 [the recovery record](../ops/text-editor-drafts.md).
 
+Source-only text-editor generation enables `app.singleInstance: true`.
+The existing host guard reuses the first window for the same user, session,
+app ID and profile, preventing duplicate launches from competing for the
+one draft record. It adds no host code, permission or storage migration.
+Basic and folder-browser defaults are unchanged; tray-app already opts in.
+Public alpha.68 and existing editors are unchanged. Existing editors can
+enable the same app setting and rebuild while retaining their app ID and
+profile, after closing all instances. Concurrent draft safety is not provided
+when the setting is disabled.
+
 The published alpha.68 text-editor starter also offers opt-in document finding with
 literal non-overlapping matches, previous/next wraparound, match counts and
 a case-sensitivity checkbox. Ctrl+F opens the initially hidden bar; Enter and

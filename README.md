@@ -269,6 +269,14 @@ permissions; the next Save selects a destination again. Existing generated
 projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
+The source CLI now sets `app.singleInstance: true` for new text-editor projects
+so duplicate launches reuse the existing window rather than compete for its
+one draft record. This default is not in public alpha.68. For an existing
+editor, add `"singleInstance": true` inside `app` in `velox.json` and rebuild;
+keep the app ID and profile unchanged to retain its draft. Close all existing
+instances before launching the rebuilt app. Disabling this setting permits
+concurrent windows to overwrite or clear the same draft.
+
 New alpha.68 text-editor projects also include document finding: Ctrl+F,
 previous/next matches, a match count, Match case and Escape to close.
 Search is literal with wraparound and does not change the document or draft.

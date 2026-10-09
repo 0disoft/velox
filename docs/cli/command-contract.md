@@ -190,6 +190,16 @@ editing and unsaved-change protection. No native path, token, saved-text
 baseline or permission is persisted. This affects newly generated projects,
 not existing projects; host, IPC and permissions are unchanged.
 
+Source `init --template text-editor` sets `app.singleInstance: true` to keep
+duplicate launches from sharing and overwriting the single draft record.
+It reuses the existing host guard for the same user, session, app ID and
+profile; it adds no window locking protocol or multi-document storage.
+Basic and folder-browser defaults stay unchanged, and tray-app remains
+single-instance. Public alpha.68 and existing projects are unchanged.
+Existing editors can add `"singleInstance": true` inside `app` and rebuild
+without changing their app ID or profile; close all instances before
+launching that build. Turning it off permits concurrent draft writers.
+
 The folder-browser starter provides folder selection, immediate-entry listing,
 explicit refresh, readonly UTF-8 file preview and folder release. It reuses
 the existing host bounds and document-scoped folder tokens. Selection

@@ -37,7 +37,7 @@ func TestCreateWritesDependencyFreeProject(t *testing.T) {
 		t.Fatalf("declaration differs from CLI embed: %v", err)
 	}
 	config, err := manifest.Load(filepath.Join(target, "velox.json"))
-	if err != nil || len(config.Security.Permissions) != 0 {
+	if err != nil || len(config.Security.Permissions) != 0 || config.App.SingleInstance {
 		t.Fatalf("generated manifest or default permissions changed: %v", err)
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
@@ -59,6 +59,9 @@ func TestCreateTextEditorTemplate(t *testing.T) {
 	config, err := manifest.Load(filepath.Join(target, "velox.json"))
 	if err != nil || !reflect.DeepEqual(config.Security.Permissions, []string{"file.open", "file.save"}) {
 		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
+	}
+	if !config.App.SingleInstance {
+		t.Fatal("text editor must share one window for its single draft record")
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
 	if err != nil || len(assets.Files) != 22 || len(result.Files) != 24 {
@@ -103,7 +106,7 @@ func TestCreateFolderBrowserTemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	config, err := manifest.Load(filepath.Join(target, "velox.json"))
-	if err != nil || !reflect.DeepEqual(config.Security.Permissions, []string{"folder.read", "folder.readText"}) {
+	if err != nil || !reflect.DeepEqual(config.Security.Permissions, []string{"folder.read", "folder.readText"}) || config.App.SingleInstance {
 		t.Fatalf("unexpected permissions: %+v %v", config.Security.Permissions, err)
 	}
 	assets, err := assettree.Scan(filepath.Join(target, "web"))
