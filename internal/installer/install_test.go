@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/0disoft/velox/internal/assettree"
@@ -53,9 +54,11 @@ func fixture(t *testing.T) (string, string, environment) {
 		t.Fatal(err)
 	}
 	env := environment{
-		root:            filepath.Join(root, "installed"),
-		check:           func(Record) error { return nil },
-		register:        func(Record) (string, error) { return "", nil },
+		root:  filepath.Join(root, "installed"),
+		check: func(Record) error { return nil },
+		prepare: func(Record) (registration, error) {
+			return registration{publish: func() error { return nil }, cleanup: func() {}}, nil
+		},
 		unregister:      func(Record) error { return nil },
 		validateRemoval: func(Record) error { return nil },
 		removable:       func(string) error { return nil },
@@ -111,7 +114,12 @@ func TestUninstallRefusesChangedAndForeignFiles(t *testing.T) {
 
 func TestInstallRollbackAndUninstallPreflight(t *testing.T) {
 	source, setup, env := fixture(t)
-	env.register = func(Record) (string, error) { return "", errors.New("injected registration failure") }
+	prepare := env.prepare
+	env.prepare = func(record Record) (registration, error) {
+		prepared, err := prepare(record)
+		prepared.publish = func() error { return errors.New("injected registration failure") }
+		return prepared, err
+	}
 	if _, err := install(source, setup, env); err == nil {
 		t.Fatal("ignored integration failure")
 	}
@@ -119,7 +127,7 @@ func TestInstallRollbackAndUninstallPreflight(t *testing.T) {
 	if err != nil || len(entries) != 0 {
 		t.Fatalf("failed installation residue: %v %v", entries, err)
 	}
-	env.register = func(Record) (string, error) { return "", nil }
+	env.prepare = prepare
 	result, err := install(source, setup, env)
 	if err != nil {
 		t.Fatal(err)
@@ -154,5 +162,55 @@ func TestInstallerRejectsTraversalAndInvalidOwnership(t *testing.T) {
 	}
 	if _, err := uninstall(result.AppID, env); err == nil {
 		t.Fatal("accepted forged path")
+	}
+}
+
+func TestInstallRecordsShortcutBeforePublication(t *testing.T) {
+	source, setup, env := fixture(t)
+	hash := strings.Repeat("a", 64)
+	published, cleaned := false, false
+	env.prepare = func(record Record) (registration, error) {
+		if _, err := os.Stat(record.Directory); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("installation visible before shortcut preparation: %v", err)
+		}
+		return registration{
+			shortcutHash: hash,
+			cleanup:      func() { cleaned = true },
+			publish: func() error {
+				stored, err := readState(record.Directory, record.App.ID)
+				if err != nil {
+					return err
+				}
+				if stored.ShortcutHash != hash {
+					t.Fatalf("shortcut ownership not committed before publication: %q", stored.ShortcutHash)
+				}
+				published = true
+				return nil
+			},
+		}, nil
+	}
+	result, err := install(source, setup, env)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !published || !cleaned {
+		t.Fatalf("registration lifecycle incomplete: published=%v cleaned=%v", published, cleaned)
+	}
+	if _, err := uninstall(result.AppID, env); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestInstallPreparationFailureLeavesNoPublishedInstallation(t *testing.T) {
+	source, setup, env := fixture(t)
+	env.prepare = func(Record) (registration, error) {
+		return registration{}, errors.New("injected preparation failure")
+	}
+	if _, err := install(source, setup, env); err == nil {
+		t.Fatal("ignored preparation failure")
+	}
+	entries, err := os.ReadDir(env.root)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("preparation failure left installation files: %v %v", entries, err)
 	}
 }

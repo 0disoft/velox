@@ -78,61 +78,8 @@ func windowsEnvironment(root, shortcuts, registryRoot string) environment {
 			}
 			return nil
 		},
-		register: func(record Record) (string, error) {
-			key, existing, err := registry.CreateKey(registry.CURRENT_USER, registryRoot+record.App.ID, registry.SET_VALUE)
-			if err != nil {
-				return "", err
-			}
-			if existing {
-				key.Close()
-				return "", errors.New("uninstall registration appeared during installation")
-			}
-			success := false
-			defer func() {
-				key.Close()
-				if !success {
-					_ = registry.DeleteKey(registry.CURRENT_USER, registryRoot+record.App.ID)
-				}
-			}()
-			executable := filepath.Join(record.Directory, "app", record.App.ID+".exe")
-			uninstaller := filepath.Join(record.Directory, "uninstall.exe")
-			for name, value := range map[string]string{
-				"DisplayName": record.App.Name, "DisplayVersion": record.App.Version,
-				"InstallLocation": record.Directory, "DisplayIcon": executable,
-				"UninstallString": fmt.Sprintf(`"%s" --uninstall %s`, uninstaller, record.App.ID),
-				"VeloxInstaller":  stateSchema,
-			} {
-				if err := key.SetStringValue(name, value); err != nil {
-					return "", err
-				}
-			}
-			for _, name := range []string{"NoModify", "NoRepair"} {
-				if err := key.SetDWordValue(name, 1); err != nil {
-					return "", err
-				}
-			}
-			if err := safefs.EnsureDirectory(shortcuts, 0o755); err != nil {
-				return "", err
-			}
-			temp, err := os.MkdirTemp(shortcuts, ".velox-link-")
-			if err != nil {
-				return "", err
-			}
-			defer os.RemoveAll(temp)
-			staged := filepath.Join(temp, "app.lnk")
-			if err := createShortcut(staged, executable, record.App.Name); err != nil {
-				return "", err
-			}
-			data, err := os.ReadFile(staged)
-			if err != nil {
-				return "", err
-			}
-			if err := os.Link(staged, shortcut(record)); err != nil {
-				return "", err
-			}
-			success = true
-			digest := sha256.Sum256(data)
-			return hex.EncodeToString(digest[:]), nil
+		prepare: func(record Record) (registration, error) {
+			return prepareWindowsRegistration(record, shortcuts, registryRoot)
 		},
 		validateRemoval: validate,
 		unregister: func(record Record) error {
@@ -160,4 +107,69 @@ func windowsEnvironment(root, shortcuts, registryRoot string) environment {
 			return windows.CloseHandle(handle)
 		},
 	}
+}
+
+func prepareWindowsRegistration(record Record, shortcuts, registryRoot string) (registration, error) {
+	if err := safefs.EnsureDirectory(shortcuts, 0o755); err != nil {
+		return registration{}, err
+	}
+	temp, err := os.MkdirTemp(shortcuts, ".velox-link-")
+	if err != nil {
+		return registration{}, err
+	}
+	cleanup := func() { _ = os.RemoveAll(temp) }
+	executable := filepath.Join(record.Directory, "app", record.App.ID+".exe")
+	staged := filepath.Join(temp, "app.lnk")
+	if err := createShortcut(staged, executable, record.App.Name); err != nil {
+		cleanup()
+		return registration{}, err
+	}
+	data, err := os.ReadFile(staged)
+	if err != nil {
+		cleanup()
+		return registration{}, err
+	}
+	digest := sha256.Sum256(data)
+	return registration{
+		shortcutHash: hex.EncodeToString(digest[:]),
+		cleanup:      cleanup,
+		publish: func() error {
+			key, existing, err := registry.CreateKey(registry.CURRENT_USER, registryRoot+record.App.ID, registry.SET_VALUE)
+			if err != nil {
+				return err
+			}
+			if existing {
+				key.Close()
+				return errors.New("uninstall registration appeared during installation")
+			}
+			success := false
+			defer func() {
+				key.Close()
+				if !success {
+					_ = registry.DeleteKey(registry.CURRENT_USER, registryRoot+record.App.ID)
+				}
+			}()
+			uninstaller := filepath.Join(record.Directory, "uninstall.exe")
+			for name, value := range map[string]string{
+				"DisplayName": record.App.Name, "DisplayVersion": record.App.Version,
+				"InstallLocation": record.Directory, "DisplayIcon": executable,
+				"UninstallString": fmt.Sprintf(`"%s" --uninstall %s`, uninstaller, record.App.ID),
+				"VeloxInstaller":  stateSchema,
+			} {
+				if err := key.SetStringValue(name, value); err != nil {
+					return err
+				}
+			}
+			for _, name := range []string{"NoModify", "NoRepair"} {
+				if err := key.SetDWordValue(name, 1); err != nil {
+					return err
+				}
+			}
+			if err := os.Link(staged, filepath.Join(shortcuts, record.App.ID+".lnk")); err != nil {
+				return err
+			}
+			success = true
+			return nil
+		},
+	}, nil
 }

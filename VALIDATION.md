@@ -8,6 +8,31 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Installer shortcut ownership and state replacement (2026-10-10): two native
+Windows regressions failed before the fix. An injected stop immediately after
+shortcut publication left an empty shortcut hash, blocking uninstall; a state
+write under a read/write-share but no-delete lock succeeded through in-place
+overwrite instead of preserving the old record on replacement failure.
+Setup now prepares the native shortcut first and commits its hash with the
+staged ownership record before promoting the installation and publishing the
+shortcut. No final ownership write is required. Record writes complete and
+flush a same-directory temporary file, then replace via Windows MoveFileEx
+(replace-existing/write-through) or rename on non-Windows test builds.
+Nine installer test functions passed, including native IShellLink/isolated-HKCU
+install/removal, interrupted-publication removal, changed-shortcut preservation,
+locked replacement preserving exact old bytes and subsequent removal, complete
+ownership before publication, and preparation failure cleanup.
+Installer, setuppayload and builder Go tests, Setup package compilation, scoped
+vet and `git diff --check` passed. Linux installer test cross-compilation passed;
+Linux execution was not performed. Ops installer guide and product spec updated.
+The stop is an injected in-process panic after native publication, not a forced
+process kill. End-user Setup UI/packaged smoke, full release, power-loss and
+performance/size measurements were skipped for this installer-engine change.
+Partial registry creation interruptions and repair of old damaged installations
+remain unaddressed. No application host/IPC API, native permission, ownership
+schema, dependency, repository hygiene or CI runner changes. No version bump,
+push or publication; public alpha.68 and existing installers are unchanged.
+
 Text-editor single-instance default (2026-10-10): source generation now sets
 `app.singleInstance: true` for text-editor, reusing the existing host guard
 instead of allowing duplicate launches to write or clear one shared draft.

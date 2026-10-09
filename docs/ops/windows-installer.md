@@ -78,6 +78,19 @@ uninstall registration already exists, installation is refused instead of
 overwritten. There is no updater: an update is an uninstall followed by a
 reinstall.
 
+Source-only interruption handling (2026-10-10): Setup prepares the native
+shortcut in a private temporary folder first. Its exact SHA-256 is committed
+with the staged install's ownership record before promoting the install
+directory and publishing the final shortcut. There is no post-publication
+ownership update, so stopping immediately after shortcut publication leaves
+a recognizable installation that can be uninstalled. Ownership writes use a
+completed, flushed same-directory temporary file followed by replacement,
+not in-place truncation; Windows replacement failure preserves the old record.
+This is not in public alpha.68 and does not repair existing damaged records.
+Changed shortcuts are still preserved. The native test injects a stop at this
+boundary; it is not a forced-process-kill or power-loss durability test.
+Interruption during partial registry value creation remains outside this fix.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:

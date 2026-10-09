@@ -105,6 +105,14 @@ method table, and the no-consumer-compiler boundary are unchanged. Install,
 removal, the isolated Setup payload, and the remaining limitations are
 documented in `docs/ops/windows-installer.md`.
 
+Source-only Setup interruption handling prepares the shortcut and commits
+its expected hash before publishing the installation and final shortcut.
+Ownership records are written through flushed temporary files and replacement,
+not direct overwrites. An interruption after shortcut publication therefore
+needs no final metadata update to allow guarded removal. Public alpha.68 and
+existing installations are unchanged. Partial registry creation, forced-kill
+and power-loss behavior are not covered by this change.
+
 ADR 0021 adds a narrow, opt-in window-state persistence amendment to ADR 0017.
 It restores one top-level window's placement from a bounded host-owned state
 file and does not widen the application runtime API.

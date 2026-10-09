@@ -44,10 +44,16 @@ type Result struct {
 type environment struct {
 	root            string
 	check           func(Record) error
-	register        func(Record) (string, error)
+	prepare         func(Record) (registration, error)
 	unregister      func(Record) error
 	validateRemoval func(Record) error
 	removable       func(string) error
+}
+
+type registration struct {
+	shortcutHash string
+	publish      func() error
+	cleanup      func()
 }
 
 // Install creates a fresh per-user installation from an inspected portable
@@ -119,21 +125,23 @@ func install(source, uninstaller string, env environment) (Result, error) {
 	}
 	file.Path = "uninstall.exe"
 	record.Files = append(record.Files, file)
-	// Persist ownership before promotion so even an interrupted integration step
-	// leaves a recognizable, recoverable installation instead of a foreign folder.
+	prepared, err := env.prepare(record)
+	if err != nil {
+		return Result{}, err
+	}
+	defer prepared.cleanup()
+	record.ShortcutHash = prepared.shortcutHash
+	// Commit complete ownership before either the installation or shortcut is
+	// published; an interruption after publication must not need a final update.
 	if err := writeState(stage, record); err != nil {
 		return Result{}, err
 	}
 	if err := os.Rename(stage, target); err != nil {
 		return Result{}, err
 	}
-	record.ShortcutHash, err = env.register(record)
-	if err != nil {
+	if err := prepared.publish(); err != nil {
 		cleanupErr := os.RemoveAll(target)
 		return Result{}, errors.Join(err, cleanupErr)
-	}
-	if err := writeState(target, record); err != nil {
-		return Result{}, errors.Join(err, env.unregister(record), os.RemoveAll(target))
 	}
 	return Result{AppID: record.App.ID, Directory: target}, nil
 }
@@ -247,14 +255,6 @@ func readState(root, appID string) (Record, error) {
 		return Record{}, errors.New("installed file record is incomplete")
 	}
 	return record, nil
-}
-
-func writeState(root string, record Record) error {
-	data, err := json.MarshalIndent(record, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(root, stateFile), append(data, '\n'), 0o600)
 }
 
 func copyFile(source, target string) (File, error) {
