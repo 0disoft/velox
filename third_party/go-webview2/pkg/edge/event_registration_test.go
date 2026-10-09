@@ -8,7 +8,7 @@ import (
 )
 
 func TestPartialEventRegistrationRemovesOnlySuccessfulTokens(t *testing.T) {
-	names := []string{"message", "permission", "resource", "navigation-completed", "accelerator", "navigation", "frame", "popup", "download", "window-close"}
+	names := []string{"message", "permission", "resource", "navigation-completed", "accelerator", "navigation", "frame", "popup", "download", "window-close", "process-failed"}
 	for failAt := -1; failAt < len(names); failAt++ {
 		name := "success"
 		if failAt >= 0 {
@@ -19,10 +19,11 @@ func TestPartialEventRegistrationRemovesOnlySuccessfulTokens(t *testing.T) {
 			e.NavigationAllowed = func(string) bool { return false }
 			e.DenyFrames, e.DenyNewWindows, e.DenyDownloads = true, true, true
 			e.WindowCloseRequestedCallback = func() {}
+			e.BrowserProcessExitedCallback = func() {}
 			e.retainCallbackOwner()
 			defer e.Destroy()
-			var added, removed [10]int
-			var installed [10]bool
+			var added, removed [11]int
+			var installed [11]bool
 			closeCalls, scriptCalls := 0, 0
 			add := func(index int) ComProc {
 				return NewComProc(func(_ uintptr, _ uintptr, token *_EventRegistrationToken) uintptr {
@@ -70,6 +71,7 @@ func TestPartialEventRegistrationRemovesOnlySuccessfulTokens(t *testing.T) {
 				AddFrameNavigationStarting: add(6), RemoveFrameNavigationStarting: remove(6),
 				AddNewWindowRequested: add(7), RemoveNewWindowRequested: remove(7),
 				AddWindowCloseRequested: add(9), RemoveWindowCloseRequested: remove(9),
+				AddProcessFailed: add(10), RemoveProcessFailed: remove(10),
 				AddScriptToExecuteOnDocumentCreated: NewComProc(func(_ uintptr, _ uintptr, _ uintptr) uintptr {
 					scriptCalls++
 					return 0

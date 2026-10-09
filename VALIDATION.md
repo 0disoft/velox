@@ -8,6 +8,34 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+WebView2 close after main-browser failure (2026-10-10): the source fork now
+registers a pinned/refcounted ProcessFailed callback with checked HRESULT and
+a tracked removal token. Only BrowserProcessExited marks browser consent as
+unavailable; the next user close posts existing native teardown. The callback
+does not close automatically, and renderer/frame/GPU/utility/unknown failures
+or failed kind reads do not bypass ordinary consent. No timeout-based discard.
+Fork Go tests passed, including fifteen-handler pinning/QueryInterface,
+eleven-stage registration failure/removal, repeated/late/null event delivery,
+failure-kind filtering and normal versus dead-browser close routing.
+Opt-in bounded native child tests passed for actual private-profile browser
+termination followed by WM_CLOSE and SC_CLOSE, with real ProcessFailed delivery
+and window teardown (WebView2 154.0.4258.62, Go 1.27.1). Each test verifies its
+reported browser PID/executable and refuses an existing profile; user apps
+were not targeted. Related WebView2/host/hygiene Go tests and default vet passed.
+Fork default vet failed on seven existing Win32 unsafe.Pointer conversions
+in corewebview2.go, file-permission tests and webview.go; it is not a pass.
+Fork vet with only unsafeptr disabled passed. A fresh GUI host built with
+trimpath/-s/-w/-H windowsgui; early-user-close and normal startup lifecycle
+passed against it. Its local size is 4,868,096 bytes; no same-toolchain baseline
+or startup/idle performance comparison was made. Fork notes, third-party
+notices, product spec and COM lifetime review updated; diff check passed.
+Fresh native beforeunload dialog cancellation, tray menu interaction,
+renderer/GPU crash recovery, hosted stress and full release checks were skipped;
+normal consent routing is unit-covered and its prior manual evidence is not
+upgraded. No public IPC API, permission, DB/schema, dependency, repository
+hygiene or CI runner changes. No version bump, push or publication; public
+alpha.68 and existing packaged hosts are unchanged.
+
 Text-editor newline preservation (2026-10-10): three regressions failed before
 the fix with a textarea-normalizing test harness: clean CRLF opening, exact
 draft newline retention, and CRLF byte expansion. Source generation now uses

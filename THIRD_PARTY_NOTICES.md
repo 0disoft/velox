@@ -13,7 +13,8 @@ regenerate and verify this notice before distributing binaries.
 - Local changes: default-denied permissions, virtual HTTPS folder mapping,
   message-source validation, navigation/frame/popup/download policy events,
   explicit COM close/release, event unregistration, and native window-context
-  cleanup
+  cleanup, and ProcessFailed handling for native user close after main-browser
+  termination
 
 The upstream MIT license is preserved at
 `third_party/go-webview2/LICENSE`. Fork maintenance notes are recorded in

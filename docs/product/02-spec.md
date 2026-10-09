@@ -393,6 +393,16 @@ Initialization failures and explicit runtime shutdown retain a separate forced
 cleanup path, without document consent. An unresponsive page or failed script
 request does not authorize an automatic discard timeout for ordinary user close.
 
+Source-only main-browser failure handling observes WebView2 ProcessFailed.
+Only a successfully read BrowserProcessExited kind allows a later user close
+to post native teardown without a script consent request to the closed WebView.
+The callback itself does not close the host. Renderer exit/unresponsiveness,
+frame, GPU, utility, unknown kinds and failed kind reads retain the ordinary
+consent path. No automatic restart, document recovery guarantee, polling or
+new IPC/permission is added. Public alpha.68 and existing packaged hosts are
+unchanged. This follows Microsoft's
+[process-failure guidance](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-related-events).
+
 ## Security Contract
 
 Web content is not trusted merely because it is local.

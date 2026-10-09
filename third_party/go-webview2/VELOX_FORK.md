@@ -30,6 +30,9 @@ Velox carries only the changes required by its Windows host boundary:
 - release a partially constructed browser before destroying a failed embed;
 - process the native close loop before returning from settings-stage failures;
 - discard queued binding responses after native window shutdown begins;
+- handle ProcessFailed for main-browser exit so later user close can post native
+  teardown without relying on a closed WebView; renderer/GPU/unknown failures
+  do not bypass document consent;
 - fail initialization when mandatory WebMessage or permission policies cannot
   be registered, without terminating the embedding process from the library;
 - release queried `ICoreWebView2_3` interfaces; and
@@ -56,7 +59,8 @@ The native-only file-permission maintenance operation reads the current profile
 through ICoreWebView2_13 and ICoreWebView2Profile4. It accepts only an origin
 approved by FileSystemAccessAllowed, never grants access, and resets only an
 existing FileReadWrite denial to Default after native user consent. Both async
-completion handlers participate in the pinned fourteen-handler owner lifetime.
+completion handlers participate in the pinned callback owner lifetime (fifteen
+handlers including ProcessFailed in the current source).
 Destroy cancels the pending operation, releases its profile reference, and
 suppresses late completion delivery. The public JavaScript IPC is unchanged.
 
@@ -67,3 +71,14 @@ ordinary pre-consent user-close path marks cancellation; internal teardown
 does not. A recorded Chromium initialization error takes precedence over that
 marker. The Velox host treats the cancellation sentinel as a quiet exit 0;
 actual initialization failures retain their error behavior.
+
+The ProcessFailed handler is registered with a checked HRESULT and its own
+event token, removed only after successful registration, and participates in
+the existing pinning/refcount/QueryInterface contract. Only a successfully read
+BrowserProcessExited kind marks the view unusable. The callback marks state;
+it does not destroy the window inside COM or discard a healthy page on a timer.
+The source opt-in native test uses a new private profile in a bounded subprocess,
+terminates only its reported WebView2 browser PID after checking the executable,
+and posts WM_CLOSE or SC_CLOSE after the real failure event. Repeat with
+`VELOX_NATIVE_PROCESS_FAILURE=1 go test -v -run '^TestNativeBrowserFailureClose$' .`
+from this fork (set the environment variable separately in PowerShell).

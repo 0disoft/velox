@@ -74,6 +74,7 @@ type webview struct {
 	dispatchq              []func()
 	closing                bool
 	closeConsentReady      bool
+	browserProcessExited   bool
 	initializationCanceled bool
 	shutdownPhase          func(name string)
 	maxWebMessageBytes     int
@@ -204,6 +205,7 @@ func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 	chromium.StartupPhase = options.StartupPhase
 	chromium.ShutdownPhase = options.ShutdownPhase
 	chromium.WindowCloseRequestedCallback = w.Destroy
+	chromium.BrowserProcessExitedCallback = w.markBrowserProcessExited
 	w.shutdownPhase = options.ShutdownPhase
 	if options.DenyAllPermissions {
 		chromium.SetGlobalPermission(edge.CoreWebView2PermissionStateDeny)
@@ -528,12 +530,13 @@ func (w *webview) requestUserClose() {
 	w.m.Lock()
 	closing := w.closing
 	ready := w.closeConsentReady
+	failed := w.browserProcessExited
 	if !closing && !ready {
 		w.initializationCanceled = true
 	}
 	w.m.Unlock()
 	if !closing {
-		if !ready {
+		if !ready || failed {
 			w.Destroy()
 			return
 		}
@@ -541,6 +544,13 @@ func (w *webview) requestUserClose() {
 		// closure is accepted. Destruction is posted outside the COM callback.
 		w.browser.Eval("window.close()")
 	}
+}
+
+func (w *webview) markBrowserProcessExited() {
+	w.m.Lock()
+	w.browserProcessExited = true
+	w.m.Unlock()
+	w.markShutdown("browser-process-exited")
 }
 
 func (w *webview) markShutdown(name string) {

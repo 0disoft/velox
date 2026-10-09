@@ -115,6 +115,20 @@ func TestUserCloseWaitsForBrowserConsent(t *testing.T) {
 	}
 }
 
+func TestUserCloseAfterBrowserExitUsesNativeDestruction(t *testing.T) {
+	browser := &bindingResponseBrowser{}
+	phases := []string{}
+	view := &webview{browser: browser, closeConsentReady: true, shutdownPhase: func(name string) { phases = append(phases, name) }}
+	view.markBrowserProcessExited()
+	view.requestUserClose()
+	if len(browser.evaluated) != 0 || view.initializationCanceled {
+		t.Fatal("dead browser received a script close or was treated as startup cancellation")
+	}
+	if len(phases) != 2 || phases[0] != "browser-process-exited" || phases[1] != "destroy-dispatched" {
+		t.Fatalf("native destruction was not posted: %v", phases)
+	}
+}
+
 func TestDestroyBeforeReturnPumpsNativeClose(t *testing.T) {
 	probe := &destroyRunnerProbe{}
 	destroyBeforeReturn(probe)

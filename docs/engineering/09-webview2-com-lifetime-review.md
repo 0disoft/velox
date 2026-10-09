@@ -5,6 +5,15 @@
 - Scope: `third_party/go-webview2`, `internal/webview2`, and host shutdown paths
 - Risk links: SEC-004 and R-003
 
+Source-only follow-up (2026-10-10): ProcessFailed adds a fifteenth pinned
+handler to the current source; the original eleven-handler review below is
+historical. The new handler uses the same shared refcount and QueryInterface
+identity contract. Checked event registration/removal covers eleven registration
+stages, including partial failure. Null/unreadable/unknown failure args and
+callbacks after Destroy cannot mark a healthy view as browser-exited. Real
+private-profile browser termination followed by WM_CLOSE/SC_CLOSE passed in
+the source fork; this is not public alpha.68 or hosted stress evidence.
+
 ## Decision
 
 The bounded pure-Go adapter remains viable for the current Windows-only static

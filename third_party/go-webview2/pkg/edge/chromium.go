@@ -38,6 +38,10 @@ type Chromium struct {
 	windowCloseRequested                  *windowCloseRequestedHandler
 	windowCloseToken                      _EventRegistrationToken
 	windowCloseRegistered                 bool
+	processFailed                         *processFailedHandler
+	processFailedToken                    _EventRegistrationToken
+	processFailedRegistered               bool
+	browserProcessExited                  bool
 
 	webMessageToken               _EventRegistrationToken
 	permissionToken               _EventRegistrationToken
@@ -86,6 +90,7 @@ type Chromium struct {
 	StartupPhase                 func(name string)
 	ShutdownPhase                func(name string)
 	WindowCloseRequestedCallback func()
+	BrowserProcessExitedCallback func()
 }
 
 type WebResourceResponse struct {
@@ -114,6 +119,7 @@ func NewChromium() *Chromium {
 	e.newWindowRequested = newNewWindowRequestedEventHandler(e)
 	e.downloadStarting = newDownloadStartingEventHandler(e)
 	e.windowCloseRequested = &windowCloseRequestedHandler{vtbl: &windowCloseRequestedCallbacks, impl: e}
+	e.processFailed = &processFailedHandler{vtbl: &processFailedCallbacks, impl: e}
 	e.permissions = make(map[CoreWebView2PermissionKind]CoreWebView2PermissionState)
 
 	return e
@@ -183,7 +189,7 @@ func (e *Chromium) InitializationError() error {
 }
 
 func (e *Chromium) finishInitialization() bool {
-	if e.destroyed || e.initializationError != nil || e.webview == nil || atomic.LoadUintptr(&e.inited) == 0 {
+	if e.destroyed || e.browserProcessExited || e.initializationError != nil || e.webview == nil || atomic.LoadUintptr(&e.inited) == 0 {
 		e.Destroy()
 		return false
 	}
@@ -414,6 +420,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 	e.acceleratorRegistered = true
 	e.registerSecurityPolicyHandlers()
 	e.registerWindowCloseRequested()
+	e.registerProcessFailed()
 	if e.StartupPhase != nil {
 		e.StartupPhase("controller-created")
 	}
@@ -694,6 +701,11 @@ func (e *Chromium) removeEventHandlers() {
 		_, _, _ = e.webview.vtbl.RemoveWindowCloseRequested.Call(
 			uintptr(unsafe.Pointer(e.webview)), uintptr(e.windowCloseToken.Value))
 		e.windowCloseRegistered = false
+	}
+	if e.processFailedRegistered {
+		_, _, _ = e.webview.vtbl.RemoveProcessFailed.Call(
+			uintptr(unsafe.Pointer(e.webview)), uintptr(e.processFailedToken.Value))
+		e.processFailedRegistered = false
 	}
 	if e.controller != nil && e.acceleratorRegistered {
 		_, _, _ = e.controller.vtbl.RemoveAcceleratorKeyPressed.Call(
