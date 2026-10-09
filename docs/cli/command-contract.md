@@ -200,6 +200,16 @@ Existing editors can add `"singleInstance": true` inside `app` and rebuild
 without changing their app ID or profile; close all instances before
 launching that build. Turning it off permits concurrent draft writers.
 
+Source text-editor opening sets the saved baseline from actual textarea.value
+after normalization. The document remembers its source text and first newline
+sequence: unchanged content is saved exactly, including mixed endings; edited
+content uses that sequence (LF, CRLF or CR). No-newline and new documents default
+to LF. Save/Save as reject serialized text above 2 MiB UTF-8 before requesting
+a native picker or write, and failed/cancelled saves retain the document state.
+Drafts store the serialized text in the existing v1 record and detect its
+ending again on restore; old LF drafts need no migration. No host, permission,
+dependency or schema change; public alpha.68 and existing apps are unchanged.
+
 The folder-browser starter provides folder selection, immediate-entry listing,
 explicit refresh, readonly UTF-8 file preview and folder release. It reuses
 the existing host bounds and document-scoped folder tokens. Selection

@@ -8,6 +8,32 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor newline preservation (2026-10-10): three regressions failed before
+the fix with a textarea-normalizing test harness: clean CRLF opening, exact
+draft newline retention, and CRLF byte expansion. Source generation now uses
+actual textarea.value for the clean baseline, retains raw source while
+unchanged, and serializes edited text with the first source ending (LF/CRLF/CR).
+New/no-newline documents use LF. Draft v1 keeps the same four fields and stores
+serialized text; old LF drafts remain compatible. Save checks serialized UTF-8
+against 2 MiB before picker or connected write; cancelled/failed saves do not
+commit a new baseline. 53 Bun editor/position/replace/draft tests passed;
+the size test also passed after adding exact-limit/overflow Korean UTF-8 cases.
+Initializer/CLI Go tests and scoped vet passed. Actual CLI init generated
+24 files with the updated template and unchanged single-instance setting.
+Headless Edge real textarea/IndexedDB checks passed for LF, CRLF, CR, mixed
+and no-newline source: clean opening, unchanged exact bytes, edited bytes,
+reload/restore, fresh target after restore, connected save and cancellation.
+Mock save APIs captured text into actual temporary UTF-8 files for byte
+comparison; these are not native file-picker/host write-path evidence. Edge
+also passed exact 2 MiB CRLF and overflow rejection for Save and Save as.
+The clean CRLF screenshot was inspected. Browser/server closed and receipts
+remain uncommitted under `.cache/line-endings-ui`. README, CLI contract, product
+spec and draft record updated; `git diff --check` passed. Native Windows picker,
+end-to-end WebView2 saving, installer/full release and performance/size checks
+were skipped for this template-only change. No host/IPC API, native permission,
+DB schema, dependency, repository hygiene or CI runner changes. No version bump,
+push or publication; public alpha.68 and existing generated apps are unchanged.
+
 Installer shortcut ownership and state replacement (2026-10-10): two native
 Windows regressions failed before the fix. An injected stop immediately after
 shortcut publication left an empty shortcut hash, blocking uninstall; a state

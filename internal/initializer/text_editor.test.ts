@@ -65,13 +65,18 @@ async function harness(native = true, options: { draft?: unknown; load?: Promise
     saveTextTo: (text: string, target: number) => record("to", { text, target }),
   };
   const document: any = { title: "Editor", querySelector: node, addEventListener() {} };
+  let editorValue = "";
+  Object.defineProperty(node("#editor"), "value", {
+    get: () => editorValue,
+    set: (value: string) => { editorValue = value.replace(/\r\n?/g, "\n"); },
+  });
   node("#editor").wrap = "soft";
   node("#editor").dataset.fontSize = "18";
   node("#font-size").textContent = "18 px";
   node("#word-wrap").setAttribute("aria-pressed", "true");
   runInNewContext(positionSource, { document, window, Intl });
   runInNewContext(findSource, { document, window, TextEncoder });
-  runInNewContext(source, { document, window, setTimeout: (fn: Function) => { timers.set(++timerID, fn); return timerID; }, clearTimeout: (id: number) => timers.delete(id) });
+  runInNewContext(source, { document, window, TextEncoder, setTimeout: (fn: Function) => { timers.set(++timerID, fn); return timerID; }, clearTimeout: (id: number) => timers.delete(id) });
   await tick();
   return {
     node, calls, listeners, document,
@@ -87,6 +92,60 @@ async function harness(native = true, options: { draft?: unknown; load?: Promise
     async flushDraft() { for (const [id, fn] of timers) { timers.delete(id); fn(); } await tick(); },
   };
 }
+
+test("opened line endings stay clean and round-trip unchanged or edited", async () => {
+  for (const raw of ["a\nb\n", "a\r\nb\r\n", "a\rb\r", "a\r\nb\nc\r", "no newline"]) {
+    const ui = await harness();
+    ui.setOpen({ cancelled: false, name: "lines.txt", text: raw });
+    await ui.click("open");
+    expect(ui.node("#save-state").dataset.dirty).toBe("false");
+    await ui.click("save");
+    expect(ui.calls.at(-1).params.text).toBe(raw);
+    const eol = raw.match(/\r\n|\r|\n/)?.[0] ?? "\n";
+    ui.edit(ui.node("#editor").value + "changed\n");
+    await ui.click("save");
+    expect(ui.calls.at(-1).params.text).toBe(ui.node("#editor").value.replace(/\n/g, eol));
+    expect(ui.calls.at(-1).method).toBe("to");
+    expect(ui.node("#save-state").dataset.dirty).toBe("false");
+  }
+});
+
+test("draft recovery retains raw line endings and New resets to LF", async () => {
+  const raw = "a\r\nb\nc\r";
+  const ui = await harness(true, { draft: { name: "draft.txt", text: raw } });
+  ui.node("#recovery-dialog").close("recover"); await tick();
+  await ui.flushDraft();
+  expect(ui.storedDraft().text).toBe(raw);
+  await ui.click("save-as");
+  expect(ui.calls.at(-1).params.text).toBe(raw);
+  ui.edit("changed\ntext\n"); await ui.flushDraft();
+  expect(ui.storedDraft().text).toBe("changed\r\ntext\r\n");
+  await ui.click("new"); ui.node("#discard-dialog").close("discard"); await tick();
+  ui.edit("new\ntext\n"); await ui.click("save");
+  expect(ui.calls.at(-1).params.text).toBe("new\ntext\n");
+});
+
+test("CRLF expansion is size-checked before picker or connected write", async () => {
+  const ui = await harness();
+  ui.setOpen({ cancelled: false, name: "lines.txt", text: "a\r\n" });
+  await ui.click("open");
+  ui.edit("\n".repeat(1024 * 1024)); await ui.click("save");
+  expect(new TextEncoder().encode(ui.calls.at(-1).params.text).length).toBe(2 * 1024 * 1024);
+  ui.edit("\n".repeat(1024 * 1024 + 1));
+  const calls = ui.calls.length;
+  for (const id of ["save", "save-as"]) {
+    await ui.click(id);
+    expect(ui.calls).toHaveLength(calls);
+    expect(ui.node("#status").textContent).toContain("PAYLOAD_TOO_LARGE");
+    expect(ui.node("#save-state").dataset.dirty).toBe("true");
+  }
+  ui.edit("\uD55C".repeat(699050) + "\n"); await ui.click("save");
+  expect(new TextEncoder().encode(ui.calls.at(-1).params.text).length).toBe(2 * 1024 * 1024);
+  const beforeUnicodeOverflow = ui.calls.length;
+  ui.edit("\uD55C".repeat(699051) + "\n"); await ui.click("save-as");
+  expect(ui.calls).toHaveLength(beforeUnicodeOverflow);
+  expect(ui.node("#status").textContent).toContain("PAYLOAD_TOO_LARGE");
+});
 
 test("no startup native access; first save connects and next save reuses target", async () => {
   const ui = await harness();

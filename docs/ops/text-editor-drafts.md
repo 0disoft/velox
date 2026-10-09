@@ -5,6 +5,16 @@
 > are not the alpha.66 public release bytes. See
 > [the alpha.66 publication record](alpha66-publication.md).
 
+> Source-only follow-up (2026-10-10): generated editors now preserve source
+> newline sequences in the existing draft `text` field. Restore detects LF,
+> CRLF or CR again; old LF records remain compatible without a schema change.
+> Unedited mixed endings are retained exactly, while edited text follows the
+> first newline sequence. Draft validation still applies to serialized UTF-8,
+> so CRLF expansion beyond 2 MiB reports recovery unavailable and leaves the
+> previous valid draft intact. Edge/IndexedDB reload and captured save-byte
+> checks passed; native picker/end-to-end WebView2 save was not repeated.
+> Public alpha.68 and existing generated projects are unchanged.
+
 ## Source-only Scope
 
 New `init --template text-editor` projects include local IndexedDB draft

@@ -271,6 +271,15 @@ enable the same app setting and rebuild while retaining their app ID and
 profile, after closing all instances. Concurrent draft safety is not provided
 when the setting is disabled.
 
+Source-only text-editor newline preservation sets the clean baseline from the
+normalized textarea value, preventing CRLF opening from marking the document
+dirty. Unedited content round-trips exact LF/CRLF/CR or mixed endings. After an
+edit, all newlines use the first ending from the source; new/no-newline content
+uses LF. Serialized UTF-8 must still fit 2 MiB before any save request. Drafts
+preserve endings inside their existing text field, with no v1 schema migration.
+Public alpha.68 and existing generated editors are unchanged; no host, IPC,
+permission or dependency change is included.
+
 The published alpha.68 text-editor starter also offers opt-in document finding with
 literal non-overlapping matches, previous/next wraparound, match counts and
 a case-sensitivity checkbox. Ctrl+F opens the initially hidden bar; Enter and

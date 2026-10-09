@@ -277,6 +277,15 @@ keep the app ID and profile unchanged to retain its draft. Close all existing
 instances before launching the rebuilt app. Disabling this setting permits
 concurrent windows to overwrite or clear the same draft.
 
+Source text-editor generation also preserves file line endings. Opening a
+CRLF file uses the textarea's normalized value as the clean baseline. Unedited
+files retain their exact text, including mixed LF/CRLF/CR endings; after an edit,
+newlines follow the first ending in that document. New documents and old LF
+drafts retain LF. Drafts use the same existing four-field record, with endings
+preserved in `text`. Saving checks the serialized UTF-8 size before native
+access, including CRLF expansion. This is not in public alpha.68 and does not
+upgrade existing generated projects.
+
 New alpha.68 text-editor projects also include document finding: Ctrl+F,
 previous/next matches, a match count, Match case and Escape to close.
 Search is literal with wraparound and does not change the document or draft.

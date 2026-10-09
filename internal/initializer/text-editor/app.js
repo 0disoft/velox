@@ -17,6 +17,9 @@
   const appName = document.title;
   let name = "Untitled.txt";
   let savedText = "";
+  let sourceText = "";
+  let sourceValue = "";
+  let lineEnding = "\n";
   let target = null;
   let busy = false;
   let composing = false;
@@ -38,6 +41,19 @@
     (message, changed = true) => { status.textContent = message; render(); if (changed) scheduleDraft(); });
 
   function isDirty() { return recovered || editor.value !== savedText; }
+
+  function setDocumentText(text) {
+    editor.value = text;
+    sourceText = text;
+    sourceValue = editor.value;
+    lineEnding = text.match(/\r\n|\r|\n/)?.[0] ?? "\n";
+  }
+
+  function serializeText(value) {
+    // Retain mixed endings until an edit; textarea itself always exposes LF.
+    if (value === sourceValue) return sourceText;
+    return lineEnding === "\n" ? value : value.replace(/\n/g, lineEnding);
+  }
 
   function viewBlocked() {
     return busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open;
@@ -102,7 +118,7 @@
     draftState.textContent = "Saving draft...";
     draftTimer = setTimeout(() => {
       draftTimer = null;
-      const snapshot = isDirty() ? { name, text: editor.value, updatedAt: Date.now() } : null;
+      const snapshot = isDirty() ? { name, text: serializeText(editor.value), updatedAt: Date.now() } : null;
       void writeDraft(snapshot, revision).catch(() => {});
     }, 300);
   }
@@ -161,7 +177,8 @@
     let cleared = true;
     try { await clearDraft(); } catch { cleared = false; }
     name = "Untitled.txt";
-    editor.value = savedText = "";
+    setDocumentText("");
+    savedText = editor.value;
     finder.reset();
     recovered = false;
     status.textContent = cleared ? "New document." : "New document. Draft cleanup unavailable.";
@@ -174,7 +191,8 @@
     let cleared = true;
     try { await clearDraft(); } catch { cleared = false; }
     name = result.name;
-    editor.value = savedText = result.text;
+    setDocumentText(result.text);
+    savedText = editor.value;
     finder.reset();
     recovered = false;
     status.textContent = cleared ? "File opened." : "File opened. Draft cleanup unavailable.";
@@ -182,13 +200,19 @@
 
   async function saveDocument(saveAs) {
     const snapshot = editor.value;
+    const text = serializeText(snapshot);
+    if (text.length > 2 * 1024 * 1024 || new TextEncoder().encode(text).byteLength > 2 * 1024 * 1024) {
+      throw Object.assign(new Error("Text exceeds the 2 MiB UTF-8 limit."), { code: "PAYLOAD_TOO_LARGE" });
+    }
     const result = saveAs || target === null
-      ? await window.velox.saveTextAs(snapshot, name)
-      : await window.velox.saveTextTo(snapshot, target);
+      ? await window.velox.saveTextAs(text, name)
+      : await window.velox.saveTextTo(text, target);
     if (result.cancelled) { status.textContent = "Save canceled."; return; }
     target = result.target;
     name = result.name;
     savedText = snapshot;
+    sourceText = text;
+    sourceValue = snapshot;
     recovered = false;
     status.textContent = "File saved.";
     try { await clearDraft(); }
@@ -240,7 +264,7 @@
     if (recoveryCandidate === null) return;
     if (recoveryDialog.returnValue === "recover") {
       name = recoveryCandidate.name;
-      editor.value = recoveryCandidate.text;
+      setDocumentText(recoveryCandidate.text);
       finder.reset();
       savedText = "";
       target = null;
