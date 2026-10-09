@@ -8,6 +8,32 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Text-editor long UTF-8 suggested names (2026-10-10): two new regressions failed
+before the fix for long-name opening and restored drafts. Source Save/Save as
+now send `Untitled.txt` only when the suggested name exceeds 240 UTF-8 bytes;
+normal and exact-bound names are preserved. Cancellation/failure retain the
+original label, dirty text and draft; success adopts the returned chosen name,
+and subsequent Save reuses its target. The existing editor harness was moved
+unchanged into a shared test helper to keep new save-name tests separate.
+65 Bun initializer tests and fileopen/IPC/initializer/CLI Go tests and scoped
+vet passed. Native Go boundary tests covered Korean 238/244-byte, emoji
+240/244-byte and ASCII 240/241-byte names without changing validation code.
+A Windows test created and read a real 80-Korean-character filename, saved
+the contents to a safe destination through a supplied selection callback,
+then performed a connected write. Exact bytes and unchanged original source
+were verified; this was not actual picker interaction.
+Actual CLI init generated 24 files. Headless Edge with the production JS bridge
+and mock native IPC passed all six name boundaries, cancelled/failed selection,
+real IndexedDB reload/restore of the long-name draft, saved UTF-8 capture bytes,
+and connected commit reuse. The long-name screenshot was inspected; owned
+browser/server closed. Receipts remain uncommitted under `.cache/save-name-ui`.
+README, CLI contract and product spec updated; diff check passed. Native picker
+UI, full release/installer and performance/size checks were skipped for this
+template-only change. Final destination names above 240 UTF-8 bytes remain
+unsupported. No host/IPC API, permission, DB/schema, dependency, repository
+hygiene or CI runner changes. No version bump, push or publication; public
+alpha.68 and existing generated apps are unchanged.
+
 WebView2 close after main-browser failure (2026-10-10): the source fork now
 registers a pinned/refcounted ProcessFailed callback with checked HRESULT and
 a tracked removal token. Only BrowserProcessExited marks browser consent as

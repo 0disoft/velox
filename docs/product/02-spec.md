@@ -280,6 +280,14 @@ preserve endings inside their existing text field, with no v1 schema migration.
 Public alpha.68 and existing generated editors are unchanged; no host, IPC,
 permission or dependency change is included.
 
+Source-only text-editor save-name fallback substitutes `Untitled.txt` when
+the document name exceeds 240 UTF-8 bytes. The displayed original name and
+draft are preserved until a successful save returns the selected name.
+Save cancellation/failure and connected-target reuse keep their existing
+behavior. Native filename/path validation remains unchanged; this does not
+enable writes to over-limit destination basenames. Public alpha.68 and
+existing generated editors are unchanged.
+
 The published alpha.68 text-editor starter also offers opt-in document finding with
 literal non-overlapping matches, previous/next wraparound, match counts and
 a case-sensitivity checkbox. Ctrl+F opens the initially hidden bar; Enter and

@@ -204,8 +204,9 @@
     if (text.length > 2 * 1024 * 1024 || new TextEncoder().encode(text).byteLength > 2 * 1024 * 1024) {
       throw Object.assign(new Error("Text exceeds the 2 MiB UTF-8 limit."), { code: "PAYLOAD_TOO_LARGE" });
     }
+    const suggestedName = new TextEncoder().encode(name).byteLength > 240 ? "Untitled.txt" : name;
     const result = saveAs || target === null
-      ? await window.velox.saveTextAs(text, name)
+      ? await window.velox.saveTextAs(text, suggestedName)
       : await window.velox.saveTextTo(text, target);
     if (result.cancelled) { status.textContent = "Save canceled."; return; }
     target = result.target;

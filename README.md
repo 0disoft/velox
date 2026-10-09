@@ -286,6 +286,12 @@ preserved in `text`. Saving checks the serialized UTF-8 size before native
 access, including CRLF expansion. This is not in public alpha.68 and does not
 upgrade existing generated projects.
 
+Source text-editor Save/Save as also suggest `Untitled.txt` when the document
+name exceeds the native 240-byte UTF-8 limit, including long Korean names.
+The displayed name and draft stay unchanged on cancellation or failure;
+only a successful save adopts the chosen name. The final destination must
+still satisfy native filename validation. This is not in public alpha.68.
+
 New alpha.68 text-editor projects also include document finding: Ctrl+F,
 previous/next matches, a match count, Match case and Escape to close.
 Search is literal with wraparound and does not change the document or draft.

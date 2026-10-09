@@ -210,6 +210,15 @@ Drafts store the serialized text in the existing v1 record and detect its
 ending again on restore; old LF drafts need no migration. No host, permission,
 dependency or schema change; public alpha.68 and existing apps are unchanged.
 
+Source text-editor Save/Save as replace only an over-240-byte UTF-8 suggested
+name with `Untitled.txt` before calling saveTextAs. Names within the bound are
+unchanged. The document label, dirty state and draft retain the original name
+until a successful save returns the chosen name; cancellation/failure do not
+rename the document. Connected saves continue using the existing target token.
+Native name/path checks are unchanged, including the final destination's
+240-byte basename bound; a user must choose a shorter destination name.
+Public alpha.68 and existing generated projects are unchanged.
+
 The folder-browser starter provides folder selection, immediate-entry listing,
 explicit refresh, readonly UTF-8 file preview and folder release. It reuses
 the existing host bounds and document-scoped folder tokens. Selection
