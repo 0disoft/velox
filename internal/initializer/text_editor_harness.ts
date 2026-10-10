@@ -32,6 +32,7 @@ export async function harness(native = true, options: { draft?: unknown; load?: 
   let storedDraft: any = options.draft ?? null;
   let draftFailure = false;
   let draftWait: Promise<unknown> | null = null;
+  let draftClearWait: Promise<unknown> | null = null;
   const draftCalls: any[] = [];
   const timers = new Map<number, Function>();
   let timerID = 0;
@@ -48,6 +49,7 @@ export async function harness(native = true, options: { draft?: unknown; load?: 
     },
     async clear() {
       draftCalls.push({ method: "clear" });
+      if (draftClearWait) await draftClearWait;
       if (draftFailure) throw new Error("storage failed");
       storedDraft = null;
     },
@@ -88,6 +90,7 @@ export async function harness(native = true, options: { draft?: unknown; load?: 
     draftCalls, storedDraft: () => storedDraft,
     setDraftFailure: (value: boolean) => { draftFailure = value; },
     setDraftWait: (value: Promise<unknown> | null) => { draftWait = value; },
+    setDraftClearWait: (value: Promise<unknown> | null) => { draftClearWait = value; },
     async flushDraft() { for (const [id, fn] of timers) { timers.delete(id); fn(); } await tick(); },
   };
 }

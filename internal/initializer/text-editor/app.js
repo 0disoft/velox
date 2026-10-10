@@ -30,7 +30,9 @@
   let draftTimer = null;
   let draftRevision = 0;
   let draftPending = false;
-  let draftWrites = Promise.resolve();
+  let draftWriteRunning = false;
+  let pendingDraftWrite = null;
+  let pendingDraftClear = null;
   let wordWrap = true;
   let fontSize = 18;
   const positions = window.EditorPosition.attach(document, editor, () => composing);
@@ -95,10 +97,43 @@
     positions.update();
   }
 
+  async function drainDraftWrites() {
+    if (draftWriteRunning) return;
+    draftWriteRunning = true;
+    try {
+      while (pendingDraftClear || pendingDraftWrite) {
+        const work = pendingDraftClear || pendingDraftWrite;
+        if (pendingDraftClear) pendingDraftClear = null;
+        else pendingDraftWrite = null;
+        try {
+          await (work.snapshot === null ? drafts.clear() : drafts.save(work.snapshot));
+          work.resolve();
+        } catch (error) { work.reject(error); }
+      }
+    } finally { draftWriteRunning = false; }
+  }
+
+  function enqueueDraftWrite(snapshot) {
+    // A clear discards older waiting snapshots, but remains ahead of later writes.
+    if (snapshot === null) {
+      pendingDraftWrite?.resolve();
+      pendingDraftWrite = null;
+      if (pendingDraftClear) return pendingDraftClear.promise;
+    }
+    let resolve, reject;
+    const promise = new Promise((ok, fail) => { resolve = ok; reject = fail; });
+    const work = { snapshot, promise, resolve, reject };
+    if (snapshot === null) pendingDraftClear = work;
+    else {
+      pendingDraftWrite?.resolve();
+      pendingDraftWrite = work;
+    }
+    void drainDraftWrites();
+    return promise;
+  }
+
   function writeDraft(snapshot, revision) {
-    const job = draftWrites.then(() => snapshot === null ? drafts.clear() : drafts.save(snapshot));
-    // Keep one serial chain even after failures; never let an old write follow a clear.
-    draftWrites = job.catch(() => {});
+    const job = enqueueDraftWrite(snapshot);
     job.then(() => {
       if (revision !== draftRevision) return;
       draftPending = false;

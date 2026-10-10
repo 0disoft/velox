@@ -269,6 +269,12 @@ permissions; the next Save selects a destination again. Existing generated
 projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
+Source text-editor draft scheduling now retains only the in-flight operation
+and latest waiting snapshot when storage is slow. Clearing drops obsolete
+waiting edits and still commits before later writes; failed operations do not
+block future work. The draft format, debounce and close protection are unchanged.
+This is not in public alpha.68 and does not upgrade existing generated editors.
+
 The source CLI now sets `app.singleInstance: true` for new text-editor projects
 so duplicate launches reuse the existing window rather than compete for its
 one draft record. This default is not in public alpha.68. For an existing

@@ -17,6 +17,28 @@
 
 ## Source-only Scope
 
+Source-only follow-up (2026-10-11): the editor no longer retains an unbounded
+chain of full-document snapshots when storage is slow. It keeps one in-flight
+operation, one latest waiting snapshot and a protected pending clear boundary.
+A clear removes older waiting snapshots; later snapshots cannot replace or
+overtake it. Repeated pending clears share one completion promise. Callers wait
+for clear completion, failures do not poison the queue, and only the current
+revision updates the draft status. The 300 ms debounce and existing v1 record
+are unchanged. These assets are not in public alpha.68 or existing editors.
+
+Six new queue regressions cover delayed storage, superseded snapshots, first
+write failure, awaited clearing, post-clear writes, failed clearing and repeated
+clear requests. Four initially failed against the old serial chain. All 71
+initializer Bun tests, initializer/CLI Go tests and scoped vet passed. A newly
+built CLI generated a private editor; headless Edge with real IndexedDB and
+mock native saves committed only the first/latest of six delayed snapshots,
+restored the latest Unicode draft after reload, awaited a clear without storing
+obsolete snapshots, and did not restore a cleared draft after another reload.
+The browser and loopback server closed; `.cache/draft-queue-ui/result.json`
+is an uncommitted local receipt. An initial UI probe waited for a dirty label
+that only renders after cleanup and timed out; waiting for the immediate save
+status fixed the probe. This is not native picker/WebView2 or release evidence.
+
 New `init --template text-editor` projects include local IndexedDB draft
 recovery. Public alpha.65 and existing generated projects are unchanged.
 The host, IPC v1, native permissions, schemas, dependencies and CI workflows

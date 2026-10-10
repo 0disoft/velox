@@ -261,6 +261,14 @@ editing and unsaved-change protection intact. Existing generated projects are
 not upgraded and the host is unchanged. See
 [the recovery record](../ops/text-editor-drafts.md).
 
+Source-only draft scheduling retains one in-flight operation and only the
+latest waiting snapshot. Intermediate waiting edits are skipped, but clears
+drop older waiting snapshots and commit before any later write. Clear callers
+still await completion; pending clears can share one storage operation.
+Failures leave later queue work available and stale revisions cannot change
+the persistence status. No worker, dependency, host/IPC change or v1 record
+migration is added. Public alpha.68 and existing generated editors are unchanged.
+
 Source-only text-editor generation enables `app.singleInstance: true`.
 The existing host guard reuses the first window for the same user, session,
 app ID and profile, preventing duplicate launches from competing for the

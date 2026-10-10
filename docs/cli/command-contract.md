@@ -190,6 +190,15 @@ editing and unsaved-change protection. No native path, token, saved-text
 baseline or permission is persisted. This affects newly generated projects,
 not existing projects; host, IPC and permissions are unchanged.
 
+Source-only draft scheduling keeps one in-flight storage operation and one
+latest waiting document snapshot instead of retaining every debounced edit.
+A clear drops older waiting snapshots, commits after the in-flight operation,
+and remains ahead of any later snapshot. Callers still await actual clear
+completion; repeated pending clears share that boundary. Storage failures do
+not stop later work, and only the current revision updates persistence status.
+The 300 ms debounce, v1 record, limits and close protection remain unchanged.
+Public alpha.68 and existing generated editors are not upgraded.
+
 Source `init --template text-editor` sets `app.singleInstance: true` to keep
 duplicate launches from sharing and overwriting the single draft record.
 It reuses the existing host guard for the same user, session, app ID and

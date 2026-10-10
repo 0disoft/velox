@@ -8,6 +8,31 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Latest-only text-editor draft queue (2026-10-11): source template now holds one
+in-flight operation and one latest waiting full-document snapshot. A separate
+pending clear boundary drops older snapshots, runs after the active operation,
+and cannot be replaced/overtaken by later saves. Repeated pending clears share
+completion; clear callers await it. Failures permit subsequent work, and stale
+revisions cannot claim current persistence. Existing debounce, IME guards,
+close protection, raw newline serialization, limits and v1 record remain.
+Four new regressions failed with the old chain; six queue tests now cover
+coalescing, failed writes/clears, awaited clear, later writes and repeated clears.
+All 71 initializer Bun tests and initializer/CLI Go tests passed; scoped vet
+passed. A stripped source CLI built and generated a private 24-file editor.
+Headless Edge used real IndexedDB with delayed storage and mock native saves:
+only first/latest of six snapshots committed, latest Unicode draft restored
+on reload, clear skipped obsolete snapshots and completed before unlocking,
+and cleared data did not reappear on another reload. No page errors; browser
+and server closed. The initial probe incorrectly waited for a label rendered
+only after cleanup and timed out; corrected status-based probing passed.
+Receipts stay uncommitted under `.cache/draft-queue-ui`. Native picker/WebView2,
+full release/installer and comparative memory/performance measurements were
+skipped for this template-only change. Failed cleanup can still leave an older
+draft, and abrupt exit can lose uncommitted edits. No host/public API, permission,
+DB schema, dependency, repository hygiene or CI runner changes. README, CLI
+contract, product spec and draft recovery record updated. No version bump,
+push or publication; public alpha.68 and existing generated apps are unchanged.
+
 Bounded native IPC message decoding (2026-10-11): source WebView2 fork limits
 UTF-16 payload traversal before decoding and retains the exact 64 KiB UTF-8
 check. Oversized prefixes return without a Go string copy; an allocation test
