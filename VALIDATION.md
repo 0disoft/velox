@@ -8,6 +8,21 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Same-major Action patch refresh (2026-10-11): official release/tag commit
+verification identified download-artifact v8.0.2 at
+9000827ccba6bdab643e8b6fd33ac0654aef8333 and upload-artifact v7.0.2 at
+cf430e030ddbb5b0abf93d22962f4752f3646cd9. Four download and twelve upload uses
+across six workflows now share these immutable pins. Checkout v7.0.1 and
+setup-go v7.0.0 were already current and unchanged. Release notes describe
+artifact-service HTTP 429/Retry-After retry improvements and the artifact
+library patch; no action input or major-version migration was introduced.
+The live repository pin verifier passed all four action repositories; action-
+pin Go tests, hygiene and diff checks passed. Existing workflow permissions,
+triggers, jobs, repetitions and runners are unchanged. No application API,
+DB/schema, Go dependency, executable size, version or public release change.
+A single explicitly approved quick Consumer evidence attempt will verify the
+updated main commit; this preparation record does not claim hosted success.
+
 Hosted quick consumer attempt (2026-10-11): manual Consumer evidence run
 [38081266010/1](https://github.com/0disoft/velox/actions/runs/38081266010)
 tested main df62e71b59807ec377b72af446e5b19946e95995 with evidence_tier=quick;
