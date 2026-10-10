@@ -8,6 +8,26 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Hosted quick consumer attempt (2026-10-11): manual Consumer evidence run
+[38081266010/1](https://github.com/0disoft/velox/actions/runs/38081266010)
+tested main df62e71b59807ec377b72af446e5b19946e95995 with evidence_tier=quick;
+profile comparison, startup history and security fuzz were disabled. Windows
+2025 x64 with Go 1.26.0 passed `go test -count=1 ./...`. Built-host startup and
+other explicit opt-in native steps did not run in that general test command.
+The run FAILED at Verify GitHub Action pins: actions/download-artifact was
+pinned to v8.0.1, while GitHub reported latest stable v8.0.2 (published October
+7). The upstream release was independently confirmed through GitHub's API.
+This is an action-version drift failure, not a reproduced application defect.
+Release build, native startup/security and permission recovery, three lifecycle
+pairs, consumer packaging and its summary were skipped after that failure.
+The lifecycle upload step completed with a no-files warning; it is not evidence
+that native checks passed. No release archive or lifecycle evidence was
+produced. No automatic retry, workflow/pin edit, version bump, tag, push or
+publication was performed. Only this validation record changed; no production
+API, DB/schema, permission, dependency or repository-hygiene change, and no
+runner/workflow definition change. Next: validate/update the same-major action
+patch pins before an explicitly approved push and another quick attempt.
+
 Browser-exit-first lifecycle checks (2026-10-11): ordinary built-host lifecycle
 and JSON evidence collection now share an ordered release helper. Both observed
 browser process exits precede disposable-folder deletion, with one unchanged
