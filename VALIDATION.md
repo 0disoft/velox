@@ -8,6 +8,43 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Local integrated distribution verification (2026-10-11): CLI, GUI host and
+GUI Setup template built from main source d37801736aee7667855a444f398001249b9c1705
+(17 local commits beyond origin/main), using Go 1.27.1 on Windows x64. Release
+assembly used only these new binaries and current source contracts, under
+`.cache/integration-20261011`, without replacing `dist/release` or user apps.
+All 16 release-manifest artifact sizes and SHA-256 values matched. The local
+release ZIP is 6,890,760 bytes with SHA-256
+`0898dfb7c47d35b5ee5bc878ef26f0041f03bbb59ee8ad8295492e050281a76e`.
+Releasebundle, setuppayload, installer, CLI and hygiene Go tests passed;
+Setup package compiled and has no package test files. Packaged CLI version
+and doctor passed with the generated project config. The initial doctor
+invocation without a project config correctly failed manifest validation.
+
+The existing installer smoke used Bun 1.4.2 and a unique disposable app ID.
+Two generated portable ZIPs and Setup executables were byte-identical;
+portable ZIP and installed app inspection passed. Silent installation,
+shortcut/registry creation, actual Start Menu launch, native window close,
+host exit 0, observed browser exit, and uninstall cleanup all passed. A user
+document and 169 profile files were preserved; the disposable profile was
+moved into the smoke receipt directory after removal. Evidence is at
+`.cache/installer-smoke-1f24f67e-b936-4fba-af45-61b1434f8d06/result.json`.
+This generated minimal app did not verify editor draft restoration or DOM
+readiness. No existing user app, document or profile was changed.
+
+Built-host GUI subsystem and native security-policy regressions passed on
+WebView2 154.0.4258.62. The first lifecycle trial FAILED because the immediate
+same-profile relaunch's profile lock was not released within 10 seconds.
+Two unchanged lifecycle retries passed: immediate ready in 6.45/6.74 seconds,
+profile release in 6.01/6.85 seconds. Retries do not erase the initial failure;
+intermittent lock-release delay remains unresolved and no runtime fix is
+claimed. No matching startup-test browser processes remained at final check.
+Prior focused template/fork results were reused rather than repeated. Manual
+editor/picker interaction, signing, hosted stress, Linux and full release CI
+were not repeated for this local integration check. No API, DB/schema,
+permission, dependency, repository hygiene or runner changes. No version bump,
+push or publication; version remains alpha.68 and public assets are unchanged.
+
 Reuse extraction inspection for Setup display (2026-10-11): internal Extract
 returns the verified directory and its completed inspection; Setup uses its
 app name/version without a second UI-only full inspection. Extraction still
