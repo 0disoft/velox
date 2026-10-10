@@ -8,6 +8,26 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Profile lock ownership diagnostic (2026-10-11): six unchanged-host
+fresh/immediate pairs used disposable profiles on WebView2 154.0.4258.62.
+Four counterbalanced delete-first/browser-exit-first trials observed successful
+controller Close and release markers, host exit in 94-199 ms and browser exit
+6.18-9.37 seconds later. Folder removal followed browser exit; a read-only
+Restart Manager query in the fifth pair identified the exact lockfile's user
+as only the observed WebView2 browser PID; a sixth pair verified the same
+PID-match assertion. The legacy deletion loop removed
+all but the lockfile while the browser was live. The exit-first control still
+had a 9.37-second delay, so deletion was not established as its cause.
+The previous 10-second failure remains unresolved and was not reproduced in
+these six pairs. Opt-in diagnostics, non-destructive DELETE-access probe and
+owner-query unit checks passed; scoped startup vet passed. See the
+[diagnostic record](docs/ops/profile-lock-diagnostic.md) for exact timings,
+host/source hashes and scope. No production workaround was applied. Broader
+stress/ETW tracing, internal browser shutdown attribution and release checks
+were not run for this bounded diagnosis. No API, DB/schema, dependency,
+permission, repository hygiene, runtime, version or CI runner change; no push
+or publication. Existing lifecycle deletion order is unchanged in this task.
+
 Local integrated distribution verification (2026-10-11): CLI, GUI host and
 GUI Setup template built from main source d37801736aee7667855a444f398001249b9c1705
 (17 local commits beyond origin/main), using Go 1.27.1 on Windows x64. Release
