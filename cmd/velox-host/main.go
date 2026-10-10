@@ -21,13 +21,17 @@ func main() {
 }
 
 func run(args []string) int {
+	return runWithStartupNotice(args, showStartupFailure)
+}
+
+func runWithStartupNotice(args []string, notice func(startupFailureKind)) int {
 	benchmark := benchmarkOptionsFromEnvironment(os.Getenv)
+	reporter := startupFailureReporter{output: os.Stderr, notice: notice, headless: benchmark.enabled}
 	timeline := benchmarker.NewTimelineRecorder(benchmark.pipeConfigured)
 	shutdownTimeline := benchmarker.NewShutdownTimelineRecorder(benchmark.pipeConfigured)
 	configDefault, err := defaultConfigPath(os.Executable)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
-		return 6
+		return reporter.fail(startupHost, err, 6)
 	}
 	flags := flag.NewFlagSet("velox-host", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
@@ -35,27 +39,30 @@ func run(args []string) int {
 	debug := flags.Bool("debug", false, "enable WebView2 development tools")
 	watch := flags.Bool("watch", false, "reload after stable development asset edits")
 	if err := flags.Parse(args); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			reporter.notify(startupConfiguration)
+		}
 		return 2
 	}
 
 	cfg, err := runtimeconfig.Load(*configPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
-		return 2
+		return reporter.fail(startupConfiguration, err, 2)
 	}
 	timeline.Mark("config-loaded")
 	if err := enablePerMonitorDPI(); err != nil {
-		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
-		return 6
+		return reporter.fail(startupDisplay, err, 6)
 	}
 
 	dataPath := os.Getenv("VELOX_DATA_DIR")
 	if dataPath == "" {
 		dataPath, err = defaultDataPath(cfg.App.ID)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
-			return 6
+			return reporter.fail(startupProfile, err, 6)
 		}
+	}
+	if !filepath.IsAbs(dataPath) {
+		return reporter.fail(startupProfile, errors.New("invalid WebView2 configuration: WebView2 data path must be absolute"), 6)
 	}
 
 	var instance *singleinstance.Guard
@@ -63,14 +70,17 @@ func run(args []string) int {
 		var primary bool
 		instance, primary, err = singleinstance.Acquire(cfg.App.ID, dataPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
-			return 6
+			return reporter.fail(startupInstance, err, 6)
 		}
 		defer instance.Close()
 		if !primary {
 			instance.Activate()
 			return 0
 		}
+	}
+	// A duplicate exits above without opening or creating the primary's profile.
+	if err := os.MkdirAll(dataPath, 0o700); err != nil {
+		return reporter.fail(startupProfile, fmt.Errorf("%w: prepare application profile: %w", webview2.ErrRuntimeUnavailable, err), 5)
 	}
 
 	var runtime *webview2.Runtime
@@ -130,14 +140,7 @@ func run(args []string) int {
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, webview2.ErrInitializationCanceled) {
-			return 0
-		}
-		fmt.Fprintf(os.Stderr, "velox-host: %v\n", err)
-		if errors.Is(err, webview2.ErrRuntimeUnavailable) {
-			return 5
-		}
-		return 6
+		return reporter.runtimeFailure(err)
 	}
 	timeline.Mark("runtime-opened")
 	audit.complete = func() {

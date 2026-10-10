@@ -390,6 +390,16 @@ Public alpha.65 did not include this extension; it ships in alpha.66. See
 
 ### Window Close
 
+Source-only host startup failures also have a native fixed-text error notice,
+so an Explorer-launched GUI app does not fail invisibly. Configuration/assets,
+profile-folder preparation, display scaling, instance-lock and WebView2 errors
+have separate guidance; opaque WebView2 failures are not diagnosed as profile
+corruption. No configuration strings, local paths or document contents enter
+the notice. Local stderr and process exit codes remain available. Help and
+initialization cancellation show no error notice. Explicit benchmark mode
+suppresses modal notices. No telemetry, dependency, permission, IPC/schema or
+profile reset is added; public alpha.68 hosts are unchanged.
+
 After initialization, title-bar close and Alt+F4 request browser-owned closure.
 WebView2 must be allowed to run `beforeunload` and obtain any required user
 consent before the host destroys the window. Cancellation keeps the document

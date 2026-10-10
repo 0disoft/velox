@@ -8,6 +8,31 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+GUI startup failure notices (2026-10-11): source host now routes configuration,
+profile-directory preparation, display scaling, instance-lock and WebView2
+initialization failures to bounded fixed-text MessageBoxW notices. stderr and
+exit codes remain; wrapped initialization cancellation returns 0 without any
+notice/diagnostic, help has no error notice, and explicit benchmark mode remains
+non-modal. Duplicate instances still exit before profile directory creation.
+Relative data directories fail before any creation. Existing profile contents
+are neither reset nor deleted. Opaque browser failures retain generic guidance.
+Host unit tests cover classifications, cancellation, codes 2/5/6, fixed-text
+privacy, benchmark suppression, real missing config/invalid flag and obstructed
+or relative profile paths. Scoped host/startup vet passed. A stripped GUI host
+was built and real process-owned dialogs checked for config/profile failures:
+notice body, excluded private paths/data, dismissal, original stderr/exit code
+and preserved profile bytes passed twice. The first native harness attempted
+WM_COMMAND too early and failed dismissal; polling for initialized controls
+and WM_CLOSE corrected the harness, then both runs passed.
+Built-host startup subtests passed early close, default icons, GUI subsystem,
+fresh/immediate same-profile lifecycle, missing fixed runtime and security
+policy. Early close was exercised in benchmark mode; cancellation-with-notice
+suppression is unit-tested separately. Actual runtime uninstall, forced DPI
+or mutex failures, full release/installer, size and comparative performance
+checks were skipped. No public API, permission, DB/schema, dependency, repository
+hygiene or CI runner changes. README, CLI contract and product spec updated.
+No version bump, push or publication; public alpha.68 is unchanged.
+
 Text-editor long UTF-8 suggested names (2026-10-10): two new regressions failed
 before the fix for long-name opening and restored drafts. Source Save/Save as
 now send `Untitled.txt` only when the suggested name exceeds 240 UTF-8 bytes;

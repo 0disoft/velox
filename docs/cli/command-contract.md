@@ -476,6 +476,15 @@ initialization.
 
 ## Failure and Recovery
 
+- Source-only GUI host startup failures show a native, fixed-text notice for
+  configuration/assets, profile-folder preparation, WebView2 initialization,
+  display scaling, single-instance locking or host setup. Raw errors still go
+  to stderr and existing exit codes remain. The notice contains no app-supplied
+  title, absolute path, raw native error or document contents. Help and early
+  user close show no error notice; explicit `VELOX_BENCH_MODE=1` suppresses modal
+  notices without suppressing stderr or failures. Profile preparation never
+  resets or deletes existing data; unclassified WebView2 failures remain a
+  generic initialization notice. Public alpha.68 hosts are unchanged.
 - validate and doctor do not write project or output files.
 - build writes only to an owned staging directory until completion.
 - build removes its staging directory after a handled failure.

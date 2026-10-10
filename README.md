@@ -353,6 +353,13 @@ also emits bounded JavaScript error metadata to local stderr, including with
 install no diagnostic channel. Scope, privacy and native receipts are in
 [Development Diagnostics](docs/ops/development-diagnostics.md).
 
+Source-only GUI hosts now show fixed native startup-error guidance for invalid
+configuration/assets, profile-folder preparation, WebView2 initialization,
+display scaling and instance locking. Notices do not expose paths or document
+contents, and never reset a profile. stderr and exit codes remain available;
+early user close and help do not show an error, and explicit benchmark mode
+suppresses modal notices. This is not included in public alpha.68 hosts.
+
 The published alpha.68 CLI detects stable edits to the selected manifest in
 `run --watch`. Valid edits print a restart-required notice; invalid or unreadable
 settings print a nonfatal error. The running app, permissions and original
