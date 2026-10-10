@@ -105,3 +105,26 @@ The earlier intermittent failure remains historical evidence, not a fixed
 runtime bug. No production host, public API, database, dependency, version,
 workflow or runner changes, push or publication occurred. Full release and
 hosted stress were not repeated for this test-only change.
+
+## Hosted Quick Follow-Up: 2026-10-11
+
+[Consumer evidence 38083236206/1](https://github.com/0disoft/velox/actions/runs/38083236206)
+passed at a3cd0aa0f2b3d50badc4cd1db94e46b158c8c338 after the artifact Action
+patch pins were updated. It used Windows 2025 x64, Go 1.26.0, runner image
+win25-vs2026 / 20260925.250.1 and WebView2 153.0.4234.48. Full Go tests,
+native built-host startup/security/early-close and file-permission recovery
+passed, followed by three successful lifecycle pairs through the ordered helper.
+
+Immediate browser exits followed host exit by 5,232.14-5,796.85 ms. Folder
+removal completed 5,255.22-5,812.48 ms after host exit, later than each observed
+browser exit. Raw lifecycle SHA-256 is
+`b62b92381f14958370f87fa1b3e47d54be797b6705b49954dba9561c92313d36`, matching
+the downloaded summary's source digest. Local copies are ignored under
+`.cache/action-patch-ci-38083236206/startup`.
+
+This confirms the reordered check on one hosted environment, not a shutdown
+latency fix or proof that the previous local intermittent timeout is resolved.
+The runtime version differs from the local diagnosis; timings are not presented
+as a controlled performance comparison. Quick used three pairs; full stress,
+profile comparison, startup history and fuzz were deliberately not repeated.
+No public release replacement, new version, tag or beta promotion occurred.

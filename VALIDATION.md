@@ -8,6 +8,32 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Hosted quick after Action patch refresh (2026-10-11): explicitly approved
+[Consumer evidence 38083236206/1](https://github.com/0disoft/velox/actions/runs/38083236206)
+SUCCEEDED at pushed main a3cd0aa0f2b3d50badc4cd1db94e46b158c8c338. Four
+Action latest-release/tag-SHA checks, Windows x64 Go 1.26.0 full Go tests,
+CLI/GUI host/GUI Setup build, native startup/icons/early close/security and
+native file-permission recovery passed. Browser-exit-first lifecycle evidence
+passed all three pairs on WebView2 153.0.4234.48, image win25-vs2026
+20260925.250.1. Immediate browser exit after host ranged 5,232.14-5,796.85 ms;
+profile removal ranged 5,255.22-5,812.48 ms and followed each observed browser
+exit. This does not eliminate multi-second shutdown delay or the earlier
+intermittent timeout. One basic consumer packaging sample and Ubuntu summary
+passed with no missing samples and successful process evidence.
+Downloaded native raw/summary digests and both evidence commits matched.
+The downloaded CI release ZIP is 5,937,853 bytes, SHA-256
+f3fb60efb6a65c800b0d01300453693ea78120e24c3344f7cff548671231dabb, matching
+consumer acquisition and summary. Receipts remain ignored under
+`.cache/action-patch-ci-38083236206`. Workflow input stayed quick; optional
+profile comparison, startup history and fuzz were disabled. No second CI
+attempt, full stress, new installer interaction, editor picker/draft workflow,
+independent producer reproduction, public-download verification or publication
+was performed. CI bytes retain alpha.68's version string but are new source
+artifacts, not the existing public release. Action/failure-record commits were
+pushed once; this success record is a subsequent local documentation commit.
+No application API, DB/schema, permission, Go dependency, version or runner/job
+definition change; only the already-recorded Action patch pins changed.
+
 Same-major Action patch refresh (2026-10-11): official release/tag commit
 verification identified download-artifact v8.0.2 at
 9000827ccba6bdab643e8b6fd33ac0654aef8333 and upload-artifact v7.0.2 at
