@@ -53,6 +53,24 @@ root, rejects duplicate or case-colliding names, applies the shared
 file-count, per-file, total-size, and compression-ratio budgets, and then
 re-runs the standard portable-directory inspector on the extracted tree.
 
+Source-only follow-up (2026-10-11): extraction now returns that completed
+inspection along with the directory. Setup reuses its app name/version for
+confirmation and success messages instead of immediately reading and hashing
+the same tree again. This removes one full UI-only inspection. The returned
+metadata is not installation authorization: `Install` still re-inspects the
+source at entry, scans it, compares copied sizes/hashes, and verifies the final
+staging tree. Payload checksum/ZIP budgets and copy checks are unchanged.
+Public alpha.68 and existing Setup executables do not contain this change.
+
+Targeted payload/installer tests cover the returned complete metadata, empty
+results on failed tree inspection, refusal after a prior display inspection
+becomes stale, and staging refusal after source mutation following install
+entry inspection. Existing Windows shortcut/registry/removal and interruption
+tests passed in private test locations; scoped vet and a stripped Windows GUI
+Setup build passed. Mutation during the copy stream itself was not newly
+injected, and actual Setup confirmation, full distribution smoke and timing/
+size comparisons were not repeated. No measured installation speedup is claimed.
+
 ## Install Layout
 
 A per-user install needs no elevation:

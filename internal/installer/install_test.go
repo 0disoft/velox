@@ -12,6 +12,7 @@ import (
 
 	"github.com/0disoft/velox/internal/assettree"
 	"github.com/0disoft/velox/internal/buildreport"
+	"github.com/0disoft/velox/internal/inspector"
 	"github.com/0disoft/velox/internal/runtimeconfig"
 )
 
@@ -87,6 +88,41 @@ func TestInstallUninstallPreservesDataAndRefusesReplacement(t *testing.T) {
 	}
 	if contents, err := os.ReadFile(data); err != nil || string(contents) != "keep me" {
 		t.Fatal("user data changed")
+	}
+}
+
+func TestInstallRevalidatesSourceAfterDisplayInspection(t *testing.T) {
+	source, setup, env := fixture(t)
+	if _, err := inspector.Inspect(source); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(source, "dev.velox.test.exe"), []byte("tampered host"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	checked := false
+	env.check = func(Record) error { checked = true; return nil }
+	if _, err := install(source, setup, env); err == nil {
+		t.Fatal("installation trusted stale display inspection")
+	}
+	if checked {
+		t.Fatal("environment checked before source validation")
+	}
+	if _, err := os.Stat(env.root); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("invalid source created installation files: %v", err)
+	}
+}
+
+func TestInstallStagingRejectsChangeAfterEntryInspection(t *testing.T) {
+	source, setup, env := fixture(t)
+	env.check = func(Record) error {
+		return os.WriteFile(filepath.Join(source, "web", "index.html"), []byte("changed after entry inspection"), 0o600)
+	}
+	if _, err := install(source, setup, env); err == nil || !strings.Contains(err.Error(), "verify staged installation") {
+		t.Fatalf("staged verification did not reject changed source: %v", err)
+	}
+	entries, err := os.ReadDir(env.root)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("failed installation left staged or published files: %v %v", entries, err)
 	}
 }
 

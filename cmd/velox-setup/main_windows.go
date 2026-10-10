@@ -13,7 +13,6 @@ import (
 	"unsafe"
 
 	"github.com/0disoft/velox/internal/appidentity"
-	"github.com/0disoft/velox/internal/inspector"
 	"github.com/0disoft/velox/internal/installer"
 	"github.com/0disoft/velox/internal/setuppayload"
 	"golang.org/x/sys/windows"
@@ -75,14 +74,11 @@ func run(args []string) int {
 		return failed(err, *silent)
 	}
 	defer os.RemoveAll(work)
-	source, err := payload.Extract(filepath.Join(work, "payload"))
+	extracted, err := payload.Extract(filepath.Join(work, "payload"))
 	if err != nil {
 		return failed(err, *silent)
 	}
-	inspection, err := inspector.Inspect(source)
-	if err != nil {
-		return failed(err, *silent)
-	}
+	inspection := extracted.Inspection
 	if !*silent && message("Install "+inspection.App.Name+" "+inspection.App.Version+" for your Windows account?", "Velox Setup", 0x24) != 6 {
 		return 0
 	}
@@ -90,7 +86,7 @@ func run(args []string) int {
 	if err := payload.CopyTemplate(uninstaller); err != nil {
 		return failed(err, *silent)
 	}
-	result, err := installer.Install(source, uninstaller)
+	result, err := installer.Install(extracted.Directory, uninstaller)
 	if err != nil {
 		return failed(err, *silent)
 	}

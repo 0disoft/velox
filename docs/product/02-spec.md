@@ -113,6 +113,13 @@ needs no final metadata update to allow guarded removal. Public alpha.68 and
 existing installations are unchanged. Partial registry creation, forced-kill
 and power-loss behavior are not covered by this change.
 
+Source-only Setup extraction returns the completed portable inspection for
+display; Setup no longer repeats that full inspection solely to obtain app
+name/version. Installation independently validates the current source, compares
+copy sizes/hashes and verifies staging as before. Payload checksum and archive
+limits remain. Only an internal helper return type changes; no CLI/IPC, ownership
+record or payload format change is added. Public alpha.68 Setup is unchanged.
+
 ADR 0021 adds a narrow, opt-in window-state persistence amendment to ADR 0017.
 It restores one top-level window's placement from a bounded host-owned state
 file and does not widen the application runtime API.

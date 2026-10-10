@@ -8,6 +8,28 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Reuse extraction inspection for Setup display (2026-10-11): internal Extract
+returns the verified directory and its completed inspection; Setup uses its
+app name/version without a second UI-only full inspection. Extraction still
+checks the complete tree, and Install retains independent entry inspection,
+source scan, copied size/hash comparison and final staging inspection. No
+cached extraction result is passed as installation authorization.
+New tests passed for complete identity/hash/count metadata and zero results
+after failed inspection, stale display-time validation rejected before writes,
+and changed source after install-entry inspection rejected during staging with
+no published/residual stage files. Payload/installer Go tests passed, including
+existing real Windows private shortcut/registry/removal, interruption and record
+replacement cases. Setup package compiled (no package test files), scoped vet
+passed and a stripped Windows x64 GUI Setup built. Inspector/CLI/hygiene checks
+passed. Actual Setup confirmation and whole distribution/install smoke were
+not repeated; copy-stream concurrent mutation, full release and comparative
+time/size measurements were skipped. Removal of one full inspection is a
+source-path observation, not a measured speedup. Product spec, CLI contract
+and installer guide updated. Internal Extract return shape changed; no public
+CLI/IPC, DB/schema, ownership/payload format, permission, dependency, repository
+hygiene or CI runner change. No version bump, push or publication; public
+alpha.68 and existing Setup binaries are unchanged.
+
 Latest-only text-editor draft queue (2026-10-11): source template now holds one
 in-flight operation and one latest waiting full-document snapshot. A separate
 pending clear boundary drops older snapshots, runs after the active operation,

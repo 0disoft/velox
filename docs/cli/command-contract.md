@@ -356,6 +356,13 @@ but no Setup executable is published and the command does not report a
 successful installer. The portable directory and ZIP remain the default output.
 See `docs/ops/windows-installer.md`.
 
+Source Setup reuses the portable inspection completed during payload extraction
+for its app-name/version messages instead of repeating a full UI-only scan.
+The installer still revalidates the source at entry, checks copied size/hash
+and verifies staging; extraction metadata is not trusted installation authority.
+No option, exit code, JSON, payload or ownership-record format changes. This
+source optimization is not included in public alpha.68 Setup executables.
+
 The successful `build` result includes an optional `installer` object with
 `file`, `bytes`, and `sha256`. A default build without `--installer` omits the
 `installer` key entirely.

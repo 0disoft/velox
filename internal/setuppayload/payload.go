@@ -35,6 +35,13 @@ type Payload struct {
 	ArchiveBytes  int64
 }
 
+// Extraction carries the completed tree's inspection for display only.
+// Installation must revalidate the directory rather than trust this snapshot.
+type Extraction struct {
+	Directory  string
+	Inspection inspector.Result
+}
+
 // Build attaches a verified portable ZIP to an unsigned, prebuilt Windows GUI
 // setup template. It does not compile application code or modify the template.
 func Build(template, archive, output string) (Result, error) {
@@ -156,13 +163,13 @@ func (payload *Payload) CopyTemplate(output string) error {
 
 // Extract accepts only canonical, regular ZIP entries under one application
 // root, enforces expansion budgets, and rechecks the completed portable tree.
-func (payload *Payload) Extract(output string) (string, error) {
+func (payload *Payload) Extract(output string) (Extraction, error) {
 	reader, err := zip.NewReader(io.NewSectionReader(payload.file, payload.TemplateBytes, payload.ArchiveBytes), payload.ArchiveBytes)
 	if err != nil {
-		return "", err
+		return Extraction{}, err
 	}
 	if len(reader.File) == 0 || len(reader.File) > artifactlimits.MaxFiles {
-		return "", errors.New("setup file count outside limits")
+		return Extraction{}, errors.New("setup file count outside limits")
 	}
 	root := ""
 	seen := make(map[string]bool)
@@ -170,47 +177,48 @@ func (payload *Payload) Extract(output string) (string, error) {
 	for _, entry := range reader.File {
 		parts := strings.SplitN(entry.Name, "/", 2)
 		if !entry.Mode().IsRegular() || safefs.ValidateArchiveEntry(entry.Name) != nil || len(parts) != 2 || seen[strings.ToLower(entry.Name)] {
-			return "", errors.New("unsafe or duplicate setup ZIP entry")
+			return Extraction{}, errors.New("unsafe or duplicate setup ZIP entry")
 		}
 		seen[strings.ToLower(entry.Name)] = true
 		if root == "" {
 			root = parts[0]
 		} else if root != parts[0] {
-			return "", errors.New("setup ZIP contains multiple roots")
+			return Extraction{}, errors.New("setup ZIP contains multiple roots")
 		}
 		if err := budget.Add(entry.Name, entry.UncompressedSize64); err != nil {
-			return "", err
+			return Extraction{}, err
 		}
 		if err := artifactlimits.CheckCompression(entry.Name, entry.UncompressedSize64, entry.CompressedSize64); err != nil {
-			return "", err
+			return Extraction{}, err
 		}
 	}
 	if err := safefs.EnsureDirectory(output, 0o755); err != nil {
-		return "", err
+		return Extraction{}, err
 	}
 	for _, entry := range reader.File {
 		path := filepath.Join(output, filepath.FromSlash(entry.Name))
 		if err := safefs.EnsureDirectory(filepath.Dir(path), 0o755); err != nil {
-			return "", err
+			return Extraction{}, err
 		}
 		input, err := entry.Open()
 		if err != nil {
-			return "", err
+			return Extraction{}, err
 		}
 		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o755)
 		if err != nil {
 			input.Close()
-			return "", err
+			return Extraction{}, err
 		}
 		size, copyErr := io.Copy(file, io.LimitReader(input, int64(entry.UncompressedSize64)+1))
 		closeErr := errors.Join(input.Close(), file.Close())
 		if copyErr != nil || closeErr != nil || uint64(size) != entry.UncompressedSize64 {
-			return "", fmt.Errorf("extract setup ZIP entry: %w", errors.Join(copyErr, closeErr, errors.New("entry size or checksum invalid")))
+			return Extraction{}, fmt.Errorf("extract setup ZIP entry: %w", errors.Join(copyErr, closeErr, errors.New("entry size or checksum invalid")))
 		}
 	}
 	directory := filepath.Join(output, root)
-	if _, err := inspector.Inspect(directory); err != nil {
-		return "", err
+	inspection, err := inspector.Inspect(directory)
+	if err != nil {
+		return Extraction{}, err
 	}
-	return directory, nil
+	return Extraction{Directory: directory, Inspection: inspection}, nil
 }
