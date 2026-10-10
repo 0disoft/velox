@@ -8,6 +8,31 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Browser-exit-first lifecycle checks (2026-10-11): ordinary built-host lifecycle
+and JSON evidence collection now share an ordered release helper. Both observed
+browser process exits precede disposable-folder deletion, with one unchanged
+10-second budget from release-check entry across all three waits. Browser
+observation failures retain their existing first/immediate phase and
+BROWSER_EXIT_FAILED code; only post-exit removal/deadline failures use
+PROFILE_RELEASE_FAILED. Partial browser observations survive a later failure.
+The ordinary test's cleanup guard and evidence launch-failure paths preserve
+profiles when both exits cannot be confirmed. Profile removal no longer starts
+or retries after its remaining deadline expires.
+Regression checks passed for first/second unobserved or failed exits, successful
+ordering, a real non-delete-sharing Windows file handle after simulated browser
+exits, shared budget exhaustion, late observations, zero removal budget and
+cleanup guarding. Both native paths passed against the unchanged d378017 host:
+ordinary lifecycle in 13.70 s and one JSON evidence pair in 14.18 s. The latter
+observed browser exit 6,176.26 ms after immediate host exit and folder removal
+at 6,258.42 ms (82.16 ms afterward). Existing summary ingestion, startup-summary
+and hygiene Go tests, scoped startup vet and diff checks passed. Record remains
+v3/toolVersion 2 with unchanged measured boundaries and error vocabulary; the
+removal order is now different, not evidence of a runtime speedup. Historical
+10-second failure is retained. No full release, hosted stress or repeated owner
+diagnostic was needed for this test-only change. VALIDATION and the profile-lock
+record updated; no production API, DB/schema, dependency, permission, repository
+hygiene, version or CI runner changes. No push or publication.
+
 Profile lock ownership diagnostic (2026-10-11): six unchanged-host
 fresh/immediate pairs used disposable profiles on WebView2 154.0.4258.62.
 Four counterbalanced delete-first/browser-exit-first trials observed successful

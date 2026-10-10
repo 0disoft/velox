@@ -167,7 +167,6 @@ func measureLifecycleSample(repoRoot string, host hostAdapter, index int, logf f
 
 	first, err := runHost(host, profile)
 	if err != nil {
-		_, _ = waitForProfileRelease(profile, 10*time.Second)
 		return fail("first-launch", "HOST_RUN_FAILED", err)
 	}
 	sample.First = launchWithoutBrowserExit(first)
@@ -175,34 +174,28 @@ func measureLifecycleSample(repoRoot string, host hostAdapter, index int, logf f
 	immediate, err := runHost(host, profile)
 	if err != nil {
 		_, _ = awaitBrowserExit(first, 10*time.Second)
-		_, _ = waitForProfileRelease(profile, 10*time.Second)
 		return fail("immediate-launch", "HOST_RUN_FAILED", err)
 	}
 	sample.Immediate = launchWithoutBrowserExit(immediate)
 
-	profileReleaseStarted := time.Now()
-	profileRelease, profileErr := waitForProfileRelease(profile, 10*time.Second)
-	firstBrowserExitedAt, firstErr := awaitBrowserExitAt(first, 10*time.Second)
-	immediateBrowserExitedAt, immediateErr := awaitBrowserExitAt(immediate, 10*time.Second)
-	if firstErr != nil {
-		return fail("first-browser-exit", "BROWSER_EXIT_FAILED", firstErr)
+	release, failure := waitForLifecycleRelease(profile, first, immediate, 10*time.Second)
+	if !release.FirstBrowserExitedAt.IsZero() {
+		sample.First.BrowserExitAfterHostMs = milliseconds(release.FirstBrowserExitedAt.Sub(first.HostExitedAt))
 	}
-	sample.First.BrowserExitAfterHostMs = milliseconds(firstBrowserExitedAt.Sub(first.HostExitedAt))
-	if immediateErr != nil {
-		return fail("immediate-browser-exit", "BROWSER_EXIT_FAILED", immediateErr)
+	if !release.ImmediateBrowserExitedAt.IsZero() {
+		sample.Immediate.BrowserExitAfterHostMs = milliseconds(release.ImmediateBrowserExitedAt.Sub(immediate.HostExitedAt))
 	}
-	sample.Immediate.BrowserExitAfterHostMs = milliseconds(immediateBrowserExitedAt.Sub(immediate.HostExitedAt))
-	if profileErr != nil {
-		return fail("profile-release", "PROFILE_RELEASE_FAILED", profileErr)
+	if failure != nil {
+		return fail(failure.Phase, failure.Code, failure.Cause)
 	}
-	profileReleasedAfterHost := profileReleaseStarted.Add(profileRelease).Sub(immediate.HostExitedAt)
+	profileReleasedAfterHost := release.ProfileReleasedAt.Sub(immediate.HostExitedAt)
 	value := milliseconds(profileReleasedAfterHost)
 	sample.ProfileReleaseMs = &value
 	sample.Timeline = &lifecycleTimeline{
 		ImmediateProcessStartAfterFirstHostExitMs: milliseconds(immediate.ProcessStartedAt.Sub(first.HostExitedAt)),
-		FirstBrowserExitAfterImmediateStartMs:     milliseconds(firstBrowserExitedAt.Sub(immediate.ProcessStartedAt)),
-		ImmediateReadyAfterFirstBrowserExitMs:     milliseconds(immediate.ReadyAt.Sub(firstBrowserExitedAt)),
-		ImmediateReadyWaitedForFirstBrowserExit:   !immediate.ReadyAt.Before(firstBrowserExitedAt),
+		FirstBrowserExitAfterImmediateStartMs:     milliseconds(release.FirstBrowserExitedAt.Sub(immediate.ProcessStartedAt)),
+		ImmediateReadyAfterFirstBrowserExitMs:     milliseconds(immediate.ReadyAt.Sub(release.FirstBrowserExitedAt)),
+		ImmediateReadyWaitedForFirstBrowserExit:   !immediate.ReadyAt.Before(release.FirstBrowserExitedAt),
 	}
 	sample.Outcome = "success"
 	return sample

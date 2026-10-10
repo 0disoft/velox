@@ -72,3 +72,36 @@ probe and Restart Manager owner lookup. Local raw evidence stays ignored at
 The final assertion receipt is `owner-verified-result.json` in that directory.
 No user app/profile/document, public API, DB schema, dependency, host binary,
 version or CI workflow was changed; no push or publication occurred.
+
+## Inspection Order Change: 2026-10-11
+
+Ordinary built-host lifecycle and the JSON lifecycle evidence collector now
+wait for the first and immediate browser process handles to signal exit before
+attempting folder removal. One 10-second budget starts at release-check entry;
+each wait receives only its remaining time. This does not grant ten seconds
+per browser plus another ten seconds for removal. Removal does not start or
+retry after its deadline; an OS removal call already in progress cannot be
+canceled, but late completion fails the shared-budget check.
+
+Failures preserve the existing `first-browser-exit`/`immediate-browser-exit`
+phases with `BROWSER_EXIT_FAILED`, while post-exit removal uses `profile-release`
+with `PROFILE_RELEASE_FAILED`. Already-observed exit timings are retained on
+a later failure. Unconfirmed browser exits or failed launches preserve the
+disposable profile, including the ordinary test's automatic cleanup path.
+
+Focused regressions cover ordering, missing/failed exit observations, an actual
+Windows sharing lock after simulated browser exits, deadline sharing, late
+observations, zero remaining budget and guarded cleanup. Both actual native
+paths passed on the unchanged host: ordinary lifecycle in 13.70 seconds, and
+one JSON evidence pair in 14.18 seconds. In the evidence pair, the immediate
+host exited in 94.26 ms; the browser exited 6,176.26 ms later, and folder removal
+finished at 6,258.42 ms after host exit (82.16 ms after browser exit).
+The existing summary tool accepted the record. Evidence is ignored at
+`.cache/profile-release-order-20261011/evidence.json` and `summary.json`.
+
+The v3 record shape, toolVersion 2, measured boundaries and failure vocabulary
+are unchanged; this section documents the inspection-order difference.
+The earlier intermittent failure remains historical evidence, not a fixed
+runtime bug. No production host, public API, database, dependency, version,
+workflow or runner changes, push or publication occurred. Full release and
+hosted stress were not repeated for this test-only change.

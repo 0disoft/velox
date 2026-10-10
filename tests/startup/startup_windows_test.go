@@ -74,17 +74,22 @@ func TestBuiltHostStartup(t *testing.T) {
 func testBuiltHostLifecycle(t *testing.T) {
 	repoRoot := repositoryRoot(t)
 	host := goHost(t, repoRoot)
-	profile := managedProfileRoot(t, "velox-go-smoke-")
+	browsersExited := false
+	profile := managedProfileRoot(t, "velox-go-smoke-", func() bool { return browsersExited })
 	first := mustRunHost(t, host, profile)
 	assertStartupTimeline(t, first.Timeline)
 	assertShutdownTimeline(t, first.ShutdownTimeline)
 	immediate := mustRunHost(t, host, profile)
 	assertStartupTimeline(t, immediate.Timeline)
 	assertShutdownTimeline(t, immediate.ShutdownTimeline)
-	profileReleaseStarted := time.Now()
-	profileRelease := mustWaitForProfileRelease(t, profile, 10*time.Second)
-	firstBrowserExit := mustAwaitBrowserExit(t, first, 10*time.Second)
-	immediateBrowserExit := mustAwaitBrowserExit(t, immediate, 10*time.Second)
+	release, failure := waitForLifecycleRelease(profile, first, immediate, 10*time.Second)
+	browsersExited = !release.FirstBrowserExitedAt.IsZero() && !release.ImmediateBrowserExitedAt.IsZero()
+	if failure != nil {
+		t.Fatal(failure)
+	}
+	firstBrowserExit := release.FirstBrowserExitedAt.Sub(first.HostExitedAt)
+	immediateBrowserExit := release.ImmediateBrowserExitedAt.Sub(immediate.HostExitedAt)
+	profileRelease := release.ProfileReleasedAt.Sub(release.StartedAt)
 	testUnavailableRuntime(t, host, filepath.Join(t.TempDir(), "missing-webview2-runtime"))
 
 	if first.Exit > time.Second || immediate.Exit > time.Second {
@@ -96,7 +101,7 @@ func testBuiltHostLifecycle(t *testing.T) {
 	t.Logf("first ready=%s host-exit=%s browser-pid=%d browser-exit-after-host=%s; immediate ready=%s host-exit=%s browser-pid=%d browser-exit-after-host=%s; profile-release-wait=%s profile-released-after-immediate-host=%s",
 		first.Ready, first.Exit, first.BrowserProcessID, firstBrowserExit,
 		immediate.Ready, immediate.Exit, immediate.BrowserProcessID, immediateBrowserExit,
-		profileRelease, profileReleaseStarted.Add(profileRelease).Sub(immediate.HostExitedAt))
+		profileRelease, release.ProfileReleasedAt.Sub(immediate.HostExitedAt))
 }
 
 func testBuiltHostSecurityPolicy(t *testing.T) {
@@ -109,7 +114,7 @@ func testBuiltHostSecurityPolicy(t *testing.T) {
 		run.Ready, run.Exit, run.BrowserProcessID, browserExit, profileRelease)
 }
 
-func managedProfileRoot(t *testing.T, pattern string) string {
+func managedProfileRoot(t *testing.T, pattern string, cleanupAllowed ...func() bool) string {
 	t.Helper()
 	base := filepath.Join(repositoryRoot(t), ".cache", "profiles")
 	if err := os.MkdirAll(base, 0o755); err != nil {
@@ -120,6 +125,10 @@ func managedProfileRoot(t *testing.T, pattern string) string {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
+		if len(cleanupAllowed) > 0 && !cleanupAllowed[0]() {
+			t.Logf("Disposable profile preserved: browser exit not confirmed (%s)", filepath.Base(root))
+			return
+		}
 		deadline := time.Now().Add(10 * time.Second)
 		for {
 			err := os.RemoveAll(root)
@@ -139,15 +148,20 @@ func managedProfileRoot(t *testing.T, pattern string) string {
 func waitForProfileRelease(root string, timeout time.Duration) (time.Duration, error) {
 	started := time.Now()
 	deadline := started.Add(timeout)
+	var lastError error
 	for {
+		if !time.Now().Before(deadline) {
+			if lastError != nil {
+				return 0, fmt.Errorf("WebView2 profile remained locked after %s: %w", timeout, lastError)
+			}
+			return 0, errors.New("profile release deadline expired before removal")
+		}
 		err := os.RemoveAll(root)
 		if err == nil || os.IsNotExist(err) {
 			return time.Since(started), nil
 		}
-		if time.Now().After(deadline) {
-			return 0, fmt.Errorf("WebView2 profile remained locked after %s: %w", timeout, err)
-		}
-		time.Sleep(100 * time.Millisecond)
+		lastError = err
+		time.Sleep(min(100*time.Millisecond, max(0, time.Until(deadline))))
 	}
 }
 
