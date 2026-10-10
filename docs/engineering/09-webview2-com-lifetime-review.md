@@ -16,6 +16,15 @@ the source fork; this is not public alpha.68 or hosted stress evidence.
 
 ## Decision
 
+Source-only message boundary follow-up (2026-10-11): the message handler keeps
+origin gating before reading the payload, rejects oversized UTF-16 prefixes
+before Go decoding, then checks exact UTF-8 bytes. A scoped defer frees the
+successful native string allocation on acceptance and size rejection. The
+unused browser echo is removed; existing binding responses remain. Actual
+installed WebView2 tests preserved six in-budget/boundary messages, rejected
+five oversized raw messages including 2 MiB ASCII, and observed no echoes.
+This does not cap WebView2's initial allocation or validate public alpha.68.
+
 The bounded pure-Go adapter remains viable for the current Windows-only static
 host. The initial review found three concrete lifetime defects and fixed them without
 adding native capability or changing the public IPC contract.

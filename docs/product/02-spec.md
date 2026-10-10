@@ -435,6 +435,13 @@ Web content is not trusted merely because it is local.
   remain denied. This does not add native file IPC.
 - The host accepts messages only from the expected top-level application
   origin.
+- Source-only inbound message decoding bounds UTF-16 scanning before creating
+  a Go string and retains the exact 64 KiB UTF-8 wire limit. Oversized raw
+  messages are dropped without native method dispatch. Native message memory
+  is freed after acceptance or rejection. Unused raw message echoes are removed;
+  binding RPC responses, permissions and chunked saves remain unchanged. This
+  limits additional host work, not WebView2's native allocation, and is not in
+  public alpha.68 hosts. No dependency, worker or schema change is added.
 - Frames do not receive native capabilities.
 - The native method table is closed and permission checked.
 - Arbitrary filesystem, generic shell/process execution, and network proxy

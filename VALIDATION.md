@@ -8,6 +8,35 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Bounded native IPC message decoding (2026-10-11): source WebView2 fork limits
+UTF-16 payload traversal before decoding and retains the exact 64 KiB UTF-8
+check. Oversized prefixes return without a Go string copy; an allocation test
+reported zero allocations for a rejected 65,537-unit ASCII prefix. Normal
+binding RPC responses remain, while unused raw browser echoes are removed.
+Origin checks still precede payload retrieval, and one deferred CoTaskMemFree
+releases successful native allocations on accepted and size-rejected paths.
+Fork tests passed for ASCII/Korean/emoji/controls exact and over-budget cases,
+nil/empty/unterminated prefixes, surrogate pairs/replacements, unlimited fork
+configuration, COM callback dispatch/denial, getter failures and zero echo calls.
+All four fork Go packages passed. An opt-in real installed WebView2 test passed
+six exact/in-budget raw messages and five oversized raw messages including
+2 MiB ASCII; no browser echo events occurred. Its private profile/browser was
+released after teardown. Main-repo IPC/fileopen/webview2/host Go tests and scoped
+vet passed. Four Bun save-bridge tests passed (2 MiB chunking, connected save,
+Unicode/escaped-control preservation and invalid/failed upload cleanup); these
+use mock native IPC, not picker interaction. A stripped GUI host build and its
+GUI-subsystem/security-policy subtests passed actual binding responses, method
+and permission denials and normal invocation after rejected requests.
+Full fork vet did not pass: seven pre-existing unsafe.Pointer diagnostics plus
+one new native test allocator's uintptr-to-pointer conversion were reported.
+`go vet -unsafeptr=false ./...` passed; this is not a full vet pass or a general
+memory-safety claim. WebView2's own initial native allocation remains outside
+this traversal bound. Full release/installer, manual picker, size and comparative
+performance measurements were skipped. No supported API/permission, DB/schema,
+dependency, repository hygiene or CI runner changes. Product spec, IPC contract
+and COM lifetime review updated. No version bump, push or publication; public
+alpha.68 hosts are unchanged.
+
 GUI startup failure notices (2026-10-11): source host now routes configuration,
 profile-directory preparation, display scaling, instance-lock and WebView2
 initialization failures to bounded fixed-text MessageBoxW notices. stderr and

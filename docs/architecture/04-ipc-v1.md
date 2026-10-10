@@ -54,6 +54,17 @@ a pending request. Native size checks remain authoritative. Invalid parameters
 and unsupported versions preserve an unambiguously decoded request identifier;
 malformed or ambiguous envelopes may use identifier zero.
 
+Source-only transport hardening (2026-10-11) bounds native message scanning to
+64 Ki UTF-16 code units plus the terminator position before conversion, then
+retains the exact 64 KiB UTF-8 check. An oversized prefix is not decoded or
+copied into a Go string. This bounds additional host work, not WebView2's own
+allocation returned by `TryGetWebMessageAsString`. Native message memory is
+freed on both accepted and rejected paths. Received strings are no longer
+echoed through `PostWebMessageAsString`; supported RPC responses use the
+existing binding response path. Raw echo events are not a supported API.
+Origin, permission, request and document-shutdown checks are unchanged.
+Public alpha.68 hosts do not contain this source change.
+
 The JavaScript bridge and native dispatcher both enforce the concurrent-request
 limit. Native enforcement remains authoritative when application code calls the
 internal transport binding directly.

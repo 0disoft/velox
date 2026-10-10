@@ -460,20 +460,15 @@ func (e *Chromium) MessageReceived(sender *ICoreWebView2, args *iCoreWebView2Web
 		e.setPolicyError(errors.New("read WebMessage: empty native message"))
 		return 0
 	}
-	decoded := w32.Utf16PtrToString(message)
-	if e.MaxWebMessageBytes > 0 && len(decoded) > e.MaxWebMessageBytes {
+	defer windows.CoTaskMemFree(unsafe.Pointer(message))
+	decoded, allowed := decodeWebMessage(message, e.MaxWebMessageBytes)
+	if !allowed {
 		e.reportPolicyBlocked("message-size")
-		windows.CoTaskMemFree(unsafe.Pointer(message))
 		return 0
 	}
 	if e.MessageCallback != nil {
 		e.MessageCallback(decoded)
 	}
-	_, _, _ = sender.vtbl.PostWebMessageAsString.Call(
-		uintptr(unsafe.Pointer(sender)),
-		uintptr(unsafe.Pointer(message)),
-	)
-	windows.CoTaskMemFree(unsafe.Pointer(message))
 	return 0
 }
 

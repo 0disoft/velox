@@ -181,6 +181,26 @@ func Utf16PtrToString(p *uint16) string {
 	return string(utf16.Decode(s))
 }
 
+// Utf16PtrToStringBounded reads at most maxUnits code units plus the terminator
+// position. An oversized prefix is rejected without decoding or copying it.
+func Utf16PtrToStringBounded(p *uint16, maxUnits int) (string, bool) {
+	if maxUnits < 0 {
+		return "", false
+	}
+	if p == nil {
+		return "", true
+	}
+	for n := 0; ; n++ {
+		unit := *(*uint16)(unsafe.Add(unsafe.Pointer(p), uintptr(n)*unsafe.Sizeof(*p)))
+		if unit == 0 {
+			return string(utf16.Decode(unsafe.Slice(p, n))), true
+		}
+		if n == maxUnits {
+			return "", false
+		}
+	}
+}
+
 func SHCreateMemStream(data []byte) (uintptr, error) {
 	ret, _, err := shlwapiSHCreateMemStream.Call(
 		uintptr(unsafe.Pointer(&data[0])),
