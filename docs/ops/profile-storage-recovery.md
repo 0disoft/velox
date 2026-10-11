@@ -19,20 +19,36 @@ not replace their JavaScript. This source change is not a published release.
 ## Long Profile Paths
 
 Velox uses an existing shorter Windows alias only after verifying that it refers
-to the configured profile directory. It does not create an alias or move data.
+to the configured profile directory. Current source also creates a guarded
+same-directory junction when the remaining local fixed-drive browser spelling
+exceeds 120 UTF-16 units. Data is not moved or copied. The private root is
+`%LOCALAPPDATA%\VeloxProfileLinks`; each entry is tied to the current user and
+original directory identity. Existing mismatched roots, foreign/redirected
+entries and linked/offline ancestors are refused. Failure stops startup with a
+profile notice instead of retrying an unsafe long spelling. Remote/removable
+profiles retain their previous path handling; this is not verified long-path
+storage support for those drives. A long LocalAppData path can also prevent
+preparing a short enough link. Contact the app author if preparation fails;
+do not reset the profile or change the existing app's data directory.
+
+The host holds directory guards through its run loop and releases them on
+startup failure or loop exit. Published junctions remain because browser
+subprocesses can outlive the GUI host. No automatic orphan sweep is performed.
+Window state and single-instance locks continue to use the original profile.
 An extended `\\?\` spelling alone does not ensure Chromium IndexedDB support.
 The native diagnostic in VALIDATION.md reproduced failed writes to a new
 218-character profile and failed reads from an existing one when path shortening
 was bypassed. Returning to the existing alias read the original draft again.
 The diagnostic did not disable NTFS 8.3 naming or prove every volume/runtime case.
 
-A test-only [directory junction](https://learn.microsoft.com/en-us/windows/win32/fileio/hard-links-and-junctions)
+The initial test-only [directory junction](https://learn.microsoft.com/en-us/windows/win32/fileio/hard-links-and-junctions)
 to the same isolated profile passed write/read and read recovery without an 8.3
 alias. Its mount-point buffer follows the
 [Microsoft reparse structure](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_reparse_data_buffer).
-The current host does not create such links. Product use needs verified link
-ownership, stable concurrent-profile identity and shutdown/cleanup behavior;
-the fixture experiment alone does not satisfy those requirements.
+Subsequent manager tests cover ownership, concurrent acquisitions and lease
+release. Actual Runtime.Open and built-host tests now verify write/relaunch-read
+through the production fallback. These isolated local checks do not verify
+installed profiles or abrupt termination, and the change is not published.
 
 Do not delete a profile, remove its databases or change Windows volume settings
 to dismiss this warning. A shorter profile location may be chosen for a new app
@@ -48,3 +64,8 @@ Microsoft Edge, and closes its own browser/server. Native file responses and
 startup/write UnknownError failures are injected; no real picker or disk export
 is claimed. Screenshots/results are left under `.cache`. The opt-in native
 storage diagnostic separately uses real WebView2/IndexedDB and isolated profiles.
+`VELOX_NATIVE_STORAGE_PROBE=1 go test -count=1 -run '^TestNativeRuntimeProfile' ./internal/webview2`
+checks the actual runtime lifecycle and initialization failure. The built-host
+guarded case uses `VELOX_STORAGE_PATH_TEST=1`, a freshly built `VELOX_BUILT_HOST`,
+and `go test -count=1 -run '^TestBuiltHostIndexedDBLongPath/guarded-link-without-short-spelling$' ./tests/startup`.
+Fixtures use their own LocalAppData roots and never change volume settings.

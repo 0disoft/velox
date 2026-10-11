@@ -1,9 +1,13 @@
 package webview2
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"golang.org/x/sys/windows"
 )
 
 func TestBrowserDataPath(t *testing.T) {
@@ -30,6 +34,120 @@ func TestBrowserDataPath(t *testing.T) {
 				t.Fatalf("not idempotent: %q -> %q", got, again)
 			}
 		})
+	}
+}
+
+func TestPrepareProfilePathKeepsExistingShortPaths(t *testing.T) {
+	for _, path := range []string{`C:\profile`, `C:\` + strings.Repeat("a", maxProfileLinkPath-7), `\\server\share\` + strings.Repeat("a", 180)} {
+		got, lease, err := prepareProfilePath(path, browserDataPath, func() (string, error) {
+			t.Fatal("an existing short or remote path must not prepare a link root")
+			return "", nil
+		})
+		if err != nil || lease != nil || got != browserDataPath(path) {
+			t.Fatalf("existing path changed: %q %v %v", got, lease, err)
+		}
+	}
+	got, lease, err := prepareProfilePath(`C:\`+strings.Repeat("a", 180), func(string) string { return `C:\short` }, func() (string, error) {
+		t.Fatal("verified short alias must not prepare a link root")
+		return "", nil
+	})
+	if err != nil || lease != nil || got != `C:\short` {
+		t.Fatalf("existing short alias changed: %q %v", got, err)
+	}
+}
+
+func TestPrepareProfilePathUsesSameDirectoryAndReleasesLease(t *testing.T) {
+	fixture, profile, _ := profileLinkFixture(t)
+	root := filepath.Join(fixture, "VeloxProfileLinks")
+	t.Cleanup(func() { removeFixtureProfileLinks(t, root) })
+	path, lease, err := prepareProfilePath(profile, browserDataPath, func() (string, error) { return fixture, nil })
+	if err != nil || lease == nil {
+		t.Fatalf("prepare long profile: %v", err)
+	}
+	defer lease.Close()
+	original, err := os.Stat(profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	alias, err := os.Stat(path)
+	if err != nil || !os.SameFile(original, alias) {
+		t.Fatalf("profile identity changed: %v", err)
+	}
+	if err := os.Remove(path); err == nil {
+		t.Fatal("selected link was not pinned")
+	}
+	if err := lease.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatalf("selected link remained pinned: %v", err)
+	}
+	if body, err := os.ReadFile(filepath.Join(profile, "marker.txt")); err != nil || string(body) != "original fixture" {
+		t.Fatalf("original data changed: %q %v", body, err)
+	}
+}
+
+func TestPrepareProfilePathFailsWithoutRedirectOrNativeDetails(t *testing.T) {
+	fixture, profile, _ := profileLinkFixture(t)
+	for _, cacheDir := range []func() (string, error){
+		func() (string, error) { return "", errors.New("private native path details") },
+		func() (string, error) { return filepath.Join(fixture, "missing-parent"), nil },
+		func() (string, error) { return "relative", nil },
+	} {
+		path, lease, err := prepareProfilePath(profile, browserDataPath, cacheDir)
+		if path != "" || lease != nil || err != ErrProfileUnavailable {
+			t.Fatalf("failure exposed a fallback or private details: %q %v %v", path, lease, err)
+		}
+	}
+	// Unicode byte length is not Windows path length.
+	unicodePath := `C:\` + strings.Repeat("\uD55C", 100)
+	got, lease, err := prepareProfilePath(unicodePath, browserDataPath, func() (string, error) {
+		t.Fatal("100 BMP characters still fit the UTF-16 budget")
+		return "", nil
+	})
+	if err != nil || lease != nil || got != browserDataPath(unicodePath) {
+		t.Fatalf("UTF-16 budget changed: %q %v", got, err)
+	}
+	for _, path := range []string{`C:\` + strings.Repeat("\U0001f600", 60), "C:\\invalid\x00profile"} {
+		got, lease, err := prepareProfilePath(path, browserDataPath, func() (string, error) {
+			return "", errors.New("private details")
+		})
+		if got != "" || lease != nil || err != ErrProfileUnavailable {
+			t.Fatalf("invalid or over-budget UTF-16 path accepted: %q %v", got, err)
+		}
+	}
+}
+
+func removeFixtureProfileLinks(t *testing.T, root string) {
+	t.Helper()
+	entries, err := os.ReadDir(root)
+	if os.IsNotExist(err) {
+		return
+	}
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for _, entry := range entries {
+		path := filepath.Join(root, entry.Name())
+		name, _ := windows.UTF16PtrFromString(browserDataPath(path))
+		h, err := windows.CreateFile(name, windows.FILE_READ_ATTRIBUTES, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE|windows.FILE_SHARE_DELETE,
+			nil, windows.OPEN_EXISTING, windows.FILE_FLAG_BACKUP_SEMANTICS|windows.FILE_FLAG_OPEN_REPARSE_POINT, 0)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		var info windows.ByHandleFileInformation
+		err = windows.GetFileInformationByHandle(h, &info)
+		windows.CloseHandle(h)
+		if err != nil || info.FileAttributes&windows.FILE_ATTRIBUTE_REPARSE_POINT == 0 {
+			t.Errorf("unexpected fixture link entry: %v", err)
+			return
+		}
+		if err := os.Remove(path); err != nil {
+			t.Error(err)
+			return
+		}
 	}
 }
 

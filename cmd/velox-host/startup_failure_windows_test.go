@@ -39,16 +39,18 @@ func TestRuntimeFailurePreservesCancellationAndExitCodes(t *testing.T) {
 	for _, tt := range []struct {
 		err  error
 		code int
+		kind startupFailureKind
 	}{
-		{fmt.Errorf("wrapped: %w", webview2.ErrInitializationCanceled), 0},
-		{fmt.Errorf("wrapped: %w", webview2.ErrRuntimeUnavailable), 5},
-		{errors.New("bind bridge failed"), 6},
+		{fmt.Errorf("wrapped: %w", webview2.ErrInitializationCanceled), 0, startupRuntime},
+		{fmt.Errorf("wrapped: %w", webview2.ErrRuntimeUnavailable), 5, startupRuntime},
+		{webview2.ErrProfileUnavailable, 6, startupProfile},
+		{errors.New("bind bridge failed"), 6, startupRuntime},
 	} {
 		var output bytes.Buffer
 		calls := 0
 		reporter := startupFailureReporter{output: &output, notice: func(kind startupFailureKind) {
 			calls++
-			if kind != startupRuntime {
+			if kind != tt.kind {
 				t.Errorf("kind=%d", kind)
 			}
 		}}

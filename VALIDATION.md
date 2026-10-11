@@ -8,6 +8,40 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Guarded profile-path host integration (2026-10-12): Runtime.Open retains the
+existing verified short spelling when it fits a 120 UTF-16-unit storage budget.
+For longer fixed-local-drive profiles it now acquires the same-directory link
+under a private `LocalAppData/VeloxProfileLinks` root. The configured profile,
+window-state path and single-instance identity are unchanged. Link preparation
+failure returns a fixed profile error before browser initialization, without a
+raw path/native error or an unsafe long-path retry. Unsupported drive types
+retain the prior path behavior, not a new storage-support guarantee. Startup
+failure and Run-loop exit release leases; published links persist.
+
+New path-selection tests cover short/8.3/remote retention, BMP/supplementary
+UTF-16 accounting, failure redaction, pinned-link release and original-directory
+identity. Opt-in actual Runtime.Open write/relaunch-read passed (14.65 s):
+profile 246 characters, browser spelling 103, Korean/CRLF content recovered,
+one stable junction reused, browser exits observed and original marker intact.
+Native missing-runtime initialization also passed and released all lease handles
+without deleting profile data (0.13 s). A freshly built GUI host passed the
+guarded long-profile case (14.11 s), real IndexedDB write/read through a
+262-character original profile and a 377-character database manifest pathname.
+One isolated junction was reused across the two host processes; browser exits
+were observed before fixture-only cleanup. No NTFS volume setting was changed.
+
+The full Go suite and scoped vet passed. Built-host early-close, icon, GUI
+subsystem and immediate-relaunch lifecycle checks passed. The security-policy
+subcase initially exceeded its 10 s browser-exit deadline; the PID was absent
+on inspection, and an isolated rerun passed (browser exit 6.28 s after host).
+This intermittent shutdown deadline is still unresolved; the first run is not
+a pass. Same-toolchain/flags host size changed from 4,877,824 to 4,931,072 bytes
+(+53,248 / 52 KiB), with no new dependency or background worker. These are local
+source/built-host checks, not an installed app, hosted/Linux run, crash-recovery
+guarantee, publication or version/API/permission/schema/CI change.
+
+Historical component evidence before host integration follows.
+
 Profile-link manager component (2026-10-12): a private, protected current-user/
 SYSTEM directory holds stable per-directory-identity junctions. New junctions
 are completed under unpredictable staging names and renamed by the same handle
@@ -34,7 +68,7 @@ manager component while its guards stayed held, profile length 205/browser path
 91. Browser exit was observed before fixture link/profile cleanup. The WebView
 is a native dependency test view, not the packaged host or Runtime.Open path.
 Scoped vet passed. Component source is not yet called by the host; no automatic
-product fix, hosted/Linus verification, installed-profile change, API/DB/schema,
+product fix, hosted/Linux verification, installed-profile change, API/DB/schema,
 permission/dependency/version/CI or release claim is made. Crash-orphan sweeping
 is deliberately absent; published links persist after lease close because a
 browser can outlive its GUI host. Runtime wiring and native packaged lifecycle

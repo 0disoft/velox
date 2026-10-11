@@ -46,6 +46,9 @@ func (r startupFailureReporter) runtimeFailure(err error) int {
 	if errors.Is(err, webview2.ErrInitializationCanceled) {
 		return 0
 	}
+	if errors.Is(err, webview2.ErrProfileUnavailable) {
+		return r.fail(startupProfile, err, 6)
+	}
 	code := 6
 	if errors.Is(err, webview2.ErrRuntimeUnavailable) {
 		code = 5

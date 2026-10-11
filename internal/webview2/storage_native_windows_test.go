@@ -188,6 +188,10 @@ func TestNativeStorageProbeChild(t *testing.T) {
 	defer runtime.UnlockOSThread()
 	path := os.Getenv("VELOX_STORAGE_PROBE_PATH")
 	mode := os.Getenv("VELOX_STORAGE_PROBE_MODE")
+	if strings.HasPrefix(mode, "runtime-") {
+		runRuntimeStorageProbeChild(t, profile, path, strings.TrimPrefix(mode, "runtime-"))
+		return
+	}
 	if mode != "write" && mode != "read" {
 		t.Fatal("invalid mode")
 	}
@@ -205,7 +209,30 @@ func TestNativeStorageProbeChild(t *testing.T) {
 		t.Fatal(err)
 	}
 	assets := t.TempDir()
-	page := `<!doctype html><title>Storage probe</title><p id="status">Checking storage</p><script>
+	page := storageProbePage(mode, "__storageResult")
+	if err := os.WriteFile(filepath.Join(assets, "index.html"), []byte(page), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := view.SetVirtualHostNameToFolderMapping("dev.velox.storage-probe.velox.local", assets); err != nil {
+		t.Fatal(err)
+	}
+	if err := view.Bind("__storageResult", func(status string) {
+		result.Status = status
+		view.Dispatch(func() { view.Dispatch(view.Destroy) })
+	}); err != nil {
+		t.Fatal(err)
+	}
+	view.Navigate("https://dev.velox.storage-probe.velox.local/index.html")
+	view.Run()
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(storageProbePrefix + string(encoded))
+}
+
+func storageProbePage(mode, callback string) string {
+	return `<!doctype html><title>Storage probe</title><p id="status">Checking storage</p><script>
 (async () => {
   const expected = "Draft \uD55C\uAE00\r\nSecond line";
   const mode = "` + mode + `";
@@ -228,26 +255,7 @@ func TestNativeStorageProbeChild(t *testing.T) {
       tx.onerror = () => reject(tx.error);
     });
   } finally { db.close(); }
-  await window.__storageResult("verified");
-})().catch(error => window.__storageResult("failed:" + error.name + ":" + error.message));
+  await window.` + callback + `("verified");
+})().catch(error => window.` + callback + `("failed:" + error.name + ":" + error.message));
 </script>`
-	if err := os.WriteFile(filepath.Join(assets, "index.html"), []byte(page), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := view.SetVirtualHostNameToFolderMapping("dev.velox.storage-probe.velox.local", assets); err != nil {
-		t.Fatal(err)
-	}
-	if err := view.Bind("__storageResult", func(status string) {
-		result.Status = status
-		view.Dispatch(func() { view.Dispatch(view.Destroy) })
-	}); err != nil {
-		t.Fatal(err)
-	}
-	view.Navigate("https://dev.velox.storage-probe.velox.local/index.html")
-	view.Run()
-	encoded, err := json.Marshal(result)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(storageProbePrefix + string(encoded))
 }

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/sys/windows"
 )
 
 // This opt-in test requires real WebView2 and never uses an installed app profile.
@@ -18,27 +20,72 @@ func TestBuiltHostIndexedDBLongPath(t *testing.T) {
 	executable := requiredExecutable(t, "VELOX_BUILT_HOST")
 	for _, length := range []int{0, 146, 180, 218} {
 		t.Run(fmt.Sprintf("profile-%d", length), func(t *testing.T) {
-			testNativeStoragePath(t, executable, executable, length)
+			testNativeStoragePath(t, executable, executable, length, false)
 		})
 	}
+	t.Run("guarded-link-without-short-spelling", func(t *testing.T) {
+		testNativeStoragePath(t, executable, executable, 218, true)
+	})
 	if os.Getenv("VELOX_STORAGE_LEGACY_HOST") != "" {
 		legacy := requiredExecutable(t, "VELOX_STORAGE_LEGACY_HOST")
 		t.Run("legacy-profile", func(t *testing.T) {
-			testNativeStoragePath(t, executable, legacy, 0)
+			testNativeStoragePath(t, executable, legacy, 0, false)
 		})
 	}
 }
 
-func testNativeStoragePath(t *testing.T, executable, writer string, length int) {
+func testNativeStoragePath(t *testing.T, executable, writer string, length int, guarded bool) {
 	allBrowsersExited := false
 	root := managedProfileRoot(t, "velox-storage-", func() bool { return allBrowsersExited })
 	profile := root
 	if len(profile) < length {
 		profile = filepath.Join(profile, strings.Repeat("p", length-len(profile)-1))
 	}
+	if guarded {
+		profile = root
+		for range 16 {
+			profile = filepath.Join(profile, "p0000000")
+		}
+	}
 	if err := os.MkdirAll(profile, 0o700); err != nil {
 		t.Fatal(err)
 	}
+	cacheRoot, err := os.MkdirTemp("", "vph-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if !allBrowsersExited {
+			t.Logf("private link root retained until browser exit is confirmed: %s", cacheRoot)
+			return
+		}
+		links := filepath.Join(cacheRoot, "VeloxProfileLinks")
+		entries, err := os.ReadDir(links)
+		if err != nil && !os.IsNotExist(err) {
+			t.Error(err)
+			return
+		}
+		for _, entry := range entries {
+			path := filepath.Join(links, entry.Name())
+			name, _ := windows.UTF16PtrFromString(path)
+			attributes, err := windows.GetFileAttributes(name)
+			if err != nil || attributes&windows.FILE_ATTRIBUTE_REPARSE_POINT == 0 {
+				t.Errorf("unexpected private fixture link: %v", err)
+				return
+			}
+			if err := os.Remove(path); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+		if filepath.Dir(cacheRoot) != filepath.Clean(os.TempDir()) || !strings.HasPrefix(filepath.Base(cacheRoot), "vph-") {
+			t.Error("unsafe cache fixture cleanup path")
+			return
+		}
+		if err := os.RemoveAll(cacheRoot); err != nil {
+			t.Error(err)
+		}
+	})
 	fixture := t.TempDir()
 	assets := filepath.Join(fixture, "web")
 	if err := os.Mkdir(assets, 0o700); err != nil {
@@ -96,7 +143,7 @@ func testNativeStoragePath(t *testing.T, executable, writer string, length int) 
 		name: "long-profile-storage", executable: executable,
 		arguments: func(string) []string { return []string{"--config", configPath} },
 		environment: func(profile string) []string {
-			return []string{"VELOX_DATA_DIR=" + profile}
+			return []string{"VELOX_DATA_DIR=" + profile, "LOCALAPPDATA=" + cacheRoot}
 		},
 		expectedPhase: "dom-2raf", requireBrowserProcess: true,
 	}
@@ -130,6 +177,13 @@ func testNativeStoragePath(t *testing.T, executable, writer string, length int) 
 			mode, run.Ready, run.Exit, run.BrowserProcessID, len(profile))
 	}
 	allBrowsersExited = true
+	if guarded {
+		entries, err := os.ReadDir(filepath.Join(cacheRoot, "VeloxProfileLinks"))
+		if err != nil || len(entries) != 1 {
+			t.Fatalf("packaged host did not reuse one guarded link: %v %v", entries, err)
+		}
+		t.Log("built host reused one guarded junction across write/read processes")
+	}
 	longDatabasePath := false
 	if err := filepath.WalkDir(profile, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {

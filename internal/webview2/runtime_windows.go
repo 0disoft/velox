@@ -28,6 +28,7 @@ type Runtime struct {
 	dispatcher    *ipc.Dispatcher
 	shutdownPhase func(name string)
 	closeOnce     sync.Once
+	profileLease  *profileLink
 	fixedSize     bool
 	watcher       *devwatch.Watcher
 	watchError    func(error)
@@ -36,6 +37,10 @@ type Runtime struct {
 }
 
 func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
+	return openWithProfilePath(config, onReady, prepareBrowserProfilePath)
+}
+
+func openWithProfilePath(config Config, onReady ReadyHandler, prepare func(string) (string, *profileLink, error)) (*Runtime, error) {
 	if err := config.validate(); err != nil {
 		return nil, fmt.Errorf("invalid WebView2 configuration: %w", err)
 	}
@@ -53,6 +58,16 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 			return nil, fmt.Errorf("initialize development watch: %w", err)
 		}
 	}
+	dataPath, lease, err := prepare(config.DataPath)
+	if err != nil {
+		return nil, err
+	}
+	opened := false
+	defer func() {
+		if !opened && lease != nil {
+			lease.Close()
+		}
+	}()
 
 	var documentGeneration atomic.Uint64
 	var runtime *Runtime
@@ -63,7 +78,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	view, createErr := webview.NewWithOptionsAndError(webview.WebViewOptions{
 		Debug:                   config.Debug,
 		DevelopmentCache:        config.Watch,
-		DataPath:                resolveBrowserDataPath(config.DataPath),
+		DataPath:                dataPath,
 		BrowserExecutableFolder: config.BrowserExecutableFolder,
 		AutoFocus:               true,
 		DenyAllPermissions:      true,
@@ -112,7 +127,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime = &Runtime{view: view, shutdownPhase: config.ShutdownPhase, fixedSize: config.FixedSize, watcher: watcher, watchError: config.WatchError}
+	runtime = &Runtime{view: view, profileLease: lease, shutdownPhase: config.ShutdownPhase, fixedSize: config.FixedSize, watcher: watcher, watchError: config.WatchError}
 	runtime.dispatcher = ipc.NewDispatcher(ipc.Identity{
 		ID: config.AppID, Name: config.Title, Version: config.AppVersion, Platform: "windows",
 	}, config.Permissions, nativeWindow{view: view, runtime: runtime})
@@ -221,10 +236,14 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	if config.StartupPhase != nil {
 		config.StartupPhase("navigation-dispatched")
 	}
+	opened = true
 	return runtime, nil
 }
 
 func (r *Runtime) Run() {
+	if r.profileLease != nil {
+		defer r.profileLease.Close()
+	}
 	if r.watcher != nil {
 		ctx, cancel := context.WithCancel(context.Background())
 		done := make(chan struct{})

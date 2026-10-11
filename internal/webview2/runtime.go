@@ -16,6 +16,7 @@ import (
 
 var ErrRuntimeUnavailable = errors.New("WebView2 Runtime is unavailable or initialization failed")
 var ErrInitializationCanceled = errors.New("WebView2 initialization canceled by user")
+var ErrProfileUnavailable = errors.New("application profile could not be prepared for browser storage")
 
 const (
 	PolicyNavigation      = "navigation"

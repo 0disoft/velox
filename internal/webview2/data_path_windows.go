@@ -54,3 +54,34 @@ func resolveBrowserDataPath(path string) string {
 	}
 	return browserDataPath(short)
 }
+
+func prepareBrowserProfilePath(profile string) (string, *profileLink, error) {
+	return prepareProfilePath(profile, resolveBrowserDataPath, os.UserCacheDir)
+}
+
+func prepareProfilePath(profile string, resolve func(string) string, cacheDir func() (string, error)) (string, *profileLink, error) {
+	path := resolve(profile)
+	spelling, err := windows.UTF16FromString(path)
+	if err != nil {
+		return "", nil, ErrProfileUnavailable
+	}
+	// Keep the existing path for short profiles and unsupported drive types.
+	// The budget reserves room for Chromium's nested storage filenames.
+	if len(spelling)-1 <= maxProfileLinkPath {
+		return path, nil, nil
+	}
+	if _, err := localProfilePath(profile); err != nil {
+		return path, nil, nil
+	}
+	base, err := cacheDir()
+	if err != nil {
+		return "", nil, ErrProfileUnavailable
+	}
+	link, err := acquireProfileLink(profile, filepath.Join(base, "VeloxProfileLinks"))
+	if err != nil {
+		// Neither a failed link nor a known-long fallback should start a new
+		// browser profile. Do not expose paths or native errors in startup output.
+		return "", nil, ErrProfileUnavailable
+	}
+	return link.path, link, nil
+}
