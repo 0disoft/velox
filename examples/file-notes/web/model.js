@@ -41,10 +41,24 @@
   }
 
   function stats(state) {
-    return {
-      lines: state.text.length === 0 ? 1 : state.text.split(/\r\n|\r|\n/).length,
-      characters: Array.from(state.text.replace(/\r\n?/g, "\n")).length,
-    };
+    let lines = 1;
+    let characters = 0;
+    const text = state.text;
+    for (let index = 0; index < text.length; index++) {
+      const code = text.charCodeAt(index);
+      characters++;
+      if (code === 13) {
+        lines++;
+        if (text.charCodeAt(index + 1) === 10) index++;
+      } else if (code === 10) {
+        lines++;
+      } else if (code >= 0xd800 && code <= 0xdbff) {
+        const next = text.charCodeAt(index + 1);
+        // A UTF-16 surrogate pair represents one Unicode character.
+        if (next >= 0xdc00 && next <= 0xdfff) index++;
+      }
+    }
+    return { lines, characters };
   }
 
   function validName(value) {

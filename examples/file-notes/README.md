@@ -62,6 +62,10 @@ empty-search close, local font loading and desktop/narrow layouts, and writes
 screenshots plus its result under `.cache`. It closes its own browser and
 local HTTP server, and does not read or change the installed app's profile.
 This does not replace native picker, Windows window-close or installer tests.
+`node scripts/file-notes-stats-bench.mjs` compares the old allocation-heavy
+statistics function with the current single pass on bounded 2 MiB inputs.
+Its medians describe this local function benchmark, not native startup or
+end-to-end input latency; there is no timing threshold in the regression tests.
 
 ## Minimum Window Size
 

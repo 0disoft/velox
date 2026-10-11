@@ -40,6 +40,16 @@ describe("FileNotesModel", () => {
     expect(model.stats(model.replaceText(model.createState(), "A😀\r\nB\nC", "2026-07-21T01:00:00.000Z"))).toEqual({ lines: 3, characters: 6 });
   });
 
+  test("single-pass statistics preserve Unicode and newline counting at document limits", () => {
+    for (const text of ["", "\r\r\n", "\n\r", "\r\n\r\n", "a\uD800\r\nb\uDC00",
+      "\n".repeat(2 * 1024 * 1024), "A\uD83D\uDE42\r\n\uD55C\uAE00".repeat(100000)]) {
+      expect(model.stats({ text })).toEqual({
+        lines: text.split(/\r\n|\r|\n/).length,
+        characters: Array.from(text.replace(/\r\n?/g, "\n")).length,
+      });
+    }
+  });
+
   test("draft restoration never restores a write target or legacy browser handle", () => {
     const restored = model.restoreDraft({ schemaVersion: 1, name: "note.md", text: "draft", savedText: "saved", target: 42, handle: {} });
     expect(restored.target).toBeNull();
