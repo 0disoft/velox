@@ -50,6 +50,19 @@ external-change conflicts have distinct status messages. Errors preserve the
 editor buffer and its unsaved baseline. Recovery errors can follow a partially
 completed replacement; do not treat an error as proof that disk bytes are unchanged.
 
+## Development Checks
+
+Run `bun test examples/file-notes` for the model, search, draft storage and
+native-response regression cases. `node scripts/file-notes-ui-smoke.mjs`
+requires Playwright and installed Microsoft Edge; `NODE_PATH` can point to an
+existing development installation without adding consumer dependencies.
+The smoke uses real IndexedDB, mocked native file responses and an injected
+blocked-open response. It checks recovery, line endings, keyboard search,
+empty-search close, local font loading and desktop/narrow layouts, and writes
+screenshots plus its result under `.cache`. It closes its own browser and
+local HTTP server, and does not read or change the installed app's profile.
+This does not replace native picker, Windows window-close or installer tests.
+
 ## Minimum Window Size
 
 The manifest requests a minimum outer window of 720 x 520 in 96-DPI logical
