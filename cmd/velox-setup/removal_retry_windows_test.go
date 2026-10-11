@@ -25,7 +25,7 @@ func TestSilentRemovalHelperFailureOffersRetry(t *testing.T) {
 	if !errors.As(err, &exit) || exit.ExitCode() != 6 {
 		t.Fatalf("helper exit=%v output=%s", err, output)
 	}
-	if !strings.Contains(string(output), "To retry removal") || !strings.Contains(string(output), `"`+self+`" --uninstall `) {
+	if !strings.Contains(string(output), "To retry removal") || !strings.Contains(string(output), "& '"+strings.ReplaceAll(self, "'", "''")+"' --uninstall ") {
 		t.Fatalf("no usable helper retry command: %s", output)
 	}
 }
@@ -74,7 +74,7 @@ func TestRetryRemovalDecisions(t *testing.T) {
 			}, func(text string) bool {
 				prompts++
 				if !strings.Contains(text, "locked directory") || !strings.Contains(text, "Retry now?") ||
-					!strings.Contains(text, `"C:\private helper\remove.exe" --uninstall dev.velox.test`) {
+					!strings.Contains(text, `& 'C:\private helper\remove.exe' --uninstall dev.velox.test`) {
 					t.Fatalf("unusable retry dialog: %q", text)
 				}
 				return test.retry
@@ -86,5 +86,13 @@ func TestRetryRemovalDecisions(t *testing.T) {
 				t.Fatal("original cause was lost")
 			}
 		})
+	}
+}
+
+func TestRetryCommandQuotesPowerShellPath(t *testing.T) {
+	self := "C:\\O'Brien\\$cache`name\\remove.exe"
+	err := retryRemoval(self, "dev.velox.test", true, func() error { return errors.New("locked") }, nil)
+	if err == nil || !strings.Contains(err.Error(), "& 'C:\\O''Brien\\$cache`name\\remove.exe' --uninstall dev.velox.test") {
+		t.Fatalf("retry command did not use a literal PowerShell path: %v", err)
 	}
 }

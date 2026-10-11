@@ -154,7 +154,7 @@ func TestBuiltSetupLateRemovalRetry(t *testing.T) {
 	failedHelper := exec.CommandContext(ctx, setup, "--uninstall", id, "--remove-helper", "--wait-pid", "4294967295", "--silent")
 	output, err := failedHelper.CombinedOutput()
 	var exit *exec.ExitError
-	if !errors.As(err, &exit) || exit.ExitCode() != 6 || !strings.Contains(string(output), `"`+setup+`" --uninstall `+id) {
+	if !errors.As(err, &exit) || exit.ExitCode() != 6 || !strings.Contains(string(output), "& '"+strings.ReplaceAll(setup, "'", "''")+"' --uninstall "+id) {
 		t.Fatalf("built helper did not expose its retry command: %v; %s", err, output)
 	}
 	if _, err := os.Stat(filepath.Join(target, "uninstall.exe")); !os.IsNotExist(err) {

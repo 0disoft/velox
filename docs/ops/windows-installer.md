@@ -267,6 +267,15 @@ uses a fixture portable tree and the real Setup as its uninstaller, not a
 consumer GUI host or full appended-payload Setup installation. Native dialog
 clicks, real draft restoration and power-loss recovery remain unverified here.
 
+Retry-command formatting is now explicitly PowerShell: `& '<helper-path>'
+--uninstall <app-id>`, with apostrophes doubled inside the literal path. Spaces,
+apostrophes, dollar signs and backticks do not become shell expansion. The
+format regression includes all of those characters; the removal callback does
+not execute this displayed text itself.
+The format-updated Setup was rebuilt and passed the real helper integration
+again in 0.43 s (`dev.velox.retry-956b7854d11efffd`, SHA-256
+`02698b8268aa7fabbc63503a23b3765d96cfcb523f91dc936f8b1916b2469845`).
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:
