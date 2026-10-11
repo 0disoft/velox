@@ -115,3 +115,29 @@ No public API, permissions, database schema, dependency, version, release or CI
 workflow changed. The runtime host implementation changed; no installed app
 or user profile was replaced. Installer upgrade and interactive picker checks
 were not run in this slice.
+
+## Isolated Interactive Session
+
+`node scripts/packaged-app-session.mjs <portable-directory>` verifies the host's
+build-report size/hash, strips inherited benchmark/browser argument overrides,
+and launches exactly that packaged executable with a new disposable profile.
+Default profiles use a short temporary path; `--long-profile` uses a deeper
+repository-local path, and `--extended-profile` uses its extended spelling.
+These are alternative fixture modes, not an instruction to alter a user profile.
+
+The launcher preserves the profile and writes an exit receipt under its unique
+`.cache/packaged-session-*` directory. Nonzero exit, spawn error or its own
+eight-minute forced stop causes a failing exit status. It does not claim browser
+exit, durable draft storage or permission success from a normal host exit alone.
+It is a local interactive tool, not part of ordinary CI or a consumer bundle.
+
+Earlier actual packaged File Notes session `a286cbed-f6ff-480c-ac9f-0946f9a9007e`
+confirmed the close warning, cancellation retaining the synthetic text, Undo to
+a clean document and normal host exit. Its draft store failed, so it is not
+draft-recovery evidence. Session `b058ea3a-cc62-40c3-bd7e-3b04284fa347` showed
+successful draft persistence with extended spelling, but ended nonzero; it is
+not a successful lifecycle pair. The native transaction tests above are the
+new storage-relaunch proof. Both historical sessions predate the final launcher
+and runtime changes; syntax/invalid-input checks alone do not verify a new
+interactive run. The launcher's short-profile branch now also creates its
+receipt directory before launching rather than failing at receipt write time.
