@@ -109,6 +109,25 @@ Changed shortcuts are still preserved. The native test injects a stop at this
 boundary; it is not a forced-process-kill or power-loss durability test.
 Interruption during partial registry value creation remains outside this fix.
 
+Source-only registry follow-up (2026-10-12): the ownership schema and target
+directory are now written together as the `VeloxInstallIdentity` registry value
+before any display metadata. Metadata order is deterministic and `DisplayName`
+is written last. Removal recognizes that complete identity even when later
+values are missing, while still refusing changed owner/location values,
+malformed or mismatched identities, and unowned subkeys. A key with no values or
+subkeys is removable after the installation's file record is authenticated:
+there is no registry data to erase at the CreateKey/first-value boundary.
+
+Legacy registrations without this new value still require both their original
+owner and location fields. Already damaged nonempty legacy registrations are
+not automatically reset. Native private-registry regression cases reproduced
+the empty-key refusal before the change, and now cover recognized partial
+identity, legacy compatibility and preservation on foreign/changed ownership.
+These injected partial states are not power-loss or actual Setup UI evidence.
+The application API, permissions and `velox.install/v1` file-record schema are
+unchanged; the installer adds one registry value. Existing installed applications
+and public Setup assets have not been replaced.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:

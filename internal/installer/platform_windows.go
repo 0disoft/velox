@@ -4,10 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/0disoft/velox/internal/safefs"
 	"golang.org/x/sys/windows"
@@ -34,10 +32,8 @@ func windowsEnvironment(root, shortcuts, registryRoot string) environment {
 		key, err := registry.OpenKey(registry.CURRENT_USER, registryRoot+record.App.ID, registry.QUERY_VALUE)
 		if err == nil {
 			defer key.Close()
-			owner, _, e1 := key.GetStringValue("VeloxInstaller")
-			location, _, e2 := key.GetStringValue("InstallLocation")
-			if e1 != nil || e2 != nil || owner != stateSchema || !strings.EqualFold(location, record.Directory) {
-				return errors.New("uninstall registration belongs to another installation")
+			if err := validateWindowsRegistration(key, record); err != nil {
+				return err
 			}
 		} else if !errors.Is(err, registry.ErrNotExist) {
 			return err
@@ -149,21 +145,8 @@ func prepareWindowsRegistration(record Record, shortcuts, registryRoot string) (
 					_ = registry.DeleteKey(registry.CURRENT_USER, registryRoot+record.App.ID)
 				}
 			}()
-			uninstaller := filepath.Join(record.Directory, "uninstall.exe")
-			for name, value := range map[string]string{
-				"DisplayName": record.App.Name, "DisplayVersion": record.App.Version,
-				"InstallLocation": record.Directory, "DisplayIcon": executable,
-				"UninstallString": fmt.Sprintf(`"%s" --uninstall %s`, uninstaller, record.App.ID),
-				"VeloxInstaller":  stateSchema,
-			} {
-				if err := key.SetStringValue(name, value); err != nil {
-					return err
-				}
-			}
-			for _, name := range []string{"NoModify", "NoRepair"} {
-				if err := key.SetDWordValue(name, 1); err != nil {
-					return err
-				}
+			if err := writeWindowsRegistration(key, record); err != nil {
+				return err
 			}
 			if err := os.Link(staged, filepath.Join(shortcuts, record.App.ID+".lnk")); err != nil {
 				return err
