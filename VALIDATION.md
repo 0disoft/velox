@@ -8,6 +8,38 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Test-only apartment shutdown comparison (2026-10-12): the diagnostic builds a
+Go test executable for cmd/velox-host and invokes the actual host run function
+on a locked test thread. Both arms acquire one explicit successful STA COM
+initialization reference; the balanced arm pairs only that reference with
+CoUninitialize after the run returns. The production executable, package init
+and native close sequence are unchanged. This follows Microsoft's
+[per-successful-call balance rule](https://learn.microsoft.com/en-us/windows/win32/api/objbase/nf-objbase-coinitialize),
+not proof that every implicit/library COM owner has been released.
+
+Final counterbalanced unbalanced/balanced/balanced/unbalanced trials passed in
+57.16 s on Go 1.27.1/WebView2 154.0.4258.62. Second browser exits after host were
+6,380.61 / 6,298.90 / 6,225.62 / 6,259.23 ms; immediate second readiness was
+6,926.41 / 7,373.93 / 7,070.60 / 6,973.41 ms. Thus pairing this one additional
+reference alone did not remove the delay in the helper. CoGetApartmentType
+still succeeded afterward in both arms; full apartment teardown and the actual
+production main-thread package-init reference are not established. No generic
+COM-leak or unavoidable-runtime-delay conclusion is drawn.
+
+Receipt `.cache/apartment-release-diagnostic-final.json` records test-host SHA,
+baseline HEAD, dirty-worktree status, Go/runtime versions and both apartment
+receipts. The test executable is not a release host; dirty source is not attested
+by the baseline commit alone. Native PID exits were observed before safe-arm
+profile deletion. Cleanup now also requires two actual exit timestamps rather
+than closed observation channels and retains a fixture on incomplete/error
+observations. The explicitly named historical legacy-delete-first comparison
+remains the only diagnostic arm allowed to delete before exit. New tests cover
+missing exit evidence and malformed/duplicate apartment receipts. Scoped Go
+tests/vet/diff checks passed. Missing lockfile probes remain unobserved rather
+than being called successful release. The intermittent 10 s failure, native
+owner lifetime and user-visible relaunch delay remain open. No product/API/DB/
+permission/dependency/version/CI/push/release change or broad suite rerun.
+
 Guarded profile-path host integration (2026-10-12): Runtime.Open retains the
 existing verified short spelling when it fits a 120 UTF-16-unit storage budget.
 For longer fixed-local-drive profiles it now acquires the same-directory link

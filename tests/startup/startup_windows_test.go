@@ -52,6 +52,7 @@ type hostRun struct {
 	Timeline           *benchmarker.StartupTimeline
 	ShutdownTimeline   *benchmarker.ShutdownTimeline
 	AbruptExit         bool
+	ApartmentProbe     *apartmentProbeReceipt
 }
 
 func TestBuiltHostStartup(t *testing.T) {
@@ -433,6 +434,10 @@ func runHostWithStop(host hostAdapter, profile string, stop func(*os.Process, ui
 	if err := validateShutdownResult(shutdownTimeline); err != nil {
 		return hostRun{}, fmt.Errorf("%s shutdown failed: %w; host output: %s", host.name, err, output.String())
 	}
+	apartment, err := parseApartmentProbeResult(output.String())
+	if err != nil {
+		return hostRun{}, fmt.Errorf("%s apartment receipt failed: %w", host.name, err)
+	}
 	return hostRun{
 		Ready:              readyDuration,
 		Exit:               hostExitedAt.Sub(exitStarted),
@@ -443,6 +448,7 @@ func runHostWithStop(host hostAdapter, profile string, stop func(*os.Process, ui
 		BrowserProcessExit: ready.browserExit,
 		Timeline:           timeline,
 		ShutdownTimeline:   shutdownTimeline,
+		ApartmentProbe:     apartment,
 	}, nil
 }
 

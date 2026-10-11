@@ -76,6 +76,18 @@ checks the actual runtime lifecycle and initialization failure. The built-host
 guarded case uses `VELOX_STORAGE_PATH_TEST=1`, a freshly built `VELOX_BUILT_HOST`,
 and `go test -count=1 -run '^TestBuiltHostIndexedDBLongPath/guarded-link-without-short-spelling$' ./tests/startup`.
 Fixtures use their own LocalAppData roots and never change volume settings.
+
+The separate apartment comparison builds `go test -c -o <test-host> ./cmd/velox-host`.
+Set `VELOX_APARTMENT_PROBE_HOST` to that test executable and
+`VELOX_APARTMENT_DIAGNOSTIC_RESULT` to a private evidence filename, then run
+`go test -count=1 -run '^TestApartmentReleaseDiagnostic$' ./tests/startup`.
+It compares one explicitly acquired STA reference with/without its matched
+release, not all production apartment ownership. Safe-arm cleanup requires
+observed exit timestamps for both native browsers. The final local comparison
+still took about 6.2-6.4 s for browser exit and did not resolve the existing
+ordinary relaunch delay. Never treat a missing lockfile or a closed error
+observation channel as proof that a browser has exited.
+
 `go test -count=1 -run '^TestBuiltHostGuardedStorageAfterAbruptExit$' ./tests/startup`
 uses the same built-host/storage opt-in settings for committed-draft process
 interruption checks. It stops only processes created or identified by that

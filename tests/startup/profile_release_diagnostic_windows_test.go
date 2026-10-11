@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -16,36 +18,40 @@ import (
 )
 
 type profileReleaseDiagnostic struct {
-	SchemaVersion string                `json:"schemaVersion"`
-	SourceCommit  string                `json:"sourceCommit"`
-	HostSHA256    string                `json:"hostSha256"`
-	WebView2      string                `json:"webview2Version"`
-	StartedAtUTC  time.Time             `json:"startedAtUtc"`
-	Trials        []profileReleaseTrial `json:"trials"`
+	SchemaVersion  string                `json:"schemaVersion"`
+	SourceCommit   string                `json:"sourceCommit"`
+	HostSHA256     string                `json:"hostSha256"`
+	WebView2       string                `json:"webview2Version"`
+	StartedAtUTC   time.Time             `json:"startedAtUtc"`
+	WorkspaceDirty bool                  `json:"workspaceDirty"`
+	GoVersion      string                `json:"goVersion"`
+	Trials         []profileReleaseTrial `json:"trials"`
 }
 
 type profileReleaseTrial struct {
-	Mode                  string             `json:"mode"`
-	FirstReadyMs          float64            `json:"firstReadyMs"`
-	SecondReadyMs         float64            `json:"secondReadyMs"`
-	FirstExitMs           float64            `json:"firstHostExitMs"`
-	SecondExitMs          float64            `json:"secondHostExitMs"`
-	FirstBrowserPID       uint32             `json:"firstBrowserPid"`
-	SecondBrowserPID      uint32             `json:"secondBrowserPid"`
-	FirstBrowserExitMs    *float64           `json:"firstBrowserExitAfterHostMs"`
-	SecondBrowserExitMs   *float64           `json:"secondBrowserExitAfterHostMs"`
-	SecondReadyAfterFirst *float64           `json:"secondReadyAfterFirstBrowserExitMs"`
-	LockDeleteAccessMs    *float64           `json:"lockDeleteAccessAfterSecondHostMs"`
-	DirectoryRemovedMs    *float64           `json:"directoryRemovedAfterSecondHostMs"`
-	FilesBefore           int                `json:"filesBeforeObservation"`
-	FilesAfterFirstRemove *int               `json:"filesAfterFirstRemove"`
-	InitialRemoveError    string             `json:"initialRemoveError,omitempty"`
-	LockErrors            map[string]int     `json:"lockProbeErrors"`
-	LockOwners            []profileLockOwner `json:"lockOwners,omitempty"`
-	OwnerQueryMs          *float64           `json:"ownerQueryMs,omitempty"`
-	OwnerQueryError       string             `json:"ownerQueryError,omitempty"`
-	SecondShutdown        *json.RawMessage   `json:"secondShutdownTimeline,omitempty"`
-	Error                 string             `json:"error,omitempty"`
+	Mode                  string                 `json:"mode"`
+	FirstReadyMs          float64                `json:"firstReadyMs"`
+	SecondReadyMs         float64                `json:"secondReadyMs"`
+	FirstExitMs           float64                `json:"firstHostExitMs"`
+	SecondExitMs          float64                `json:"secondHostExitMs"`
+	FirstBrowserPID       uint32                 `json:"firstBrowserPid"`
+	SecondBrowserPID      uint32                 `json:"secondBrowserPid"`
+	FirstBrowserExitMs    *float64               `json:"firstBrowserExitAfterHostMs"`
+	SecondBrowserExitMs   *float64               `json:"secondBrowserExitAfterHostMs"`
+	SecondReadyAfterFirst *float64               `json:"secondReadyAfterFirstBrowserExitMs"`
+	LockDeleteAccessMs    *float64               `json:"lockDeleteAccessAfterSecondHostMs"`
+	DirectoryRemovedMs    *float64               `json:"directoryRemovedAfterSecondHostMs"`
+	FilesBefore           int                    `json:"filesBeforeObservation"`
+	FilesAfterFirstRemove *int                   `json:"filesAfterFirstRemove"`
+	InitialRemoveError    string                 `json:"initialRemoveError,omitempty"`
+	LockErrors            map[string]int         `json:"lockProbeErrors"`
+	LockOwners            []profileLockOwner     `json:"lockOwners,omitempty"`
+	OwnerQueryMs          *float64               `json:"ownerQueryMs,omitempty"`
+	OwnerQueryError       string                 `json:"ownerQueryError,omitempty"`
+	SecondShutdown        *json.RawMessage       `json:"secondShutdownTimeline,omitempty"`
+	Error                 string                 `json:"error,omitempty"`
+	FirstApartment        *apartmentProbeReceipt `json:"firstApartment,omitempty"`
+	SecondApartment       *apartmentProbeReceipt `json:"secondApartment,omitempty"`
 }
 
 // This deliberately separate diagnostic leaves the production host unchanged.
@@ -71,12 +77,16 @@ func TestProfileLockOwnerDiagnostic(t *testing.T) {
 }
 
 func runProfileReleaseDiagnostic(t *testing.T, resultEnv string, modes []string) profileReleaseDiagnostic {
+	return runProfileReleaseDiagnosticWithHost(t, resultEnv, modes, func(string) hostAdapter { return goHost(t, repositoryRoot(t)) })
+}
+
+func runProfileReleaseDiagnosticWithHost(t *testing.T, resultEnv string, modes []string, hostForMode func(string) hostAdapter) profileReleaseDiagnostic {
 	t.Helper()
 	resultPath := os.Getenv(resultEnv)
 	if resultPath == "" {
 		t.Skip("profile-release diagnostic requires an explicit result path")
 	}
-	host := goHost(t, repositoryRoot(t))
+	host := hostForMode(modes[0])
 	body, err := os.ReadFile(host.executable)
 	if err != nil {
 		t.Fatal(err)
@@ -86,15 +96,21 @@ func runProfileReleaseDiagnostic(t *testing.T, resultEnv string, modes []string)
 	if err != nil {
 		t.Fatal(err)
 	}
+	status := exec.Command("git", "status", "--porcelain")
+	status.Dir = repositoryRoot(t)
+	dirty, err := status.Output()
+	if err != nil {
+		t.Fatalf("read diagnostic worktree state: %v", err)
+	}
 	evidence := profileReleaseDiagnostic{
 		SchemaVersion: "velox.profile-release-diagnostic/v1",
 		SourceCommit:  os.Getenv("VELOX_DIAGNOSTIC_SOURCE_COMMIT"),
 		HostSHA256:    hex.EncodeToString(digest[:]), WebView2: version,
-		StartedAtUTC: time.Now().UTC(),
+		StartedAtUTC: time.Now().UTC(), WorkspaceDirty: len(dirty) != 0, GoVersion: runtime.Version(),
 	}
 	// Counterbalance the order without an unbounded stress loop.
 	for _, mode := range modes {
-		trial := measureProfileRelease(t, host, mode)
+		trial := measureProfileRelease(t, hostForMode(mode), mode)
 		evidence.Trials = append(evidence.Trials, trial)
 		t.Logf("mode=%s second-ready=%.2fms browser-exit=%s lock-access=%s removed=%s files=%d error=%s",
 			mode, trial.SecondReadyMs, diagnosticMilliseconds(trial.SecondBrowserExitMs),
@@ -120,7 +136,8 @@ func runProfileReleaseDiagnostic(t *testing.T, resultEnv string, modes []string)
 }
 
 func measureProfileRelease(t *testing.T, host hostAdapter, mode string) profileReleaseTrial {
-	profile := managedProfileRoot(t, "velox-release-diagnostic-")
+	allBrowsersExited := false
+	profile := managedProfileRoot(t, "velox-release-diagnostic-", func() bool { return allBrowsersExited })
 	trial := profileReleaseTrial{Mode: mode, LockErrors: make(map[string]int)}
 	first, err := runHost(host, profile)
 	if err != nil {
@@ -136,6 +153,7 @@ func measureProfileRelease(t *testing.T, host hostAdapter, mode string) profileR
 	trial.FirstReadyMs, trial.SecondReadyMs = milliseconds(first.Ready), milliseconds(second.Ready)
 	trial.FirstExitMs, trial.SecondExitMs = milliseconds(first.Exit), milliseconds(second.Exit)
 	trial.FirstBrowserPID, trial.SecondBrowserPID = first.BrowserProcessID, second.BrowserProcessID
+	trial.FirstApartment, trial.SecondApartment = first.ApartmentProbe, second.ApartmentProbe
 	if body, err := json.Marshal(second.ShutdownTimeline); err == nil {
 		raw := json.RawMessage(body)
 		trial.SecondShutdown = &raw
@@ -182,7 +200,7 @@ func measureProfileRelease(t *testing.T, host hostAdapter, mode string) profileR
 				trial.LockErrors[err.Error()]++
 			}
 		}
-		if trial.DirectoryRemovedMs == nil && (mode == "legacy-delete-first" || (firstExit == nil && secondExit == nil)) {
+		if trial.DirectoryRemovedMs == nil && diagnosticRemovalAllowed(mode, trial.FirstBrowserExitMs, trial.SecondBrowserExitMs) {
 			err := os.RemoveAll(profile)
 			if !removeAttempted && mode == "legacy-delete-first" {
 				removeAttempted = true
@@ -210,7 +228,26 @@ func measureProfileRelease(t *testing.T, host hostAdapter, mode string) profileR
 	if trial.FirstBrowserExitMs == nil || trial.SecondBrowserExitMs == nil {
 		trial.Error = "browser process exit observation unavailable or incomplete"
 	}
+	allBrowsersExited = trial.FirstBrowserExitMs != nil && trial.SecondBrowserExitMs != nil
 	return trial
+}
+
+func diagnosticRemovalAllowed(mode string, firstExit, secondExit *float64) bool {
+	return mode == "legacy-delete-first" || firstExit != nil && secondExit != nil
+}
+
+func TestDiagnosticRemovalRequiresObservedExits(t *testing.T) {
+	observed := 1.0
+	for _, mode := range []string{"browser-exit-first", "apartment-balanced", "apartment-unbalanced"} {
+		for _, exits := range [][2]*float64{{nil, nil}, {&observed, nil}, {nil, &observed}} {
+			if diagnosticRemovalAllowed(mode, exits[0], exits[1]) {
+				t.Fatalf("%s permitted cleanup without two observed exits", mode)
+			}
+		}
+		if !diagnosticRemovalAllowed(mode, &observed, &observed) {
+			t.Fatalf("%s rejected confirmed exits", mode)
+		}
+	}
 }
 
 func msPointer(duration time.Duration) *float64 {
