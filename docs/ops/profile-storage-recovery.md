@@ -48,7 +48,14 @@ alias. Its mount-point buffer follows the
 Subsequent manager tests cover ownership, concurrent acquisitions and lease
 release. Actual Runtime.Open and built-host tests now verify write/relaunch-read
 through the production fallback. These isolated local checks do not verify
-installed profiles or abrupt termination, and the change is not published.
+installed profiles, and the change is not published. Later built-host tests
+recover committed Korean/CRLF text after forcibly stopping the owned host, or
+the host and its browser, then observing browser exit and reopening the same
+profile. Another native check seeds a draft using a different short spelling
+at the same trusted origin before reading it twice through Runtime.Open.
+Neither test establishes power-loss durability or recovery of input whose
+IndexedDB transaction had not completed. The production origin/database format
+does not change; the fallback does not import data from other origins.
 
 Do not delete a profile, remove its databases or change Windows volume settings
 to dismiss this warning. A shorter profile location may be chosen for a new app
@@ -69,3 +76,7 @@ checks the actual runtime lifecycle and initialization failure. The built-host
 guarded case uses `VELOX_STORAGE_PATH_TEST=1`, a freshly built `VELOX_BUILT_HOST`,
 and `go test -count=1 -run '^TestBuiltHostIndexedDBLongPath/guarded-link-without-short-spelling$' ./tests/startup`.
 Fixtures use their own LocalAppData roots and never change volume settings.
+`go test -count=1 -run '^TestBuiltHostGuardedStorageAfterAbruptExit$' ./tests/startup`
+uses the same built-host/storage opt-in settings for committed-draft process
+interruption checks. It stops only processes created or identified by that
+fixture, never a user app or browser. Root/link cleanup waits for observed exit.

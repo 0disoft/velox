@@ -51,6 +51,7 @@ type hostRun struct {
 	BrowserProcessExit <-chan time.Time
 	Timeline           *benchmarker.StartupTimeline
 	ShutdownTimeline   *benchmarker.ShutdownTimeline
+	AbruptExit         bool
 }
 
 func TestBuiltHostStartup(t *testing.T) {
@@ -301,6 +302,12 @@ func TestHostExitCodeDiagnosticHelper(t *testing.T) {
 }
 
 func runHost(host hostAdapter, profile string) (hostRun, error) {
+	return runHostWithStop(host, profile, nil)
+}
+
+// stop runs only after a verified readiness receipt. It is a fixture operation,
+// not a production command or a request to terminate unrelated processes.
+func runHostWithStop(host hostAdapter, profile string, stop func(*os.Process, uint32) error) (hostRun, error) {
 	pipeName := fmt.Sprintf(`\\.\pipe\velox-%d`, time.Now().UnixNano())
 	pipe, err := createPipe(pipeName)
 	if err != nil {
@@ -310,11 +317,15 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	defer disconnectNamedPipe.Call(uintptr(pipe))
 
 	cmd := exec.Command(host.executable, host.arguments(profile)...)
+	exitAfterReady := "1"
+	if stop != nil {
+		exitAfterReady = "0"
+	}
 	cmd.Env = append(os.Environ(),
 		append(host.environment(profile),
 			"VELOX_BENCH_MODE=1",
 			"VELOX_BENCH_PIPE="+pipeName,
-			"VELOX_BENCH_EXIT_AFTER_READY=1",
+			"VELOX_BENCH_EXIT_AFTER_READY="+exitAfterReady,
 		)...,
 	)
 	output := &strings.Builder{}
@@ -381,12 +392,23 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 	readyAt := time.Now()
 	readyDuration := readyAt.Sub(started)
 	exitStarted := time.Now()
+	if stop != nil {
+		if err := stop(cmd.Process, ready.browserProcessID); err != nil {
+			_ = cmd.Process.Kill()
+			_ = cmd.Wait()
+			return hostRun{}, fmt.Errorf("stop owned %s fixture: %w", host.name, err)
+		}
+	}
 
 	waitDone := make(chan error, 1)
 	go func() { waitDone <- cmd.Wait() }()
 	select {
 	case err := <-waitDone:
-		if err != nil {
+		var exitError *exec.ExitError
+		if stop != nil && (err == nil || !errors.As(err, &exitError) || exitError.ExitCode() == 0) {
+			return hostRun{}, fmt.Errorf("%s fixture did not confirm abrupt nonzero exit: %v", host.name, err)
+		}
+		if err != nil && stop == nil {
 			return hostRun{}, fmt.Errorf("%s host exit failed: %w; exit-code=%s; output: %s", host.name, err, hostExitCode(cmd), output.String())
 		}
 	case <-time.After(5 * time.Second):
@@ -395,6 +417,11 @@ func runHost(host hostAdapter, profile string) (hostRun, error) {
 		return hostRun{}, fmt.Errorf("%s host did not exit within 5s after ready; forced-stop-requested=true exit-code=%s; output: %s", host.name, hostExitCode(cmd), output.String())
 	}
 	hostExitedAt := time.Now()
+	if stop != nil {
+		return hostRun{Ready: readyDuration, Exit: hostExitedAt.Sub(exitStarted), ProcessStartedAt: started,
+			ReadyAt: readyAt, HostExitedAt: hostExitedAt, BrowserProcessID: ready.browserProcessID,
+			BrowserProcessExit: ready.browserExit, AbruptExit: true}, nil
+	}
 	timeline, err := parseStartupTimeline(output.String())
 	if err != nil && host.expectedPhase == "dom-2raf" {
 		return hostRun{}, fmt.Errorf("%s startup timeline failed: %w; host output: %s", host.name, err, output.String())

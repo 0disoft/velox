@@ -42,6 +42,35 @@ guarantee, publication or version/API/permission/schema/CI change.
 
 Historical component evidence before host integration follows.
 
+Guarded profile interruption/recovery checks (2026-10-12): the actual GUI host
+now has an opt-in committed-draft regression. The parent waits for a readiness
+receipt emitted only after the IndexedDB transaction completes, confirms the
+owned browser is alive and force-stops only its started host, or the host plus
+the captured browser process handle. A nonzero host exit is required; normal
+shutdown is not counted as a crash. After observed browser exit, DELETE-access
+opening (without deletion) verifies release of the killed host's link lease.
+Relaunch reads the identical Korean/CRLF draft, reuses the same single link and
+preserves the original profile marker. Both final cases passed in 21.71 s:
+host-only browser exit 6.45 s after host; host/browser interruption 21.20 ms.
+Profile lengths 245/246. Fixtures retain their data if exit is not confirmed.
+This is committed-transaction process interruption, not power-loss durability,
+uncommitted input recovery, or all subprocesses being forcibly terminated.
+
+`TestNativeRuntimeProfileExistingDraft` separately seeds the original directory
+through a native dependency view using another short spelling, then the
+production Runtime.Open reads it twice through its own guarded fallback. Final
+test passed in 20.82 s (profile 246/browser path 103). The seed explicitly uses
+the same hashed trusted origin as the host. An initial fixture used a different
+origin and returned draft mismatch; that was corrected in the fixture, not by
+changing the product origin or database. Marker/identity and browser-exit
+checks remain. No host source, database schema or installed profile changed.
+Scoped Go tests/vet passed. The separate ordinary immediate-relaunch lifecycle
+subcase still failed its 10 s browser-exit wait (PID 25968); that PID was absent
+on later inspection and its disposable profile was retained. No claim that
+crash checks repair this existing intermittent shutdown issue is made. No new
+dependency/version/CI/push/publication. The full unchanged-product suite from
+the integration commit was not rerun for these test-only additions.
+
 Profile-link manager component (2026-10-12): a private, protected current-user/
 SYSTEM directory holds stable per-directory-identity junctions. New junctions
 are completed under unpredictable staging names and renamed by the same handle

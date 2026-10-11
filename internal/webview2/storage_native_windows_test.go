@@ -25,6 +25,7 @@ type storageProbeResult struct {
 	BrowserPID        uint32 `json:"browserPid"`
 	ProfileLength     int    `json:"profileLength"`
 	BrowserPathLength int    `json:"browserPathLength"`
+	Origin            string `json:"origin"`
 }
 
 // A diagnostic, not a claim that all measured storage operations succeed.
@@ -192,6 +193,8 @@ func TestNativeStorageProbeChild(t *testing.T) {
 		runRuntimeStorageProbeChild(t, profile, path, strings.TrimPrefix(mode, "runtime-"))
 		return
 	}
+	productionOrigin := strings.HasPrefix(mode, "production-")
+	mode = strings.TrimPrefix(mode, "production-")
 	if mode != "write" && mode != "read" {
 		t.Fatal("invalid mode")
 	}
@@ -213,7 +216,12 @@ func TestNativeStorageProbeChild(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(assets, "index.html"), []byte(page), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := view.SetVirtualHostNameToFolderMapping("dev.velox.storage-probe.velox.local", assets); err != nil {
+	host := "dev.velox.storage-probe.velox.local"
+	if productionOrigin {
+		host = trustedHost("dev.velox.storage-probe")
+	}
+	result.Origin = "https://" + host
+	if err := view.SetVirtualHostNameToFolderMapping(host, assets); err != nil {
 		t.Fatal(err)
 	}
 	if err := view.Bind("__storageResult", func(status string) {
@@ -222,7 +230,7 @@ func TestNativeStorageProbeChild(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	view.Navigate("https://dev.velox.storage-probe.velox.local/index.html")
+	view.Navigate("https://" + host + "/index.html")
 	view.Run()
 	encoded, err := json.Marshal(result)
 	if err != nil {

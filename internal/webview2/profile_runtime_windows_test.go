@@ -15,6 +15,18 @@ func TestNativeRuntimeProfileStorage(t *testing.T) {
 	if os.Getenv("VELOX_NATIVE_STORAGE_PROBE") != "1" {
 		t.Skip("opt-in real Runtime.Open storage lifecycle")
 	}
+	testRuntimeProfileStorage(t, false)
+}
+
+func TestNativeRuntimeProfileExistingDraft(t *testing.T) {
+	if os.Getenv("VELOX_NATIVE_STORAGE_PROBE") != "1" {
+		t.Skip("opt-in existing dependency-view draft recovery by Runtime.Open")
+	}
+	testRuntimeProfileStorage(t, true)
+}
+
+func testRuntimeProfileStorage(t *testing.T, existingDraft bool) {
+	t.Helper()
 	root, err := os.MkdirTemp("", "vpr-")
 	if err != nil {
 		t.Fatal(err)
@@ -30,6 +42,7 @@ func TestNativeRuntimeProfileStorage(t *testing.T) {
 			return
 		}
 		removeFixtureProfileLinks(t, filepath.Join(root, "VeloxProfileLinks"))
+		removeFixtureProfileLinks(t, filepath.Join(root, "seed"))
 		if t.Failed() {
 			return
 		}
@@ -52,7 +65,26 @@ func TestNativeRuntimeProfileStorage(t *testing.T) {
 	if err := os.WriteFile(marker, []byte("existing profile"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	for _, mode := range []string{"write", "read"} {
+	modes := []string{"write", "read"}
+	if existingDraft {
+		lease, err := acquireProfileLink(profile, filepath.Join(root, "seed"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer lease.Close()
+		cleanupSafe = false
+		seeded, exited := runStorageProbeChild(t, profile, lease.path, "production-write")
+		cleanupSafe = exited
+		if !exited || seeded.Status != "verified" || seeded.Origin != trustedOrigin("dev.velox.storage-probe") {
+			t.Fatalf("existing dependency-view draft not committed: %+v exited=%v", seeded, exited)
+		}
+		if err := lease.Close(); err != nil {
+			t.Fatal(err)
+		}
+		t.Log("preexisting Korean/CRLF draft committed by dependency view using a different same-directory spelling")
+		modes = []string{"read", "read"}
+	}
+	for _, mode := range modes {
 		cleanupSafe = false
 		result, exited := runStorageProbeChild(t, profile, root, "runtime-"+mode)
 		cleanupSafe = exited
@@ -81,7 +113,7 @@ func runRuntimeStorageProbeChild(t *testing.T, profile, cacheDir, mode string) {
 	if err := os.WriteFile(entry, []byte(storageProbePage(mode, "__veloxReady")), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	result := storageProbeResult{ProfileLength: len(profile)}
+	result := storageProbeResult{ProfileLength: len(profile), Origin: trustedOrigin("dev.velox.storage-probe")}
 	var view *Runtime
 	view, err := Open(Config{Title: "Velox Isolated Runtime Storage Probe", AppID: "dev.velox.storage-probe", AppVersion: "1",
 		Width: 640, Height: 480, DataPath: profile, AssetRoot: assets, EntryPath: entry}, func(status string) error {
