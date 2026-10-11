@@ -87,6 +87,9 @@ func install(source, uninstaller string, env environment) (Result, error) {
 	if _, err := os.Lstat(target); !errors.Is(err, os.ErrNotExist) {
 		return Result{}, errors.New("installation already exists; uninstall it before installing again")
 	}
+	if _, err := os.Lstat(removalJournalPath(target, inspected.App.ID)); !errors.Is(err, os.ErrNotExist) {
+		return Result{}, fmt.Errorf("pending removal recovery record; finish removal with Setup --uninstall %s before installing again", inspected.App.ID)
+	}
 	if err := env.check(record); err != nil {
 		return Result{}, err
 	}
@@ -161,10 +164,27 @@ func uninstall(appID string, env environment) (Result, error) {
 	}
 	target := filepath.Join(env.root, appID)
 	record, err := readState(target, appID)
+	if errors.Is(err, os.ErrNotExist) {
+		record, err = readRemovalJournal(target, appID)
+	}
 	if err != nil {
 		return Result{}, err
 	}
+	if err := validateRemovalJournal(record); err != nil {
+		return Result{}, err
+	}
 	if err := env.validateRemoval(record); err != nil {
+		return Result{}, err
+	}
+	if _, err := os.Lstat(target); errors.Is(err, os.ErrNotExist) {
+		if err := env.unregister(record); err != nil {
+			return Result{}, err
+		}
+		if err := removeRemovalJournal(record); err != nil {
+			return Result{}, err
+		}
+		return Result{AppID: appID, Directory: target}, nil
+	} else if err != nil {
 		return Result{}, err
 	}
 	tree, err := assettree.Scan(target)
@@ -203,7 +223,11 @@ func uninstall(appID string, env environment) (Result, error) {
 }
 
 func readState(root, appID string) (Record, error) {
-	file, _, err := safefs.OpenVerifiedRegular(filepath.Join(root, stateFile))
+	return readRecordAt(filepath.Join(root, stateFile), root, appID)
+}
+
+func readRecordAt(path, root, appID string) (Record, error) {
+	file, _, err := safefs.OpenVerifiedRegular(path)
 	if err != nil {
 		return Record{}, err
 	}

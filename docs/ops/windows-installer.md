@@ -211,6 +211,37 @@ decisions and the silent command path, not a manually clicked MessageBox or an
 actual installed application's helper removal. No background retry, new flag,
 application API, permission, dependency, version or CI runner was added.
 
+Source-only final-removal journal (2026-10-12): before deleting the internal
+ownership record, the engine publishes a completed, flushed snapshot at
+`%LOCALAPPDATA%\Programs\Velox\.velox-removal-<app-id>.json`. Its contents
+use the existing `velox.install/v1` record and still bind the same app identity,
+target directory and file paths. Publication refuses to overwrite any existing
+entry; an existing journal is reusable only when its validated record matches.
+
+If the internal record is missing, removal can resume from this sibling snapshot.
+If the target directory is already gone, it finishes the guarded integration
+and journal cleanup. A conflicting or unreadable journal is preserved and blocks
+removal before file deletion. New installation also refuses a pending journal
+instead of replacing the identity while old removal is unresolved. Successful
+removal deletes its journal; returned root-deletion errors keep the journal as
+well as attempting the earlier no-overwrite internal-record restoration.
+
+Regressions reproduced missing-record recovery failure and bypass of conflicting
+metadata before the change. Actual child exits without Go defers passed at three
+boundaries: journal committed, internal record deleted and root deleted. Each
+resumed engine removal and allowed fresh installation afterward. A new user file
+added after interruption was retained and blocked removal until moved; an outside
+synthetic draft was byte-preserved. The final three-cut run took 0.52 s.
+
+These are authenticated installer fixtures and the production final-deletion
+routine, not whole Setup termination, a consumer host launch or power-loss proof.
+The snapshot file is a new private installer storage artifact; no record schema,
+public application API, permission, dependency, version or CI runner changed.
+Old interrupted installations lacking a valid internal record and journal are
+not automatically deleted. File replacement between preflight and removal and
+manual native retry-dialog interaction remain separate checks. Related package
+tests, scoped vet and a stripped GUI Setup build passed; nothing was published.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:

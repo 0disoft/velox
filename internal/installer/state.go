@@ -26,7 +26,10 @@ func sameOwnership(a, b Record) bool {
 }
 
 func publishState(root string, record Record, publish func(string, string) error) error {
-	path := filepath.Join(root, stateFile)
+	return publishStateAt(filepath.Join(root, stateFile), record, publish)
+}
+
+func publishStateAt(path string, record Record, publish func(string, string) error) error {
 	if err := safefs.RejectLinkedComponents(path); err != nil {
 		return err
 	}
@@ -34,7 +37,7 @@ func publishState(root string, record Record, publish func(string, string) error
 	if err != nil {
 		return err
 	}
-	temp, err := os.CreateTemp(root, ".velox-state-")
+	temp, err := os.CreateTemp(filepath.Dir(path), ".velox-state-")
 	if err != nil {
 		return err
 	}
