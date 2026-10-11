@@ -44,9 +44,15 @@ func run(args []string) int {
 			if err := waitForParent(uint32(*waitPID)); err != nil {
 				return failed(err, *silent)
 			}
-			_, err := installer.Uninstall(*remove)
+			err := retryRemoval(self, *remove, *silent, func() error {
+				_, err := installer.Uninstall(*remove)
+				return err
+			}, func(text string) bool {
+				return message(text, "Velox Uninstall", 0x15) == 4
+			})
 			if err != nil {
-				return failed(err, *silent)
+				// The interactive retry/cancel dialog already displayed this error.
+				return failed(err, true)
 			}
 			if !*silent {
 				message("The application was removed. Documents and recovery data were kept.", "Velox Uninstall", 0x40)

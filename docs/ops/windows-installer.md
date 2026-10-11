@@ -194,6 +194,23 @@ end-user retry through Setup/helper UI still requires a separate check. No power
 loss, full Setup UI, concurrent file-replacement stress or new public artifact
 was verified here.
 
+Source-only helper retry follow-up (2026-10-12): an interactive removal helper
+now offers Retry/Cancel after a removal failure instead of immediately ending
+with an OK-only error. Retry invokes the same removal engine in the still-running
+temporary helper. Cancellation emits the failure once without a second error
+dialog. Silent failure remains exit 6 and includes a quoted command invoking
+that helper with `--uninstall <app-id>`, which works even if the installed
+uninstaller has already been deleted. Success behavior is unchanged.
+
+The real command entry-point child test reproduced the missing retry command
+before the change and passes afterward; its unique app identity is verified
+absent before execution, so it changes no installation. Decision tests cover
+success, silent refusal without prompting, cancellation, one retry and multiple
+retries, preserving the original error cause. These tests exercise callback
+decisions and the silent command path, not a manually clicked MessageBox or an
+actual installed application's helper removal. No background retry, new flag,
+application API, permission, dependency, version or CI runner was added.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:
