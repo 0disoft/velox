@@ -88,7 +88,8 @@ A per-user install needs no elevation:
 - The Apps uninstall entry is written under
   `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\Velox.<app-id>`
   with `DisplayName`, `DisplayVersion`, `InstallLocation`, `DisplayIcon`,
-  `UninstallString`, `VeloxInstaller`, and `NoModify`/`NoRepair`. The entry
+  `UninstallString`, `VeloxInstaller`, `VeloxInstallIdentity`, and
+  `NoModify`/`NoRepair`. The entry
   is per-user and is removed with the install.
 
 This is a fresh install only. If the install directory, the shortcut, or the
@@ -127,6 +128,25 @@ These injected partial states are not power-loss or actual Setup UI evidence.
 The application API, permissions and `velox.install/v1` file-record schema are
 unchanged; the installer adds one registry value. Existing installed applications
 and public Setup assets have not been replaced.
+
+The follow-up native process test stops an actual child with `os.Exit` at ten
+boundaries: after empty key creation and after each of the nine production
+value writes. That bypasses Go defers instead of simulating normal error-return
+cleanup. The already-promoted, authenticated install record and the real
+HKCU test key are then passed to the normal removal engine. Every boundary
+passed removal, fresh reinstall with version 2.0.0, matching Apps registry
+version, final removal and preservation of a separate synthetic draft file.
+The test uses private `Software\VeloxInstallerTests` keys and temporary native
+shortcuts, not the user's Apps entries. Its host/uninstaller files are installer
+test fixtures; no consumer application or Setup UI is launched.
+
+`go test ./internal/installer ./internal/setuppayload ./cmd/velox-setup`, scoped
+vet, diff checks and a stripped Windows GUI Setup build passed. The Setup
+command currently has no own test files, so that package step is compilation,
+not new command/UI coverage. These controlled post-call process exits do not
+verify interruption inside a registry system call, power-loss durability,
+whole-Setup termination, installer confirmation dialogs or real GUI application
+upgrade. No full CI, public release or existing installation was changed.
 
 ## Removal
 
