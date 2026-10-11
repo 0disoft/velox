@@ -8,6 +8,19 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+COM initialization failure diagnostic correction (2026-10-12): the existing
+`int(HRESULT) < 0` predicate missed zero-extended failure HRESULTs on Windows
+amd64. Three new cases reproduced missing warnings (0x80010106, 0x80004005,
+0x800401f0); reporting now uses the fork's existing 32-bit HRESULT classifier
+and prints the 32-bit code. S_OK and S_FALSE remain quiet. This only corrects
+failure reporting, not package-init apartment ownership or browser shutdown.
+Fork package tests and Velox host/runtime/startup package tests passed. Default
+fork vet still fails on eight unchanged unsafe.Pointer sites in COM/Win32
+source and fixtures; `go vet -unsafeptr=false ./...` passed, not a full vet pass.
+No new unsafe conversion, public API, schema, dependency or version change.
+The preceding native comparison uses the unchanged shutdown behavior and was
+not repeated for this diagnostic-only correction. No push/publication.
+
 Test-only apartment shutdown comparison (2026-10-12): the diagnostic builds a
 Go test executable for cmd/velox-host and invokes the actual host run function
 on a locked test thread. Both arms acquire one explicit successful STA COM
