@@ -242,6 +242,31 @@ not automatically deleted. File replacement between preflight and removal and
 manual native retry-dialog interaction remain separate checks. Related package
 tests, scoped vet and a stripped GUI Setup build passed; nothing was published.
 
+An optional built-Setup integration check now exercises real helper commands:
+set process-local `VELOX_BUILT_SETUP` to the source-built GUI Setup and run
+`go test ./cmd/velox-setup -run '^TestBuiltSetupLateRemovalRetry$' -count=1 -v`.
+Without that setting the test skips and ordinary CI creates no extra installation.
+
+Local run (2026-10-12): Setup SHA-256
+`f324be9458edbc033e838d15ecfa0667202625dfe400f6c1bfa067e45953b180`, app ID
+`dev.velox.retry-b431c95d5b447615`, completed in 0.38 s. A fresh unique fixture
+was installed with the real installer engine and native per-user registration
+after confirming its paths/key did not exist. A Windows root-directory lock
+caused the actual Setup helper command to fail with exit 6 after deleting the
+installed uninstaller. The failure exposed the surviving Setup retry command.
+After unlocking, the public `--uninstall <id> --silent` command launched its
+real copied helper. That exact helper's process handle signaled termination with
+exit 0. Installation, native shortcut, registry entry and journal disappeared;
+the default profile's synthetic draft marker remained byte-identical.
+
+The fixture, private helper folder and marker were cleaned after verified
+completion. A helper that ends before process enumeration is reported as having
+an unobserved exit code, not assumed successful; removal postconditions still
+must pass. Process-query errors do not establish helper absence. This check
+uses a fixture portable tree and the real Setup as its uninstaller, not a
+consumer GUI host or full appended-payload Setup installation. Native dialog
+clicks, real draft restoration and power-loss recovery remain unverified here.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:
