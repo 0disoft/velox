@@ -6,25 +6,102 @@ const source = await readFile(new URL("./folder-browser/app.js", import.meta.url
 
 function harness(invoke?: (method: string, params?: any) => Promise<any>) {
   const nodes = new Map<string, any>();
+  let active: any;
+  const connect = (node: any, connected: boolean) => {
+    node.isConnected = connected;
+    if (!connected && active === node) active = body;
+    for (const child of node.children) connect(child, connected);
+  };
   function element() {
     const handlers = new Map<string, Function>();
     return {
-      textContent: "", value: "", disabled: false, children: [] as any[],
+      textContent: "", value: "", disabled: false, isConnected: false, children: [] as any[],
       addEventListener(event: string, fn: Function) { handlers.set(event, fn); },
-      click() { return handlers.get("click")?.(); },
-      appendChild(child: any) { this.children.push(child); },
-      replaceChildren(...children: any[]) { this.children = children; },
+      focus() { if (this.isConnected && !this.disabled) active = this; },
+      click() { this.focus(); return handlers.get("click")?.(); },
+      appendChild(child: any) { this.children.push(child); connect(child, this.isConnected); },
+      replaceChildren(...children: any[]) {
+        for (const child of this.children) connect(child, false);
+        this.children = children;
+        for (const child of children) connect(child, this.isConnected);
+      },
     };
   }
-  const node = (id: string) => { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); };
-  const context: any = { document: { querySelector: node, createElement: element },
+  const body = element();
+  body.isConnected = true;
+  active = body;
+  const node = (id: string) => {
+    if (!nodes.has(id)) { const value = element(); value.isConnected = true; nodes.set(id, value); }
+    return nodes.get(id);
+  };
+  const context: any = { document: { querySelector: node, createElement: element, body, get activeElement() { return active; } },
     requestAnimationFrame: (fn: Function) => fn() };
   if (invoke) context.velox = { invoke };
   context.window = context;
   runInNewContext(source, context);
-  return { node, click: (id: string) => node(`#${id}`).click(),
+  return { node, active: () => active, click: (id: string) => node(`#${id}`).click(),
     file: () => node("#entries").children[0].children[0].children[0] };
 }
+
+test("failed refresh removes stale results, invalidates old rows and permits recovery", async () => {
+  let fail = false, reads = 0;
+  const ui = harness(async method => {
+    if (method === "folder.select") return { name: "Selected", target: 4 };
+    if (method === "folder.list") {
+      if (fail) throw Object.assign(new Error("retry later"), { code: "NATIVE_OPERATION_FAILED" });
+      return { entries: [{ name: "notes.txt", kind: "file" }], skipped: 0 };
+    }
+    reads++;
+    return { name: "notes.txt", text: "old preview", bytes: 11 };
+  });
+  await ui.click("select");
+  const old = ui.file();
+  await old.click();
+  fail = true;
+  await ui.click("refresh");
+  expect(ui.node("#entries").children).toEqual([]);
+  expect(ui.node("#preview").value).toBe("");
+  expect(ui.node("#count").textContent).toBe("");
+  expect(ui.node("#refresh").disabled).toBe(false);
+  expect(ui.node("#release").disabled).toBe(false);
+  await old.click();
+  expect(reads).toBe(1);
+  fail = false;
+  await ui.click("refresh");
+  await ui.file().click();
+  expect(reads).toBe(2);
+  expect(ui.node("#preview").value).toBe("old preview");
+});
+
+test("non-Error failures still report failure and allow a fresh selection", async () => {
+  for (const failure of [null, undefined, "bridge unavailable"]) {
+    let fail = true;
+    const ui = harness(async method => {
+      if (fail) throw failure;
+      if (method === "folder.select") return { name: "Recovered", target: 9 };
+      return { entries: [], skipped: 0 };
+    });
+    await ui.click("select");
+    expect(ui.node("#status").textContent).toBe("ERROR: The folder operation failed.");
+    expect(ui.node("#select").disabled).toBe(false);
+    fail = false;
+    await ui.click("select");
+    expect(ui.node("#folder-name").textContent).toBe("Recovered");
+    expect(ui.node("#count").textContent).toBe("0 items");
+  }
+});
+
+test("expired folder returns keyboard focus to selection", async () => {
+  const ui = harness(async method => {
+    if (method === "folder.select") return { name: "Selected", target: 2 };
+    if (method === "folder.list") return { entries: [{ name: "notes.txt", kind: "file" }], skipped: 0 };
+    throw Object.assign(new Error("select again"), { code: "FOLDER_TARGET_INVALID" });
+  });
+  await ui.click("select");
+  await ui.file().click();
+  expect(ui.active()).toBe(ui.node("#select"));
+  expect(ui.node("#entries").children).toEqual([]);
+});
 
 test("folder starter accesses only folder methods on clicks and renders names literally", async () => {
   const calls: any[] = [];

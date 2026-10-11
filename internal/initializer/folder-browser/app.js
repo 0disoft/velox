@@ -15,6 +15,7 @@
   let target = 0;
   let busy = false;
   let fileButtons = [];
+  let listingVersion = 0;
 
   function controls() {
     select.disabled = busy || !available;
@@ -26,16 +27,22 @@
     fileName.textContent = "No file selected";
     fileBytes.textContent = "";
   }
+  function clearListing() {
+    listingVersion++;
+    entries.replaceChildren();
+    fileButtons = [];
+    count.textContent = "";
+    clearPreview();
+  }
   function clear() {
     target = 0;
     folder.textContent = "No folder selected";
-    entries.replaceChildren();
-    fileButtons = [];
+    clearListing();
     count.textContent = "0 items";
-    clearPreview();
   }
   async function openText(name) {
     clearPreview();
+    status.textContent = "Loading text...";
     const result = await window.velox.invoke("folder.openText", { target, name });
     preview.value = result.text;
     fileName.textContent = result.name;
@@ -43,10 +50,11 @@
     status.textContent = "Text loaded.";
   }
   async function list() {
+    clearListing();
+    status.textContent = "Loading list...";
     const result = await window.velox.invoke("folder.list", { target });
-    clearPreview();
-    fileButtons = [];
     const listedTarget = target;
+    const listedVersion = listingVersion;
     entries.replaceChildren(...result.entries.map((item) => {
       const row = document.createElement("tr");
       const nameCell = document.createElement("td");
@@ -56,7 +64,7 @@
         button.className = "file-name";
         button.textContent = item.name;
         button.title = `Open ${item.name} as text`;
-        button.addEventListener("click", () => target === listedTarget && run(() => openText(item.name)));
+        button.addEventListener("click", () => target === listedTarget && listingVersion === listedVersion && run(() => openText(item.name)));
         fileButtons.push(button);
         nameCell.appendChild(button);
       } else {
@@ -73,19 +81,27 @@
   }
   async function run(action) {
     if (busy || !available) return;
+    const previousFocus = document.activeElement;
     busy = true;
     controls();
     try {
       await action();
     } catch (error) {
-      if (error.code === "FOLDER_TARGET_INVALID") clear();
-      status.textContent = `${error.code || "ERROR"}: ${error.message}`;
+      const code = typeof error?.code === "string" ? error.code : "ERROR";
+      const message = typeof error?.message === "string" ? error.message : "The folder operation failed.";
+      if (code === "FOLDER_TARGET_INVALID") clear();
+      status.textContent = `${code}: ${message}`;
     } finally {
       busy = false;
       controls();
+      if (document.activeElement === document.body || document.activeElement === previousFocus) {
+        if (previousFocus?.isConnected && !previousFocus.disabled) previousFocus.focus();
+        else select.focus();
+      }
     }
   }
   select.addEventListener("click", () => run(async () => {
+    status.textContent = "Selecting folder...";
     const result = await window.velox.invoke("folder.select");
     if (result.cancelled) { status.textContent = "Selection canceled."; return; }
     clear();
@@ -95,6 +111,7 @@
   }));
   refresh.addEventListener("click", () => target && run(list));
   release.addEventListener("click", () => target && run(async () => {
+    status.textContent = "Releasing folder...";
     await window.velox.invoke("folder.release", { target });
     clear();
     status.textContent = "Folder released.";

@@ -236,6 +236,18 @@ expired tokens clear both panes. It includes three local licensed icons but
 no subfolder navigation, clipboard, writes, monitoring, bundled font or new
 dependency. Folder-browser does not change the basic or text-editor template.
 
+Source-only folder recovery correction (2026-10-12): refresh clears the old
+listing/preview before requesting new data, invalidates detached old rows even
+when the target token is unchanged, and keeps explicit retry/reselection
+available after failure. Pending operations display their working state.
+Malformed JavaScript rejection values still report a generic failure and
+restore controls. Completion restores lost action focus, or selection focus
+when its folder/row was invalidated, without taking focus from a preview the
+user focused while waiting. Cancellation preserves the existing view.
+No target persistence, browser-picker fallback, native method, permission,
+runtime protocol or generated file-name change was added. Previously generated
+projects and the public alpha.68 package remain unchanged.
+
 The tray starter published in alpha.67 and later includes a message composer, kind selector,
 bounded count and explicit Send action. It calls only the existing
 `notification.show` method, blocks duplicate submissions, preserves text on

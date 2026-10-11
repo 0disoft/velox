@@ -8,6 +8,40 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Folder-browser recovery (source-only, 2026-10-12): three new regressions failed
+against the earlier starter for retained stale refresh results, null rejection
+breaking error reporting and lost selection focus after an expired target.
+The correction clears old list/preview before refresh, revokes old row handlers
+through a listing revision, provides working/failure states and restores lost
+action focus without stealing a preview the user focused while waiting.
+Final `bun test internal/initializer` passed 74 tests/634 assertions; Go
+initializer/fileopen/IPC suites and scoped vet passed. Native private-folder
+flow passed initial read, deleted-file failure/refresh/retry, directory
+replacement rejection, fresh selection/read, injected cancellation, release and
+selection after release. Its chooser/window/dispatch are fixtures, while folder
+identity, listing, UTF-8 reads and deletion-lock release use Windows operations.
+No native picker or consumer GUI host was launched.
+
+`node scripts/folder-browser-ui-smoke.mjs` creates a fresh project through the
+actual source CLI, serves its generated assets locally, and uses dev-only
+Playwright/Edge with a mocked native bridge. It passed at 1080x760 light and
+360x640 light/dark: keyboard selection, cancellation preserving preview,
+failed-refresh clearing and explicit retry, stale-row rejection, pending state
+and no focus theft, expired-folder selection focus/reselection, unsupported
+read/retry, release failure/retry, malformed rejection and reload with no
+automatic native calls or restored grant. No page/resource errors or horizontal
+overflow; preview areas remain usable and local icons render. Loaded/failure
+screenshots were inspected. Receipt:
+`.cache/folder-browser-readiness-1791756137515/result.json`.
+An initial smoke failed in its HTTP harness after sending headers before a
+failed file read; it was fixed and rerun, not counted as application evidence.
+The smoke closes browser/server and leaves only ignored local receipts/generated
+files. A post-run process check found no headless Playwright Edge processes.
+No API/DB/schema, native permissions, dependency manifest, host implementation,
+version, CI runner or public artifact changed. Existing generated apps were not
+modified. No push, release, hosted CI, real picker click, Linux execution or
+full native packaged-window workflow was performed in this slice.
+
 Hosted quick after Action patch refresh (2026-10-11): explicitly approved
 [Consumer evidence 38083236206/1](https://github.com/0disoft/velox/actions/runs/38083236206)
 SUCCEEDED at pushed main a3cd0aa0f2b3d50badc4cd1db94e46b158c8c338. Four
