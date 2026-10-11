@@ -44,7 +44,7 @@ function harness(options: {
     return nodes.get(id);
   }
   const context: any = {
-    document: { querySelector: node, title: "" }, indexedDB: {},
+    document: { querySelector: node, title: "" }, indexedDB: {}, TextEncoder,
     FileNotesStorage: { load: () => options.load ?? Promise.resolve(options.draft), save: async (state: any) => { persisted = { ...state }; } },
     velox: options.unavailable ? undefined : {
       invoke(method: string, params?: { target?: number; title?: string }) {
@@ -66,6 +66,11 @@ function harness(options: {
     __veloxReady() { ready.resolve(); },
   };
   context.window = context;
+  let editorValue = "";
+  Object.defineProperty(node("#editor"), "value", {
+    get: () => editorValue,
+    set: (value: string) => { editorValue = value.replace(/\r\n?/g, "\n"); },
+  });
   runInNewContext(model, context);
   runInNewContext(find, context);
   runInNewContext(app, context);
@@ -179,6 +184,89 @@ test("saving a snapshot never marks edits made during the native write as saved"
   await reopened.ready;
   expect(reopened.node("#editor").value).toBe("second");
   expect(reopened.unload()).toBe(true);
+});
+
+test("opened and recovered line endings are preserved through editing, drafts and saving", async () => {
+  for (const raw of ["a\nb\n", "a\r\nb\r\n", "a\rb\r", "a\r\nb\nc\r"]) {
+    const eol = raw.match(/\r\n|\r|\n/)![0];
+    const writes: string[] = [];
+    const ui = harness({ open: async () => ({ name: "lines.md", text: raw }),
+      save: async text => { writes.push(text); return { name: "lines.md", target: 1 }; },
+      saveTo: async text => { writes.push(text); return { name: "lines.md", target: 1 }; } });
+    await ui.ready;
+    ui.click("open-document"); await tick();
+    expect(ui.unload()).toBe(false);
+    await ui.click("save-document");
+    expect(writes.at(-1)).toBe(raw);
+    ui.edit(ui.node("#editor").value + "new\n");
+    const expected = ui.node("#editor").value.replace(/\n/g, eol);
+    const draft = await ui.flushDraft();
+    expect(draft.text).toBe(expected);
+    const reopened = harness({ draft, save: async text => {
+      expect(text).toBe(expected); return { name: "lines.md", target: 2 };
+    } });
+    await reopened.ready;
+    await reopened.click("save-document");
+    await ui.click("save-document");
+    expect(writes.at(-1)).toBe(expected);
+    ui.click("new-document"); await tick();
+    ui.edit("new\ntext\n");
+    await ui.click("save-document");
+    expect(writes.at(-1)).toBe("new\ntext\n");
+  }
+});
+
+test("oversized UTF-8 and expanded CRLF are refused before native saving without losing text", async () => {
+  let selections = 0;
+  const ui = harness({ open: async () => ({ name: "lines.md", text: "a\r\n" }),
+    save: async () => { selections++; return { cancelled: true }; } });
+  await ui.ready;
+  ui.click("open-document"); await tick();
+  for (const text of ["\uD55C".repeat(699051), "\n".repeat(1024 * 1024 + 1)]) {
+    ui.edit(text);
+    await ui.click("save-as-document");
+    expect(selections).toBe(0);
+    expect(ui.node("#status").textContent).toContain("2 MiB UTF-8 limit");
+    expect(ui.node("#editor").value).toBe(text);
+    expect(ui.unload()).toBe(true);
+  }
+  ui.edit("\n".repeat(1024 * 1024));
+  await ui.click("save-as-document");
+  expect(selections).toBe(1);
+});
+
+test("long Unicode filenames get a valid save suggestion while keeping the document name", async () => {
+  let suggestion = "";
+  const name = "\uD55C".repeat(81) + ".md";
+  const ui = harness({ draft: { schemaVersion: 1, name, text: "keep", savedText: "" },
+    save: async (_text, value) => { suggestion = value; return { cancelled: true }; } });
+  await ui.ready;
+  await ui.click("save-as-document");
+  expect(suggestion).toBe("Untitled.md");
+  expect(ui.node("#document-name").textContent).toBe(name);
+});
+
+test("CRLF saving keeps later edits dirty and oversized connected saves never invoke the bridge", async () => {
+  const completion = deferred<any>();
+  const writes: string[] = [];
+  const ui = harness({ open: async () => ({ name: "lines.md", text: "a\r\n" }),
+    save: async text => { writes.push(text); return completion.promise; },
+    saveTo: async text => { writes.push(text); return { name: "lines.md", target: 1 }; } });
+  await ui.ready;
+  ui.click("open-document"); await tick();
+  ui.edit("first\n");
+  const saving = ui.click("save-document");
+  ui.edit("later\n");
+  completion.resolve({ name: "lines.md", target: 1 });
+  await saving;
+  expect(writes).toEqual(["first\r\n"]);
+  expect(ui.node("#save-state").textContent).toBe("Unsaved changes");
+  await ui.click("save-document");
+  expect(writes.at(-1)).toBe("later\r\n");
+  ui.edit("\uD55C".repeat(699051));
+  await ui.click("save-document");
+  expect(writes).toHaveLength(2);
+  expect(ui.node("#status").textContent).toContain("2 MiB UTF-8 limit");
 });
 
 test("startup and clean-document file operations guard window close until they finish", async () => {

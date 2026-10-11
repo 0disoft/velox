@@ -26,8 +26,32 @@
   let fileActionPending = true;
   let composing = false;
   let requestedTitle = null;
+  let sourceText = "";
+  let sourceValue = "";
+  let lineEnding = "\n";
   const finder = window.FileNotesFind.attach(document, elements.editor,
     () => fileActionPending || elements.discardDialog.open);
+
+  function setDocumentText(text) {
+    elements.editor.value = text;
+    sourceText = text;
+    sourceValue = elements.editor.value;
+    lineEnding = text.match(/\r\n|\r|\n/)?.[0] ?? "\n";
+  }
+
+  function serializeText(value) {
+    if (value === sourceValue) return sourceText;
+    return lineEnding === "\n" ? value : value.replace(/\n/g, lineEnding);
+  }
+
+  function saveSnapshot() {
+    const snapshot = { ...state };
+    if (snapshot.text.length > 2 * 1024 * 1024 ||
+        new TextEncoder().encode(snapshot.text).byteLength > 2 * 1024 * 1024) {
+      throw new Error("Text exceeds the 2 MiB UTF-8 limit.");
+    }
+    return snapshot;
+  }
 
   function setBusy(busy, freezeEditor = false) {
     fileActionPending = busy;
@@ -119,7 +143,7 @@
       if (selected.cancelled) { announce("Open canceled."); return; }
       await releaseSaveTarget();
       state = model.openDocument(state, selected.name, selected.text, new Date().toISOString());
-      elements.editor.value = state.text;
+      setDocumentText(state.text);
       render();
       queueDraftSave();
       announce(`${selected.name} opened.`);
@@ -132,19 +156,22 @@
     if (result.cancelled) { announce("Save canceled."); return; }
     // Editing may continue during a write; only the submitted text reached disk.
     state = { ...model.markSaved(snapshot, result.name, result.target, new Date().toISOString()), text: state.text };
+    sourceText = snapshot.text;
+    sourceValue = snapshot.text.replace(/\r\n?/g, "\n");
     render();
     queueDraftSave();
     announce(`${state.name} saved.`);
   }
 
   async function saveAsDocument() {
-    const snapshot = { ...state };
     if (typeof window.velox?.saveTextAs !== "function") {
       announce("Native file saving is unavailable.");
       return;
     }
     try {
-      finishSave(await window.velox.saveTextAs(snapshot.text, snapshot.name), snapshot);
+      const snapshot = saveSnapshot();
+      const suggestedName = new TextEncoder().encode(snapshot.name).byteLength > 240 ? "Untitled.md" : snapshot.name;
+      finishSave(await window.velox.saveTextAs(snapshot.text, suggestedName), snapshot);
     } catch (error) {
       reportFileError("Save", error);
     }
@@ -156,7 +183,7 @@
       return;
     }
     try {
-      const snapshot = { ...state };
+      const snapshot = saveSnapshot();
       finishSave(await window.velox.saveTextTo(snapshot.text, snapshot.target), snapshot);
     } catch (error) {
       reportFileError("Save", error);
@@ -171,7 +198,7 @@
       return;
     }
     state = model.newDocument();
-    elements.editor.value = "";
+    setDocumentText("");
     render();
     queueDraftSave();
     elements.editor.focus();
@@ -189,7 +216,7 @@
   }
 
   elements.editor.addEventListener("input", () => {
-    state = model.replaceText(state, elements.editor.value, new Date().toISOString());
+    state = model.replaceText(state, serializeText(elements.editor.value), new Date().toISOString());
     render();
     queueDraftSave();
   });
@@ -236,7 +263,7 @@
     }
     try {
       state = model.restoreDraft(await storage.load());
-      elements.editor.value = state.text;
+      setDocumentText(state.text);
       if (state.updatedAt) announce(`Draft restored from ${new Date(state.updatedAt).toLocaleString()}.`);
     } catch (error) {
       elements.draftState.textContent = "Draft recovery unavailable";

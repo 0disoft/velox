@@ -16,6 +16,12 @@ contents; an external modification, replacement or deletion blocks the write
 without an automatic retry or force-overwrite. Cancellation keeps the previous
 connection. New and successful Open release it. Open is read-only: its first
 Save still requires a native Save as selection and overwrite confirmation.
+Unedited files retain their original line endings, including mixed endings.
+After editing, newlines use the first original line-ending style; New resets
+to LF. Drafts preserve this serialized text. Saving checks the resulting UTF-8
+size before requesting native file access, without truncating the editor.
+Names above the native 240-byte suggestion limit use `Untitled.md` in the
+picker; canceling leaves the original document name unchanged.
 
 Drafts retain names, text and saved-text baselines, never native save tokens or
 browser handles. Old schema-v1 drafts remain readable, but their browser handles
