@@ -359,6 +359,18 @@ validation and path-based key deletion still have a separate mutation window;
 file-handle protection does not make that registry operation atomic. Schema,
 public API, permissions, dependencies, version, host code and CI are unchanged.
 
+Registry-value follow-up (2026-10-12): four native interrupted-installation
+fixtures reproduced deletion of foreign values, changed display metadata and
+changed uninstall commands, including legacy ownership. Validation now shares
+the writer's expected string fields, checks all present metadata and DWORD
+flags, rejects unknown values/subkeys and unexpected types, and checks initial
+value-count/name/data-size limits. Missing expected values remain valid for
+authenticated interrupted installation. Path fields remain case-insensitive.
+Refusal tests verify that the registration values and installed uninstaller are
+unchanged; QWORD flags, expandable ownership/identity strings, changed flags,
+foreign binary values and oversized metadata are also rejected. This does not
+close the later validation-to-key-deletion race or make reads transactional.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:
