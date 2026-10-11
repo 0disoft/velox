@@ -209,7 +209,7 @@ func uninstall(appID string, env environment) (Result, error) {
 	}
 	// Missing recorded files are allowed so a failed partial removal can be retried.
 	for _, file := range record.Files {
-		if err := os.Remove(filepath.Join(target, filepath.FromSlash(file.Path))); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := removeRecordedFile(filepath.Join(target, filepath.FromSlash(file.Path)), file); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return Result{}, err
 		}
 	}

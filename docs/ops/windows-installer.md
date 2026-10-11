@@ -276,6 +276,46 @@ The format-updated Setup was rebuilt and passed the real helper integration
 again in 0.43 s (`dev.velox.retry-956b7854d11efffd`, SHA-256
 `02698b8268aa7fabbc63503a23b3765d96cfcb523f91dc936f8b1916b2469845`).
 
+## Verified File Removal
+
+Source-only correction (2026-10-12): size-preserving edits, replacement files
+and empty replacement directories after preflight all reproduced deletion by
+the old path-based loop. Recorded-file deletion now verifies the size and
+SHA-256 again on its open handle. On Windows it pins non-reparse ancestors
+against writes/renames, opens the file with exclusive read/delete access,
+rejects directory/reparse/offline attributes and marks that same handle for
+deletion. It never falls back to deleting the path when that operation fails.
+The handle stays open until the deletion request has been made. This follows
+the Windows [CreateFile sharing contract](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)
+and [handle-based disposition contract](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileinformationbyhandle).
+
+All three regressions retain the replacement and installation record without
+reaching unregistration, then pass retry once the conflict is resolved. Real Windows
+checks passed for ordinary and 280+-character paths, write/delete/file-rename
+and parent-rename refusal while the verified handle is held, an already-open
+writer, final-component and parent-directory symlinks, handle release and
+preservation of a concurrently added user note. No symlink case was skipped.
+Unchanged earlier files may already have been removed before a later conflict;
+retry continues to tolerate those missing recorded files.
+
+Installer, payload and Setup package suites plus scoped vet passed. The new
+source-built stripped GUI Setup is 4,146,688 bytes, SHA-256
+`facc133d6aff07a0a448d6d14189a68cfa31b2613c77a5d4966cf075c5e62ddd`.
+Its real helper late-failure/public-retry integration passed in 0.58 s with
+unique app ID `dev.velox.retry-619a2c1bb4c69ed0`: failure exit 6, retry helper
+exit 0, install/shortcut/registration/journal removed and profile marker
+preserved. The fixture and helper were cleaned by the test.
+
+This closes the recorded-file path deletion gap, not every concurrent change
+to the ownership file, shortcut or registry. Those still have separate
+validation/removal boundaries. No native Retry/Cancel dialog clicks, power-loss
+test, consumer GUI launch or hosted CI were performed in this slice. The
+non-Windows engine is only a test fixture with revalidation, not atomic Unix
+deletion or public Linux installation support. Installation/removal now reads
+each present recorded file again; app startup, host code, consumer assets,
+public API, permissions, schema, dependencies, version and CI settings are
+unchanged. No public package was replaced or published.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:
