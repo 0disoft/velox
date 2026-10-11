@@ -148,6 +148,27 @@ verify interruption inside a registry system call, power-loss durability,
 whole-Setup termination, installer confirmation dialogs or real GUI application
 upgrade. No full CI, public release or existing installation was changed.
 
+Source-only publication rollback follow-up (2026-10-12): a failed publication
+no longer recursively deletes the promoted target. It reuses the owned-file
+removal checks, first requiring the on-disk record to match the record committed
+by this install. Changed or additional files and altered ownership stop rollback
+before file deletion; the error identifies the preserved installation and the
+conflict to resolve before removal/retry. Ordinary unchanged installs still roll
+back completely. Integration cleanup stays with the publisher, not ordinary
+unregister, so a foreign registry entry or shortcut appearing during publication
+is not removed as part of filesystem rollback.
+
+Three regression fixtures reproduced loss of added root/nested notes and an
+edited web asset before the change. Afterward their bytes and retry record are
+preserved, and resolving the conflict permits removal and reinstallation.
+An altered ownership-record case also remains intact. Two real private-registry
+and native-shortcut publication races verify foreign integrations are preserved
+while unchanged owned files roll back. These are deterministic failure-boundary
+tests, not concurrent-writer stress or atomic deletion guarantees. A file can
+still change after the existing preflight, and the final directory-removal
+record ordering is a separate pending check. No API, permissions, record schema,
+dependency, version, CI runner or installed app changed.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:

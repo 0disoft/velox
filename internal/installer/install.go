@@ -140,7 +140,7 @@ func install(source, uninstaller string, env environment) (Result, error) {
 		return Result{}, err
 	}
 	if err := prepared.publish(); err != nil {
-		cleanupErr := os.RemoveAll(target)
+		cleanupErr := rollbackInstallation(record, env)
 		return Result{}, errors.Join(err, cleanupErr)
 	}
 	return Result{AppID: record.App.ID, Directory: target}, nil
