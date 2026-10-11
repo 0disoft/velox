@@ -8,6 +8,34 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Editor storage-failure recovery (source-only, 2026-10-12): two new regressions
+failed against earlier assets for missing file-save guidance after IndexedDB
+startup failure. Text-editor now retains the actionable failure notice during
+input, IME and pending retry until a current storage operation succeeds. File
+Notes separates draft failure from successful file-operation status and handles
+null storage rejections without throwing a second error or exposing raw errors.
+Editing, explicit file saving, cancellation, dirty/close protection, current
+revision guards and later storage recovery remain intact.
+Final `bun test internal/initializer examples/file-notes`: 122 pass, 0 fail,
+917 assertions. WebView2/initializer Go suites, scoped vet and diff checks passed.
+`node scripts/editor-storage-failure-ui-smoke.mjs` generated current source CLI
+text-editor assets and tested them alongside File Notes with injected startup
+and write UnknownError, and mocked native file responses. All 12 combinations
+passed (1080x760 light and 360x640 light/dark for each app/failure phase): editing,
+save cancellation preserving dirty text, explicit Save as retry/export payload,
+visible guidance, no horizontal overflow, no page/resource errors and usable
+editor dimensions. Desktop/narrow screenshots were inspected. Receipt:
+`.cache/editor-storage-failure-1791757158445/result.json`.
+The first smoke incorrectly tried to replace frozen draft-method properties and
+timed out; the corrected harness injects failure at IndexedDB.open instead.
+That initial run is not passing application evidence. Browser/server closed;
+the final process query found no headless Playwright Edge processes.
+CLI/example docs and a profile-storage recovery guide changed. No native picker,
+packaged-app file export, Linux execution, hosted rerun, release or existing-app
+asset upgrade was performed. No host/API, permission, DB schema, dependency,
+version or CI change; no profile relocation. The underlying long-profile
+fallback failure remains a limitation, not repaired by the notice.
+
 Native storage alias-fallback diagnostic (2026-10-12): opt-in
 `VELOX_NATIVE_STORAGE_PROBE=1 go test -count=1 -v -run
 '^TestNativeStorageWithoutShortAlias$' ./internal/webview2` completed in 48.34 s

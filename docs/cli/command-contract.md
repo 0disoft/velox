@@ -199,6 +199,13 @@ not stop later work, and only the current revision updates persistence status.
 The 300 ms debounce, v1 record, limits and close protection remain unchanged.
 Public alpha.68 and existing generated editors are not upgraded.
 
+Source editors keep an actionable draft-storage failure notice during subsequent
+typing, composition and retry. It is replaced only after a current-revision
+storage operation succeeds. Native Save/Save as remain usable and their result
+is separate from draft persistence. See
+[profile storage recovery](../ops/profile-storage-recovery.md) for the known
+long-profile fallback limitation; this does not add a migration or host API.
+
 Source `init --template text-editor` sets `app.singleInstance: true` to keep
 duplicate launches from sharing and overwriting the single draft record.
 It reuses the existing host guard for the same user, session, app ID and

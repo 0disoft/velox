@@ -192,7 +192,7 @@ test("empty restored draft remains dirty and failed discard preserves candidate"
   await tick();
   expect(ui.node("#recovery-dialog").open).toBe(true);
   expect(ui.storedDraft().name).toBe("emptied.txt");
-  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable");
+  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable. Save changes to a file.");
   ui.setDraftFailure(false);
   ui.node("#recovery-dialog").close("recover");
   await tick();
@@ -240,7 +240,7 @@ test("storage failure keeps editing available and never weakens close protection
   ui.setDraftFailure(true);
   ui.edit("keep text");
   await ui.flushDraft();
-  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable");
+  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable. Save changes to a file.");
   expect(ui.node("#editor").readOnly).toBe(false);
   let blocked = false;
   ui.listeners.beforeunload({ preventDefault() { blocked = true; } });
@@ -252,6 +252,28 @@ test("storage failure keeps editing available and never weakens close protection
   expect(ui.node("#editor").value).toBe("opened");
   await ui.click("new");
   expect(ui.node("#editor").value).toBe("");
+});
+
+test("unavailable drafts keep file-save guidance visible until storage really recovers", async () => {
+  const ui = await harness(true, { load: Promise.reject(new Error("Internal error opening backing store for indexedDB.open.")) });
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  expect(ui.node("#editor").readOnly).toBe(false);
+  ui.setDraftFailure(true);
+  ui.edit("\uD55C\uAE00\nkeep this draft");
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  await ui.flushDraft();
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  ui.node("#editor").listeners.compositionstart();
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  ui.node("#editor").listeners.compositionend();
+  await ui.click("save-as");
+  expect(ui.calls.at(-1).params.text).toBe("\uD55C\uAE00\nkeep this draft");
+  expect(ui.node("#save-state").textContent).toBe("Saved to file");
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  ui.setDraftFailure(false);
+  ui.edit("storage recovered");
+  await ui.flushDraft();
+  expect(ui.node("#draft-state").textContent).toBe("Draft stored");
 });
 
 test("IME defers drafts until composition ends and rapid edits coalesce", async () => {

@@ -106,7 +106,7 @@ try {
     const page = await context.newPage();
     await page.goto(url);
     await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
-    assert.equal(await page.locator("#draft-state").textContent(), "Draft recovery unavailable");
+    assert.equal(await page.locator("#draft-state").textContent(), "Draft recovery unavailable. Save changes to a file.");
     await page.getByRole("textbox", { name: "Markdown document" }).fill("Still editable");
     assert.equal(await page.locator("#editor").inputValue(), "Still editable");
     result.blockedRecoveryUnlocksEditor = true;

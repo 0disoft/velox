@@ -104,7 +104,7 @@ test("failed clear remains visible and does not poison subsequent draft writes",
   await ui.click("save");
   expect(ui.storedDraft().text).toBe("old");
   expect(ui.node("#status").textContent).toBe("File saved. Draft cleanup unavailable.");
-  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable");
+  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable. Save changes to a file.");
   ui.setDraftFailure(false);
   ui.edit("new"); await ui.flushDraft();
   expect(ui.storedDraft().text).toBe("new");

@@ -299,11 +299,37 @@ test("draft recovery failure leaves native saving and editing available", async 
   const ui = harness({ load: Promise.reject(new Error("Draft database is blocked.")),
     save: async () => ({ name: "kept.md", target: 1 }) });
   await ui.ready;
-  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable");
+  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable. Save changes to a file.");
   expect(ui.node("#editor").readOnly).toBe(false);
   ui.edit("keep editing");
   await ui.click("save-document");
   expect(ui.node("#save-state").textContent).toBe("Saved to file");
+});
+
+test("draft failures explain file saving and keep the native export usable", async () => {
+  let unavailable = true;
+  let exported = "";
+  const ui = harness({
+    load: Promise.reject(new Error("Internal error opening backing store for indexedDB.open.")),
+    draftSave: async () => { if (unavailable) throw null; },
+    save: async text => { exported = text; return { name: "kept.txt", target: 1 }; },
+  });
+  await ui.ready;
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  ui.edit("\uD55C\uAE00\nkeep this draft");
+  await ui.flushDraft();
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  expect(ui.node("#editor").readOnly).toBe(false);
+  expect(ui.unload()).toBe(true);
+  await ui.click("save-as-document");
+  expect(exported).toBe("\uD55C\uAE00\nkeep this draft");
+  expect(ui.node("#save-state").textContent).toBe("Saved to file");
+  await ui.flushDraft();
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  unavailable = false;
+  ui.edit("storage recovered");
+  await ui.flushDraft();
+  expect(ui.node("#draft-state").textContent).toBe("Draft saved");
 });
 
 test("slow draft storage retains only the in-flight and newest waiting snapshots", async () => {

@@ -31,6 +31,7 @@
   let draftRevision = 0;
   let draftPending = false;
   let draftWriteRunning = false;
+  let draftUnavailable = false;
   let pendingDraftWrite = null;
   let pendingDraftClear = null;
   let wordWrap = true;
@@ -137,20 +138,26 @@
     job.then(() => {
       if (revision !== draftRevision) return;
       draftPending = false;
+      draftUnavailable = false;
       draftState.textContent = snapshot === null ? "No draft" : "Draft stored";
     }, () => {
       if (revision !== draftRevision) return;
       draftPending = false;
-      draftState.textContent = "Draft recovery unavailable";
+      reportDraftUnavailable();
     });
     return job;
+  }
+
+  function reportDraftUnavailable() {
+    draftUnavailable = true;
+    draftState.textContent = "Draft recovery unavailable. Save changes to a file.";
   }
 
   function scheduleDraft() {
     clearTimeout(draftTimer);
     const revision = ++draftRevision;
     draftPending = true;
-    draftState.textContent = "Saving draft...";
+    if (!draftUnavailable) draftState.textContent = "Saving draft...";
     draftTimer = setTimeout(() => {
       draftTimer = null;
       const snapshot = isDirty() ? { name, text: serializeText(editor.value), updatedAt: Date.now() } : null;
@@ -162,7 +169,7 @@
     clearTimeout(draftTimer);
     draftTimer = null;
     draftPending = true;
-    draftState.textContent = "Saving draft...";
+    if (!draftUnavailable) draftState.textContent = "Saving draft...";
     return writeDraft(null, ++draftRevision);
   }
 
@@ -177,7 +184,7 @@
       } else draftState.textContent = "No draft";
     } catch {
       recoveryCandidate = null;
-      draftState.textContent = "Draft recovery unavailable";
+      reportDraftUnavailable();
     } finally {
       checkingDraft = false;
       render();
@@ -290,7 +297,7 @@
     draftTimer = null;
     draftRevision++;
     draftPending = true;
-    draftState.textContent = "Saving draft...";
+    if (!draftUnavailable) draftState.textContent = "Saving draft...";
     finder.refresh();
     positions.update();
   });

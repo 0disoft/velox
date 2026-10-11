@@ -99,6 +99,10 @@
     elements.status.textContent = message;
   }
 
+  function reportDraftUnavailable() {
+    elements.draftState.textContent = "Draft recovery unavailable. Save changes to a file.";
+  }
+
   function reportFileError(operation, error) {
     if (error.code === "PERMISSION_DENIED") {
       announce(`${operation} blocked: File access was denied. Your text is still in the editor.`);
@@ -125,10 +129,9 @@
         try {
           await storage.save(snapshot);
           if (revision === draftRevision) elements.draftState.textContent = "Draft saved";
-        } catch (error) {
+        } catch {
           if (revision !== draftRevision) continue;
-          elements.draftState.textContent = "Draft recovery unavailable";
-          announce(`Draft save failed: ${error.message}`);
+          reportDraftUnavailable();
         }
       }
     } finally { draftWriteRunning = false; }
@@ -281,7 +284,7 @@
 
   async function restore() {
     if (!("indexedDB" in window)) {
-      elements.draftState.textContent = "Draft recovery unavailable";
+      reportDraftUnavailable();
       render();
       return;
     }
@@ -289,9 +292,8 @@
       state = model.restoreDraft(await storage.load());
       setDocumentText(state.text);
       if (state.updatedAt) announce(`Draft restored from ${new Date(state.updatedAt).toLocaleString()}.`);
-    } catch (error) {
-      elements.draftState.textContent = "Draft recovery unavailable";
-      announce(`Draft restore failed: ${error.message}`);
+    } catch {
+      reportDraftUnavailable();
     }
     render();
   }
