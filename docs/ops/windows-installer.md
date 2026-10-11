@@ -335,6 +335,30 @@ claim guarded deletion of native shortcuts or registry keys, native dialog
 clicks, a full consumer launch or power-loss recovery. No schema, permission,
 dependency, version, host code or CI setting changed; nothing was published.
 
+Start Menu follow-up (2026-10-12): the native unregistration path also reproduced
+deletion of a size-preserving edit, replacement file and empty directory at the
+shortcut path after successful validation. It now snapshots a regular shortcut
+against the recorded hash and uses the same exclusive handle deletion, never
+path deletion. Failure preserves the shortcut and stops before registry-key
+removal. All three native cases preserve the original registration values and
+pass full engine retry after the original shortcut is restored. Validation now
+uses a bounded streaming hash (1 MiB shortcut limit), not an unbounded ReadFile.
+Exact-limit removal and over-limit preservation passed; fixture bytes in the
+limit check are not claims of parsing a real Shell Link.
+
+Final installer/payload/Setup package suites passed (installer 9.655 s), scoped
+vet and Linux test-binary cross-compilation passed, and the rebuilt stripped
+GUI Setup passed its real late-failure/public-retry check in 0.70 s. Setup was
+4,156,928 bytes, SHA-256
+`ac4020a970faba55d0beb58e8dd36b8fbdca2192c7fbc887956a98afd337f5a3`, unique
+app ID `dev.velox.retry-8fe89391c6bda16d`: failure exit 6, copied helper exit 0,
+installation/shortcut/registry/journal removed and synthetic profile marker
+preserved. No consumer host or Retry/Cancel dialog was launched, no Linux binary
+was executed and no hosted CI or public artifact was replaced. Native registry
+validation and path-based key deletion still have a separate mutation window;
+file-handle protection does not make that registry operation atomic. Schema,
+public API, permissions, dependencies, version, host code and CI are unchanged.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:

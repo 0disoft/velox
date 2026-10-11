@@ -39,21 +39,11 @@ func windowsEnvironment(root, shortcuts, registryRoot string) environment {
 			return err
 		}
 		path := shortcut(record)
-		if err := safefs.RejectLinkedComponents(path); err != nil {
-			return err
-		}
-		data, err := os.ReadFile(path)
+		_, err = snapshotWindowsShortcut(path, record.ShortcutHash)
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}
-		if err != nil {
-			return err
-		}
-		digest := sha256.Sum256(data)
-		if record.ShortcutHash == "" || hex.EncodeToString(digest[:]) != record.ShortcutHash {
-			return errors.New("Start Menu shortcut changed; move it before uninstalling")
-		}
-		return nil
+		return err
 	}
 	return environment{
 		root: root,
@@ -79,17 +69,7 @@ func windowsEnvironment(root, shortcuts, registryRoot string) environment {
 		},
 		validateRemoval: validate,
 		unregister: func(record Record) error {
-			if err := validate(record); err != nil {
-				return err
-			}
-			if err := os.Remove(shortcut(record)); err != nil && !errors.Is(err, os.ErrNotExist) {
-				return err
-			}
-			if err := registry.DeleteKey(registry.CURRENT_USER, registryRoot+record.App.ID); err != nil && !errors.Is(err, registry.ErrNotExist) {
-				return err
-			}
-			_ = os.Remove(shortcuts)
-			return nil
+			return unregisterWindows(record, shortcuts, registryRoot, validate)
 		},
 		removable: func(path string) error {
 			name, err := windows.UTF16PtrFromString(path)
@@ -103,6 +83,20 @@ func windowsEnvironment(root, shortcuts, registryRoot string) environment {
 			return windows.CloseHandle(handle)
 		},
 	}
+}
+
+func unregisterWindows(record Record, shortcuts, registryRoot string, validate func(Record) error) error {
+	if err := validate(record); err != nil {
+		return err
+	}
+	if err := removeWindowsShortcut(filepath.Join(shortcuts, record.App.ID+".lnk"), record.ShortcutHash); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if err := registry.DeleteKey(registry.CURRENT_USER, registryRoot+record.App.ID); err != nil && !errors.Is(err, registry.ErrNotExist) {
+		return err
+	}
+	_ = os.Remove(shortcuts)
+	return nil
 }
 
 func prepareWindowsRegistration(record Record, shortcuts, registryRoot string) (registration, error) {
