@@ -307,7 +307,7 @@ exit 0, install/shortcut/registration/journal removed and profile marker
 preserved. The fixture and helper were cleaned by the test.
 
 This closes the recorded-file path deletion gap, not every concurrent change
-to the ownership file, shortcut or registry. Those still have separate
+to the ownership file, shortcut or registry. Those initially had separate
 validation/removal boundaries. No native Retry/Cancel dialog clicks, power-loss
 test, consumer GUI launch or hosted CI were performed in this slice. The
 non-Windows engine is only a test fixture with revalidation, not atomic Unix
@@ -315,6 +315,25 @@ deletion or public Linux installation support. Installation/removal now reads
 each present recorded file again; app startup, host code, consumer assets,
 public API, permissions, schema, dependencies, version and CI settings are
 unchanged. No public package was replaced or published.
+
+Ownership-metadata follow-up (2026-10-12): the final internal-record removal
+also deleted a replacement user note, changed JSON ownership and empty
+directory after its earlier ownership comparison. All three failures were
+reproduced against the old path deletion. Internal records and sibling recovery
+journals now share a bounded snapshot of the original validated ownership;
+deletion reopens and verifies those exact bytes through the locked-handle path.
+Changed/malformed/non-regular metadata is preserved rather than removed.
+Original recovery metadata remains usable after the conflicting internal entry
+is moved. A missing internal entry still permits journal-backed retry.
+
+Snapshot-to-delete changes to both internal records and journals, current
+conflicting ownership, all three final-removal replacements and retry passed.
+The native abrupt-exit test now uses the production guarded internal-record
+removal before its record/root cut points; all three exit/recovery phases pass.
+Installer/payload/Setup package suites and scoped vet passed. This does not yet
+claim guarded deletion of native shortcuts or registry keys, native dialog
+clicks, a full consumer launch or power-loss recovery. No schema, permission,
+dependency, version, host code or CI setting changed; nothing was published.
 
 ## Removal
 

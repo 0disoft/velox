@@ -232,7 +232,11 @@ func readRecordAt(path, root, appID string) (Record, error) {
 		return Record{}, err
 	}
 	defer file.Close()
-	decoder := json.NewDecoder(io.LimitReader(file, 16<<20))
+	return decodeRecord(io.LimitReader(file, 16<<20), root, appID)
+}
+
+func decodeRecord(reader io.Reader, root, appID string) (Record, error) {
+	decoder := json.NewDecoder(reader)
 	decoder.DisallowUnknownFields()
 	var record Record
 	if err := decoder.Decode(&record); err != nil {

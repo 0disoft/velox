@@ -41,10 +41,7 @@ func prepareRemovalJournal(record Record) error {
 }
 
 func removeRemovalJournal(record Record) error {
-	if err := validateRemovalJournal(record); err != nil {
-		return err
-	}
-	if err := os.Remove(removalJournalPath(record.Directory, record.App.ID)); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := removeOwnedRecord(record, removalJournalPath(record.Directory, record.App.ID)); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 	return nil

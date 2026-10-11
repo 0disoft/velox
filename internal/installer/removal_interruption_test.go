@@ -104,7 +104,7 @@ func TestRemovalProcessExitHelper(t *testing.T) {
 		if isState && phase == "journal-ready" {
 			os.Exit(97)
 		}
-		err := os.Remove(path)
+		err := removeInstallationEntry(record, path)
 		if err == nil && ((isState && phase == "record-removed") || (path == directory && phase == "root-removed")) {
 			os.Exit(97)
 		}

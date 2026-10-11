@@ -8,7 +8,14 @@ import (
 )
 
 func removeInstallationDirectories(record Record) error {
-	return finishDirectoryRemoval(record, os.Remove)
+	return finishDirectoryRemoval(record, func(path string) error { return removeInstallationEntry(record, path) })
+}
+
+func removeInstallationEntry(record Record, path string) error {
+	if path == filepath.Join(record.Directory, stateFile) {
+		return removeOwnedRecord(record, path)
+	}
+	return os.Remove(path)
 }
 
 func finishDirectoryRemoval(record Record, remove func(string) error) error {
