@@ -63,7 +63,7 @@ func Open(config Config, onReady ReadyHandler) (*Runtime, error) {
 	view, createErr := webview.NewWithOptionsAndError(webview.WebViewOptions{
 		Debug:                   config.Debug,
 		DevelopmentCache:        config.Watch,
-		DataPath:                config.DataPath,
+		DataPath:                resolveBrowserDataPath(config.DataPath),
 		BrowserExecutableFolder: config.BrowserExecutableFolder,
 		AutoFocus:               true,
 		DenyAllPermissions:      true,

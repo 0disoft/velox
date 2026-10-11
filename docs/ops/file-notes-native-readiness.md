@@ -53,3 +53,65 @@ after forced termination. The historical intermittent ten-second failure is
 still unresolved; one passing pair does not establish its cause or fix.
 No user profile, document, registry entry, public API, runtime host, permission,
 database schema, dependency, version or CI workflow changed.
+
+## Long Profile Storage: 2026-10-12
+
+A real WebView2 storage probe reproduced `UnknownError: Internal error opening
+backing store for indexedDB.open.` with a 146-character profile and the prior
+host. The underlying IndexedDB manifest name was 261 characters long. Ordinary
+DOM readiness does not cover this failure: the new storage probe reports ready
+only after its database transaction completes, followed by two animation frames.
+
+The runtime now gives WebView2 an extended-length path. When an existing local
+directory has a shorter Windows short-name alias, the runtime verifies it with
+`os.SameFile` before using that spelling. It never creates an alias, relocates
+the profile, resets its contents or changes registry settings. The configured
+path still identifies single-instance locks and window-state files. UNC and
+device namespaces are not queried for short-name aliases.
+
+Extended spelling alone passed write/read at 146 characters, but still failed
+at 180 and 218 characters. Those exploratory failures are retained, not counted
+as passes. With the verified short-name spelling, the final source-built host
+passed four separate write/exit/browser-exit/relaunch/read/browser-exit pairs
+with profile lengths 118, 146, 180 and 218. The long-name IndexedDB manifests
+were 261, 295 and 333 characters. The fixture checked exact synthetic Korean
+text and CRLF data; it used no native file permission or user document. All
+successful profiles were removed only after both browser exits were observed.
+
+A fifth compatibility pair wrote through the previous host's ordinary profile
+spelling and read through the new host's spelling. It passed without copying or
+migrating the database. The four final pairs took 56.37 s; compatibility took
+14.02 s. This is controlled Windows x64 / WebView2 `154.0.4258.62` evidence,
+not a cross-machine or arbitrary-path-length guarantee.
+
+Native test invocation (process-local environment):
+
+```text
+VELOX_STORAGE_PATH_TEST=1
+VELOX_BUILT_HOST=<freshly built host.exe>
+go test ./tests/startup -run '^TestBuiltHostIndexedDBLongPath$' -count=1 -v -timeout=120s
+```
+
+Optionally set `VELOX_STORAGE_LEGACY_HOST` to the previous host and run the
+`/legacy-profile` subtest to check retained data across the change. Without the
+enable flag, this optional native check skips and consumes no ordinary CI host
+launches. Test failures preserve their disposable profiles for diagnosis.
+
+The before/after hosts were built with Go `1.27.1`, `-trimpath`, and
+`-ldflags='-s -w -H windowsgui'`. Sizes: 4,876,288 / 4,878,336 bytes (+2 KiB).
+SHA-256 before: `0b2ac4f2ee1aad7add3bd1a77a611cd641fdf0d3237d4cb92f64a7d9a33d7241`;
+after: `9d6497f556089668242fb6cf69110ff7c630e5643f573177369e7fa2d55e8bc8`.
+Related WebView2/host/startup package tests, vet and diff checks passed. The first
+probe's invalid asset-root configuration was repaired before storage evidence
+was collected; its failure does not establish an IndexedDB defect.
+
+Short aliases are not guaranteed on NTFS and are absent on ReFS. If unavailable,
+the runtime retains extended spelling rather than substituting a different
+profile. Deeper profiles in that environment remain unverified and the
+extended-only failures above remain a limitation. See Microsoft's
+[short-path API limitations](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getshortpathnamew)
+and [extended-path rules](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation).
+No public API, permissions, database schema, dependency, version, release or CI
+workflow changed. The runtime host implementation changed; no installed app
+or user profile was replaced. Installer upgrade and interactive picker checks
+were not run in this slice.
