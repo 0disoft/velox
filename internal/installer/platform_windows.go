@@ -89,10 +89,13 @@ func unregisterWindows(record Record, shortcuts, registryRoot string, validate f
 	if err := validate(record); err != nil {
 		return err
 	}
-	if err := removeWindowsShortcut(filepath.Join(shortcuts, record.App.ID+".lnk"), record.ShortcutHash); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := removeWindowsRegistration(record, registryRoot+record.App.ID, func() error {
+		err := removeWindowsShortcut(filepath.Join(shortcuts, record.App.ID+".lnk"), record.ShortcutHash)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
 		return err
-	}
-	if err := registry.DeleteKey(registry.CURRENT_USER, registryRoot+record.App.ID); err != nil && !errors.Is(err, registry.ErrNotExist) {
+	}); err != nil {
 		return err
 	}
 	_ = os.Remove(shortcuts)

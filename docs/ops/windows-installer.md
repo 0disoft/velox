@@ -371,6 +371,37 @@ unchanged; QWORD flags, expandable ownership/identity strings, changed flags,
 foreign binary values and oversized metadata are also rejected. This does not
 close the later validation-to-key-deletion race or make reads transactional.
 
+Registry-handle follow-up (2026-10-12): an isolated native regression reproduced
+deletion of ownership changed after the earlier unregistration validation.
+Removal now holds a READ/DELETE key handle, validates current fields before
+shortcut IO and again afterward, and deletes that opened key through the
+user-mode [NtDeleteKey contract](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwdeletekey).
+There is no fallback to deleting the registry path if handle deletion is
+unavailable or fails. Native checks preserve changed ownership and a new value
+added during shortcut IO. Another check renames the original opened key and
+creates foreign data at its former path: only the original verified key is
+removed, and the new key/data remains intact. Missing registration still permits
+shortcut cleanup and retry.
+
+A registry-transaction prototype was rejected after RegOpenKeyTransacted failed
+with resource-manager-not-active status text in this Windows environment,
+breaking otherwise normal removal. Its code was removed, and no transaction
+service/filesystem/OS setting was repaired or changed. The final implementation
+does not promise atomic comparison/deletion against a write to the same opened
+key after the last validation. Transactional reading/commit and broader native
+writer stress remain unverified; handle identity protection is not registry
+value isolation.
+
+Final installer/payload/Setup package suites passed (installer 9.330 s), scoped
+vet and stripped GUI Setup build passed. Real built-helper retry passed in
+0.42 s with app ID `dev.velox.retry-5b57a3cf30134359`, failure exit 6 and copied
+helper exit 0. Install/shortcut/registration/journal were gone and the synthetic
+profile marker was preserved. Setup was 4,170,240 bytes, SHA-256
+`526c3b8961a6db97e8739901bebc2d95d9d206bcec3906314d8ca126b29a54d8`.
+No consumer host launch, native dialog clicking, Linux runtime, power-loss test,
+CI rerun or public artifact replacement occurred. Public API, permissions,
+record/DB schema, dependencies, version, host code and CI settings are unchanged.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:
