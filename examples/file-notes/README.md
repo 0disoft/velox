@@ -27,6 +27,11 @@ On supported Velox hosts, normal native window close uses the browser's
 `beforeunload` confirmation. Cancel keeps the current document open even when
 draft recovery is unavailable. Forced process termination is not protected by
 that confirmation, and recovery still requires a completed IndexedDB write.
+Startup recovery and pending native file operations also request close
+confirmation, even for a clean document. A blocked draft database reports
+recovery as unavailable and unlocks the editor; it does not prevent native
+file operations. Draft connections close when a database version change is
+requested, including connections that open after an earlier blocked failure.
 
 Native saving remains subject to Windows access controls and Velox's file
 policy. Cancellation, manifest permission denial, expired connections and

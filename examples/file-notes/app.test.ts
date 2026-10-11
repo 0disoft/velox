@@ -181,6 +181,39 @@ test("saving a snapshot never marks edits made during the native write as saved"
   expect(reopened.unload()).toBe(true);
 });
 
+test("startup and clean-document file operations guard window close until they finish", async () => {
+  const load = deferred<any>();
+  const saved = deferred<any>();
+  const opened = deferred<any>();
+  const ui = harness({ load: load.promise, save: () => saved.promise, open: () => opened.promise });
+  expect(ui.unload()).toBe(true);
+  load.resolve(null);
+  await ui.ready;
+  expect(ui.unload()).toBe(false);
+  const saving = ui.click("save-as-document");
+  expect(ui.unload()).toBe(true);
+  saved.resolve({ name: "empty.md", target: 1 });
+  await saving;
+  expect(ui.unload()).toBe(false);
+  const opening = ui.click("open-document");
+  expect(ui.unload()).toBe(true);
+  opened.resolve({ cancelled: true });
+  await opening;
+  await tick();
+  expect(ui.unload()).toBe(false);
+});
+
+test("draft recovery failure leaves native saving and editing available", async () => {
+  const ui = harness({ load: Promise.reject(new Error("Draft database is blocked.")),
+    save: async () => ({ name: "kept.md", target: 1 }) });
+  await ui.ready;
+  expect(ui.node("#draft-state").textContent).toBe("Draft recovery unavailable");
+  expect(ui.node("#editor").readOnly).toBe(false);
+  ui.edit("keep editing");
+  await ui.click("save-document");
+  expect(ui.node("#save-state").textContent).toBe("Saved to file");
+});
+
 test("Save as cancellation keeps edits and the previous connected target", async () => {
   let selections = 0;
   let connected: any;

@@ -7,10 +7,21 @@
 
   function openDatabase() {
     return new Promise((resolve, reject) => {
+      let settled = false;
       const request = indexedDB.open(databaseName, 1);
+      const fail = () => {
+        settled = true;
+        reject(new Error("Draft database could not be opened."));
+      };
       request.onupgradeneeded = () => request.result.createObjectStore(storeName);
-      request.onerror = () => reject(request.error || new Error("Draft database could not be opened."));
-      request.onsuccess = () => resolve(request.result);
+      request.onblocked = fail;
+      request.onerror = fail;
+      request.onsuccess = () => {
+        if (settled) { request.result.close(); return; }
+        settled = true;
+        request.result.onversionchange = () => request.result.close();
+        resolve(request.result);
+      };
     });
   }
 

@@ -223,7 +223,7 @@
     if (elements.discardDialog.returnValue === "discard" && action) action();
   });
   window.addEventListener("beforeunload", (event) => {
-    if (!model.isDirty(state)) return;
+    if (!fileActionPending && !model.isDirty(state)) return;
     event.preventDefault();
     event.returnValue = "";
   });
