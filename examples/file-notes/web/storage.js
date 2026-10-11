@@ -49,6 +49,12 @@
 
   async function save(state) {
     const { schemaVersion, name, text, savedText, updatedAt } = state;
+    for (const value of [text, savedText]) {
+      if (typeof value !== "string" || value.length > 2 * 1024 * 1024 ||
+          new TextEncoder().encode(value).byteLength > 2 * 1024 * 1024) {
+        throw new Error("Draft exceeds the 2 MiB UTF-8 limit.");
+      }
+    }
     await run("readwrite", (store) => store.put({ schemaVersion, name, text, savedText, updatedAt }, currentKey));
   }
 

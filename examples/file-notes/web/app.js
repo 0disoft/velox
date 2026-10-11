@@ -22,7 +22,9 @@
   let state = model.createState();
   let pendingAction = null;
   let draftTimer = null;
-  let draftWrites = Promise.resolve();
+  let draftWriteRunning = false;
+  let pendingDraftWrite = null;
+  let draftRevision = 0;
   let fileActionPending = true;
   let composing = false;
   let requestedTitle = null;
@@ -113,17 +115,33 @@
     }
   }
 
+  async function drainDraftWrites() {
+    if (draftWriteRunning) return;
+    draftWriteRunning = true;
+    try {
+      while (pendingDraftWrite) {
+        const { snapshot, revision } = pendingDraftWrite;
+        pendingDraftWrite = null;
+        try {
+          await storage.save(snapshot);
+          if (revision === draftRevision) elements.draftState.textContent = "Draft saved";
+        } catch (error) {
+          if (revision !== draftRevision) continue;
+          elements.draftState.textContent = "Draft recovery unavailable";
+          announce(`Draft save failed: ${error.message}`);
+        }
+      }
+    } finally { draftWriteRunning = false; }
+  }
+
   function queueDraftSave() {
     clearTimeout(draftTimer);
+    const revision = ++draftRevision;
+    if (composing) return;
     draftTimer = setTimeout(() => {
-      const snapshot = { ...state };
-      draftWrites = draftWrites.then(async () => {
-        await storage.save(snapshot);
-        elements.draftState.textContent = "Draft saved";
-      }).catch((error) => {
-        elements.draftState.textContent = "Draft recovery unavailable";
-        announce(`Draft save failed: ${error.message}`);
-      });
+      draftTimer = null;
+      pendingDraftWrite = { snapshot: { ...state }, revision };
+      void drainDraftWrites();
     }, 300);
   }
 
@@ -224,8 +242,14 @@
   elements.open.addEventListener("click", () => requestDestructiveAction(() => performFileAction(openDocument, true)));
   elements.save.addEventListener("click", () => performFileAction(saveDocument));
   elements.saveAs.addEventListener("click", () => performFileAction(saveAsDocument));
-  elements.editor.addEventListener("compositionstart", () => { composing = true; });
-  elements.editor.addEventListener("compositionend", () => { composing = false; });
+  elements.editor.addEventListener("compositionstart", () => {
+    composing = true;
+    clearTimeout(draftTimer);
+    draftTimer = null;
+    pendingDraftWrite = null;
+    draftRevision++;
+  });
+  elements.editor.addEventListener("compositionend", () => { composing = false; queueDraftSave(); });
   window.addEventListener("keydown", (event) => {
     if (event.defaultPrevented ||
         composing || event.isComposing || event.keyCode === 229) return;

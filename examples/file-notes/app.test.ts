@@ -22,6 +22,7 @@ function harness(options: {
   saveTo?: (text: string, target: number) => Promise<any>;
   release?: (target: number) => Promise<any>; unavailable?: boolean;
   title?: (title: string) => Promise<any>;
+  draftSave?: (state: any) => Promise<void>;
 } = {}) {
   const nodes = new Map<string, any>();
   const events = new Map<string, Function>();
@@ -45,7 +46,10 @@ function harness(options: {
   }
   const context: any = {
     document: { querySelector: node, title: "" }, indexedDB: {}, TextEncoder,
-    FileNotesStorage: { load: () => options.load ?? Promise.resolve(options.draft), save: async (state: any) => { persisted = { ...state }; } },
+    FileNotesStorage: { load: () => options.load ?? Promise.resolve(options.draft), save: async (state: any) => {
+      await options.draftSave?.(state);
+      persisted = { ...state };
+    } },
     velox: options.unavailable ? undefined : {
       invoke(method: string, params?: { target?: number; title?: string }) {
         if (method === "window.setTitle") {
@@ -302,6 +306,51 @@ test("draft recovery failure leaves native saving and editing available", async 
   expect(ui.node("#save-state").textContent).toBe("Saved to file");
 });
 
+test("slow draft storage retains only the in-flight and newest waiting snapshots", async () => {
+  const completion = deferred<void>();
+  const writes: string[] = [];
+  const ui = harness({ draftSave: async state => {
+    writes.push(state.text);
+    if (writes.length === 1) await completion.promise;
+  } });
+  await ui.ready;
+  ui.edit("first"); await ui.flushDraft();
+  for (let i = 0; i < 40; i++) { ui.edit(`edit-${i}`); await ui.flushDraft(); }
+  expect(writes).toEqual(["first"]);
+  completion.resolve(); await tick();
+  expect(writes).toEqual(["first", "edit-39"]);
+  expect((await ui.flushDraft()).text).toBe("edit-39");
+  expect(ui.node("#draft-state").textContent).toBe("Draft saved");
+});
+
+test("an outdated draft failure does not replace the current status or block newer drafts", async () => {
+  const completion = deferred<void>();
+  let count = 0;
+  const ui = harness({ draftSave: async () => {
+    if (++count === 1) { await completion.promise; throw new Error("old failure"); }
+  } });
+  await ui.ready;
+  ui.edit("first"); await ui.flushDraft();
+  ui.edit("latest"); await ui.flushDraft();
+  completion.resolve(); await tick();
+  expect((await ui.flushDraft()).text).toBe("latest");
+  expect(ui.node("#draft-state").textContent).toBe("Draft saved");
+  expect(ui.node("#status").textContent).not.toContain("old failure");
+});
+
+test("IME draft persistence waits for composition completion", async () => {
+  const writes: string[] = [];
+  const ui = harness({ draftSave: async state => { writes.push(state.text); } });
+  await ui.ready;
+  ui.edit("before");
+  ui.compose(true);
+  ui.edit("unfinished"); await ui.flushDraft();
+  expect(writes).toEqual([]);
+  ui.edit("complete");
+  ui.compose(false); await ui.flushDraft();
+  expect(writes).toEqual(["complete"]);
+});
+
 test("Save as cancellation keeps edits and the previous connected target", async () => {
   let selections = 0;
   let connected: any;
@@ -538,6 +587,7 @@ test("IndexedDB stores draft fields only, never write targets or legacy handles"
     close() { closed = true; },
   };
   const context: any = {
+    TextEncoder,
     indexedDB: {
       open(name: string, version: number) {
         expect(name).toBe("dev.velox.filenotes");

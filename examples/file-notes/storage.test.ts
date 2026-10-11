@@ -5,6 +5,19 @@ import { runInNewContext } from "node:vm";
 const source = readFileSync(new URL("./web/storage.js", import.meta.url), "utf8");
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
+test("oversized draft text or saved baseline fails before touching the stored draft", async () => {
+  let opens = 0;
+  const context: any = { TextEncoder, indexedDB: { open() { opens++; throw new Error("unexpected open"); } } };
+  runInNewContext(source, context);
+  const draft = { schemaVersion: 1, name: "note.md", text: "new", savedText: "old", updatedAt: null };
+  for (const field of ["text", "savedText"]) {
+    for (const oversized of ["x".repeat(2 * 1024 * 1024 + 1), "\uD55C".repeat(699051)]) {
+      await expect(context.FileNotesStorage.save({ ...draft, [field]: oversized })).rejects.toThrow("2 MiB UTF-8 limit");
+    }
+  }
+  expect(opens).toBe(0);
+});
+
 function harness() {
   let closes = 0;
   let transaction: any;
