@@ -8,6 +8,38 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Profile-link manager component (2026-10-12): a private, protected current-user/
+SYSTEM directory holds stable per-directory-identity junctions. New junctions
+are completed under unpredictable staging names and renamed by the same handle
+without replacement. On failure, only that newly created staging object is
+marked for deletion; existing roots/entries/profiles are never recursively
+removed. Existing roots must match owner/protected DACL. Mount-point target and
+followed volume/file identity are verified with retained handles. The manager
+rejects remote/device/linked/offline or over-budget paths at this boundary.
+
+Eight focused Windows tests passed: original/junction/root rename/delete/write
+protection, idempotent release retaining the junction, six concurrent acquisitions
+with one stable final entry, different-profile coexistence, cross-process lease
+retention/release, failed publication preserving existing data, foreign/occupied/
+redirected paths and unsupported inputs. An early implementation with attribute-
+only handles failed real rename/delete assertions. FILE_LIST_DIRECTORY access
+now engages sharing enforcement. Ancestors allow writes but deny deletion;
+the profile/junction deny writes too. A nonempty, pinned-child link root permits
+other publications and rejects conversion to a reparse point. Tests passed after
+this correction, not before. The source uses no background worker or volume change.
+
+Opt-in `TestNativeManagedProfileStorage` passed in 13.87 s on this machine's
+Go 1.27.1/WebView2 154.0.4258.62: real write/relaunch-read through the production
+manager component while its guards stayed held, profile length 205/browser path
+91. Browser exit was observed before fixture link/profile cleanup. The WebView
+is a native dependency test view, not the packaged host or Runtime.Open path.
+Scoped vet passed. Component source is not yet called by the host; no automatic
+product fix, hosted/Linus verification, installed-profile change, API/DB/schema,
+permission/dependency/version/CI or release claim is made. Crash-orphan sweeping
+is deliberately absent; published links persist after lease close because a
+browser can outlive its GUI host. Runtime wiring and native packaged lifecycle
+checks remain separate work.
+
 Native same-profile junction experiment (2026-10-12): the test-only
 `long-junction` subcase of `TestNativeStorageWithoutShortAlias` passed in
 27.86 s on Go 1.27.1/WebView2 154.0.4258.62, with token elevation false.
