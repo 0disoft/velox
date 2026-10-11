@@ -429,9 +429,9 @@ func runBuild(args []string, dependencies Dependencies) int {
 	if options.json {
 		return emitSuccessJSON(dependencies.Stdout, Envelope{SchemaVersion: 1, OK: true, Command: "build", Result: presented, Diagnostics: []Diagnostic{}})
 	} else if !options.quiet {
-		fmt.Fprintf(dependencies.Stdout, "Built %s\nArchive: %s\nSHA-256: %s\n", presented.AppID, presented.Archive, presented.ArchiveSHA256)
+		fmt.Fprintf(dependencies.Stdout, "Built %s\nDirectory: %s\nArchive: %s\nSHA-256: %s\n", presented.AppID, result.DirectoryPath, result.ArchivePath, presented.ArchiveSHA256)
 		if presented.Installer != nil {
-			fmt.Fprintf(dependencies.Stdout, "Installer: %s\nSHA-256: %s\n", presented.Installer.File, presented.Installer.SHA256)
+			fmt.Fprintf(dependencies.Stdout, "Installer: %s\nSHA-256: %s\n", filepath.Join(snapshot.OutputRoot, presented.Installer.File), presented.Installer.SHA256)
 		}
 	}
 	emitVerbose(options, dependencies.Stderr, "release=%s target=%s archiveBytes=%d", presented.ReleaseVersion, presented.Target, presented.ArchiveBytes)

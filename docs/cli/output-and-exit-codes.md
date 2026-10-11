@@ -118,6 +118,12 @@ Successful build JSON should include:
 Build output must not claim reproducibility until the reproducibility check
 passes.
 
+Successful human build output displays the resolved absolute portable directory
+and ZIP paths, and the Setup path when requested. These paths can be passed
+directly to `inspect` regardless of the working directory. Relative `--out`
+still resolves from the manifest's project root; JSON paths remain relative
+to that selected output root. `--quiet` suppresses these human success lines.
+
 `version --json` reports manifest, runtime, host, and IPC compatibility
 independently. IPC v1 is also recorded in host metadata, release manifests, and
 build results so a CLI cannot silently package an incompatible bridge.
