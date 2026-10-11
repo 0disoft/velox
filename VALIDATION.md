@@ -8,6 +8,24 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Native storage alias-fallback diagnostic (2026-10-12): opt-in
+`VELOX_NATIVE_STORAGE_PROBE=1 go test -count=1 -v -run
+'^TestNativeStorageWithoutShortAlias$' ./internal/webview2` completed in 48.34 s
+on Windows x64, Go 1.27.1 and WebView2 154.0.4258.62. Short-profile write/read
+passed. A 218-character profile passed write/read through its existing shorter
+alias (55-character browser path). Passing the same existing profile directly
+as an extended path (222 characters) failed to open IndexedDB with UnknownError;
+returning to its original alias recovered the unchanged Korean/CRLF draft.
+A fresh 218-character direct-path profile also failed to open the backing store.
+The diagnostic reports failed storage, not a successful long-path regression.
+It deliberately bypasses alias resolution in the real native dependency view;
+NTFS 8.3 settings were not disabled, and no packaged-host/full-app/picker claim
+is made. Each child browser exit was confirmed before removing its private
+profile. No user profile was moved, substituted or deleted. The long-path
+fallback remains unable to guarantee persistent storage without a usable alias.
+Scoped WebView2/initializer Go suites and vet passed. No production host/API,
+permission, DB schema, dependency, version or CI setting changed.
+
 Folder-browser recovery (source-only, 2026-10-12): three new regressions failed
 against the earlier starter for retained stale refresh results, null rejection
 breaking error reporting and lost selection focus after an expired target.
