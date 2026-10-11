@@ -9,7 +9,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/0disoft/velox/internal/appidentity"
@@ -197,26 +196,8 @@ func uninstall(appID string, env environment) (Result, error) {
 	if err := env.unregister(record); err != nil {
 		return Result{}, err
 	}
-	if err := os.Remove(filepath.Join(target, stateFile)); err != nil {
+	if err := removeInstallationDirectories(record); err != nil {
 		return Result{}, err
-	}
-	var directories []string
-	if err := filepath.WalkDir(target, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if entry.IsDir() {
-			directories = append(directories, path)
-		}
-		return nil
-	}); err != nil {
-		return Result{}, err
-	}
-	sort.Slice(directories, func(i, j int) bool { return len(directories[i]) > len(directories[j]) })
-	for _, directory := range directories {
-		if err := os.Remove(directory); err != nil {
-			return Result{}, err
-		}
 	}
 	return Result{AppID: appID, Directory: target}, nil
 }

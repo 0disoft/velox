@@ -169,6 +169,31 @@ still change after the existing preflight, and the final directory-removal
 record ordering is a separate pending check. No API, permissions, record schema,
 dependency, version, CI runner or installed app changed.
 
+Source-only late-removal retry follow-up (2026-10-12): empty child directories
+are removed while the ownership record is still present. Only afterward is the
+record removed before the final root removal. If that final removal returns an
+error, a flushed temporary record is restored by a no-overwrite hard link. A
+file recreated at the record path is never overwritten. Ownership is re-read
+and must match before the final record deletion. Both normal removal and guarded
+publication rollback use this ordering.
+
+Before the change, an added file after file preflight and real Windows locks on
+the child/root directory each reproduced loss of the retry record. They now
+preserve or restore it, and the engine removes the installation on retry after
+the conflicting file/lock is resolved. Separate tests preserve late changes to
+ownership and verify restoration refuses a new file at the record path without
+leaving temporary state files.
+
+This is error-return retry evidence, not atomic removal or forced-process-exit
+recovery: the interval between record deletion and final root deletion remains
+unprotected against a process stop. Hard-link restoration can fail on an
+unsupported filesystem; its error is returned together with the removal error.
+The temporary removal helper remains available after ordinary failure, but the
+installed `uninstall.exe` and Apps registration may already be gone, so complete
+end-user retry through Setup/helper UI still requires a separate check. No power
+loss, full Setup UI, concurrent file-replacement stress or new public artifact
+was verified here.
+
 ## Removal
 
 `uninstall.exe --uninstall <app-id>` performs a guarded removal:

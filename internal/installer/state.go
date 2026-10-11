@@ -5,11 +5,27 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/0disoft/velox/internal/safefs"
 )
 
 func writeState(root string, record Record) error {
+	return publishState(root, record, replaceStateFile)
+}
+
+func restoreState(root string, record Record) error {
+	// Publishing a completed temporary file by link cannot overwrite a file
+	// created by somebody else after removal of the original ownership record.
+	return publishState(root, record, os.Link)
+}
+
+func sameOwnership(a, b Record) bool {
+	return a.SchemaVersion == b.SchemaVersion && a.App == b.App &&
+		a.Directory == b.Directory && a.ShortcutHash == b.ShortcutHash && slices.Equal(a.Files, b.Files)
+}
+
+func publishState(root string, record Record, publish func(string, string) error) error {
 	path := filepath.Join(root, stateFile)
 	if err := safefs.RejectLinkedComponents(path); err != nil {
 		return err
@@ -32,5 +48,5 @@ func writeState(root string, record Record) error {
 	if err := temp.Close(); err != nil {
 		return err
 	}
-	return replaceStateFile(temp.Name(), path)
+	return publish(temp.Name(), path)
 }
