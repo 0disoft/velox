@@ -26,6 +26,14 @@ The native diagnostic in VALIDATION.md reproduced failed writes to a new
 was bypassed. Returning to the existing alias read the original draft again.
 The diagnostic did not disable NTFS 8.3 naming or prove every volume/runtime case.
 
+A test-only [directory junction](https://learn.microsoft.com/en-us/windows/win32/fileio/hard-links-and-junctions)
+to the same isolated profile passed write/read and read recovery without an 8.3
+alias. Its mount-point buffer follows the
+[Microsoft reparse structure](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_reparse_data_buffer).
+The current host does not create such links. Product use needs verified link
+ownership, stable concurrent-profile identity and shutdown/cleanup behavior;
+the fixture experiment alone does not satisfy those requirements.
+
 Do not delete a profile, remove its databases or change Windows volume settings
 to dismiss this warning. A shorter profile location may be chosen for a new app
 before user data exists. Changing `VELOX_DATA_DIR` on an existing app selects a

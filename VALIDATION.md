@@ -8,6 +8,22 @@ This document owns stable validation names for this scaffold.
 
 ## Standard Validation Names
 
+Native same-profile junction experiment (2026-10-12): the test-only
+`long-junction` subcase of `TestNativeStorageWithoutShortAlias` passed in
+27.86 s on Go 1.27.1/WebView2 154.0.4258.62, with token elevation false.
+A private mount-point fixture resolves to the same existing 218-character
+profile (`os.SameFile` checked), without using GetShortPathName. Its 70-character
+browser path passed IndexedDB write and relaunch read of Korean/CRLF text.
+Reading through the unshortened path still failed with UnknownError; returning
+through the junction recovered the original text. Browser exit was confirmed
+before removing only the junction, and a marker in the original profile remained
+unchanged before fixture cleanup. WebView2 Go suite and scoped vet passed.
+This establishes a tested candidate approach, not an automatic product fix.
+No host path selection, alias lifecycle/ownership/concurrency implementation,
+installed profile, NTFS setting, API/schema/permission/dependency/version/CI,
+release or remote state changed. Full packaged-host/multi-instance/abrupt-exit
+verification remains necessary before using this approach in the host.
+
 Editor storage-failure recovery (source-only, 2026-10-12): two new regressions
 failed against earlier assets for missing file-save guidance after IndexedDB
 startup failure. Text-editor now retains the actionable failure notice during

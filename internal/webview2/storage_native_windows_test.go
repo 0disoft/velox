@@ -38,14 +38,17 @@ func TestNativeStorageWithoutShortAlias(t *testing.T) {
 		t.Fatalf("WebView2 required: %v", err)
 	}
 	t.Logf("WebView2=%s Go=%s; direct native dependency view, not a packaged host", version, runtime.Version())
+	t.Logf("process token elevated=%v", windows.GetCurrentProcessToken().IsElevated())
 	for _, scenario := range []struct {
-		name   string
-		length int
-		alias  bool
+		name     string
+		length   int
+		alias    bool
+		junction bool
 	}{
-		{"short-fallback", 0, false},
-		{"long-resolved", 218, true},
-		{"long-fallback", 218, false},
+		{"short-fallback", 0, false, false},
+		{"long-resolved", 218, true, false},
+		{"long-fallback", 218, false, false},
+		{"long-junction", 218, false, true},
 	} {
 		t.Run(scenario.name, func(t *testing.T) {
 			root, err := os.MkdirTemp("", "velox-storage-probe-")
@@ -53,16 +56,28 @@ func TestNativeStorageWithoutShortAlias(t *testing.T) {
 				t.Fatal(err)
 			}
 			cleanupSafe := true
+			junction := ""
+			profile := filepath.Join(root, "profile")
 			t.Cleanup(func() {
 				if !cleanupSafe {
 					t.Logf("retained unconfirmed browser profile: %s", root)
 					return
 				}
+				if junction != "" {
+					if err := os.Remove(junction); err != nil {
+						t.Errorf("remove private junction only: %v", err)
+						return
+					}
+					marker, err := os.ReadFile(filepath.Join(profile, "marker.txt"))
+					if err != nil || string(marker) != "original profile" {
+						t.Errorf("junction removal changed original profile: %q %v", marker, err)
+						return
+					}
+				}
 				if err := os.RemoveAll(root); err != nil {
 					t.Errorf("remove isolated profile: %v", err)
 				}
 			})
-			profile := filepath.Join(root, "profile")
 			if len(profile) < scenario.length {
 				profile = filepath.Join(root, strings.Repeat("p", scenario.length-len(root)-1))
 			}
@@ -76,6 +91,14 @@ func TestNativeStorageWithoutShortAlias(t *testing.T) {
 			if scenario.alias && len(browserPath) >= len(browserDataPath(profile)) {
 				t.Skip("control requires an existing shorter alias on this volume")
 			}
+			if scenario.junction {
+				if err := os.WriteFile(filepath.Join(profile, "marker.txt"), []byte("original profile"), 0o600); err != nil {
+					t.Fatal(err)
+				}
+				junction = filepath.Join(root, "j")
+				createStorageProbeJunction(t, junction, profile)
+				browserPath = browserDataPath(junction)
+			}
 			rounds := []struct {
 				mode, path string
 				verify     bool
@@ -83,7 +106,7 @@ func TestNativeStorageWithoutShortAlias(t *testing.T) {
 				{"write", browserPath, scenario.name != "long-fallback"},
 				{"read", browserPath, scenario.name != "long-fallback"},
 			}
-			if scenario.alias {
+			if scenario.alias || scenario.junction {
 				rounds = append(rounds,
 					struct {
 						mode, path string
