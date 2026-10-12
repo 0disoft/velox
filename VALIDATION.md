@@ -1,5 +1,38 @@
 # Validation
 
+Native generated Folder Browser follow-up (2026-10-12): an isolated current
+source host with SHA-256
+`1788f639fe57f0a3693b0d876ba7ae3e0d456b19c68f5990e5b39e45912900d0`
+ran freshly generated folder-browser assets under a new app ID and profile,
+with only `folder.read` and `folder.readText`. Windows Computer Use opened
+the real host-owned folder picker, selected the synthetic fixture directory
+and clicked the listed 255-unit Hangul basename. Subsequent page-control
+clicks and state inspection used CDP against that actual WebView2 instance;
+the bridge and filesystem results were not mocked.
+
+Both the Hangul and 255-unit emoji names load the literal Unicode/script-like
+text and report the actual 39 disk bytes. Textarea values normalize CRLF to
+LF; all five fixture files retain their original SHA-256 values. Invalid UTF-8
+clears the preview with `UNSUPPORTED_FILE`, retains the selected folder and
+permits a subsequent normal-file read. The zero-byte file succeeds as empty
+text. Refresh clears the preview/title, release clears the listing and returns
+focus to selection, and relaunch after explicit release starts with no folder
+or preview. Visible runs exit zero without forced termination; the isolated
+host and WebView2 processes were absent at the final process check. Assertions
+and source snapshots are in
+`.cache/folder-native-flow-20261012/verified.json` and adjacent receipts.
+
+The first fixture launcher used `windowsHide: true`, leaving the GUI hidden;
+the visible rerun changed only that launcher setting. A Windows UI capture
+call stalled after the Hangul click while the app remained responsive. Direct
+inspection of the same WebView2 showed the read had succeeded; subsequent
+controls used CDP and the Windows automation session was reset after shutdown.
+This is a source-host/generated-assets run with a fixture runtime config, not
+a built portable package, installer or hosted run. Picker cancellation,
+shutdown with an active selection, OS IME and screen readers were not tested.
+No product behavior, permission/API contract, DB, dependency, version, CI,
+user profile, push or release changed in this evidence-only follow-up.
+
 Folder text-read name bound and folder-browser long-name clamp (2026-10-12):
 source-only, unpushed. The folder text-read path reused the text-save name rule,
 so `folder.openText` rejected listed valid Windows basenames above 240 UTF-8
