@@ -162,11 +162,12 @@ scrolling for long lines. The action changes display only, preserving text,
 selection direction, logical line/grapheme position, save target, dirty state,
 drafts and replacement Undo. Focus returns to the editor and scroll offsets
 are retained where the new layout permits them. The setting is retained across
-New/Open in the same window but not persisted after restart. The toggle is
-blocked during editor IME composition, busy work, draft loading/recovery and
-modal dialogs. The licensed local Lucide `text-wrap.svg` adds no dependency.
-Public alpha.68, existing generated apps, host APIs, permissions and storage
-schema are unchanged.
+New/Open and persists across restarts in the `velox.text-editor.view.v1`
+localStorage record described below. The toggle is blocked during editor IME
+composition, busy work, draft loading/recovery and modal dialogs. The licensed
+local Lucide `text-wrap.svg` adds no dependency. Public alpha.68, existing
+generated apps, host APIs and permissions are unchanged, and the IndexedDB
+draft schema is untouched.
 
 Source text-editor Find navigation measures the textarea's actual wrap mode and
 text direction, then scrolls its first visual match rectangle into view on both
@@ -182,10 +183,30 @@ or WebView zoom. Static `data-font-size` CSS selectors avoid inline styles
 and retain the existing CSP. The action preserves text, selection direction,
 logical line/grapheme position, scroll offsets where valid, save target,
 dirty state, drafts, replacement Undo and word-wrap setting. Focus returns
-to the editor. Size lasts across New/Open within the current window but is
-not persisted after restart. The same IME, busy/load/recovery and modal guards
-as word wrap apply. No new native permission, host code, dependency or storage
-schema is added; public alpha.68 and existing generated apps are unchanged.
+to the editor. Size lasts across New/Open and persists across restarts through
+the same view-settings record. The same IME, busy/load/recovery and modal
+guards as word wrap apply. No new native permission, host code or dependency is
+added, and the IndexedDB draft schema is unchanged; public alpha.68 and existing
+generated apps are unchanged.
+
+Source text-editor generation persists the font-size and word-wrap view
+settings in the browser profile's `localStorage` under the single key
+`velox.text-editor.view.v1`, separate from the IndexedDB draft record. The
+value is JSON with exactly `schemaVersion: 1`, an even integer `fontSize`
+from 14 to 28, and a boolean `wordWrap`; defaults are 18 and on. The stored
+string is bounded to 256 characters, and the startup read writes nothing. A
+corrupt, malformed, oversized or future-schema value is retained unchanged
+while the current window still runs on the defaults, and the status line
+reports that view settings are unavailable. Changing a control merges only that
+field into the latest stored valid record before writing, so sequential
+cross-window updates to different fields are preserved; there is no live
+synchronization or atomic cross-process guarantee, and an unreadable or future
+record is never overwritten. A denied storage getter or a quota/write failure
+shows a fixed changes-apply-to-this-window notice without blocking editing, and
+a later change may retry the write. This adds a new localStorage format while
+the IndexedDB draft schema stays unchanged, with no host/native IPC, permission,
+dependency, version or CI change. Newly generated projects only; existing
+generated apps and public alpha.68 are unchanged.
 
 Published alpha.66 text-editor generation also includes `drafts.js` and a
 Restore/Discard dialog. One local IndexedDB record contains only

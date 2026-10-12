@@ -694,7 +694,7 @@ test("word wrap stays available without native APIs but guards IME, busy and dia
   expect(recovery.node("#word-wrap").disabled).toBe(false);
 });
 
-test("word wrap is session-only and does not clear replacement undo or change New/Open", async () => {
+test("word wrap does not clear replacement undo or change New/Open; separate profiles keep defaults", async () => {
   const ui = await harness();
   ui.edit("one one");
   replaceFields(ui, "one", "two");
@@ -792,7 +792,7 @@ test("font size is available in browser preview but guarded during IME, work, lo
   expect(recovery.node("#font-increase").disabled).toBe(false);
 });
 
-test("font size survives New/Open and replacement Undo only for the current window", async () => {
+test("font size survives New/Open and replacement Undo; separate profiles keep defaults", async () => {
   const ui = await harness();
   ui.edit("one one");
   replaceFields(ui, "one", "two");

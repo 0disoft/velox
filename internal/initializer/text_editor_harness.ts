@@ -6,7 +6,9 @@ export const findSource = await readFile(new URL("./text-editor/find.js", import
 const positionSource = await readFile(new URL("./text-editor/positions.js", import.meta.url), "utf8");
 export const tick = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 
-export async function harness(native = true, options: { draft?: unknown; load?: Promise<unknown> } = {}) {
+export async function harness(native = true, options: { draft?: unknown; load?: Promise<unknown>;
+  viewStorage?: { getItem(key: string): string | null; setItem(key: string, value: string): void };
+  viewStorageUnavailable?: boolean } = {}) {
   const nodes = new Map<string, any>();
   function node(id: string) {
     if (!nodes.has(id)) nodes.set(id, {
@@ -37,6 +39,14 @@ export async function harness(native = true, options: { draft?: unknown; load?: 
   const timers = new Map<number, Function>();
   let timerID = 0;
   const window: any = { addEventListener: (event: string, fn: Function) => { listeners[event] = fn; } };
+  const viewValues = new Map<string, string>();
+  Object.defineProperty(window, "localStorage", { get() {
+    if (options.viewStorageUnavailable) throw new Error("storage access denied");
+    return options.viewStorage ?? {
+      getItem: (key: string) => viewValues.get(key) ?? null,
+      setItem: (key: string, value: string) => { viewValues.set(key, value); },
+    };
+  } });
   window.setTimeout = (fn: Function) => { timers.set(++timerID, fn); return timerID; };
   window.clearTimeout = (id: number) => timers.delete(id);
   window.EditorDrafts = {

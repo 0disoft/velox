@@ -36,6 +36,18 @@
   let pendingDraftClear = null;
   let wordWrap = true;
   let fontSize = 18;
+  const viewSettingsKey = "velox.text-editor.view.v1";
+  let viewSettingsUnavailable = false;
+  try {
+    const settings = readViewSettings();
+    wordWrap = settings.wordWrap;
+    fontSize = settings.fontSize;
+  } catch { viewSettingsUnavailable = true; }
+  editor.wrap = wordWrap ? "soft" : "off";
+  editor.dataset.fontSize = String(fontSize);
+  fontLabel.textContent = `${fontSize} px`;
+  wrapButton.setAttribute("aria-pressed", String(wordWrap));
+  wrapButton.title = `Word wrap (${wordWrap ? "on" : "off"})`;
   const positions = window.EditorPosition.attach(document, editor, () => composing);
   const native = typeof window.velox?.invoke === "function" &&
     typeof window.velox?.saveTextAs === "function" && typeof window.velox?.saveTextTo === "function";
@@ -62,6 +74,33 @@
     return busy || composing || checkingDraft || recoveryCandidate !== null || dialog.open || recoveryDialog.open;
   }
 
+  function readViewSettings() {
+    const raw = window.localStorage.getItem(viewSettingsKey);
+    if (raw === null) return { schemaVersion: 1, fontSize: 18, wordWrap: true };
+    if (raw.length > 256) throw new Error("Invalid view settings");
+    const settings = JSON.parse(raw);
+    if (settings === null || typeof settings !== "object" || Array.isArray(settings) ||
+        Object.keys(settings).length !== 3 || settings.schemaVersion !== 1 ||
+        typeof settings.wordWrap !== "boolean" || !Number.isInteger(settings.fontSize) ||
+        settings.fontSize < 14 || settings.fontSize > 28 || settings.fontSize % 2 !== 0) {
+      throw new Error("Invalid view settings");
+    }
+    return settings;
+  }
+
+  function persistViewSetting(field, value) {
+    const warning = "View settings could not be saved. Changes apply to this window.";
+    try {
+      // Merge only this action; preserve other windows' settings and unknown formats.
+      const settings = readViewSettings();
+      settings[field] = value;
+      window.localStorage.setItem(viewSettingsKey, JSON.stringify(settings));
+      if (status.textContent === warning) status.textContent = "View settings saved.";
+    } catch {
+      status.textContent = warning;
+    }
+  }
+
   function refreshViewControls() {
     const blocked = viewBlocked();
     wrapButton.disabled = blocked;
@@ -82,6 +121,7 @@
     editor.focus({ preventScroll: true });
     editor.scrollTop = top;
     editor.scrollLeft = left;
+    persistViewSetting("fontSize", fontSize);
   }
 
   function render() {
@@ -287,6 +327,7 @@
     editor.focus({ preventScroll: true });
     editor.scrollTop = top;
     editor.scrollLeft = left;
+    persistViewSetting("wordWrap", wordWrap);
   });
   fontButtons[0].addEventListener("click", () => setFontSize(fontSize - 2));
   fontButtons[1].addEventListener("click", () => setFontSize(fontSize + 2));
@@ -362,6 +403,9 @@
     if (!event.repeat && !busy && !dialog.open) buttons[index].click();
   });
   if (!native) status.textContent = "Native file access unavailable.";
+  if (viewSettingsUnavailable) {
+    status.textContent = `${status.textContent ? status.textContent + " " : ""}View settings unavailable; using defaults.`;
+  }
   render();
   void initializeDraft();
 })();

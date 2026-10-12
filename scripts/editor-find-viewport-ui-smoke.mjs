@@ -7,8 +7,9 @@ import { join, resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const onlyUndo = process.argv[2] === "--undo-only";
-if (process.argv.length > 3 || process.argv.length === 3 && !onlyUndo) {
-  throw Error("Usage: node scripts/editor-find-viewport-ui-smoke.mjs [--undo-only]");
+const onlySettings = process.argv[2] === "--settings-only";
+if (process.argv.length > 3 || process.argv.length === 3 && !onlyUndo && !onlySettings) {
+  throw Error("Usage: node scripts/editor-find-viewport-ui-smoke.mjs [--undo-only | --settings-only]");
 }
 const root = fileURLToPath(new URL("..", import.meta.url));
 const output = join(root, ".cache", "editor-find-viewport-" + Date.now());
@@ -31,8 +32,9 @@ const server = createServer(async (request, response) => {
 await new Promise(done => server.listen(0, "127.0.0.1", done));
 const url = "http://127.0.0.1:" + server.address().port + "/index.html";
 const { chromium } = createRequire(import.meta.url)("playwright");
-const result = { nativeBridge: "mocked; no file operations", generatedProject: project, undoOnly: onlyUndo,
-  cases: [], undoCases: [], passed: false };
+const result = { nativeBridge: onlySettings ? "unavailable; browser preview, no file operations" : "mocked; no file operations",
+  generatedProject: project, undoOnly: onlyUndo, settingsOnly: onlySettings,
+  cases: [], undoCases: [], settingsCases: [], passed: false };
 
 async function measuredMatch(page) {
   return page.evaluate(() => {
@@ -62,7 +64,59 @@ let browser;
 try {
   browser = await chromium.launch({ channel: "msedge", headless: true });
   for (const viewport of [{ width: 1080, height: 760 }, { width: 360, height: 640 }]) {
-    for (const sample of onlyUndo ? [] : [
+    for (const mode of onlyUndo ? [] : ["restart", "invalid", "future", "denied", "quota"]) {
+      const context = await browser.newContext({ viewport });
+      try {
+        const key = "velox.text-editor.view.v1";
+        const raw = mode === "invalid" ? "{" : JSON.stringify({ schemaVersion: 2, fontSize: 26, wordWrap: false });
+        if (mode === "denied") await context.addInitScript(() => {
+          Object.defineProperty(window, "localStorage", { get() { throw new DOMException("Blocked", "SecurityError"); } });
+        });
+        if (mode === "quota") await context.addInitScript(() => {
+          Storage.prototype.setItem = function () { throw new DOMException("Full", "QuotaExceededError"); };
+        });
+        let page = await context.newPage();
+        const errors = [];
+        page.on("pageerror", error => errors.push(error.message));
+        await page.goto(url);
+        await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+        if (mode === "invalid" || mode === "future") {
+          await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key, raw });
+          await page.reload();
+          await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+          assert.match(await page.locator("#status").textContent(), /View settings unavailable/);
+        }
+        await page.locator("#font-increase").click();
+        await page.locator("#word-wrap").click();
+        if (mode === "restart") {
+          await page.close();
+          page = await context.newPage();
+          page.on("pageerror", error => errors.push(error.message));
+          await page.goto(url);
+          await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+        } else {
+          assert.match(await page.locator("#status").textContent(), /Changes apply to this window/);
+          if (mode === "invalid" || mode === "future") {
+            assert.equal(await page.evaluate(key => localStorage.getItem(key), key), raw);
+          }
+          await page.locator("#editor").fill("Still editable. \uD55C\uAE00");
+        }
+        const state = await page.locator("#editor").evaluate(editor => ({
+          fontSize: getComputedStyle(editor).fontSize, wrap: editor.wrap, text: editor.value,
+          pressed: document.querySelector("#word-wrap").getAttribute("aria-pressed"),
+          overflow: document.documentElement.scrollWidth > innerWidth,
+        }));
+        result.settingsCases.push({ mode, viewport, state, pageErrors: errors });
+        await page.screenshot({ path: join(output, `settings-${mode}-${viewport.width}.png`) });
+        assert.equal(state.fontSize, "20px");
+        assert.equal(state.wrap, "off");
+        assert.equal(state.pressed, "false");
+        assert.equal(state.text, mode === "restart" ? "" : "Still editable. \uD55C\uAE00");
+        assert.equal(state.overflow, false);
+        assert.deepEqual(errors, []);
+      } finally { await context.close(); }
+    }
+    for (const sample of onlyUndo || onlySettings ? [] : [
       { name: "single-long-line", text: "HEAD " + "x".repeat(220) + " NEEDLE", wrap: false },
       { name: "multiline-unwrapped", text: "HEAD\n" + "x".repeat(220) + " NEEDLE\n" + "other line\n".repeat(65), wrap: false },
       { name: "vertical-unwrapped", text: "other line\n".repeat(65) + "NEEDLE", wrap: false },
@@ -99,7 +153,7 @@ try {
         }
       } finally { await context.close(); }
     }
-    for (const direction of ["ltr", "rtl"]) {
+    for (const direction of onlySettings ? [] : ["ltr", "rtl"]) {
       for (const keyboard of [false, true]) {
         const context = await browser.newContext({ viewport });
         try {

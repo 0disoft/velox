@@ -1,5 +1,36 @@
 # Validation
 
+Generated Text Editor view-settings persistence (2026-10-12): source
+text-editor generation now stores font size and word wrap in the profile's
+`localStorage` under `velox.text-editor.view.v1` (JSON `schemaVersion: 1`,
+even `fontSize` 14-28, boolean `wordWrap`, defaults 18/on, string bounded to
+256 characters), separate from the IndexedDB draft record and carrying no
+document content or native authority. A missing key leaves the defaults with no
+write. A corrupt, malformed, oversized or future-schema value is retained
+unchanged while the current window still applies the defaults and the status
+line reports view settings unavailable. Changing a control merges only that
+field into the latest stored valid record, so sequential cross-window field
+updates are preserved; there is no live synchronization or atomic cross-process
+guarantee. Focused Bun tests over the five editor/view-settings files passed 65
+tests and 602 assertions; before implementation the new view-settings tests
+failed 14 and passed 2. `go test ./internal/initializer ./tests/hygiene`
+passed. An actual Edge check covered ten settings-only cases at 1080x760 and
+360x640: restart persistence, invalid JSON, future schema, a denied storage
+getter and a quota failure, each expected to show 20px and wrap off with an
+editable editor and no horizontal page overflow or page errors, with native
+APIs unavailable in the browser preview. Receipt:
+`.cache/editor-find-viewport-1791811864979/result.json`. The final full smoke
+receipt `.cache/editor-find-viewport-1791811933574/result.json` passes those ten
+settings cases plus ten search and eight replacement Undo cases. Desktop
+restored and narrow error-state screenshots reviewed; JavaScript parsing and
+diff checks pass. Packaged/native EXE
+restart, forced termination, OS IME, screen readers and performance benchmarks
+were not run, and no full-audit claim is made. Newly generated projects only;
+existing generated apps, public alpha.68, the IndexedDB draft schema,
+host/native API, permissions, dependencies, version and CI are unchanged, and a
+new localStorage format is added. No push or release in this slice; the full
+workspace objective remains active.
+
 Generated Text Editor replacement Undo view correction (2026-10-12): the
 in-memory snapshot now keeps selectionDirection and scrollLeft as well as the
 offsets/scrollTop. Four new regressions failed before the fix: backward became
