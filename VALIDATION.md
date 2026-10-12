@@ -1,5 +1,19 @@
 # Validation
 
+Fresh-thread STA release comparison (2026-10-12): `TestFreshApartmentReleaseDiagnostic`
+uses the actual host run function on a private locked thread. Before initialization
+all children returned CO_E_NOTINITIALIZED; initialization returned S_OK. After
+the owned release, both balanced trials became implicit MTA (type 1/qualifier 1),
+while unbalanced trials retained STA (0/0). A successful CoGetApartmentType alone
+does not prove an STA reference remains. Four counterbalanced trials passed in
+57.63 s with WebView2 154.0.4258.62 / Go 1.27.1; second browser-exit times were
+6379.97 / 6398.18 / 6404.46 / 6416.10 ms. Receipt:
+`.cache/apartment-fresh-qualified-diagnostic.json`. This test-only comparison
+does not resolve the production relaunch delay or change COM ownership. The
+initial test incorrectly expected CO_E_NOTINITIALIZED after release and failed;
+type/qualifier observation corrected that test assumption, not product behavior.
+No API/schema/dependency/version/CI, push or publication change.
+
 - Status: M4 complete; M5 narrow alpha active; beta gated by product workflows with no human adoption claim
 
 ## Validation Source of Truth

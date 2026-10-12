@@ -88,6 +88,15 @@ still took about 6.2-6.4 s for browser exit and did not resolve the existing
 ordinary relaunch delay. Never treat a missing lockfile or a closed error
 observation channel as proof that a browser has exited.
 
+`VELOX_FRESH_APARTMENT_DIAGNOSTIC_RESULT=<private-result>` and the same test host
+enable `TestFreshApartmentReleaseDiagnostic`. Each child starts on a private,
+locked thread with no apartment, verifies S_OK initialization, and retires that
+thread on return. The receipt records apartment type/qualifier, not just HRESULT.
+On 2026-10-12 the released arm became implicit MTA (type 1, qualifier 1), while
+the unreleased arm remained STA (type 0, qualifier 0). All four comparisons still
+took about 6.4 s for browser exit. This demonstrates the owned STA release in
+this test, not production ownership cleanup or a fix for the relaunch delay.
+
 `go test -count=1 -run '^TestBuiltHostGuardedStorageAfterAbruptExit$' ./tests/startup`
 uses the same built-host/storage opt-in settings for committed-draft process
 interruption checks. It stops only processes created or identified by that

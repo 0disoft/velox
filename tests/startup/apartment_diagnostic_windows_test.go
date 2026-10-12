@@ -10,11 +10,14 @@ import (
 )
 
 type apartmentProbeReceipt struct {
-	Balanced bool   `json:"balanced"`
-	Before   string `json:"beforeHresult"`
-	Init     string `json:"initializeHresult"`
-	After    string `json:"afterHresult"`
-	ExitCode int    `json:"hostExitCode"`
+	Balanced       bool   `json:"balanced"`
+	Fresh          bool   `json:"freshThread"`
+	Before         string `json:"beforeHresult"`
+	Init           string `json:"initializeHresult"`
+	After          string `json:"afterHresult"`
+	AfterType      uint32 `json:"afterApartmentType"`
+	AfterQualifier uint32 `json:"afterApartmentQualifier"`
+	ExitCode       int    `json:"hostExitCode"`
 }
 
 func parseApartmentProbeResult(output string) (*apartmentProbeReceipt, error) {
@@ -54,12 +57,21 @@ func TestApartmentProbeReceipt(t *testing.T) {
 }
 
 func TestApartmentReleaseDiagnostic(t *testing.T) {
-	if os.Getenv("VELOX_APARTMENT_DIAGNOSTIC_RESULT") == "" {
+	runApartmentReleaseDiagnostic(t, "VELOX_APARTMENT_DIAGNOSTIC_RESULT", false)
+}
+
+func TestFreshApartmentReleaseDiagnostic(t *testing.T) {
+	runApartmentReleaseDiagnostic(t, "VELOX_FRESH_APARTMENT_DIAGNOSTIC_RESULT", true)
+}
+
+func runApartmentReleaseDiagnostic(t *testing.T, resultEnv string, fresh bool) {
+	t.Helper()
+	if os.Getenv(resultEnv) == "" {
 		t.Skip("explicit result path required for test-only apartment comparison")
 	}
 	executable := requiredExecutable(t, "VELOX_APARTMENT_PROBE_HOST")
 	config := filepath.Join(repositoryRoot(t), "examples", "hello", "velox.runtime.json")
-	evidence := runProfileReleaseDiagnosticWithHost(t, "VELOX_APARTMENT_DIAGNOSTIC_RESULT",
+	evidence := runProfileReleaseDiagnosticWithHost(t, resultEnv,
 		[]string{"apartment-unbalanced", "apartment-balanced", "apartment-balanced", "apartment-unbalanced"}, func(mode string) hostAdapter {
 			balanced := "0"
 			if mode == "apartment-balanced" {
@@ -68,14 +80,30 @@ func TestApartmentReleaseDiagnostic(t *testing.T) {
 			return hostAdapter{name: mode, executable: executable,
 				arguments: func(string) []string { return []string{"-test.run=^TestHostApartmentProbeChild$", "-test.v"} },
 				environment: func(profile string) []string {
-					return []string{"VELOX_DATA_DIR=" + profile, "VELOX_APARTMENT_PROBE_CONFIG=" + config, "VELOX_APARTMENT_PROBE_BALANCED=" + balanced}
+					freshThread := "0"
+					if fresh {
+						freshThread = "1"
+					}
+					return []string{"VELOX_DATA_DIR=" + profile, "VELOX_APARTMENT_PROBE_CONFIG=" + config, "VELOX_APARTMENT_PROBE_BALANCED=" + balanced, "VELOX_APARTMENT_PROBE_FRESH_THREAD=" + freshThread}
 				}, expectedPhase: "dom-2raf", requireBrowserProcess: true}
 		})
 	for _, trial := range evidence.Trials {
 		wantBalanced := trial.Mode == "apartment-balanced"
 		for _, receipt := range []*apartmentProbeReceipt{trial.FirstApartment, trial.SecondApartment} {
-			if receipt == nil || receipt.Balanced != wantBalanced {
+			if receipt == nil || receipt.Balanced != wantBalanced || receipt.Fresh != fresh {
 				t.Fatalf("comparison arm lacks matching receipt: %s %+v", trial.Mode, receipt)
+			}
+			if fresh {
+				if receipt.Before != "0x800401f0" || receipt.Init != "0x00000000" {
+					t.Fatalf("fresh STA ownership was not demonstrated: %+v", receipt)
+				}
+				if receipt.After != "0x00000000" || (!wantBalanced && (receipt.AfterType != 0 || receipt.AfterQualifier != 0)) ||
+					(wantBalanced && (receipt.AfterType != 1 || receipt.AfterQualifier != 1)) {
+					t.Fatalf("fresh STA release did not match the comparison arm: %+v", receipt)
+				}
+				// A successful query alone does not demonstrate an STA reference:
+				// COM may report an implicit MTA after the owned STA is released.
+				t.Logf("balanced=%t after=%s type=%d qualifier=%d", receipt.Balanced, receipt.After, receipt.AfterType, receipt.AfterQualifier)
 			}
 		}
 		t.Logf("mode=%s apartment init=%s before=%s after=%s; second browser exit=%s", trial.Mode,
