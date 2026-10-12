@@ -1,5 +1,21 @@
 # Validation
 
+Background-thread termination correction (2026-10-12): the fork's documented
+thread-safe `Terminate` previously used PostQuitMessage, which targets the
+calling thread rather than the WebView UI thread. The real Win32 message-queue
+regression failed before the change: a worker received WM_QUIT and the UI Run
+loop remained blocked. Posting to the retained UI thread ID now passes both
+background and UI-thread calls. Fixture recovery retains its own locked thread
+until cleanup, avoiding thread-ID reuse and leftover quit messages. The first
+fixture revision incorrectly posted cleanup to an already stopped thread; that
+test bug was corrected before the product failure was reproduced.
+Fork package tests, host/runtime/startup package tests and root scoped vet pass.
+Fork vet passed only with the existing unsafeptr warnings disabled. Fresh GUI
+host startup passed all five subcases in 40.67 s (early close, icons, GUI header,
+relaunch lifecycle, security policy). Normal lifecycle browser exits still took
+6.42/6.46 s; this fix is not a solution to that independent delay. No new API,
+permission, schema, dependency, version, CI change, push or publication.
+
 Fresh-thread STA release comparison (2026-10-12): `TestFreshApartmentReleaseDiagnostic`
 uses the actual host run function on a private locked thread. Before initialization
 all children returned CO_E_NOTINITIALIZED; initialization returned S_OK. After

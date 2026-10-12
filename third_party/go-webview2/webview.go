@@ -590,7 +590,7 @@ func (w *webview) Run() {
 }
 
 func (w *webview) Terminate() {
-	_, _, _ = w32.User32PostQuitMessage.Call(0)
+	_, _, _ = w32.User32PostThreadMessageW.Call(w.mainthread, w32.WMQuit, 0, 0)
 }
 
 func (w *webview) Window() unsafe.Pointer {
