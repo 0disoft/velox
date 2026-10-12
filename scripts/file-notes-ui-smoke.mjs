@@ -34,6 +34,22 @@ async function waitForDraft(page, text, savedText) {
   }
   throw new Error("The expected recovery snapshot did not commit within five seconds.");
 }
+async function rawDraft(page, value, write = false) {
+  return page.evaluate(({ value, write }) => new Promise((resolve, reject) => {
+    const request = indexedDB.open("dev.velox.filenotes", 1);
+    request.onerror = () => reject(Error("Fixture database could not open"));
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction("drafts", write ? "readwrite" : "readonly");
+      const store = transaction.objectStore("drafts");
+      const operation = write ? store.put(value, "current") : store.get("current");
+      let result;
+      operation.onsuccess = () => { result = operation.result; };
+      transaction.oncomplete = () => { database.close(); resolve(result); };
+      transaction.onerror = transaction.onabort = () => { database.close(); reject(Error("Fixture transaction failed")); };
+    };
+  }), { value, write });
+}
 let browser;
 try {
   browser = await chromium.launch({ channel: "msedge", headless: true });
@@ -195,6 +211,63 @@ try {
     assert.deepEqual(errors, []);
     result.cleanRecoveryTransitions = { delay: "controlled storage boundary", checks, pageErrors: errors };
   } finally { await recoveryContext.close(); }
+  const protectedDrafts = [
+    { kind: "future-format", value: { schemaVersion: 2, text: "Future draft", extra: { preserved: true } } },
+    { kind: "invalid-text", value: { schemaVersion: 1, text: { invalid: true }, savedText: "old text" } },
+    { kind: "oversized-text", value: { schemaVersion: 1, text: "x".repeat(2 * 1024 * 1024 + 1) } },
+  ];
+  result.protectedDrafts = [];
+  for (const candidate of protectedDrafts) {
+    const viewport = { width: 360, height: 640 };
+    const context = await browser.newContext({ viewport });
+    try {
+      await context.addInitScript(() => {
+        const open = indexedDB.open.bind(indexedDB);
+        window.__draftOpens = 0;
+        indexedDB.open = (...args) => { window.__draftOpens++; return open(...args); };
+        window.__writes = [];
+        window.velox = { invoke: async () => null, saveTextAs: async text => {
+          window.__writes.push(text);
+          return { name: "exported.md", target: 1 };
+        } };
+      });
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", error => errors.push(error.message));
+      await page.goto(url);
+      await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+      await rawDraft(page, candidate.value, true);
+      await page.reload();
+      await page.waitForFunction(() => !document.querySelector("#editor").readOnly &&
+        document.querySelector("#draft-state").textContent.includes("kept unchanged"));
+      const before = await page.evaluate(() => window.__draftOpens);
+      await page.locator("#editor").fill("New editable text");
+      await page.waitForFunction(count => window.__draftOpens > count, before);
+      assert.deepEqual(await rawDraft(page), candidate.value);
+      assert.ok((await page.locator("#draft-state").textContent()).includes("kept unchanged"));
+      const layout = await page.evaluate(() => {
+        const notice = document.querySelector("#draft-state").getBoundingClientRect();
+        return { overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+          noticeWithinPage: notice.left >= 0 && notice.right <= document.documentElement.clientWidth };
+      });
+      assert.equal(layout.overflow, false);
+      assert.equal(layout.noticeWithinPage, true);
+      const screenshot = join(output, "protected-" + candidate.kind + ".png");
+      await page.screenshot({ path: screenshot, fullPage: true });
+      await page.getByRole("button", { name: "Save as", exact: true }).click();
+      await page.locator("#status").filter({ hasText: "exported.md saved." }).waitFor();
+      assert.deepEqual(await page.evaluate(() => window.__writes), ["New editable text"]);
+      assert.equal(await page.locator("#save-state").textContent(), "Saved to file");
+      assert.deepEqual(await rawDraft(page), candidate.value);
+      await page.getByRole("button", { name: "New", exact: true }).click();
+      await page.waitForFunction(() => document.querySelector("#editor").value === "" &&
+        !document.querySelector("#new-document").disabled);
+      assert.deepEqual(await rawDraft(page), candidate.value);
+      assert.deepEqual(errors, []);
+      result.protectedDrafts.push({ kind: candidate.kind, viewport, layout, screenshot, startupNotice: true, editingEnabled: true,
+        autoSaveAndNewPreserveOriginal: true, mockedNativeExportWorks: true, pageErrors: errors });
+    } finally { await context.close(); }
+  }
   const context = await browser.newContext();
   try {
     await context.addInitScript(() => {

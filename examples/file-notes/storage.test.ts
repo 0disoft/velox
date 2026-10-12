@@ -57,3 +57,81 @@ test("an opened draft database releases its connection when another version is r
   h.finish();
   await loading;
 });
+
+function storedDraft(initial: any) {
+  let value = initial, writes = 0, closes = 0;
+  const modes: string[] = [];
+  const database = {
+    close() { closes++; },
+    transaction(_store: string, mode: string) {
+      modes.push(mode);
+      let pending = 0, aborted = false;
+      const transaction: any = {
+        abort() { aborted = true; queueMicrotask(() => transaction.onabort?.()); },
+        objectStore: () => ({
+          get() { return request(() => value); },
+          put(next: any) { writes++; return request(() => { value = next; }); },
+          delete() { writes++; return request(() => { value = undefined; }); },
+        }),
+      };
+      function request(operation: () => any) {
+        pending++;
+        const result: any = {};
+        queueMicrotask(() => {
+          if (aborted) return;
+          result.result = operation();
+          result.onsuccess?.();
+          pending--;
+          if (!pending && !aborted) queueMicrotask(() => transaction.oncomplete?.());
+        });
+        return result;
+      }
+      return transaction;
+    },
+  };
+  const context: any = { TextEncoder, indexedDB: { open() {
+    const request: any = { result: database };
+    queueMicrotask(() => request.onsuccess());
+    return request;
+  } } };
+  runInNewContext(source, context);
+  return { storage: context.FileNotesStorage, value: () => value, replace: (next: any) => { value = next; },
+    writes: () => writes, closes: () => closes, modes };
+}
+
+const replacement = { schemaVersion: 1, name: "new.md", text: "new text", savedText: "", updatedAt: null };
+
+test("unsupported or unreadable drafts are reported without automatic replacement", async () => {
+  for (const current of [null, { schemaVersion: 2, text: "future text", extra: { preserve: true } },
+    { schemaVersion: 1, text: { corrupt: true } },
+    { schemaVersion: 1, text: "x".repeat(2 * 1024 * 1024 + 1) },
+    { schemaVersion: 1, text: "small", savedText: "\uD55C".repeat(699051) }]) {
+    const h = storedDraft(current);
+    await expect(h.storage.load()).rejects.toThrow("Stored draft");
+    await expect(h.storage.save(replacement)).rejects.toThrow("Stored draft");
+    expect(h.value()).toBe(current);
+    expect(h.writes()).toBe(0);
+    expect(h.closes()).toBe(2);
+  }
+});
+
+test("a newer draft appearing after load is rechecked in the write transaction", async () => {
+  const h = storedDraft(undefined);
+  await h.storage.load();
+  const future = { schemaVersion: 2, text: "another writer's text" };
+  h.replace(future);
+  await expect(h.storage.save(replacement)).rejects.toThrow("Stored draft");
+  expect(h.value()).toBe(future);
+  expect(h.writes()).toBe(0);
+  expect(h.modes).toEqual(["readonly", "readwrite"]);
+});
+
+test("empty storage and legacy schema-v1 metadata remain writable", async () => {
+  for (const current of [undefined, { schemaVersion: 1, text: "legacy", savedText: 3, handle: {}, target: 42 }]) {
+    const h = storedDraft(current);
+    await h.storage.save(replacement);
+    expect(h.value()).toEqual(replacement);
+    expect(h.writes()).toBe(1);
+    expect(h.modes).toEqual(["readwrite"]);
+  }
+});

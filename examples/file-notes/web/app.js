@@ -100,9 +100,11 @@
     elements.status.textContent = message;
   }
 
-  function reportDraftUnavailable() {
+  function reportDraftUnavailable(error) {
     draftUnavailable = true;
-    elements.draftState.textContent = "Draft recovery unavailable. Save changes to a file.";
+    elements.draftState.textContent = error?.code === "DRAFT_UNREADABLE"
+      ? "Stored draft cannot be read and was kept unchanged. Save changes to a file."
+      : "Draft recovery unavailable. Save changes to a file.";
   }
 
   function reportFileError(operation, error) {
@@ -134,9 +136,9 @@
             draftUnavailable = false;
             elements.draftState.textContent = "Draft saved";
           }
-        } catch {
+        } catch (error) {
           if (revision !== draftRevision) continue;
-          reportDraftUnavailable();
+          reportDraftUnavailable(error);
         }
       }
     } finally { draftWriteRunning = false; }
@@ -303,8 +305,8 @@
       state = model.restoreDraft(await storage.load());
       setDocumentText(state.text);
       if (state.updatedAt) announce(`Draft restored from ${new Date(state.updatedAt).toLocaleString()}.`);
-    } catch {
-      reportDraftUnavailable();
+    } catch (error) {
+      reportDraftUnavailable(error);
     }
     render();
   }

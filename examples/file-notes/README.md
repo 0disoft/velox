@@ -49,6 +49,16 @@ from obsolete writes. Each text field is bounded to 2 MiB of UTF-8 before
 writing; an oversized draft leaves the previous stored draft intact and the
 current editor text available to correct or copy.
 
+Loading requires supported schema-v1 text within the 2 MiB UTF-8 byte limit;
+string saved-text baselines have the same limit. Legacy v1 metadata still uses
+the model's existing normalization. Unsupported formats, malformed text and
+oversized stored text are left unchanged with an explicit notice. Each automatic
+save checks the existing row in the same readwrite transaction as its put, so
+a newer incompatible draft appearing after startup is not overwritten. Editing
+and native file export remain available, but New does not discard the protected
+stored row. No migration is attempted; the explicit storage clear helper is
+separate and is not called by the New button.
+
 Because a buffer that looks clean can still have an older dirty draft as its
 last committed write, the close guard requests confirmation until the serial
 draft queue and any IME composition have settled; it returns without a prompt

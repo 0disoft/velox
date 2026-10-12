@@ -1,5 +1,29 @@
 # Validation
 
+Unreadable-draft overwrite protection (2026-10-12): File Notes validates stored
+schema-v1 text and bounded string baselines on load. Save rechecks the current
+row and puts its snapshot in one readwrite transaction; an incompatible draft
+appearing after startup is not overwritten. Legacy metadata normalization stays
+supported. Unsupported/malformed/oversized rows are retained, and a fixed
+kept-unchanged notice leaves editing and file export available. Two regressions
+failed before the fix; `bun test examples/file-notes` passes 57 tests/359
+assertions. Real IndexedDB Edge checks at 360x640 preserve three seeded rows
+after automatic save, mocked native export and New, with no overflow/errors.
+Receipt: `.cache/file-notes-readiness-1791807370326/result.json`; existing
+desktop/narrow normal recovery and close-consent checks also pass.
+
+The freshly packaged supported-v1 native recovery check also passed on WebView2
+154.0.4258.62: dirty recovery, blocked clean-draft close/cancel, committed clean
+close and blank relaunch, three zero host exits and three observed browser exits.
+Receipt: `.cache/packaged-recovery-32be27b4-2355-4bff-9e83-79c408601fa5/result.json`.
+That native suite does not seed incompatible/corrupt drafts; do not relabel
+the browser preservation checks as native corrupted-draft evidence. Node syntax,
+scoped hygiene and diff checks pass. Private database read/write validation
+changes without a schema migration/version bump; explicit clear remains separate.
+No Go/native API, permissions, dependency, CI, push or release change. Native
+file pickers/disk saving, installer, power loss and OS IME remain untested;
+existing user profiles are untouched and the full workspace goal remains active.
+
 Native clean-transition close guard (2026-10-12): the opt-in packaged recovery
 script adds `--check-clean-transition`; the default two-launch flow is unchanged.
 An actual IndexedDB readwrite transaction held alive by GET requests delays the

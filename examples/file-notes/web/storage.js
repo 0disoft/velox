@@ -4,6 +4,20 @@
   const databaseName = "dev.velox.filenotes";
   const storeName = "drafts";
   const currentKey = "current";
+  const maxBytes = 2 * 1024 * 1024;
+
+  function boundedText(value) {
+    return typeof value === "string" && value.length <= maxBytes &&
+      new TextEncoder().encode(value).byteLength <= maxBytes;
+  }
+
+  function assertReadable(draft) {
+    if (draft === undefined) return;
+    if (!draft || draft.schemaVersion !== 1 || !boundedText(draft.text) ||
+        (typeof draft.savedText === "string" && !boundedText(draft.savedText))) {
+      throw Object.assign(new Error("Stored draft format or text is not supported."), { code: "DRAFT_UNREADABLE" });
+    }
+  }
 
   function openDatabase() {
     return new Promise((resolve, reject) => {
@@ -25,18 +39,23 @@
     });
   }
 
-  async function run(mode, operation) {
+  async function run(mode, operation, afterRead) {
     const database = await openDatabase();
     try {
       return await new Promise((resolve, reject) => {
         const transaction = database.transaction(storeName, mode);
         const request = operation(transaction.objectStore(storeName));
         let result;
+        let failure;
         request.onerror = () => reject(request.error || new Error("Draft operation failed."));
-        request.onsuccess = () => { result = request.result; };
+        request.onsuccess = () => {
+          result = request.result;
+          try { afterRead?.(transaction.objectStore(storeName), result); }
+          catch (error) { failure = error; transaction.abort(); }
+        };
         transaction.oncomplete = () => resolve(result);
         transaction.onerror = () => reject(transaction.error || new Error("Draft transaction failed."));
-        transaction.onabort = () => reject(transaction.error || new Error("Draft transaction was aborted."));
+        transaction.onabort = () => reject(failure || transaction.error || new Error("Draft transaction was aborted."));
       });
     } finally {
       database.close();
@@ -44,18 +63,22 @@
   }
 
   function load() {
-    return run("readonly", (store) => store.get(currentKey));
+    return run("readonly", (store) => store.get(currentKey), (_store, draft) => assertReadable(draft));
   }
 
   async function save(state) {
     const { schemaVersion, name, text, savedText, updatedAt } = state;
+    if (schemaVersion !== 1) throw new Error("Draft schema version is not supported.");
     for (const value of [text, savedText]) {
-      if (typeof value !== "string" || value.length > 2 * 1024 * 1024 ||
-          new TextEncoder().encode(value).byteLength > 2 * 1024 * 1024) {
+      if (!boundedText(value)) {
         throw new Error("Draft exceeds the 2 MiB UTF-8 limit.");
       }
     }
-    await run("readwrite", (store) => store.put({ schemaVersion, name, text, savedText, updatedAt }, currentKey));
+    // Recheck in the same transaction: another app version may have stored a draft.
+    await run("readwrite", (store) => store.get(currentKey), (store, current) => {
+      assertReadable(current);
+      store.put({ schemaVersion, name, text, savedText, updatedAt }, currentKey);
+    });
   }
 
   function clear() {

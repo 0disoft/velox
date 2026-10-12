@@ -765,11 +765,16 @@ test("IndexedDB stores draft fields only, never write targets or legacy handles"
     transaction() {
       const transaction: any = {
         objectStore: () => ({
+          get() {
+            const request: any = {};
+            queueMicrotask(() => request.onsuccess());
+            return request;
+          },
           put(value: any, key: string) {
             expect(key).toBe("current");
             stored = value;
             const request: any = {};
-            queueMicrotask(() => { request.onsuccess(); transaction.oncomplete(); });
+            queueMicrotask(() => { request.onsuccess?.(); transaction.oncomplete(); });
             return request;
           },
         }),

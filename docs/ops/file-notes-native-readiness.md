@@ -1,5 +1,29 @@
 # File Notes Native Readiness
 
+## Validated-Storage Package: 2026-10-12
+
+The pending-write/clean-transition native suite was rerun against the current
+locally packaged assets after unreadable-draft validation was added. Host:
+`c81f03cd06cc26bc9a792bd1c48bb11f92459c2884f424ecba624691c3785a2c`;
+assets: `016d41e76c571943b0ee872dad30f66735bfeaf6551eb7ea421b8b8eadb779a9`;
+ZIP: `9f1863f4dac107fa870fec411bf6d4e25a166c30dfaafd1ec66ce7d88c08ce25`.
+Before/after directory inspection is identical. The unchanged private host is
+reused; the alpha.68 string does not identify published replacement bytes.
+
+On WebView2 `154.0.4258.62`, dirty commit/cancel/immediate recovery and actual
+transaction-blocked New close/cancel followed by committed clean close/blank
+relaunch pass. All three hosts exit zero and their retained browser handles
+observe exit. Receipt:
+`.cache/packaged-recovery-32be27b4-2355-4bff-9e83-79c408601fa5/result.json`.
+
+The native fixture uses supported schema-v1 records, not incompatible/corrupt
+records. Preservation of those rows was separately verified in real IndexedDB
+with Edge and mocked native export; see VALIDATION.md for that boundary. CDP
+and the actual transaction delay instrument native recovery; no performance
+improvement is inferred. Native file pickers, disk saving, installer, power
+loss and OS IME were not run. Existing user profiles and public assets are
+unchanged; no default CI or product API/permission/dependency/version change.
+
 ## Native Clean Transition: 2026-10-12
 
 The current File Notes assets at `e2975bb` were packaged with the unchanged
