@@ -1,5 +1,21 @@
 # Validation
 
+Packaged File Notes shutdown/recovery (2026-10-12): source 23f2327 was rebuilt
+into a private CLI/GUI bundle and the unchanged actual app. The opt-in
+`scripts/file-notes-packaged-recovery.mjs` passed real IndexedDB commit/read,
+native WM_CLOSE cancellation retaining Korean/multiline text, accepted close,
+immediate same-profile relaunch restoring identical dirty text and the recovery
+notice, then accepted close and observed exits of both retained browser handles.
+Both runs (11.18/10.52 s) are CDP-instrumented and do not mock bridge/storage/dialogs,
+modify packaged assets or use an existing user profile. Inspection before/after
+matched host c81f03cd and assets 8efbce17. A separate benchmark-mode packaged
+lifecycle pair passed in 14.85 s, with immediate readiness 7.09 s and browser
+exit 6.42 s after host; the relaunch delay remains. Details and raw receipt
+locations are in docs/ops/file-notes-native-readiness.md. Native file picker,
+installer upgrade, interrupted transaction and power-loss checks were not run.
+No production source/API/permission/schema/dependency/version/CI change, push
+or publication occurred in this verification slice.
+
 Runtime termination and draft recovery (2026-10-12): the runtime's Terminate
 previously stopped the view loop without closing the dispatcher/browser, so
 later queued Close work could no longer run. The new regression failed before

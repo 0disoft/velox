@@ -1,5 +1,53 @@
 # File Notes Native Readiness
 
+## Packaged Recovery After Shutdown Corrections: 2026-10-12
+
+Source `23f2327` was rebuilt into a new private CLI/GUI host bundle and used to
+package the unchanged File Notes example. Directory inspection passed before
+and after the recovery check. Host SHA-256:
+`c81f03cd06cc26bc9a792bd1c48bb11f92459c2884f424ecba624691c3785a2c`;
+assets SHA-256:
+`8efbce17c90ea30e0fa94b3dfca489b387f918e50047082aa0ca8f7dd1386b74`.
+The local app ZIP SHA-256 is
+`a8fd5b377b59790d4431886224adc23bb9ee63ad831e36522985086d87837c1b`.
+Its release string remains alpha.68; this is not a public asset replacement.
+
+`scripts/file-notes-packaged-recovery.mjs` drives the actual packaged application
+over loopback CDP without replacing its files, bridge, storage or dialogs. It
+creates a unique repository-local profile and isolated LocalAppData, enters
+synthetic Korean/multiline/literal text, waits for the actual draft transaction,
+and reads it through File Notes' own storage module. Native WM_CLOSE produces
+the real beforeunload dialog: cancel retains the text and live host; accepting
+the repeated close exits normally. Immediate same-profile relaunch starts
+before the first browser-exit wait and restores identical committed text,
+the dirty state and the recovery notice. The reopened app also closes normally.
+Browser process handles acquired while each observed CDP browser PID was live
+confirm both browser exits. The fixture and receipt are retained, not deleted.
+
+Run explicitly on Windows with Node/Playwright and PowerShell 7 available:
+
+```text
+node scripts/file-notes-packaged-recovery.mjs <velox.exe> <File-Notes-portable-directory>
+```
+
+Two actual runs passed in 11.18 s and 10.52 s on WebView2 `154.0.4258.62`.
+The final receipt is
+`.cache/packaged-recovery-5a4ef7bf-4bd0-4912-aca8-240331e5d50f/result.json`;
+the first is
+`.cache/packaged-recovery-74c9e075-ac31-4a26-8e2f-45b4c39c3a8b/result.json`.
+CDP arguments and process observation instrument this check, so it makes no
+ordinary-startup latency claim. It does not cover a native file picker, an
+installer upgrade, interrupted transaction or power-loss recovery. Existing
+user profiles and documents were not accessed.
+
+The separate benchmark-mode `TestPackagedAppLifecycle` passed on the same
+artifact in 14.85 s: first/immediate ready 958.22/7,091.53 ms, host exits
+71.91/103.46 ms, immediate browser exit 6,419.49 ms after host, and profile
+release 6,501.33 ms after host. Receipt:
+`.cache/shutdown-package-20261012/lifecycle.json`. This confirms the existing
+guardrails, not a relaunch-delay fix. No new default native CI launches, API,
+permissions, database schema, dependency, version, push or publication occurred.
+
 ## Optional Packaged-App Lifecycle Check
 
 `TestPackagedAppLifecycle` inspects the supplied portable directory before
