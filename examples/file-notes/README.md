@@ -55,8 +55,12 @@ draft queue and any IME composition have settled; it returns without a prompt
 once nothing is pending, so a clean document is not permanently blocked from
 closing. Save, New and a successful Open enqueue an immediate commit, typing
 keeps a short debounce, and the status line shows `Draft pending` while a
-commit is queued or in flight. Editor and file buttons are not disabled by
-pending IndexedDB work. A draft write that finally fails keeps its own
+commit is queued or in flight. The `Draft recovery unavailable` guidance is not
+replaced by that pending state; it stays visible until the latest draft
+revision is actually committed, so a failed draft keeps showing its warning
+from the first keystroke through IME composition until the next successful
+write. Editor and file buttons are not disabled by pending IndexedDB work. A
+draft write that finally fails keeps its own
 `Draft recovery unavailable` notice and does not turn a completed native file
 save into a reported failure. This guard covers the browser close path only
 and does not promise recovery after an accepted close, a forced termination or

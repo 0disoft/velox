@@ -47,6 +47,16 @@ try {
           await context.addInitScript(({ phase }) => {
             window.__writes = [];
             window.__cancelSave = true;
+            window.__draftUnavailable = phase === "startup";
+            const actualDatabase = window.indexedDB;
+            Object.defineProperty(window, "indexedDB", { value: {
+              open(...args) {
+                if (window.__draftUnavailable) {
+                  throw new DOMException("Internal error opening backing store for indexedDB.open.", "UnknownError");
+                }
+                return actualDatabase.open(...args);
+              },
+            } });
             window.velox = {
               invoke: async () => null,
               saveTextAs: async (text, name) => {
@@ -56,9 +66,6 @@ try {
               },
               saveTextTo: async () => { throw Error("Unexpected connected save"); },
             };
-            if (phase === "startup") Object.defineProperty(window, "indexedDB", { value: {
-              open() { throw new DOMException("Internal error opening backing store for indexedDB.open.", "UnknownError"); },
-            } });
           }, { phase });
           const errors = [], failures = [];
           const page = await context.newPage();
@@ -67,14 +74,28 @@ try {
           await page.goto(`${url}/${app}/`);
           await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
           if (phase === "write") await page.evaluate(() => {
-            Object.defineProperty(window, "indexedDB", { value: {
-              open() { throw new DOMException("Internal error opening backing store for indexedDB.open.", "UnknownError"); },
-            } });
+            window.__draftUnavailable = true;
           });
           const editor = page.locator("#editor");
           const text = "\uD55C\uAE00 draft\nKeep this text.";
           await editor.fill(text);
           await page.waitForFunction(() => document.querySelector("#draft-state").textContent.includes("Save changes to a file"));
+          await editor.fill(text + " retry");
+          assert.ok((await page.locator("#draft-state").textContent()).includes("Save changes to a file"));
+          await page.evaluate(text => {
+            const editor = document.querySelector("#editor");
+            editor.dispatchEvent(new CompositionEvent("compositionstart"));
+            editor.value = text + " unfinished";
+            editor.dispatchEvent(new Event("input", { bubbles: true }));
+          }, text);
+          assert.ok((await page.locator("#draft-state").textContent()).includes("Save changes to a file"));
+          await page.evaluate(text => {
+            const editor = document.querySelector("#editor");
+            editor.value = text;
+            editor.dispatchEvent(new Event("input", { bubbles: true }));
+            editor.dispatchEvent(new CompositionEvent("compositionend"));
+          }, text);
+          assert.ok((await page.locator("#draft-state").textContent()).includes("Save changes to a file"));
           await page.getByRole("button", { name: "Save as", exact: true }).click();
           await page.waitForFunction(() => document.querySelector("#status").textContent.toLowerCase().includes("cancel"));
           assert.equal(await editor.inputValue(), text);
@@ -102,9 +123,17 @@ try {
           assert.equal((await page.evaluate(() => window.__writes))[0].text, text);
           assert.equal(await editor.inputValue(), text);
           assert.ok((await page.locator("#draft-state").textContent()).includes("Save changes to a file"));
+          await page.evaluate(() => { window.__draftUnavailable = false; });
+          const recovered = text + "\nRecovery retry";
+          await editor.fill(recovered);
+          assert.ok((await page.locator("#draft-state").textContent()).includes("Save changes to a file"));
+          await page.waitForFunction(() => /^(Draft saved|Draft stored)$/.test(document.querySelector("#draft-state").textContent));
+          const draft = await page.evaluate(app => (app === "editor" ? window.EditorDrafts : window.FileNotesStorage).load(), app);
+          assert.equal(draft.text, recovered);
           assert.deepEqual(errors, []);
           assert.deepEqual(failures, []);
-          result.views.push({ app, phase, view, layout, screenshot, canceledThenSaved: true });
+          result.views.push({ app, phase, view, layout, screenshot, canceledThenSaved: true,
+            warningRetainedDuringTypingAndSyntheticIME: true, recoveryConfirmedInRealIndexedDB: true });
         } finally { await context.close(); }
       }
     }

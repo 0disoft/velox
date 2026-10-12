@@ -1,5 +1,40 @@
 # Validation
 
+Sticky draft-failure guidance correction (2026-10-12): File Notes now keeps the
+`Draft recovery unavailable` guidance visible until the latest draft revision
+is actually committed, instead of letting the pending state hide it. Source
+parent `767c00a` displayed `Draft pending` from `queueDraftSave` without a
+condition, so the known-failure notice disappeared at the first keystroke and
+during IME composition. `examples/file-notes/web/app.js` now tracks a
+`draftUnavailable` flag, sets it in `reportDraftUnavailable()`, clears
+it only when `storage.save` succeeds for the latest revision, and shows the
+queued status only while `!draftUnavailable`. The close guard, serial queue,
+schema, host and permissions are unchanged. The extended `app.test.ts` failure
+case and the new obsolete-success test both failed before the change (two
+failures). The extended actual-Edge smoke passed its six text-editor cases and
+then failed the File Notes retry-typing guidance assertion,
+`.cache/editor-storage-failure-1791805511273/result.json`. After the change
+`bun test examples/file-notes` passed 54/0 with 324 assertions, and `node
+scripts/editor-storage-failure-ui-smoke.mjs` exited 0 with receipt
+`.cache/editor-storage-failure-1791805547254/result.json`: the generated-source
+text editor plus the actual File Notes web, startup/write `UnknownError`
+injection, desktop 1080x760 with narrow 360x640 light and narrow dark, twelve
+cases, native-bridge mocks, synthetic DOM composition events (not OS IME),
+recovered IndexedDB text checked after the injected failure is switched off,
+text retention across cancel and a native-response save, no overflow, and empty
+page-error and failure lists. The changed script retains the original IndexedDB
+factory and toggles the injected open failure, so retries use the real store.
+`node scripts/file-notes-ui-smoke.mjs` re-checked
+exit 0 with receipt `.cache/file-notes-readiness-1791805579536/result.json`
+(real IndexedDB with mocked native responses; Save, New, Open close consent,
+cancel restore, current commit and an unprompted reload all pass), and Node
+syntax passed. `go test ./tests/hygiene` exited 0 in 0.102 s and the product
+diff check passed. This slice is JavaScript/UI only;
+the Windows native picker, WM_CLOSE, packaged runtime, power loss and OS IME
+were not tested for this change and the unchanged host was not rebuilt. No API,
+DB schema, permission, dependency, version or CI change, and no user profile or
+document was touched. The workspace goal and its 72 criteria remain active.
+
 Draft-commit close guard (2026-10-12): File Notes now routes draft commits
 through `queueDraftSave(immediate = false)`. Save, New and a successful Open
 enqueue an immediate commit on the existing serial queue, the status line shows

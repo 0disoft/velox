@@ -23,6 +23,7 @@
   let pendingAction = null;
   let draftTimer = null;
   let draftWriteRunning = false;
+  let draftUnavailable = false;
   let pendingDraftWrite = null;
   let draftRevision = 0;
   let fileActionPending = true;
@@ -100,6 +101,7 @@
   }
 
   function reportDraftUnavailable() {
+    draftUnavailable = true;
     elements.draftState.textContent = "Draft recovery unavailable. Save changes to a file.";
   }
 
@@ -128,7 +130,10 @@
         pendingDraftWrite = null;
         try {
           await storage.save(snapshot);
-          if (revision === draftRevision) elements.draftState.textContent = "Draft saved";
+          if (revision === draftRevision) {
+            draftUnavailable = false;
+            elements.draftState.textContent = "Draft saved";
+          }
         } catch {
           if (revision !== draftRevision) continue;
           reportDraftUnavailable();
@@ -141,7 +146,7 @@
     clearTimeout(draftTimer);
     draftTimer = null;
     const revision = ++draftRevision;
-    elements.draftState.textContent = "Draft pending";
+    if (!draftUnavailable) elements.draftState.textContent = "Draft pending";
     if (composing) return;
     const enqueue = () => {
       draftTimer = null;

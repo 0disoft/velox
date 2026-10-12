@@ -317,6 +317,12 @@ test("draft failures explain file saving and keep the native export usable", asy
   await ui.ready;
   expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
   ui.edit("\uD55C\uAE00\nkeep this draft");
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  ui.compose(true);
+  ui.edit("\uD55C\uAE00\nkeep this draft");
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  ui.compose(false);
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
   await ui.flushDraft();
   expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
   expect(ui.node("#editor").readOnly).toBe(false);
@@ -328,8 +334,26 @@ test("draft failures explain file saving and keep the native export usable", asy
   expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
   unavailable = false;
   ui.edit("storage recovered");
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
   await ui.flushDraft();
   expect(ui.node("#draft-state").textContent).toBe("Draft saved");
+});
+
+test("obsolete recovery success keeps failure guidance until the newest draft commits", async () => {
+  const first = deferred<void>(), latest = deferred<void>();
+  let writes = 0;
+  const ui = harness({ load: Promise.reject(new Error("storage unavailable")),
+    draftSave: async () => { await (++writes === 1 ? first.promise : latest.promise); } });
+  await ui.ready;
+  ui.edit("first recovery"); await ui.flushDraft();
+  ui.edit("latest recovery"); await ui.flushDraft();
+  first.resolve(); await tick();
+  expect(writes).toBe(2);
+  expect(ui.node("#draft-state").textContent).toContain("Save changes to a file");
+  latest.resolve(); await tick();
+  expect(ui.node("#draft-state").textContent).toBe("Draft saved");
+  ui.edit("next input");
+  expect(ui.node("#draft-state").textContent).toBe("Draft pending");
 });
 
 test("slow draft storage retains only the in-flight and newest waiting snapshots", async () => {
