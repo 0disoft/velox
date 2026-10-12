@@ -15,17 +15,24 @@ func TestNativeRuntimeProfileStorage(t *testing.T) {
 	if os.Getenv("VELOX_NATIVE_STORAGE_PROBE") != "1" {
 		t.Skip("opt-in real Runtime.Open storage lifecycle")
 	}
-	testRuntimeProfileStorage(t, false)
+	testRuntimeProfileStorage(t, false, false)
 }
 
 func TestNativeRuntimeProfileExistingDraft(t *testing.T) {
 	if os.Getenv("VELOX_NATIVE_STORAGE_PROBE") != "1" {
 		t.Skip("opt-in existing dependency-view draft recovery by Runtime.Open")
 	}
-	testRuntimeProfileStorage(t, true)
+	testRuntimeProfileStorage(t, true, false)
 }
 
-func testRuntimeProfileStorage(t *testing.T, existingDraft bool) {
+func TestNativeRuntimeTerminateStorage(t *testing.T) {
+	if os.Getenv("VELOX_NATIVE_STORAGE_PROBE") != "1" {
+		t.Skip("opt-in real runtime termination and committed draft recovery")
+	}
+	testRuntimeProfileStorage(t, false, true)
+}
+
+func testRuntimeProfileStorage(t *testing.T, existingDraft, terminate bool) {
 	t.Helper()
 	root, err := os.MkdirTemp("", "vpr-")
 	if err != nil {
@@ -86,7 +93,11 @@ func testRuntimeProfileStorage(t *testing.T, existingDraft bool) {
 	}
 	for _, mode := range modes {
 		cleanupSafe = false
-		result, exited := runStorageProbeChild(t, profile, root, "runtime-"+mode)
+		probeMode := mode
+		if terminate {
+			probeMode = "terminate-" + mode
+		}
+		result, exited := runStorageProbeChild(t, profile, root, "runtime-"+probeMode)
 		cleanupSafe = exited
 		if !exited || result.Status != "verified" || result.BrowserPathLength > maxProfileLinkPath {
 			t.Fatalf("runtime storage %s: %+v exited=%v", mode, result, exited)
@@ -104,6 +115,8 @@ func testRuntimeProfileStorage(t *testing.T, existingDraft bool) {
 
 func runRuntimeStorageProbeChild(t *testing.T, profile, cacheDir, mode string) {
 	t.Helper()
+	terminate := strings.HasPrefix(mode, "terminate-")
+	mode = strings.TrimPrefix(mode, "terminate-")
 	if mode != "write" && mode != "read" {
 		t.Fatal("invalid runtime probe mode")
 	}
@@ -118,7 +131,11 @@ func runRuntimeStorageProbeChild(t *testing.T, profile, cacheDir, mode string) {
 	view, err := Open(Config{Title: "Velox Isolated Runtime Storage Probe", AppID: "dev.velox.storage-probe", AppVersion: "1",
 		Width: 640, Height: 480, DataPath: profile, AssetRoot: assets, EntryPath: entry}, func(status string) error {
 		result.Status = status
-		view.Close()
+		if terminate {
+			view.Terminate()
+		} else {
+			view.Close()
+		}
 		return nil
 	})
 	if err != nil {
@@ -139,6 +156,9 @@ func runRuntimeStorageProbeChild(t *testing.T, profile, cacheDir, mode string) {
 	}
 	view.Run()
 	view.Close()
+	if _, err := view.BrowserProcessID(); err == nil {
+		t.Fatal("runtime loop returned with its browser interface retained")
+	}
 	if len(view.profileLease.handles) != 0 {
 		t.Fatal("run-loop exit did not release the profile lease")
 	}

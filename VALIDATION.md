@@ -1,5 +1,21 @@
 # Validation
 
+Runtime termination and draft recovery (2026-10-12): the runtime's Terminate
+previously stopped the view loop without closing the dispatcher/browser, so
+later queued Close work could no longer run. The new regression failed before
+the correction (two low-level loop stops). Terminate now uses the existing
+idempotent Close path, retaining both RPC-drain turns and one view destruction.
+Host/runtime/startup package tests and scoped vet pass. Opt-in actual
+`TestNativeRuntimeTerminateStorage` passed in 14.96 s: write/read child processes
+terminated through this runtime method, recovered identical Korean/CRLF text,
+cleared the browser interface, released profile guards and reused one stable
+link while retaining the original marker. Profile length 246/browser path 103.
+Fixture cleanup requires confirmed browser exit; no user profile was touched.
+This is source-runtime/native storage evidence, not installed/released-host,
+power-loss, canceled dialog or all-Windows evidence. Ordinary relaunch delay
+remains unresolved. No new API/permission/schema/dependency/version/CI change,
+push or publication.
+
 Destroy after a terminated loop (2026-10-12): a hidden, message-only Win32
 fixture reproduced `Terminate -> Run returns -> Destroy` retaining the native
 window, window-context registration and browser teardown (destroy count zero).

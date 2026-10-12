@@ -284,8 +284,9 @@ const watchReloadScript = `(() => {
   setTimeout(() => { window.__veloxWatchReloadPending = false; }, 1000);
 })()`
 
+// Terminate closes the view before Run releases the profile guards.
 func (r *Runtime) Terminate() {
-	r.view.Terminate()
+	r.Close()
 }
 
 func (r *Runtime) BrowserProcessID() (uint32, error) {

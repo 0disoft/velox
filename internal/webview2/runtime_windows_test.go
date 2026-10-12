@@ -12,6 +12,7 @@ import (
 type fakeWebView struct {
 	dispatches []func()
 	destroyed  int
+	terminated int
 	sequence   []string
 	scripts    []string
 }
@@ -20,7 +21,7 @@ func (f *fakeWebView) Run() {
 	f.sequence = append(f.sequence, "run")
 }
 
-func (f *fakeWebView) Terminate() {}
+func (f *fakeWebView) Terminate() { f.terminated++ }
 
 func (f *fakeWebView) Dispatch(callback func()) {
 	f.dispatches = append(f.dispatches, callback)
@@ -83,6 +84,26 @@ func TestRuntimeCloseDrainsBoundResponseBeforeDestroy(t *testing.T) {
 	view.drainOne(t)
 	if view.destroyed != 1 || len(view.dispatches) != 0 {
 		t.Fatalf("second dispatch queued=%d destroyed=%d, want one destroy", len(view.dispatches), view.destroyed)
+	}
+}
+
+func TestRuntimeTerminateUsesDrainedClose(t *testing.T) {
+	view := &fakeWebView{}
+	runtime := &Runtime{view: view}
+	runtime.Terminate()
+	runtime.Terminate()
+	runtime.Close()
+	if view.terminated != 0 || len(view.dispatches) != 1 || view.destroyed != 0 {
+		t.Fatalf("Terminate skipped teardown: terminate=%d queued=%d destroyed=%d",
+			view.terminated, len(view.dispatches), view.destroyed)
+	}
+	view.drainOne(t)
+	if view.destroyed != 0 {
+		t.Fatal("Terminate did not leave the response-drain turn")
+	}
+	view.drainOne(t)
+	if view.destroyed != 1 || len(view.dispatches) != 0 {
+		t.Fatal("Terminate did not complete one queued destruction")
 	}
 }
 
