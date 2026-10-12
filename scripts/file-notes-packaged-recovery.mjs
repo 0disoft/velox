@@ -7,8 +7,10 @@ import { createServer } from "node:net";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-if (process.platform !== "win32" || process.argv.length !== 4) {
-  throw Error("Usage on Windows: node scripts/file-notes-packaged-recovery.mjs <velox.exe> <portable-directory>");
+const checkCleanTransition = process.argv[4] === "--check-clean-transition";
+if (process.platform !== "win32" ||
+    !(process.argv.length === 4 || (process.argv.length === 5 && checkCleanTransition))) {
+  throw Error("Usage on Windows: node scripts/file-notes-packaged-recovery.mjs <velox.exe> <portable-directory> [--check-clean-transition]");
 }
 const root = fileURLToPath(new URL("..", import.meta.url));
 const cli = resolve(process.argv[2]), directory = resolve(process.argv[3]);
@@ -139,6 +141,87 @@ async function waitHost(item) {
   assert.equal(item.child.signalCode, null);
 }
 
+async function closeClean(item) {
+  let dialogs = 0;
+  const unexpected = async dialog => { dialogs++; await dialog.dismiss(); };
+  item.page.on("dialog", unexpected);
+  try {
+    nativeClose(item.child.pid);
+    await waitHost(item);
+    assert.equal(dialogs, 0, "A settled clean document unexpectedly requested consent");
+  } finally { item.page.off("dialog", unexpected); }
+}
+
+async function closeNewDocument(item) {
+  await item.page.evaluate(() => new Promise((resolve, reject) => {
+    const opened = indexedDB.open("dev.velox.filenotes", 1);
+    opened.onerror = () => reject(Error("Could not open the controlled draft transaction"));
+    opened.onsuccess = () => {
+      const database = opened.result;
+      const transaction = database.transaction("drafts", "readwrite");
+      const store = transaction.objectStore("drafts");
+      const deadline = Date.now() + 15000;
+      let first = true;
+      window.__holdDraftTransaction = true;
+      window.__draftTransactionReleased = false;
+      transaction.oncomplete = () => { database.close(); window.__draftTransactionReleased = true; };
+      transaction.onerror = () => { database.close(); reject(Error("Controlled draft transaction failed")); };
+      transaction.onabort = transaction.onerror;
+      // Reads keep this actual readwrite transaction alive without changing a row.
+      const read = () => {
+        const request = store.get("current");
+        request.onsuccess = () => {
+          if (first) { first = false; resolve(); }
+          if (window.__holdDraftTransaction && Date.now() < deadline) read();
+        };
+      };
+      read();
+    };
+  }));
+  await item.page.getByRole("button", { name: "New", exact: true }).click();
+  await item.page.getByRole("button", { name: "Discard changes", exact: true }).click();
+  await item.page.waitForFunction(() => document.querySelector("#editor").value === "" &&
+    !document.querySelector("#new-document").disabled && !document.querySelector("#editor").readOnly);
+  assert.equal(await item.page.locator("#editor").inputValue(), "");
+  let consent;
+  let timer;
+  const handled = new Promise((resolve, reject) => {
+    timer = setTimeout(() => reject(Error("Clean transition neither closed nor offered consent")), 10000);
+    consent = async dialog => {
+      try {
+        assert.equal(dialog.type(), "beforeunload");
+        await dialog.dismiss();
+        resolve("canceled");
+      } catch (error) { reject(error); }
+    };
+  });
+  item.page.on("dialog", consent);
+  let outcome;
+  try {
+    nativeClose(item.child.pid);
+    outcome = await Promise.race([handled, item.done.then(() => "exited")]);
+  } finally {
+    clearTimeout(timer);
+    item.page.off("dialog", consent);
+  }
+  if (outcome === "canceled") {
+    assert.equal(item.child.exitCode, null);
+    assert.equal(await item.page.locator("#editor").inputValue(), "");
+    assert.equal(await item.page.evaluate(() => window.__draftTransactionReleased), false);
+    await item.page.evaluate(() => { window.__holdDraftTransaction = false; });
+    await item.page.waitForFunction(() => document.querySelector("#draft-state").textContent === "Draft saved");
+    const saved = await item.page.evaluate(() => window.FileNotesStorage.load());
+    assert.equal(saved.text, "");
+    assert.equal(saved.savedText, "");
+    await closeClean(item);
+  } else {
+    await waitHost(item);
+    throw Error("The pending clean draft closed without consent under an active transaction lock");
+  }
+  return { firstClose: outcome, pendingCloseCanceled: true,
+    storageDelay: "actual readwrite transaction held by read-only requests", automaticReleaseMs: 15000 };
+}
+
 try {
   const first = await launch();
   const editor = first.page.getByRole("textbox", { name: "Markdown document" });
@@ -164,9 +247,23 @@ try {
   assert.equal(recovered.text, expected);
   assert.equal(recovered.savedText, "");
   result.immediateRelaunchRecoversCommittedDraft = true;
-  await second.page.locator("#editor").click();
-  await closeWithConsent(second, true);
-  await waitHost(second);
+  if (checkCleanTransition) {
+    result.cleanTransition = await closeNewDocument(second);
+    const third = await launch();
+    assert.equal(await third.page.locator("#editor").inputValue(), "");
+    assert.equal(await third.page.locator("#save-state").textContent(), "No save target");
+    const clean = await third.page.evaluate(() => window.FileNotesStorage.load());
+    assert.equal(clean.text, "");
+    assert.equal(clean.savedText, "");
+    result.cleanTransition.relaunchHasNoDiscardedDraft = true;
+    await third.page.locator("#editor").click();
+    await closeClean(third);
+    result.cleanTransition.restoredCleanCloseUnprompted = true;
+  } else {
+    await second.page.locator("#editor").click();
+    await closeWithConsent(second, true);
+    await waitHost(second);
+  }
   for (const item of launches) {
     await item.observation.done;
     assert.equal(item.observation.exited, true, item.observation.error);

@@ -1,5 +1,47 @@
 # File Notes Native Readiness
 
+## Native Clean Transition: 2026-10-12
+
+The current File Notes assets at `e2975bb` were packaged with the unchanged
+private `23f2327` CLI/host bundle. The source and packaged `app.js` SHA-256
+match `9ddcecb8c5e408755866ec6f48bda128a78b355e27bb952aa64bfa746612112d`.
+Packaged host: `c81f03cd06cc26bc9a792bd1c48bb11f92459c2884f424ecba624691c3785a2c`;
+assets: `a30109d8728a0f05ca93d27fb878abebd8733e1da54c07139db7f03756fa477b`;
+ZIP: `466cfaac3f52ca5ac00fd05ba64fe90995bc92e2c55d2bc689dbbc5cdf639075`.
+Directory and ZIP inspection pass, and the inspected artifact is identical
+before and after the native run. The alpha.68 string identifies private test
+bytes, not a replacement for the published preview.
+
+```text
+node scripts/file-notes-packaged-recovery.mjs <velox.exe> <portable-directory> --check-clean-transition
+```
+
+The optional flag adds a third real launch; the existing two-launch flow stays
+unchanged. New/Discard waits for the action acknowledgement, not the draft
+commit. A real IndexedDB readwrite transaction held by GET requests delays app
+writes for up to 15 seconds without changing a row itself. WM_CLOSE requests
+confirmation while the clean blank draft waits; cancel retains the document
+and host. Releasing the transaction lets the actual blank snapshot commit;
+subsequent native close is unprompted. Immediate relaunch stays blank, with no
+discarded dirty draft, and closes unprompted. Initial Korean/multiline draft
+commit, native close cancellation and immediate dirty recovery also pass.
+
+The final run passed in 12.41 s on WebView2 `154.0.4258.62` with three host
+exits zero and all three retained browser handles observing exit. Receipt:
+`.cache/packaged-recovery-a04ad631-f205-48c1-a7af-0876b813a761/result.json`.
+An initial fixture failure read old text before async New acknowledged; waiting
+for that acknowledgement fixed the fixture. An intermediate unlocked pass did
+not exercise pending-close consent and is not used to prove that branch.
+
+The profile and LocalAppData are isolated. CDP and the controlled transaction
+instrument this test; bridge, storage methods, dialogs and package files are
+not mocked or replaced. No ordinary-startup latency improvement is claimed.
+Node syntax, unknown-flag refusal before inspect/launch, scoped hygiene and
+diff checks pass. Native file pickers/disk saving, installer, power loss and
+OS IME were not tested. No product API/schema/permission/dependency/version,
+default CI, remote push or public release changed; the workspace goal remains
+active beyond this verification slice.
+
 ## Packaged Recovery After Shutdown Corrections: 2026-10-12
 
 Source `23f2327` was rebuilt into a new private CLI/GUI host bundle and used to

@@ -1,5 +1,28 @@
 # Validation
 
+Native clean-transition close guard (2026-10-12): the opt-in packaged recovery
+script adds `--check-clean-transition`; the default two-launch flow is unchanged.
+An actual IndexedDB readwrite transaction held alive by GET requests delays the
+new document's commit, bounded to 15 seconds. Native WM_CLOSE prompts while the
+clean draft is pending; cancel retains the blank document and live host. After
+release and the actual blank snapshot commit, native close is unprompted. A
+third immediate same-profile launch remains blank and closes without a prompt.
+Korean/multiline dirty-draft commit, close cancellation and immediate recovery
+also pass. WebView2 154.0.4258.62 completed in 12.41 s with all three host exits
+zero and all three retained browser handles signaling exit. Receipt:
+`.cache/packaged-recovery-a04ad631-f205-48c1-a7af-0876b813a761/result.json`.
+These are CDP-instrumented real native/storage operations, not mocked dialogs
+or storage and not ordinary-startup latency evidence. The initial fixture read
+the old buffer before async New completed; its acknowledgement wait was fixed.
+An intermediate unlocked pass did not exercise pending close, so the actual
+transaction lock was added. Current e2975bb assets were packaged with the
+unchanged private 23f2327 host; directory/ZIP inspection and before/after
+artifact identity pass. Node syntax, unknown-flag refusal before any launch,
+scoped hygiene and diff checks pass. Native file pickers/disk saves, installer,
+power loss and OS IME remain untested. Only this internal opt-in verifier and
+evidence records change; no product API/schema/permission/dependency/version,
+default CI, push or publication change. Existing user profiles are untouched.
+
 Sticky draft-failure guidance correction (2026-10-12): File Notes now keeps the
 `Draft recovery unavailable` guidance visible until the latest draft revision
 is actually committed, instead of letting the pending state hide it. Source
