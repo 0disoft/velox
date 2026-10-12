@@ -152,7 +152,7 @@ func Run(args []string, dependencies Dependencies) int {
 		printUsage(dependencies.Stdout)
 		return 0
 	default:
-		fmt.Fprintf(dependencies.Stderr, "velox: unknown command %q\n", args[0])
+		fmt.Fprintln(dependencies.Stderr, "velox: unknown command; see the commands below")
 		printUsage(dependencies.Stderr)
 		return 2
 	}
@@ -175,7 +175,7 @@ func runInit(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(reorderPositionalArgs(args, "template")); err != nil {
+	if err := parseFlags(flags, reorderPositionalArgs(args, "template")); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -231,7 +231,7 @@ func runDoctor(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(args); err != nil {
+	if err := parseFlags(flags, args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -302,7 +302,7 @@ func runProject(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(args); err != nil {
+	if err := parseFlags(flags, args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -345,7 +345,7 @@ func runValidate(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(args); err != nil {
+	if err := parseFlags(flags, args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -374,7 +374,7 @@ func runBuild(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(args); err != nil {
+	if err := parseFlags(flags, args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -452,7 +452,7 @@ func runVersion(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(args); err != nil {
+	if err := parseFlags(flags, args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -482,7 +482,7 @@ func runInspect(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(reorderPositionalArgs(args)); err != nil {
+	if err := parseFlags(flags, reorderPositionalArgs(args)); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
@@ -555,7 +555,12 @@ func emitPlanError(dependencies Dependencies, command string, options commonOpti
 	if !errors.As(err, &planError) {
 		return emitFailure(dependencies, command, options.json, 10, "INTERNAL", "Unexpected internal failure.", err)
 	}
-	diagnostic := Diagnostic{Severity: "error", Facts: map[string]string{"kind": string(planError.Kind), "target": options.target}}
+	target := options.target
+	if target != "" && target != buildplan.TargetWindowsX64 {
+		target = "unsupported"
+	}
+	diagnostic := Diagnostic{Severity: "error", Message: planFailureMessage(planError.Kind, err, options.target),
+		Facts: map[string]string{"kind": string(planError.Kind), "target": target}}
 	diagnostic.Path = safeDiagnosticPath(options.config)
 	if planError.Kind == buildplan.ErrorHost {
 		diagnostic.Path = safeDiagnosticPath(dependencies.HostPath)
@@ -581,11 +586,13 @@ func emitFailure(dependencies Dependencies, command string, jsonOutput bool, exi
 	return emitFailureWithDiagnostic(dependencies, command, jsonOutput, exitCode, code, message, Diagnostic{}, detail)
 }
 
-func emitFailureWithDiagnostic(dependencies Dependencies, command string, jsonOutput bool, exitCode int, code, message string, diagnostic Diagnostic, detail error) int {
+func emitFailureWithDiagnostic(dependencies Dependencies, command string, jsonOutput bool, exitCode int, code, message string, diagnostic Diagnostic, _ error) int {
 	diagnostic.Code = code
 	diagnostic.Severity = "error"
 	diagnostic.Category = category(code)
-	diagnostic.Message = message
+	if diagnostic.Message == "" {
+		diagnostic.Message = failureGuidance(command, code, message)
+	}
 	if jsonOutput {
 		if err := emitJSON(dependencies.Stdout, Envelope{
 			SchemaVersion: 1, OK: false, Command: command,
@@ -595,7 +602,14 @@ func emitFailureWithDiagnostic(dependencies Dependencies, command string, jsonOu
 			return 10
 		}
 	} else {
-		fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", code, safeMessage(detail))
+		fmt.Fprintf(dependencies.Stderr, "velox: %s: %s\n", code, diagnostic.Message)
+		if diagnostic.Path != "" {
+			location := diagnostic.Path
+			if diagnostic.Line > 0 {
+				location += fmt.Sprintf(":%d:%d", diagnostic.Line, diagnostic.Column)
+			}
+			fmt.Fprintf(dependencies.Stderr, "Location: %q\n", location)
+		}
 	}
 	return exitCode
 }
@@ -666,17 +680,6 @@ func category(code string) string {
 	default:
 		return "internal"
 	}
-}
-
-func safeMessage(err error) string {
-	if err == nil {
-		return "operation failed"
-	}
-	message := err.Error()
-	if volume := filepath.VolumeName(message); volume != "" {
-		return "operation failed at a local path"
-	}
-	return message
 }
 
 func safePath(projectRoot, path string) string {

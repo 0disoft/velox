@@ -1,5 +1,65 @@
 # Validation
 
+CLI failure recovery diagnostics (2026-10-12): source-only, unpushed CLI
+failure output now emits one actionable, safe diagnostic per failed
+validate/run/build plan and fixed code-owned recovery hints for generic
+failures. Typed manifest JSON syntax and value-type errors and filesystem
+errors carry fixed guidance in `diagnostic.message` and on the human stderr
+line; manifest, asset, host, output, and target failures map to specific
+recovery hints; a manifest/config failure also reports a quoted, safe
+project-relative path, with `line:column` when a parser offset is available
+(JSON syntax and value-type errors provide the offset; other manifest/config
+errors may carry only the file path), and no source snippet; the path is
+shape-sanitized but not length-bounded. Opaque underlying errors, invalid
+boolean flag values, and unsupported target values are not echoed, and an
+unsupported `--target` fact becomes `unsupported`.
+`parseFlags` suppresses the standard flag package's parse-error echo; `--help`
+keeps its original channels and a requested `--json` help stays silent. Generic
+failures use fixed code-owned hints with no raw-error passthrough, and an
+unknown command no longer echoes the supplied text while the static usage is
+unchanged. Diagnostic codes, exit codes, and the schema-version-1 envelope are
+unchanged, and the top-level `error.code`/`error.message` are retained.
+
+Four new top-level CLI tests failed before the fix:
+`TestPlanFailureRecoveryGuidance` (7 scenarios across 2 channels, 14 variants),
+`TestUsageFailureDoesNotEchoFlagValues` (8 commands across 2 channels, 16
+variants), `TestHumanFailureDoesNotPrintArbitraryUnderlyingError`, and
+`TestManifestCorrectionCanRetryBuildAndInspect`. The first patch misclassified
+a missing manifest because `os.IsNotExist` did not traverse the `fmt.Errorf`
+wrapper around the not-exist error; switching to `errors.Is` fixed it. A fifth
+test, `TestUnknownCommandDoesNotEchoSuppliedText`, was added with the final
+unknown-command tweak. The full CLI suite passed, and after the final
+wording/signature tweak a scoped recovery/help suite passed; the full run
+included all five new top-level tests (30 subtests). `go vet ./internal/cli` was
+rerun and passes, and `go test ./tests/hygiene -count=1` and
+`git diff --check` pass.
+
+A freshly built real CLI paired with a reused cached host (not a freshly
+compiled host) ran the Windows build flow; cache
+`.cache/cli-recovery-399d0f35c0914005bc7a027ffd9d0b10`. Missing config, output
+overlap, an invalid boolean flag value, and malformed JSON each exited 2 after
+an explicit `powershell exit $LASTEXITCODE` (the initial tool wrapper reported
+exit 1, not the actual child code); the syntax case reports
+`broken.json:2:20`. An invalid `--out web` corrected to `dist` built and
+inspected the ZIP at exit 0. `broken.json` was changed from a syntax error to
+the valid project `dev.velox.recovery` at the same path, which then built and
+inspected at exit 0; those build/inspect observations are reused for the
+unchanged packaging inputs. The final `--out web` overlap message was verified
+at actual exit 2. Final ZIP SHA-256
+`2208d7adb68d17b1a43e6765259fa58c576cf89e36d63e2f9a774be571ab1f8d`; cached
+real host SHA-256
+`83e39abacbe43d62d9fc0225988e9aa9fb1e4077f3df9ce641ee3bab122d9275`; final
+source-built CLI SHA-256
+`339e0c845caa7088a6ae1ddcad64292f3446ecd0bde8e9c8f65c5da421beb34a`.
+
+Native app-window startup, native file pickers, the installer, and other host
+interaction were not run, and there was no hosted CI run and no release in this
+slice. App API, IPC, host, schema, permissions, dependencies, version, and CI
+are unchanged; CLI human output and diagnostic messages change source-only.
+Public alpha.68 and existing distributed artifacts are unchanged. The CLI
+output contract and this validation record were updated alongside the source.
+No push or release; the full workspace objective remains active.
+
 Generated Text Editor view-settings persistence (2026-10-12): source
 text-editor generation now stores font size and word wrap in the profile's
 `localStorage` under `velox.text-editor.view.v1` (JSON `schemaVersion: 1`,

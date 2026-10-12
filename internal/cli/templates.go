@@ -22,7 +22,7 @@ func runTemplates(args []string, dependencies Dependencies) int {
 	if jsonRequested(args) {
 		flags.SetOutput(io.Discard)
 	}
-	if err := flags.Parse(args); err != nil {
+	if err := parseFlags(flags, args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}

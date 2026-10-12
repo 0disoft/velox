@@ -37,6 +37,10 @@ on stderr and exit 2. `init --help` adds defaults, a generation example and
 without creating a project. As before, subcommand help requested with
 `--json` exits 0 with no output. Alpha.67 did not include the expanded help.
 
+The source tree (unpushed) additionally emits actionable, safe failure
+diagnostics and hides opaque underlying error text; see Failure and Recovery.
+Public alpha.68 does not include this change.
+
 ## MVP Commands
 
 ### velox templates
@@ -510,7 +514,8 @@ Successful commands return:
       "diagnostics": []
     }
 
-Failed commands return:
+Failed commands keep the top-level error and add one actionable, safe
+diagnostic:
 
     {
       "schemaVersion": 1,
@@ -520,13 +525,31 @@ Failed commands return:
         "code": "MANIFEST_INVALID",
         "message": "Project manifest is invalid."
       },
-      "diagnostics": []
+      "diagnostics": [
+        {
+          "code": "MANIFEST_INVALID",
+          "severity": "error",
+          "category": "configuration",
+          "path": "broken.json",
+          "line": 2,
+          "column": 20,
+          "message": "Project manifest contains invalid JSON. Correct the JSON syntax at the reported location.",
+          "facts": {
+            "kind": "manifest",
+            "target": "windows-x64"
+          }
+        }
+      ]
     }
 
 Diagnostics use stable codes, severity, category, project-relative path,
 optional line and column, a short message, and structured facts. They do not
 contain timestamps, random identifiers, progress events, or absolute local
-paths unless no safe relative representation exists.
+paths unless no safe relative representation exists. The values above are
+illustrative; the top-level `error.code` and `error.message` are retained and
+the schema-version-1 envelope is unchanged. Structured JSON failures emit a
+single diagnostic in source builds; an unknown top-level command stays static
+human usage on stderr and is not an envelope.
 
 ## Exit Codes
 
@@ -550,6 +573,35 @@ initialization.
 
 ## Failure and Recovery
 
+- Source-only CLI recovery diagnostics (2026-10-12, unpushed): a failed
+  validate, run, or build plan emits one actionable diagnostic. Typed manifest
+  JSON syntax and value-type errors, filesystem errors, and
+  manifest/asset/host/output/target failures carry fixed recovery hints in
+  `diagnostic.message` and on the human stderr line instead of echoing the
+  underlying error: correct the JSON at the reported location, check
+  `--config` and `branding.icon`, check `assets.root` and `assets.entry`,
+  extract the matching `velox-host.exe`/`velox-host.json` beside the CLI, set
+  `--out` so that neither it nor `assets.root` contains the other, or use
+  `--target windows-x64`.
+- A manifest or configuration failure reports a quoted, safe project-relative
+  path, with `line:column` when a parser offset is available (for example
+  `Location: "broken.json:2:20"`); JSON syntax and value-type errors provide
+  that offset, while other manifest/config errors may carry only the file path.
+  No source snippet is printed, and the path is shape-sanitized but not
+  length-bounded. Opaque underlying errors, invalid boolean flag values, and
+  unsupported target values are not echoed, and an unsupported `--target` fact
+  is reported as `unsupported`. Diagnostic codes, exit codes, and the
+  schema-version-1 envelope are unchanged, and the top-level
+  `error.code`/`error.message` are retained.
+- `parseFlags` suppresses the standard flag package's parse-error echo while
+  `--help` still uses its original streams and a requested `--json` help stays
+  silent. Generic failures use fixed code-owned hints with no raw-error
+  passthrough, and an unknown command no longer echoes the supplied text while
+  the static usage output is unchanged. These are CLI human-output and
+  diagnostic-message changes only; app API, IPC, host, schema, permissions,
+  dependencies, version, and CI are unchanged, and public alpha.68 is
+  unchanged. This is not a comprehensive logging, doctor, or watch security
+  review.
 - Source-only GUI host startup failures show a native, fixed-text notice for
   configuration/assets, profile-folder preparation, WebView2 initialization,
   display scaling, single-instance locking or host setup. Raw errors still go
