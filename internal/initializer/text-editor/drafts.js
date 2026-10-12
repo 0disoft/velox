@@ -14,6 +14,14 @@
       Object.keys(draft).length === 4;
   }
 
+  function unreadable() {
+    return Object.assign(new Error("Stored draft is invalid."), { code: "DRAFT_UNREADABLE" });
+  }
+
+  function assertMutable(draft) {
+    if (draft !== undefined && !valid(draft)) throw unreadable();
+  }
+
   function openDatabase() {
     return new Promise((resolve, reject) => {
       let settled = false;
@@ -31,21 +39,27 @@
     });
   }
 
-  async function run(mode, operation) {
+  async function run(mode, operation, afterRead) {
     const database = await openDatabase();
     try {
       return await new Promise((resolve, reject) => {
         const transaction = database.transaction(storeName, mode);
         const request = operation(transaction.objectStore(storeName));
         let result;
+        let failure;
         const fail = () => reject(new Error("Draft storage unavailable."));
-        request.onsuccess = () => { result = request.result; };
+        request.onsuccess = () => {
+          result = request.result;
+          try { afterRead?.(transaction.objectStore(storeName), result); }
+          catch (error) { failure = error; transaction.abort(); }
+        };
         request.onerror = fail;
         transaction.oncomplete = () => resolve(result);
         transaction.onerror = fail;
-        transaction.onabort = fail;
+        transaction.onabort = () => failure ? reject(failure) : fail();
       });
-    } catch {
+    } catch (error) {
+      if (error?.code === "DRAFT_UNREADABLE") throw error;
       throw new Error("Draft storage unavailable.");
     } finally {
       database.close();
@@ -55,18 +69,24 @@
   async function load() {
     const draft = await run("readonly", store => store.get(currentKey));
     if (draft === undefined) return null;
-    if (!valid(draft)) throw new Error("Stored draft is invalid.");
+    if (!valid(draft)) throw unreadable();
     return draft;
   }
 
   async function save(state) {
     const draft = { schemaVersion: 1, name: state.name, text: state.text, updatedAt: state.updatedAt };
     if (!valid(draft)) throw new Error("Draft is outside the allowed size or format.");
-    await run("readwrite", store => store.put(draft, currentKey));
+    await run("readwrite", store => store.get(currentKey), (store, current) => {
+      assertMutable(current);
+      store.put(draft, currentKey);
+    });
   }
 
-  function clear() {
-    return run("readwrite", store => store.delete(currentKey));
+  async function clear() {
+    await run("readwrite", store => store.get(currentKey), (store, current) => {
+      assertMutable(current);
+      store.delete(currentKey);
+    });
   }
 
   root.EditorDrafts = Object.freeze({ load, save, clear });

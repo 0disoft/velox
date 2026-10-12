@@ -1,5 +1,28 @@
 # Validation
 
+Generated Text Editor unreadable-draft protection (2026-10-12): save and clear
+read and validate the existing row before put/delete in one readwrite transaction.
+Missing rows remain writable; unsupported, malformed, oversized or authority-bearing
+rows remain unchanged, including newer incompatible data appearing after a valid
+load. The private `DRAFT_UNREADABLE` tag selects fixed kept-unchanged guidance;
+editing and native file actions remain usable. Successful Save/Open/New reports
+its own result with a draft-cleanup-unavailable suffix if cleanup fails.
+The existing strict four-field v1 record and database version are unchanged.
+
+`bun test internal/initializer/drafts.test.ts internal/initializer/text_editor.test.ts
+internal/initializer/text_editor_draft_queue.test.ts` passes 50 tests/426 assertions,
+including ten invalid mutation paths and late future-format replacements. The new
+mutation regression failed before the fix. `go test ./internal/initializer
+./tests/hygiene`, Node syntax and diff checks pass. Actual Edge IndexedDB at
+360x640 preserves four seeded records after autosave and Save/Open/New cleanup;
+the existing twelve desktop/narrow light/dark storage-failure cases also pass.
+Receipt: `.cache/editor-storage-failure-1791808260955/result.json`.
+Native bridge responses are mocked, not actual picker/disk-save evidence. Real
+native picker, disk bytes, packaged native, OS IME and power loss remain untested
+for this slice. Newly generated projects only; existing projects/public alpha.68,
+Go/native API, permissions, dependencies, version and CI are unchanged. No push,
+release or existing user profile changes; the workspace objective remains active.
+
 Unreadable-draft overwrite protection (2026-10-12): File Notes validates stored
 schema-v1 text and bounded string baselines on load. Save rechecks the current
 row and puts its snapshot in one readwrite transaction; an incompatible draft

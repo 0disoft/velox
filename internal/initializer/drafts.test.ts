@@ -7,10 +7,12 @@ const tick = async () => { for (let i = 0; i < 12; i++) await Promise.resolve();
 const draft = { schemaVersion: 1, name: "note.txt", text: "\ud55c\uae00", updatedAt: 123 };
 function harness(initial: unknown = undefined, abort = false, blocked = false) {
   let record = initial, closes = 0, complete: Function = () => {};
+  const modes: string[] = [];
   const database: any = {
     close() { closes++; },
-    transaction() {
-      const transaction: any = { objectStore() { return {
+    transaction(_store: string, mode: string) {
+      modes.push(mode);
+      const transaction: any = { abort() { queueMicrotask(() => transaction.onabort()); }, objectStore() { return {
         get() { return request("get"); },
         put(value: unknown) { return request("put", value); },
         delete() { return request("delete"); },
@@ -19,7 +21,7 @@ function harness(initial: unknown = undefined, abort = false, blocked = false) {
         const req: any = {};
         queueMicrotask(() => {
           req.result = method === "get" ? record : undefined;
-          req.onsuccess();
+          req.onsuccess?.();
           complete = () => {
             if (abort) { transaction.onabort(); return; }
             if (method === "put") record = structuredClone(value);
@@ -39,7 +41,8 @@ function harness(initial: unknown = undefined, abort = false, blocked = false) {
   } };
   const context: any = { indexedDB, TextEncoder };
   runInNewContext(source, context);
-  return { storage: context.EditorDrafts, finish: () => complete(), record: () => record, closes: () => closes };
+  return { storage: context.EditorDrafts, finish: () => complete(), record: () => record, closes: () => closes,
+    replace: (value: unknown) => { record = value; }, modes };
 }
 
 test("save resolves only after commit and excludes native targets and saved baselines", async () => {
@@ -92,5 +95,37 @@ test("invalid, oversized UTF-8 and authority-bearing records are rejected", asyn
     await tick(); corrupt.finish();
     expect(await rejected).toBe("Stored draft is invalid.");
     expect(corrupt.record()).toEqual(invalid);
+  }
+});
+
+test("unreadable stored drafts are neither replaced nor cleared", async () => {
+  for (const initial of [null, { ...draft, schemaVersion: 2 }, { ...draft, target: 42 },
+    { ...draft, text: "x".repeat(2 * 1024 * 1024 + 1) }, { ...draft, text: { invalid: true } }]) {
+    for (const action of ["save", "clear"]) {
+      const h = harness(initial);
+      const result = (action === "save" ? h.storage.save({ ...draft, text: "new text" }) : h.storage.clear())
+        .catch((error: Error) => error);
+      await tick(); h.finish();
+      const error = await result;
+      expect(error?.message).toBe("Stored draft is invalid.");
+      expect(error?.code).toBe("DRAFT_UNREADABLE");
+      expect(h.record()).toEqual(initial);
+      expect(h.closes()).toBe(1);
+    }
+  }
+});
+
+test("save and cleanup recheck newer incompatible data appearing after a valid load", async () => {
+  for (const action of ["save", "clear"]) {
+    const h = harness(draft);
+    const loading = h.storage.load();
+    await tick(); h.finish(); await loading;
+    const future = { ...draft, schemaVersion: 2 };
+    h.replace(future);
+    const result = (action === "save" ? h.storage.save(draft) : h.storage.clear()).catch((error: Error) => error);
+    await tick(); h.finish();
+    expect((await result)?.code).toBe("DRAFT_UNREADABLE");
+    expect(h.record()).toEqual(future);
+    expect(h.modes).toEqual(["readonly", "readwrite"]);
   }
 });

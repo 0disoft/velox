@@ -206,6 +206,17 @@ is separate from draft persistence. See
 [profile storage recovery](../ops/profile-storage-recovery.md) for the known
 long-profile fallback limitation; this does not add a migration or host API.
 
+Source text-editor draft save and clear read and validate the current record
+before put/delete in the same readwrite transaction. Missing records are allowed;
+an existing record must satisfy the unchanged strict four-field v1 format and
+2 MiB UTF-8 bound. Unsupported, malformed, oversized or authority-bearing records
+are kept, even if they appear after a valid startup read. The private
+`DRAFT_UNREADABLE` error selects fixed kept-unchanged guidance without exposing
+stored contents. Clear still resolves without a value. Editing and native file
+actions remain usable; successful Save/Open/New gets a cleanup-unavailable suffix
+when draft cleanup fails. No migration, database version, native-authority restore
+or public API change; existing generated projects/public alpha.68 are unchanged.
+
 Source `init --template text-editor` sets `app.singleInstance: true` to keep
 duplicate launches from sharing and overwriting the single draft record.
 It reuses the existing host guard for the same user, session, app ID and

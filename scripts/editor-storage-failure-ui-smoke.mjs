@@ -32,6 +32,22 @@ const server = createServer(async (request, response) => {
 await new Promise(done => server.listen(0, "127.0.0.1", done));
 const url = "http://127.0.0.1:" + server.address().port;
 const result = { nativeBridge: "mocked", storageFailure: "injected UnknownError", generatedProject: project, views: [], passed: false };
+async function rawEditorDraft(page, value, write = false) {
+  return page.evaluate(({ value, write }) => new Promise((resolve, reject) => {
+    const request = indexedDB.open("velox.text-editor", 1);
+    request.onerror = () => reject(Error("Fixture database could not open"));
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction("drafts", write ? "readwrite" : "readonly");
+      const store = transaction.objectStore("drafts");
+      const operation = write ? store.put(value, "current") : store.get("current");
+      let result;
+      operation.onsuccess = () => { result = operation.result; };
+      transaction.oncomplete = () => { database.close(); resolve(result); };
+      transaction.onerror = transaction.onabort = () => { database.close(); reject(Error("Fixture transaction failed")); };
+    };
+  }), { value, write });
+}
 let browser;
 try {
   browser = await chromium.launch({ channel: "msedge", headless: true });
@@ -137,6 +153,66 @@ try {
         } finally { await context.close(); }
       }
     }
+  }
+  result.protectedDrafts = [];
+  const valid = { schemaVersion: 1, name: "protected.txt", text: "protected original", updatedAt: 123 };
+  for (const candidate of [
+    { kind: "future-format", value: { ...valid, schemaVersion: 2 } },
+    { kind: "invalid-text", value: { ...valid, text: { invalid: true } } },
+    { kind: "authority-field", value: { ...valid, target: 42 } },
+    { kind: "oversized-text", value: { ...valid, text: "x".repeat(2 * 1024 * 1024 + 1) } },
+  ]) {
+    const context = await browser.newContext({ viewport: { width: 360, height: 640 } });
+    try {
+      await context.addInitScript(() => {
+        const open = indexedDB.open.bind(indexedDB);
+        window.__draftOpens = 0;
+        indexedDB.open = (...args) => { window.__draftOpens++; return open(...args); };
+        window.__writes = [];
+        window.velox = {
+          invoke: async method => method === "file.openText" ? { name: "opened.txt", text: "Opened content" } : null,
+          saveTextAs: async text => { window.__writes.push(text); return { name: "exported.txt", target: 1 }; },
+          saveTextTo: async () => { throw Error("Unexpected connected save"); },
+        };
+      });
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", error => errors.push(error.message));
+      await page.goto(`${url}/editor/`);
+      await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+      await rawEditorDraft(page, candidate.value, true);
+      await page.reload();
+      await page.waitForFunction(() => !document.querySelector("#editor").readOnly &&
+        document.querySelector("#draft-state").textContent.includes("kept unchanged"));
+      const before = await page.evaluate(() => window.__draftOpens);
+      await page.locator("#editor").fill("New exportable text");
+      await page.waitForFunction(count => window.__draftOpens > count, before);
+      assert.deepEqual(await rawEditorDraft(page), candidate.value);
+      await page.getByRole("button", { name: "Save as", exact: true }).click();
+      await page.locator("#status").filter({ hasText: "File saved. Draft cleanup unavailable." }).waitFor();
+      assert.deepEqual(await page.evaluate(() => window.__writes), ["New exportable text"]);
+      assert.equal(await page.locator("#save-state").textContent(), "Saved to file");
+      assert.deepEqual(await rawEditorDraft(page), candidate.value);
+      await page.getByRole("button", { name: "Open", exact: true }).click();
+      await page.locator("#status").filter({ hasText: "File opened. Draft cleanup unavailable." }).waitFor();
+      assert.equal(await page.locator("#editor").inputValue(), "Opened content");
+      assert.deepEqual(await rawEditorDraft(page), candidate.value);
+      await page.getByRole("button", { name: "New", exact: true }).click();
+      await page.locator("#status").filter({ hasText: "New document. Draft cleanup unavailable." }).waitFor();
+      assert.equal(await page.locator("#editor").inputValue(), "");
+      assert.deepEqual(await rawEditorDraft(page), candidate.value);
+      const layout = await page.evaluate(() => {
+        const notice = document.querySelector("#draft-state").getBoundingClientRect();
+        return { overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+          noticeWithinPage: notice.left >= 0 && notice.right <= document.documentElement.clientWidth };
+      });
+      assert.equal(layout.overflow, false);
+      assert.equal(layout.noticeWithinPage, true);
+      assert.ok((await page.locator("#draft-state").textContent()).includes("kept unchanged"));
+      assert.deepEqual(errors, []);
+      result.protectedDrafts.push({ kind: candidate.kind, layout, autoSavePreserved: true,
+        saveOpenAndNewCleanupPreserved: true, nativeResponses: "mocked", pageErrors: errors });
+    } finally { await context.close(); }
   }
   result.passed = true;
 } catch (error) {

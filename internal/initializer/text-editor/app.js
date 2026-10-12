@@ -140,17 +140,19 @@
       draftPending = false;
       draftUnavailable = false;
       draftState.textContent = snapshot === null ? "No draft" : "Draft stored";
-    }, () => {
+    }, error => {
       if (revision !== draftRevision) return;
       draftPending = false;
-      reportDraftUnavailable();
+      reportDraftUnavailable(error);
     });
     return job;
   }
 
-  function reportDraftUnavailable() {
+  function reportDraftUnavailable(error) {
     draftUnavailable = true;
-    draftState.textContent = "Draft recovery unavailable. Save changes to a file.";
+    draftState.textContent = error?.code === "DRAFT_UNREADABLE"
+      ? "Stored draft cannot be read and was kept unchanged. Save changes to a file."
+      : "Draft recovery unavailable. Save changes to a file.";
   }
 
   function scheduleDraft() {
@@ -182,9 +184,9 @@
         recoveryDialog.returnValue = "";
         recoveryDialog.showModal();
       } else draftState.textContent = "No draft";
-    } catch {
+    } catch (error) {
       recoveryCandidate = null;
-      reportDraftUnavailable();
+      reportDraftUnavailable(error);
     } finally {
       checkingDraft = false;
       render();
