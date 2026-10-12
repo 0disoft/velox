@@ -73,6 +73,7 @@ type webview struct {
 	bindings               map[string]interface{}
 	dispatchq              []func()
 	closing                bool
+	runExited              bool
 	closeConsentReady      bool
 	browserProcessExited   bool
 	initializationCanceled bool
@@ -378,7 +379,12 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 		case w32.WMDestroy:
 			deleteWindowContext(hwnd)
 			w.markShutdown("window-destroyed")
-			w.Terminate()
+			w.m.Lock()
+			exited := w.runExited
+			w.m.Unlock()
+			if !exited {
+				w.Terminate()
+			}
 		case w32.WMGetMinMaxInfo:
 			lpmmi := (*w32.MinMaxInfo)(unsafe.Pointer(lp))
 			if w.maxsz.X > 0 && w.maxsz.Y > 0 {
@@ -522,7 +528,19 @@ func destroyBeforeReturn(view destroyRunner) {
 }
 
 func (w *webview) Destroy() {
+	w.m.Lock()
+	exited, closing := w.runExited, w.closing
+	w.m.Unlock()
+	if closing {
+		return
+	}
 	w.markShutdown("destroy-dispatched")
+	thread, _, _ := w32.Kernel32GetCurrentThreadID.Call()
+	if exited && thread == w.mainthread {
+		// The owner loop has unwound; another queued message cannot clean up.
+		_, _, _ = w32.User32SendMessageW.Call(w.hwnd, forceDestroyMessage, 0, 0)
+		return
+	}
 	_, _, _ = w32.User32PostMessageW.Call(w.hwnd, forceDestroyMessage, 0, 0)
 }
 
@@ -560,6 +578,14 @@ func (w *webview) markShutdown(name string) {
 }
 
 func (w *webview) Run() {
+	w.m.Lock()
+	w.runExited = false
+	w.m.Unlock()
+	defer func() {
+		w.m.Lock()
+		w.runExited = true
+		w.m.Unlock()
+	}()
 	var msg w32.Msg
 	for {
 		_, _, _ = w32.User32GetMessageW.Call(

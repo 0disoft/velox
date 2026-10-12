@@ -1,5 +1,21 @@
 # Validation
 
+Destroy after a terminated loop (2026-10-12): a hidden, message-only Win32
+fixture reproduced `Terminate -> Run returns -> Destroy` retaining the native
+window, window-context registration and browser teardown (destroy count zero).
+After the loop unwinds, owner-thread Destroy now invokes the existing guarded
+teardown synchronously. While initialization/the loop is active, destruction
+stays posted outside COM callbacks. Repeated Destroy releases once; post-loop
+WM_DESTROY no longer leaves a quit message that would stop a subsequent loop.
+The fixture uses a browser test double, not real WebView2 COM-release evidence.
+All fork and host/runtime/startup package tests pass; the fork compiles for
+Windows 386 (not an execution result). Root scoped vet passes; fork vet passes
+with pre-existing unsafeptr diagnostics disabled, not full vet clearance.
+A freshly built GUI host passed all five startup cases in 46.52 s; normal
+browser exit remained 6.38/6.70 s after host. No relaunch-delay repair is claimed.
+The original-owner-thread cleanup contract is clarified without a new API,
+permission/schema/dependency/version/CI change, push or publication.
+
 Post-loop message processing comparison (2026-10-12): four test-only
 idle/pump/pump/idle trials retain the private STA for one second after the real
 host run returns, then release only the owned initialization. All eight receipts

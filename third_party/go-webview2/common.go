@@ -35,7 +35,7 @@ const (
 type WebView interface {
 
 	// Run runs the main loop until it's terminated. After this function exits -
-	// you must destroy the webview.
+	// you must destroy the webview on its original UI thread.
 	Run()
 
 	// Terminate stops the main loop. It is safe to call this function from
