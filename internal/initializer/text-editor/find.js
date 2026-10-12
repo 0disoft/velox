@@ -191,7 +191,8 @@
       if (!total) return;
       if (!all && current < 0) move();
       const before = editor.value;
-      const snapshot = { before, selectionStart: editor.selectionStart, selectionEnd: editor.selectionEnd, scrollTop: editor.scrollTop };
+      const snapshot = { before, selectionStart: editor.selectionStart, selectionEnd: editor.selectionEnd,
+        selectionDirection: editor.selectionDirection, scrollTop: editor.scrollTop, scrollLeft: editor.scrollLeft };
       let result;
       try { result = replace(before, input.value, replacement.value, matchCase.checked, all ? null : current); }
       catch (error) { onChange(error.message, false); return; }
@@ -209,8 +210,9 @@
       const snapshot = undoSnapshot;
       undoSnapshot = null;
       editor.value = snapshot.before;
-      editor.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+      editor.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd, snapshot.selectionDirection);
       editor.scrollTop = snapshot.scrollTop;
+      editor.scrollLeft = snapshot.scrollLeft;
       onChange("Replacement undone.");
       controls();
       editor.focus({ preventScroll: true });

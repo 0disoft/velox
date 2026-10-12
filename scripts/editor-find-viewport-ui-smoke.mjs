@@ -6,6 +6,10 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const onlyUndo = process.argv[2] === "--undo-only";
+if (process.argv.length > 3 || process.argv.length === 3 && !onlyUndo) {
+  throw Error("Usage: node scripts/editor-find-viewport-ui-smoke.mjs [--undo-only]");
+}
 const root = fileURLToPath(new URL("..", import.meta.url));
 const output = join(root, ".cache", "editor-find-viewport-" + Date.now());
 const project = join(output, "editor");
@@ -27,7 +31,8 @@ const server = createServer(async (request, response) => {
 await new Promise(done => server.listen(0, "127.0.0.1", done));
 const url = "http://127.0.0.1:" + server.address().port + "/index.html";
 const { chromium } = createRequire(import.meta.url)("playwright");
-const result = { nativeBridge: "mocked; no file operations", generatedProject: project, cases: [], passed: false };
+const result = { nativeBridge: "mocked; no file operations", generatedProject: project, undoOnly: onlyUndo,
+  cases: [], undoCases: [], passed: false };
 
 async function measuredMatch(page) {
   return page.evaluate(() => {
@@ -57,7 +62,7 @@ let browser;
 try {
   browser = await chromium.launch({ channel: "msedge", headless: true });
   for (const viewport of [{ width: 1080, height: 760 }, { width: 360, height: 640 }]) {
-    for (const sample of [
+    for (const sample of onlyUndo ? [] : [
       { name: "single-long-line", text: "HEAD " + "x".repeat(220) + " NEEDLE", wrap: false },
       { name: "multiline-unwrapped", text: "HEAD\n" + "x".repeat(220) + " NEEDLE\n" + "other line\n".repeat(65), wrap: false },
       { name: "vertical-unwrapped", text: "other line\n".repeat(65) + "NEEDLE", wrap: false },
@@ -93,6 +98,59 @@ try {
           result.cases.at(-1).leadingMatch = leading;
         }
       } finally { await context.close(); }
+    }
+    for (const direction of ["ltr", "rtl"]) {
+      for (const keyboard of [false, true]) {
+        const context = await browser.newContext({ viewport });
+        try {
+          await context.addInitScript(() => {
+            window.__nativeCalls = 0;
+            window.velox = { invoke: async () => { window.__nativeCalls++; return null; },
+              saveTextAs: async () => { window.__nativeCalls++; return { cancelled: true }; },
+              saveTextTo: async () => { window.__nativeCalls++; return { cancelled: true }; } };
+          });
+          const page = await context.newPage(), errors = [];
+          page.on("pageerror", error => errors.push(error.message));
+          await page.goto(url);
+          await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+          const query = direction === "rtl" ? "\u05d0" : "x";
+          await page.locator("#editor").evaluate((editor, dir) => { editor.dir = dir; }, direction);
+          await page.locator("#editor").fill(Array(66).fill(query.repeat(220)).join("\n"));
+          await page.getByRole("button", { name: "Word wrap", exact: true }).click();
+          await page.getByRole("button", { name: "Find and replace", exact: true }).click();
+          await page.locator("#find-input").fill(query);
+          const before = await page.locator("#editor").evaluate((editor, direction) => {
+            editor.setSelectionRange(683, 689, "backward");
+            editor.scrollTop = 53;
+            editor.scrollLeft = direction === "rtl" ? -137 : 137;
+            return { text: editor.value, start: editor.selectionStart, end: editor.selectionEnd,
+              direction: editor.selectionDirection, top: editor.scrollTop, left: editor.scrollLeft, wrap: editor.wrap };
+          }, direction);
+          assert.notEqual(before.left, 0);
+          const initialMeasured = await measuredMatch(page);
+          assert.equal(initialMeasured.visible, true, `Initial selection visible: ${JSON.stringify(initialMeasured)}`);
+          await page.getByRole("button", { name: "Replace all matches", exact: true }).click();
+          assert.equal(await page.locator("#editor").evaluate(editor => editor.scrollLeft), 0);
+          if (keyboard) {
+            await page.locator("#find-close").click();
+            await page.locator("#editor").press("Control+z");
+          } else await page.getByRole("button", { name: "Undo last replacement", exact: true }).click();
+          const restored = await page.locator("#editor").evaluate(editor => ({ text: editor.value,
+            start: editor.selectionStart, end: editor.selectionEnd, direction: editor.selectionDirection,
+            top: editor.scrollTop, left: editor.scrollLeft, wrap: editor.wrap }));
+          const entry = { viewport, direction, via: keyboard ? "keyboard" : "button", before: { ...before, text: undefined },
+            restored: { ...restored, text: undefined }, textRestored: restored.text === before.text,
+            initialMeasured, pageErrors: errors };
+          result.undoCases.push(entry);
+          entry.measured = await measuredMatch(page);
+          await page.screenshot({ path: join(output, `undo-${direction}-${keyboard ? "keyboard" : "button"}-${viewport.width}.png`) });
+          assert.deepEqual(restored, before, JSON.stringify(entry));
+          assert.equal(entry.measured.visible, true, `Restored selection visible: ${JSON.stringify(entry.measured)}`);
+          assert.equal(await page.locator("#editor").evaluate(editor => document.activeElement === editor), true);
+          assert.equal(await page.evaluate(() => window.__nativeCalls), 0);
+          assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+      }
     }
   }
   result.passed = true;

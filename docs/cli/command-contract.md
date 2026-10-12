@@ -128,8 +128,9 @@ to 2 MiB UTF-8; oversized operations leave the document and undo state intact.
 IME composition in the editor, query or replacement field and busy/modal
 guards disable mutation. Escape/X can still dismiss an empty bar.
 
-Undo stores only one before/after text snapshot, selection and scroll position
-in memory. The Undo action or Ctrl+Z with editor focus restores that transaction
+Undo stores only one before/after text snapshot, selection offsets/direction and
+both scroll axes in memory. Scroll offsets clamp to the current layout.
+The Undo action or Ctrl+Z with editor focus restores that transaction
 and updates dirty state against the current saved baseline. There is no
 replacement redo or multi-step replacement history. Direct editor input and
 successful New/Open/Restore clear the snapshot; Save success/cancellation

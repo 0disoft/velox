@@ -1,5 +1,30 @@
 # Validation
 
+Generated Text Editor replacement Undo view correction (2026-10-12): the
+in-memory snapshot now keeps selectionDirection and scrollLeft as well as the
+offsets/scrollTop. Four new regressions failed before the fix: backward became
+none in the VM and positive/negative horizontal offsets reset to zero. Actual
+Edge reproduced backward-to-forward selection and scrollLeft 137-to-zero after
+Replace all/Undo despite restored text. Before-fix receipt:
+`.cache/editor-find-viewport-1791810895640/result.json`.
+
+Bun editor/replace/focused undo tests pass 45/373 assertions, including saved
+baseline, no extra native calls, single-use Undo and clean-draft cleanup. Actual
+Edge final receipt `.cache/editor-find-viewport-1791811195486/result.json` passes
+eight Undo cases (1080x760/360x640, LTR/RTL, button/Ctrl+Z after closing find)
+with exact original text, offsets, backward direction, both scrolls, wrap and
+editor focus. Original and restored selections are visible; page errors empty.
+The existing ten search cases also pass. The narrow RTL-keyboard screenshot was
+reviewed. An intermediate visibility fixture selected already-clipped RTL text;
+the final fixture checks visibility before and after, not just numeric state.
+The local script also accepts --undo-only; unknown flags are refused before
+Go init/browser launch. Go initializer/hygiene, Node parsing and diff checks pass.
+Native bridge mocked with no file operations. Packaged native, OS IME/keyboard
+layouts, screen readers, forced colors and timing benchmarks were not tested.
+No persistent format, host/API, permission, dependency, version, default CI,
+push or release change; existing apps/public alpha.68 remain unchanged.
+New generated editors only; the full workspace objective remains active.
+
 Generated Text Editor search viewport correction (2026-10-12): the previous
 scroll helper returned before horizontal measurement when vertical content fit,
 and always measured wrapped text. Real Edge selected NEEDLE at x1842.5 outside
