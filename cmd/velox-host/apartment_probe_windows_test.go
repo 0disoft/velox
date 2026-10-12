@@ -54,20 +54,28 @@ func runHostApartmentProbe(t *testing.T, config string, balanced, fresh bool) {
 	code := runWithStartupNotice([]string{"--config", config}, func(startupFailureKind) {
 		t.Error("unexpected startup notice in headless apartment diagnostic")
 	})
+	postRun := os.Getenv("VELOX_APARTMENT_PROBE_POST_RUN")
+	messages, postRunMS, err := runPostLoopProbe(postRun)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if balanced {
 		ole.NewProc("CoUninitialize").Call()
 	}
 	after, afterType, afterQualifier := queryProbeApartment(ole)
 	result := struct {
-		Balanced       bool   `json:"balanced"`
-		Fresh          bool   `json:"freshThread"`
-		Before         string `json:"beforeHresult"`
-		Init           string `json:"initializeHresult"`
-		After          string `json:"afterHresult"`
-		AfterType      uint32 `json:"afterApartmentType"`
-		AfterQualifier uint32 `json:"afterApartmentQualifier"`
-		ExitCode       int    `json:"hostExitCode"`
-	}{balanced, fresh, before, fmt.Sprintf("0x%08x", hr), after, afterType, afterQualifier, code}
+		Balanced       bool    `json:"balanced"`
+		Fresh          bool    `json:"freshThread"`
+		Before         string  `json:"beforeHresult"`
+		Init           string  `json:"initializeHresult"`
+		After          string  `json:"afterHresult"`
+		AfterType      uint32  `json:"afterApartmentType"`
+		AfterQualifier uint32  `json:"afterApartmentQualifier"`
+		ExitCode       int     `json:"hostExitCode"`
+		PostRun        string  `json:"postRun,omitempty"`
+		PostRunMS      float64 `json:"postRunMs,omitempty"`
+		Messages       int     `json:"postRunMessages,omitempty"`
+	}{balanced, fresh, before, fmt.Sprintf("0x%08x", hr), after, afterType, afterQualifier, code, postRun, postRunMS, messages}
 	encoded, err := json.Marshal(result)
 	if err != nil {
 		t.Fatal(err)

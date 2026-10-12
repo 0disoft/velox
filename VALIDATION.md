@@ -1,5 +1,20 @@
 # Validation
 
+Post-loop message processing comparison (2026-10-12): four test-only
+idle/pump/pump/idle trials retain the private STA for one second after the real
+host run returns, then release only the owned initialization. All eight receipts
+show S_OK acquisition from an uninitialized thread and implicit MTA after release;
+the classifier also accepts an uninitialized released thread and tests both
+STA/main-STA retained cases. Additional processed messages: zero in both modes.
+Second browser exit relative to test-host exit: -760.03 / -733.69 / 5521.32 /
+5499.19 ms. Negative values are actual observed browser exit before the deliberately
+delayed host exit. Second readiness remained 5.91-6.01 s. Four trials passed in
+47.99 s; `.cache/post-loop-diagnostic.json` binds the test-host SHA, dirty baseline
+e6acade, toolchain/runtime and both child receipts. This does not establish a
+consistent pump benefit, a root cause or a delay repair; no production sleep,
+pump, deadline, browser arguments or COM lifetime changed. Scoped tests/vet pass.
+No API/permission/schema/dependency/version/CI change, push or publication.
+
 Background-thread termination correction (2026-10-12): the fork's documented
 thread-safe `Terminate` previously used PostQuitMessage, which targets the
 calling thread rather than the WebView UI thread. The real Win32 message-queue

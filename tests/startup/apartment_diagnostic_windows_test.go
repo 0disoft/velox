@@ -10,14 +10,17 @@ import (
 )
 
 type apartmentProbeReceipt struct {
-	Balanced       bool   `json:"balanced"`
-	Fresh          bool   `json:"freshThread"`
-	Before         string `json:"beforeHresult"`
-	Init           string `json:"initializeHresult"`
-	After          string `json:"afterHresult"`
-	AfterType      uint32 `json:"afterApartmentType"`
-	AfterQualifier uint32 `json:"afterApartmentQualifier"`
-	ExitCode       int    `json:"hostExitCode"`
+	Balanced       bool    `json:"balanced"`
+	Fresh          bool    `json:"freshThread"`
+	Before         string  `json:"beforeHresult"`
+	Init           string  `json:"initializeHresult"`
+	After          string  `json:"afterHresult"`
+	AfterType      uint32  `json:"afterApartmentType"`
+	AfterQualifier uint32  `json:"afterApartmentQualifier"`
+	ExitCode       int     `json:"hostExitCode"`
+	PostRun        string  `json:"postRun,omitempty"`
+	PostRunMS      float64 `json:"postRunMs,omitempty"`
+	Messages       int     `json:"postRunMessages,omitempty"`
 }
 
 func parseApartmentProbeResult(output string) (*apartmentProbeReceipt, error) {
@@ -97,8 +100,7 @@ func runApartmentReleaseDiagnostic(t *testing.T, resultEnv string, fresh bool) {
 				if receipt.Before != "0x800401f0" || receipt.Init != "0x00000000" {
 					t.Fatalf("fresh STA ownership was not demonstrated: %+v", receipt)
 				}
-				if receipt.After != "0x00000000" || (!wantBalanced && (receipt.AfterType != 0 || receipt.AfterQualifier != 0)) ||
-					(wantBalanced && (receipt.AfterType != 1 || receipt.AfterQualifier != 1)) {
+				if !validFreshApartmentRelease(receipt) {
 					t.Fatalf("fresh STA release did not match the comparison arm: %+v", receipt)
 				}
 				// A successful query alone does not demonstrate an STA reference:
@@ -108,5 +110,62 @@ func runApartmentReleaseDiagnostic(t *testing.T, resultEnv string, fresh bool) {
 		}
 		t.Logf("mode=%s apartment init=%s before=%s after=%s; second browser exit=%s", trial.Mode,
 			trial.SecondApartment.Init, trial.SecondApartment.Before, trial.SecondApartment.After, diagnosticMilliseconds(trial.SecondBrowserExitMs))
+	}
+}
+
+func validFreshApartmentRelease(receipt *apartmentProbeReceipt) bool {
+	if receipt.Balanced {
+		return receipt.After == "0x800401f0" || (receipt.After == "0x00000000" && receipt.AfterType == 1 && receipt.AfterQualifier == 1)
+	}
+	return receipt.After == "0x00000000" && (receipt.AfterType == 0 || receipt.AfterType == 3) && receipt.AfterQualifier == 0
+}
+
+func TestFreshApartmentReleaseClassification(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		receipt apartmentProbeReceipt
+		want    bool
+	}{
+		{"released-uninitialized", apartmentProbeReceipt{Balanced: true, After: "0x800401f0"}, true},
+		{"released-implicit-mta", apartmentProbeReceipt{Balanced: true, After: "0x00000000", AfterType: 1, AfterQualifier: 1}, true},
+		{"released-still-sta", apartmentProbeReceipt{Balanced: true, After: "0x00000000"}, false},
+		{"released-explicit-mta", apartmentProbeReceipt{Balanced: true, After: "0x00000000", AfterType: 1}, false},
+		{"owned-sta", apartmentProbeReceipt{After: "0x00000000"}, true},
+		{"owned-main-sta", apartmentProbeReceipt{After: "0x00000000", AfterType: 3}, true},
+		{"owned-not-initialized", apartmentProbeReceipt{After: "0x800401f0"}, false},
+		{"owned-implicit-mta", apartmentProbeReceipt{After: "0x00000000", AfterType: 1, AfterQualifier: 1}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := validFreshApartmentRelease(&tc.receipt); got != tc.want {
+				t.Fatalf("classified=%t want=%t: %+v", got, tc.want, tc.receipt)
+			}
+		})
+	}
+}
+
+func TestPostRunPumpDiagnostic(t *testing.T) {
+	if os.Getenv("VELOX_POST_RUN_DIAGNOSTIC_RESULT") == "" {
+		t.Skip("explicit result path required for test-only post-loop comparison")
+	}
+	executable := requiredExecutable(t, "VELOX_APARTMENT_PROBE_HOST")
+	config := filepath.Join(repositoryRoot(t), "examples", "hello", "velox.runtime.json")
+	evidence := runProfileReleaseDiagnosticWithHost(t, "VELOX_POST_RUN_DIAGNOSTIC_RESULT",
+		[]string{"idle", "pump", "pump", "idle"}, func(mode string) hostAdapter {
+			return hostAdapter{name: mode, executable: executable,
+				arguments: func(string) []string { return []string{"-test.run=^TestHostApartmentProbeChild$", "-test.v"} },
+				environment: func(profile string) []string {
+					return []string{"VELOX_DATA_DIR=" + profile, "VELOX_APARTMENT_PROBE_CONFIG=" + config,
+						"VELOX_APARTMENT_PROBE_BALANCED=1", "VELOX_APARTMENT_PROBE_FRESH_THREAD=1", "VELOX_APARTMENT_PROBE_POST_RUN=" + mode}
+				}, expectedPhase: "dom-2raf", requireBrowserProcess: true}
+		})
+	for _, trial := range evidence.Trials {
+		for _, receipt := range []*apartmentProbeReceipt{trial.FirstApartment, trial.SecondApartment} {
+			if receipt == nil || !receipt.Balanced || !receipt.Fresh || receipt.PostRun != trial.Mode || receipt.PostRunMS < 990 ||
+				receipt.Before != "0x800401f0" || receipt.Init != "0x00000000" || !validFreshApartmentRelease(receipt) {
+				t.Fatalf("post-loop arm lacks matching fresh STA receipt: %s %+v", trial.Mode, receipt)
+			}
+		}
+		t.Logf("mode=%s messages=%d/%d; second browser exit=%s", trial.Mode,
+			trial.FirstApartment.Messages, trial.SecondApartment.Messages, diagnosticMilliseconds(trial.SecondBrowserExitMs))
 	}
 }

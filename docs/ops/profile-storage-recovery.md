@@ -97,6 +97,17 @@ the unreleased arm remained STA (type 0, qualifier 0). All four comparisons stil
 took about 6.4 s for browser exit. This demonstrates the owned STA release in
 this test, not production ownership cleanup or a fix for the relaunch delay.
 
+`VELOX_POST_RUN_DIAGNOSTIC_RESULT=<private-result>` enables
+`TestPostRunPumpDiagnostic` with that test host. The idle/pump/pump/idle arms
+all retain the private STA for one second after the host loop returns, then
+release only their owned initialization. The pump drains that thread's Win32
+queue and uses bounded message-aware waits; it never waits on a browser handle.
+The local comparison handled zero additional messages and showed mixed quick
+and delayed browser exits in both modes. It does not justify a one-second
+production wait or establish why the browser sometimes exits late. Negative
+browser-exit-after-host times mean the browser exited before the delayed test
+host, not a measurement failure.
+
 `go test -count=1 -run '^TestBuiltHostGuardedStorageAfterAbruptExit$' ./tests/startup`
 uses the same built-host/storage opt-in settings for committed-draft process
 interruption checks. It stops only processes created or identified by that
