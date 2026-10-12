@@ -167,6 +167,12 @@ modal dialogs. The licensed local Lucide `text-wrap.svg` adds no dependency.
 Public alpha.68, existing generated apps, host APIs, permissions and storage
 schema are unchanged.
 
+Source text-editor Find navigation measures the textarea's actual wrap mode and
+text direction, then scrolls its first visual match rectangle into view on both
+axes. This includes single long lines and negative RTL horizontal offsets.
+The cached measurement text remains reusable; search does not edit the document
+or invoke native methods. Existing generated apps and public alpha.68 are unchanged.
+
 Source text-editor generation adds font decrease/increase/reset buttons with
 local licensed Lucide icons and a current pixel-size readout. Default is 18px;
 the editor supports 14-28px in 2px steps with disabled controls at the bounds

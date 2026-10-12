@@ -85,7 +85,10 @@
     replaceRow.hidden = true;
 
     function scrollMatch(start, length) {
-      if (start === 0 || editor.scrollHeight <= editor.clientHeight) { editor.scrollTop = 0; return; }
+      if (editor.scrollHeight <= editor.clientHeight && editor.scrollWidth <= editor.clientWidth) {
+        editor.scrollTop = editor.scrollLeft = 0;
+        return;
+      }
       if (typeof global.getComputedStyle !== "function" || !document.createRange) return;
       if (!mirror) {
         mirror = document.createElement("div");
@@ -93,16 +96,26 @@
         mirror.style.cssText = "position:fixed;left:-10000px;top:0;visibility:hidden;contain:layout style paint;white-space:pre-wrap;box-sizing:border-box;border:0;";
         document.body.appendChild(mirror);
       }
-      // Reuse File Notes' browser layout measurement for wrapped text.
+      // Match the textarea's wrapping and direction before measuring its selected text.
       const style = global.getComputedStyle(editor);
-      for (const name of ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "wordBreak", "overflowWrap", "textIndent", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft"]) mirror.style[name] = style[name];
+      for (const name of ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "wordBreak", "overflowWrap", "textIndent", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "direction", "textAlign"]) mirror.style[name] = style[name];
+      mirror.style.whiteSpace = editor.wrap === "off" ? "pre" : "pre-wrap";
       mirror.style.width = `${editor.clientWidth}px`;
       if (mirrorText !== editor.value) { mirrorText = editor.value; mirror.textContent = mirrorText; }
       const range = document.createRange();
       range.setStart(mirror.firstChild, start);
       range.setEnd(mirror.firstChild, start + length);
-      const top = range.getBoundingClientRect().top - mirror.getBoundingClientRect().top;
+      const match = range.getClientRects()[0];
+      if (!match) return;
+      const box = mirror.getBoundingClientRect();
+      const top = match.top - box.top;
       editor.scrollTop = Math.max(0, top - (editor.clientHeight - parseFloat(style.lineHeight)) / 2);
+      const left = match.left - box.left;
+      const padding = parseFloat(style.paddingLeft) || 0;
+      const width = editor.clientWidth - padding - (parseFloat(style.paddingRight) || 0);
+      if (left - editor.scrollLeft < padding || left - editor.scrollLeft + match.width > padding + width) {
+        editor.scrollLeft = left - padding - (width - Math.min(match.width, width)) / 2;
+      }
     }
 
     function controls() {
