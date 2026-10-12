@@ -24,6 +24,30 @@ function harness(invoke: (method: string, params?: any) => Promise<any>) {
   return { node, click: (id: string) => events.get(`#${id}:click`)?.() };
 }
 
+test("long names retain literal preview identity and clear full-name tooltips", async () => {
+  const name = "\uD55C".repeat(251) + ".txt", folderName = "\uD55C".repeat(255);
+  const calls: any[] = [];
+  const ui = harness(async (method, params) => {
+    calls.push({ method, params });
+    if (method === "folder.select") return { name: folderName, target: 9 };
+    if (method === "folder.list") return { entries: [{ name, kind: "file" }], skipped: 0 };
+    if (method === "folder.openText") return { name, text: "text", bytes: 4 };
+    return null;
+  });
+  await ui.click("select");
+  expect(ui.node("#folder-name").title).toBe(folderName);
+  await ui.node("#entries").children[0].children[0].children[0].click();
+  expect(calls[2]).toEqual({ method: "folder.openText", params: { target: 9, name } });
+  expect(ui.node("#file-name").textContent).toBe(name);
+  expect(ui.node("#file-name").title).toBe(name);
+  expect(ui.node("#copy").disabled).toBe(false);
+  await ui.click("refresh");
+  expect(ui.node("#file-name").title).toBe("");
+  expect(ui.node("#copy").disabled).toBe(true);
+  await ui.click("release");
+  expect(ui.node("#folder-name").title).toBe("");
+});
+
 test("selection lists by token, renders names as text and releases explicitly", async () => {
   const calls: any[] = [];
   const ui = harness(async (method, params) => {

@@ -298,6 +298,35 @@ No target persistence, browser-picker fallback, native method, permission,
 runtime protocol or generated file-name change was added. Previously generated
 projects and the public alpha.68 package remain unchanged.
 
+Source-only folder text-read name bound (2026-10-12): `folder.openText` now
+accepts listed valid Windows basenames it previously rejected. It no longer
+reuses the text-save 240-UTF-8-byte rule; a separate source validator
+(`ValidateFolderTextName`) accepts at most 255 UTF-16 code units (a
+supplementary character counts as two) within the shared basename grammar,
+with an initial UTF-8 bound of 4x255 = 1020 bytes, strict UTF-8 validity and
+no separators, ADS colons, controls, reserved device names, or trailing
+dots/spaces. The text-save 240-byte name rule is unchanged. The IPC `name`
+field's schema `maxLength` of 255 Unicode code points is a necessary bound
+only; the host additionally enforces the 255 UTF-16-unit limit, and the schema
+bound is not claimed equivalent to the host rule. No new permission, method or
+grant is added; selected-directory identity, the handle-relative open,
+revocation, link/hardlink/ADS/traversal/offline/encrypted protections and the
+2 MiB content cap are unchanged. Only a source-built host gets the wider
+bound; public alpha.68 and previously deployed hosts keep the 240-byte limit.
+This is not limited to newly generated projects: repackaging an existing
+consumer against the rebuilt host also gains it.
+
+Source-only folder-browser long-name clamp (2026-10-12): the starter and
+reference example clamp the `#file-name` and `#folder-name` headings to at
+most two visible lines, keep the full name as the DOM text and as the
+`folder.openText` request value, and set the full name as the element `title`
+on successful load/selection (cleared when the preview or folder is cleared).
+The name shares the heading row with the byte count and controls instead of
+taking a full-width row. The mocked-bridge UI smoke passes three views at
+1080x760 and 360x640 for both the generated starter and the
+`--example-long-names` reference example; no permission, method, dependency or
+generated file-name rule is added.
+
 The tray starter published in alpha.67 and later includes a message composer, kind selector,
 bounded count and explicit Send action. It calls only the existing
 `notification.show` method, blocks duplicate submissions, preserves text on

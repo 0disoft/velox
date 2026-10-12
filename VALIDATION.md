@@ -1,5 +1,64 @@
 # Validation
 
+Folder text-read name bound and folder-browser long-name clamp (2026-10-12):
+source-only, unpushed. The folder text-read path reused the text-save name rule,
+so `folder.openText` rejected listed valid Windows basenames above 240 UTF-8
+bytes. Source now validates with a separate `ValidateFolderTextName`: at most
+255 UTF-16 code units (a supplementary character counts as two), an initial
+UTF-8 bound of `utf8.UTFMax` x 255 = 1020 bytes, strict UTF-8 validity and the
+shared basename grammar (no separators, ADS colons, controls, reserved device
+names, trailing dots/spaces, or `.`/`..`). The text-save `ValidateSaveName`
+bound and the `window.velox.saveText` name rule stay at 240 UTF-8 bytes. The
+IPC schema `folder.openText` `name` `maxLength` is 255 Unicode code points, a
+necessary bound only; the host additionally enforces the 255 UTF-16-unit limit,
+and the two bounds are not claimed equivalent. No new permission, method or
+grant; selected-directory identity, the handle-relative `NtCreateFile` open,
+revocation, the link/hardlink/ADS/traversal/offline/encrypted rejections and the
+2 MiB content cap are unchanged.
+
+Three new tests failed before the fix (native Windows list/read, the folder
+controller and IPC): `TestFolderTextReadsLongWindowsBasenamesWithoutWideningSaves`,
+`TestListedLongWindowsBasenamesOpenWithoutChangingDiskBytes` and
+`TestFolderTextIPCForwardsLongWindowsBasenames`. After the fix the full
+`internal/fileopen`, `internal/ipc`, `internal/initializer` and `tests/hygiene`
+suites pass and `go vet ./internal/fileopen ./internal/ipc` passes. On Windows,
+file creation, listing and read
+matched the exact
+disk bytes for 255 ASCII characters, 251 Hangul characters plus `.txt` (255
+UTF-16 units, 757 UTF-8 bytes) and 125 emoji plus `a.txt` (255 units, 505
+bytes). Selected native tests recorded in
+`.cache/folder-read-names-20261012/native-tests.jsonl` all pass, including
+traversal, hard-link/symlink, reparse, directory replacement/identity change,
+generation, revocation and the UTF-8/BOM/2 MiB rules, with no selected skips.
+
+`TestBuiltHostStartup` passed all five subcases (early-user-close, default-icons,
+gui-subsystem, lifecycle, security-policy) in 43.56s; receipt
+`.cache/folder-read-names-20261012/host-startup.jsonl`. The built host measured
+the same size before and after: Go 1.27.1 windows/amd64 with
+`-trimpath -ldflags "-s -w -H windowsgui"`, both 4,934,144 bytes, after-image
+SHA-256 `1788f639fe57f0a3693b0d876ba7ae3e0d456b19c68f5990e5b39e45912900d0`. That is
+a measured same-size pair, not a zero timing or cost guarantee.
+
+The folder-browser starter and reference example clamp the `#file-name` and
+`#folder-name` headings to at most two visible lines, keep the full name as the
+DOM text and the `folder.openText` request value, and set the full name as the
+element `title` on successful load/selection (cleared when the preview or folder
+is cleared). `.preview-heading` no longer gives the name a full intrinsic-width
+row: `#file-name` uses `flex: 1 1 0` with `min-width: 0`, so the name shares the
+row with the byte count and controls. The main-run
+`scripts/folder-browser-ui-smoke.mjs` passes three views (1080x760 light,
+360x640 light and dark): the generated starter reports a narrow preview height
+of 162 px and `--example-long-names` reports 133 px, up from the reported 32 px
+and 85 px collapses, above the 100 px assertion, with screenshots reviewed. The
+Bun starter/example suites pass 21 tests and 140 assertions.
+
+The wider bound applies only to a source-built host;
+public alpha.68 and previously deployed hosts keep the 240-byte limit. This is
+not limited to newly generated projects: a repackaged existing consumer run
+against the rebuilt host gains the same bound. The real folder picker and
+WebView2-to-native end-to-end flow, OS IME and screen readers remain untested
+for this slice. No push, release, version, dependency or CI change is included.
+
 CLI failure recovery diagnostics (2026-10-12): source-only, unpushed CLI
 failure output now emits one actionable, safe diagnostic per failed
 validate/run/build plan and fixed code-owned recovery hints for generic

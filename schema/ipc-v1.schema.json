@@ -120,7 +120,7 @@
           "type": "object", "additionalProperties": false, "required": ["target", "name"],
           "properties": {
             "target": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
-            "name": { "type": "string", "minLength": 1, "maxLength": 240 }
+            "name": { "type": "string", "minLength": 1, "maxLength": 255, "description": "One supported basename, at most 255 UTF-16 code units. Supplementary Unicode characters count as two units; the host enforces this additional bound." }
           }
         } } }
       }]

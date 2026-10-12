@@ -233,3 +233,26 @@ test("absent native bridge disables selection and never uses a browser picker", 
   expect(source).not.toContain("clipboard");
   expect(source).not.toContain("showDirectoryPicker");
 });
+
+test("long Unicode names remain literal with full-name tooltips and clear with their grants", async () => {
+  const name = "\uD55C".repeat(251) + ".txt", folderName = "\uD55C".repeat(255);
+  const reads: any[] = [];
+  const ui = harness(async (method, params) => {
+    if (method === "folder.select") return { name: folderName, target: 5 };
+    if (method === "folder.list") return { entries: [{ name, kind: "file" }], skipped: 0 };
+    if (method === "folder.openText") { reads.push(params); return { name, text: "text", bytes: 4 }; }
+    return null;
+  });
+  await ui.click("select");
+  expect(ui.node("#folder-name").textContent).toBe(folderName);
+  expect(ui.node("#folder-name").title).toBe(folderName);
+  expect(ui.file().textContent).toBe(name);
+  await ui.file().click();
+  expect(reads).toEqual([{ target: 5, name }]);
+  expect(ui.node("#file-name").textContent).toBe(name);
+  expect(ui.node("#file-name").title).toBe(name);
+  await ui.click("refresh");
+  expect(ui.node("#file-name").title).toBe("");
+  await ui.click("release");
+  expect(ui.node("#folder-name").title).toBe("");
+});

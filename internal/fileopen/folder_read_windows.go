@@ -11,7 +11,7 @@ import (
 )
 
 func readFolderText(path string, identity DirectoryID, name string) (Result, error) {
-	if err := ValidateSaveName(name); err != nil {
+	if err := ValidateFolderTextName(name); err != nil {
 		return Result{}, err
 	}
 	directory, snapshot, err := openSelectedFolder(path)
@@ -29,7 +29,7 @@ func readFolderText(path string, identity DirectoryID, name string) (Result, err
 }
 
 func readFolderTextAt(directory windows.Handle, name string) (Result, error) {
-	if err := ValidateSaveName(name); err != nil {
+	if err := ValidateFolderTextName(name); err != nil {
 		return Result{}, err
 	}
 	objectName, err := windows.NewNTUnicodeString(name)

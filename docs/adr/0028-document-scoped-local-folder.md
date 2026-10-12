@@ -78,6 +78,37 @@ native failures; oversize and unsupported types use the existing file errors.
 Reads share the folder operation queue and validate generation/revocation before
 and after I/O. No retries, recursion, child-folder navigation or writes are added.
 
+## Source Name-Bound Correction (2026-10-12)
+
+The Beta.18 text-read step above reused `ValidateSaveName` and its
+240-UTF-8-byte save-name bound, so `folder.openText` rejected listed valid
+Windows basenames longer than 240 UTF-8 bytes even though the bounded listing
+had returned them. Source now validates the read name with a separate
+`ValidateFolderTextName`: at most 255 UTF-16 code units, where a supplementary
+character counts as two; an initial UTF-8 bound of `utf8.UTFMax` x 255 = 1020
+bytes; strict UTF-8 validity; and the same single-component basename grammar as
+saves (no separators, ADS colons, controls, reserved device names, trailing
+dots/spaces, or `.`/`..`). The text-save 240-byte rule (`ValidateSaveName`) is
+unchanged.
+
+The IPC `folder.openText` `name` field's schema `maxLength` is 255 Unicode
+code points. That is a necessary bound only: the host additionally enforces the
+255-UTF-16-unit limit, and the two bounds are not claimed equivalent. No new
+permission, method or grant is added. Selected-directory identity, the
+handle-relative `NtCreateFile` open, revocation, the
+link/hardlink/ADS/traversal, offline and encrypted rejections, and the 2 MiB
+content cap are all unchanged. Only a host built from this source gets the wider
+bound; published alpha.68 and previously deployed hosts keep the 240-byte limit.
+This is not limited to newly generated projects: an existing consumer repackaged
+and run against the rebuilt host gains the same bound.
+
+The Beta.18 history above retains its original 240-byte read bound.
+Actual Windows tests create, list and read 255-unit ASCII, Hangul and emoji
+basenames without changing disk bytes. The matched Go 1.27.1 windows/amd64
+host builds measure 4,934,144 bytes each; startup checks pass. Exact receipts
+and the distinction between native filesystem tests and mocked UI evidence
+are recorded in `VALIDATION.md`.
+
 ## Cost and Evidence
 
 Reuse the existing UI dispatch and dialog COM adapter; no listener, timer,

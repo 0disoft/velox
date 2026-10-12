@@ -25,6 +25,7 @@
   function clearPreview() {
     preview.value = "";
     fileName.textContent = "No file selected";
+    fileName.title = "";
     fileBytes.textContent = "";
   }
   function clearListing() {
@@ -37,6 +38,7 @@
   function clear() {
     target = 0;
     folder.textContent = "No folder selected";
+    folder.title = "";
     clearListing();
     count.textContent = "0 items";
   }
@@ -46,6 +48,7 @@
     const result = await window.velox.invoke("folder.openText", { target, name });
     preview.value = result.text;
     fileName.textContent = result.name;
+    fileName.title = result.name;
     fileBytes.textContent = `${result.bytes.toLocaleString()} bytes`;
     status.textContent = "Text loaded.";
   }
@@ -107,6 +110,7 @@
     clear();
     target = result.target;
     folder.textContent = result.name;
+    folder.title = result.name;
     await list();
   }));
   refresh.addEventListener("click", () => target && run(list));

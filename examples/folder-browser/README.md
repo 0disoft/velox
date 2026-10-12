@@ -18,8 +18,15 @@ Ordinary hard-linked file names can be listed; no contents or file grant is retu
 Click an immediate file name to read a UTF-8 preview (at most 2 MiB). Contents
 are rendered literally in a read-only textarea, never as HTML, and are not saved.
 Listing does not read contents automatically. Directories have no open action.
-Names use the host's text-save basename grammar (at most 240 UTF-8 bytes);
-unsupported/oversized/binary, encrypted/offline/reparse and multiply hard-linked
+The file and folder headings show at most two lines; the full name stays in the
+page and is set as the element title on a successful load or selection.
+Names use the host basename grammar. The source host accepts up to 255 UTF-16
+code units (a supplementary character counts as two; an initial 4x255-byte UTF-8
+bound), so a valid long Windows basename such as 251 Hangul characters followed
+by `.txt` (255 units, 757 UTF-8 bytes) reads correctly. Published alpha.68 and
+previously deployed hosts still cap names at 240 UTF-8 bytes and reject longer
+ones; repackaging a consumer against the new source host gains the wider bound.
+Unsupported/oversized/binary, encrypted/offline/reparse and multiply hard-linked
 files fail without losing the folder connection. No extension is assumed safe.
 The capability permits current immediate files, not a snapshot from selection
 or listing. Refresh clears the preview; selection cancellation preserves it;

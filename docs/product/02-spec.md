@@ -352,6 +352,25 @@ readonly text preview with only `folder.read` and `folder.readText`. It omits
 the example's clipboard operation, uses local licensed icons and adds no
 subfolder navigation, write permission, monitoring, font or host dependency.
 
+Source-only folder text-read name bound (2026-10-12): `folder.openText` accepts
+the listed valid Windows basenames it previously rejected. A separate source
+validator allows up to 255 UTF-16 code units (a supplementary character counts
+as two) within the shared basename grammar, with an initial UTF-8 bound of
+4x255 = 1020 bytes; the text-save 240-byte name rule is unchanged. The IPC
+`name` `maxLength` of 255 Unicode code points is a necessary bound only, with
+the 255 UTF-16-unit limit enforced by the host. No new permission, method or
+grant, and selected-directory identity, the relative open, revocation, child
+protections and the 2 MiB cap are unchanged. Only a source-built host gets the
+wider bound; public alpha.68 and older deployed hosts keep the 240-byte limit,
+and repackaging an existing consumer against the rebuilt host also gains it.
+
+Source-only folder-browser long-name clamp (2026-10-12): the starter and
+reference example clamp `#file-name` and `#folder-name` to two visible lines
+while keeping the full name in the DOM and in the `folder.openText` request,
+and expose it as the element `title`. The mocked-bridge UI smoke passes three
+views for the starter and the reference example, with the narrow preview above
+the 100 px assertion.
+
 - init
 - validate
 - doctor

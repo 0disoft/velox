@@ -1,11 +1,54 @@
 package ipc
 
 import (
+	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/0disoft/velox/internal/fileopen"
 )
+
+func TestFolderTextIPCForwardsLongWindowsBasenames(t *testing.T) {
+	for _, name := range []string{strings.Repeat("a", 251) + ".txt", strings.Repeat("\uD55C", 100) + ".txt", strings.Repeat("\U0001F642", 125) + "a.txt"} {
+		d := NewDispatcher(Identity{}, []string{PermissionFolderRead, PermissionFolderReadText}, &fakeWindow{})
+		f := &fakeFolderAccess{}
+		d.SetFolderAccess(f)
+		params, err := json.Marshal(map[string]any{"target": 7, "name": name})
+		if err != nil {
+			t.Fatal(err)
+		}
+		d.DispatchAsync(request(1, "folder.openText", string(params)), func(r Response) {
+			if !r.OK {
+				t.Fatalf("long listed basename rejected: %d bytes: %+v", len(name), r)
+			}
+		})
+		if f.readDone == nil || f.readName != name || f.readTarget != 7 {
+			t.Fatalf("long basename not forwarded: %d bytes", len(name))
+		}
+		f.readDone(fileopen.Result{Name: name, Text: "text", Bytes: 4}, nil)
+	}
+}
+
+func TestFolderTextIPCRejectsOverlongUTF16Basenames(t *testing.T) {
+	for _, name := range []string{strings.Repeat("a", 256), strings.Repeat("\U0001F642", 128)} {
+		d := NewDispatcher(Identity{}, []string{PermissionFolderRead, PermissionFolderReadText}, &fakeWindow{})
+		f := &fakeFolderAccess{}
+		d.SetFolderAccess(f)
+		params, err := json.Marshal(map[string]any{"target": 7, "name": name})
+		if err != nil {
+			t.Fatal(err)
+		}
+		d.DispatchAsync(request(1, "folder.openText", string(params)), func(r Response) {
+			if r.Error == nil || r.Error.Code != "INVALID_PARAMS" {
+				t.Fatal(r)
+			}
+		})
+		if f.readDone != nil {
+			t.Fatal("overlong name forwarded")
+		}
+	}
+}
 
 func TestFolderTextRequiresBothPermissionsAndStrictBasenameParams(t *testing.T) {
 	permissions := []string{PermissionFolderRead, PermissionFolderReadText}

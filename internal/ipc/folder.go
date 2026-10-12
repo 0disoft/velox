@@ -147,7 +147,7 @@ func (d *Dispatcher) openFolderText(request Request, finish func(Response)) {
 		Target *uint32 `json:"target"`
 		Name   *string `json:"name"`
 	}
-	if decodeSaveParams(request.Params, &p) != nil || p.Target == nil || *p.Target == 0 || p.Name == nil || fileopen.ValidateSaveName(*p.Name) != nil {
+	if decodeSaveParams(request.Params, &p) != nil || p.Target == nil || *p.Target == 0 || p.Name == nil || fileopen.ValidateFolderTextName(*p.Name) != nil {
 		finish(failure(request.ID, "INVALID_PARAMS", "Folder text parameters must contain only a positive target token and a supported basename."))
 		return
 	}

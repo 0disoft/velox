@@ -1,8 +1,7 @@
 package fileopen
 
 func (f *Folder) OpenText(target uint32, name string, done func(Result, error)) error {
-	// Reads accept the same single-component name grammar as text saves.
-	if err := ValidateSaveName(name); err != nil {
+	if err := ValidateFolderTextName(name); err != nil {
 		return err
 	}
 	if done == nil || f.ReadText == nil {

@@ -6,16 +6,22 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, join, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const exampleOnly = process.argv[2] === "--example-long-names";
+if (process.argv.length > 3 || process.argv.length === 3 && !exampleOnly) {
+  throw Error("Usage: node scripts/folder-browser-ui-smoke.mjs [--example-long-names]");
+}
 const { chromium } = createRequire(import.meta.url)("playwright");
 const root = fileURLToPath(new URL("..", import.meta.url));
 const output = join(root, ".cache", "folder-browser-readiness-" + Date.now());
-const project = join(output, "folder-browser");
+const project = exampleOnly ? join(root, "examples", "folder-browser") : join(output, "folder-browser");
 await mkdir(output, { recursive: true });
-const generated = JSON.parse(execFileSync("go", ["run", "./cmd/velox", "init", project, "--template", "folder-browser", "--json"],
-  { cwd: root, encoding: "utf8", windowsHide: true }));
-assert.equal(generated.ok, true);
+if (!exampleOnly) {
+  const generated = JSON.parse(execFileSync("go", ["run", "./cmd/velox", "init", project, "--template", "folder-browser", "--json"],
+    { cwd: root, encoding: "utf8", windowsHide: true }));
+  assert.equal(generated.ok, true);
+}
 const web = join(project, "web");
-const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" };
 const server = createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
@@ -28,7 +34,8 @@ const server = createServer(async (request, response) => {
 });
 await new Promise(done => server.listen(0, "127.0.0.1", done));
 const url = "http://127.0.0.1:" + server.address().port;
-const result = { nativeBridge: "mocked", generatedProject: project, views: [], passed: false };
+const result = { nativeBridge: "mocked", generatedProject: exampleOnly ? null : project,
+  project, exampleOnly, views: [], passed: false };
 let browser;
 try {
   browser = await chromium.launch({ channel: "msedge", headless: true });
@@ -45,7 +52,7 @@ try {
         let target = 0;
         const listing = { entries: [
           { name: "notes-\uD55C\uAE00.txt", kind: "file" },
-          { name: "long-" + "a".repeat(180) + ".txt", kind: "file" },
+          { name: "\uD55C".repeat(251) + ".txt", kind: "file" },
           { name: "child", kind: "directory" },
         ], skipped: 1, truncated: false };
         const failure = code => Object.assign(new Error("The folder operation failed."), { code });
@@ -54,7 +61,7 @@ try {
           if (method === "folder.select") {
             if (window.__mode.selectNull) throw null;
             if (window.__mode.cancel) return { cancelled: true };
-            return { name: "Selected-\uD55C\uAE00-" + "long-name-".repeat(12), target: ++target };
+            return { name: "\uD55C".repeat(255), target: ++target };
           }
           if (method === "folder.list") {
             if (window.__mode.listFailure) throw failure("NATIVE_OPERATION_FAILED");
@@ -91,6 +98,35 @@ try {
       await file().click();
       await page.getByRole("status").filter({ hasText: "Text loaded." }).waitFor();
       assert.equal(await preview.inputValue(), "\uD55C\uAE00 text\n<script>literal</script>");
+      const longName = "\uD55C".repeat(251) + ".txt";
+      await page.getByRole("button", { name: longName, exact: true }).click();
+      await page.getByRole("status").filter({ hasText: "Text loaded." }).waitFor();
+      const longLayout = await page.evaluate(() => ({
+        previewHeight: document.querySelector("#preview").clientHeight,
+        fileName: document.querySelector("#file-name").textContent,
+        fileTitle: document.querySelector("#file-name").title,
+        folderTitle: document.querySelector("#folder-name").title,
+        folderHeight: document.querySelector("#folder-name").clientHeight,
+        overflow: document.documentElement.scrollWidth > innerWidth,
+        request: window.__calls.at(-1),
+      }));
+      const longScreenshot = join(output, `long-name-${view.width}-${view.colorScheme}.png`);
+      await page.screenshot({ path: longScreenshot });
+      result.views.push({ view, longLayout, longScreenshot });
+      assert.equal(longLayout.fileName, longName);
+      assert.equal(longLayout.fileTitle, longName);
+      assert.equal(longLayout.folderTitle, "\uD55C".repeat(255));
+      assert.ok(longLayout.folderHeight <= 52, "Folder heading exceeded two lines");
+      assert.equal(longLayout.request.method, "folder.openText");
+      assert.equal(longLayout.request.params.name, longName);
+      assert.equal(longLayout.overflow, false);
+      assert.ok(longLayout.previewHeight > 100, `Long-name preview collapsed: ${JSON.stringify(longLayout)}`);
+      if (exampleOnly) {
+        assert.deepEqual(errors, []);
+        assert.deepEqual(failures, []);
+        assert.equal(await page.locator("#copy").isEnabled(), true);
+        continue;
+      }
       await page.evaluate(() => { window.__mode.cancel = true; });
       await select.click();
       await page.getByRole("status").filter({ hasText: "Selection canceled." }).waitFor();
@@ -167,7 +203,7 @@ try {
       assert.equal(await page.locator("#folder-name").textContent(), "No folder selected");
       assert.deepEqual(errors, []);
       assert.deepEqual(failures, []);
-      result.views.push({ view, layout, failedScreenshot, loadedScreenshot, errors, failures,
+      Object.assign(result.views.at(-1), { layout, failedScreenshot, loadedScreenshot, errors, failures,
         explicitRetry: true, focusRecovery: true, noRestoredFolderGrant: true });
     } finally { await context.close(); }
   }

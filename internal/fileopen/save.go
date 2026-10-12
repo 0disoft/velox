@@ -18,7 +18,11 @@ type SaveResult struct {
 }
 
 func ValidateSaveName(name string) error {
-	if name == "" || len(name) > 240 || !utf8.ValidString(name) || strings.ContainsAny(name, `\/:*?"<>|`) || strings.TrimRight(name, ". ") != name || name == "." || name == ".." {
+	return validateBaseName(name, 240)
+}
+
+func validateBaseName(name string, maxBytes int) error {
+	if name == "" || len(name) > maxBytes || !utf8.ValidString(name) || strings.ContainsAny(name, `\/:*?"<>|`) || strings.TrimRight(name, ". ") != name || name == "." || name == ".." {
 		return ErrUnsupported
 	}
 	for _, char := range name {
