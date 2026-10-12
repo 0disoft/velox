@@ -137,15 +137,19 @@
     } finally { draftWriteRunning = false; }
   }
 
-  function queueDraftSave() {
+  function queueDraftSave(immediate = false) {
     clearTimeout(draftTimer);
+    draftTimer = null;
     const revision = ++draftRevision;
+    elements.draftState.textContent = "Draft pending";
     if (composing) return;
-    draftTimer = setTimeout(() => {
+    const enqueue = () => {
       draftTimer = null;
       pendingDraftWrite = { snapshot: { ...state }, revision };
       void drainDraftWrites();
-    }, 300);
+    };
+    if (immediate) enqueue();
+    else draftTimer = setTimeout(enqueue, 300);
   }
 
   async function releaseSaveTarget() {
@@ -166,7 +170,7 @@
       state = model.openDocument(state, selected.name, selected.text, new Date().toISOString());
       setDocumentText(state.text);
       render();
-      queueDraftSave();
+      queueDraftSave(true);
       announce(`${selected.name} opened.`);
     } catch (error) {
       reportFileError("Open", error);
@@ -180,7 +184,7 @@
     sourceText = snapshot.text;
     sourceValue = snapshot.text.replace(/\r\n?/g, "\n");
     render();
-    queueDraftSave();
+    queueDraftSave(true);
     announce(`${state.name} saved.`);
   }
 
@@ -221,7 +225,7 @@
     state = model.newDocument();
     setDocumentText("");
     render();
-    queueDraftSave();
+    queueDraftSave(true);
     elements.editor.focus();
     announce("New document created.");
   }
@@ -277,7 +281,9 @@
     if (elements.discardDialog.returnValue === "discard" && action) action();
   });
   window.addEventListener("beforeunload", (event) => {
-    if (!fileActionPending && !model.isDirty(state)) return;
+    // A clean buffer may still have an older dirty draft committed on disk.
+    if (!fileActionPending && !model.isDirty(state) && !composing &&
+        draftTimer === null && !pendingDraftWrite && !draftWriteRunning) return;
     event.preventDefault();
     event.returnValue = "";
   });

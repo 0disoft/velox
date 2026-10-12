@@ -1,5 +1,33 @@
 # Validation
 
+Draft-commit close guard (2026-10-12): File Notes now routes draft commits
+through `queueDraftSave(immediate = false)`. Save, New and a successful Open
+enqueue an immediate commit on the existing serial queue, the status line shows
+`Draft pending`, and `beforeunload` requests confirmation while
+`fileActionPending`, a dirty buffer, IME composition, the debounce timer, a
+queued write or an in-flight write remains. Editor file buttons are not disabled
+by IndexedDB waits. A completed draft-write failure keeps its separate
+`Draft recovery unavailable` notice: it is not reported as a failed native file
+save and does not permanently block closing a clean document. An accepted close,
+forced termination and power loss still carry no incomplete-draft recovery
+guarantee. Four new regressions failed before the change; `bun test
+examples/file-notes` passed 53/0 with 316 assertions. `node
+scripts/file-notes-ui-smoke.mjs` exited 0 with receipt
+`.cache/file-notes-readiness-1791805020606/result.json`: real IndexedDB, mocked
+native file responses and a controlled delay at the storage boundary; Save, New
+and Open each canceled a real Edge `beforeunload` reload from the pending-draft
+state of a clean buffer and kept the text, and a reload after the commit
+returned to the clean baseline without a prompt. Desktop 1080x760 and narrow
+360x640 regressions also passed with an empty page-error list. Two harness
+assumptions were corrected during verification: a smoke poll that matched the
+stale `Draft saved` label now compares the actual IndexedDB value, and the
+false 30 s timeout on a canceled `page.reload` was replaced by a CDP
+`Page.reload` command with real dialog-dismiss and same-document marker checks.
+This slice is JavaScript/UI only; the Windows native picker, WM_CLOSE, packaged
+runtime, installer and power loss were not tested for this new code. No API, DB
+schema, permission, dependency, version or CI change, push, deployment or
+publication.
+
 Packaged File Notes shutdown/recovery (2026-10-12): source 23f2327 was rebuilt
 into a private CLI/GUI bundle and the unchanged actual app. The opt-in
 `scripts/file-notes-packaged-recovery.mjs` passed real IndexedDB commit/read,

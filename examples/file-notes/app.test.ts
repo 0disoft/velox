@@ -349,6 +349,148 @@ test("slow draft storage retains only the in-flight and newest waiting snapshots
   expect(ui.node("#draft-state").textContent).toBe("Draft saved");
 });
 
+test("successful native save updates recovery immediately and guards close until its commit", async () => {
+  const completion = deferred<void>();
+  const writes: any[] = [];
+  const ui = harness({
+    save: async () => ({ name: "saved.md", target: 1 }),
+    draftSave: async state => {
+      writes.push({ ...state });
+      if (writes.length === 2) await completion.promise;
+    },
+  });
+  await ui.ready;
+  ui.edit("latest text");
+  await ui.flushDraft();
+  await ui.click("save-document");
+  expect(writes).toHaveLength(2);
+  expect(writes[1]).toMatchObject({ name: "saved.md", text: "latest text", savedText: "latest text" });
+  expect(ui.node("#save-state").textContent).toBe("Saved to file");
+  expect(ui.node("#save-document").disabled).toBe(false);
+  expect(ui.unload()).toBe(true);
+  completion.resolve();
+  await tick();
+  expect(ui.unload()).toBe(false);
+  const reopened = harness({ draft: await ui.flushDraft() });
+  await reopened.ready;
+  expect(reopened.node("#editor").value).toBe("latest text");
+  expect(reopened.node("#save-state").textContent).toBe("No save target");
+  expect(reopened.unload()).toBe(false);
+});
+
+test("confirmed New and Open replace the old dirty recovery before allowing unprompted close", async () => {
+  for (const action of ["new-document", "open-document"]) {
+    const completion = deferred<void>();
+    const writes: any[] = [];
+    const ui = harness({
+      open: async () => ({ name: "opened.md", text: "opened\r\ntext" }),
+      draftSave: async state => {
+        writes.push({ ...state });
+        if (writes.length === 2) await completion.promise;
+      },
+    });
+    await ui.ready;
+    ui.edit("discarded old draft");
+    await ui.flushDraft();
+    ui.click(action);
+    ui.discard(true);
+    await tick();
+    expect(writes).toHaveLength(2);
+    const text = action === "new-document" ? "" : "opened\r\ntext";
+    expect(writes[1]).toMatchObject({ text, savedText: text });
+    expect(ui.node("#editor").readOnly).toBe(false);
+    expect(ui.unload()).toBe(true);
+    completion.resolve();
+    await tick();
+    expect(ui.unload()).toBe(false);
+    const reopened = harness({ draft: await ui.flushDraft() });
+    await reopened.ready;
+    expect(reopened.node("#editor").value).toBe(text.replace(/\r\n/g, "\n"));
+    expect(reopened.unload()).toBe(false);
+  }
+});
+
+test("reverting text to its saved baseline guards close while the debounce is pending", async () => {
+  const ui = harness({ draft: { schemaVersion: 1, name: "note.md", text: "saved", savedText: "saved" } });
+  await ui.ready;
+  ui.edit("old dirty recovery");
+  await ui.flushDraft();
+  ui.edit("saved");
+  expect(ui.unload()).toBe(true);
+  expect((await ui.flushDraft()).text).toBe("saved");
+  expect(ui.unload()).toBe(false);
+});
+
+test("a clean save queues behind an older draft without clearing its close guard early", async () => {
+  const oldWrite = deferred<void>();
+  const cleanWrite = deferred<void>();
+  const writes: any[] = [];
+  const ui = harness({
+    save: async () => ({ name: "saved.md", target: 1 }),
+    draftSave: async state => {
+      writes.push({ ...state });
+      await (writes.length === 1 ? oldWrite.promise : cleanWrite.promise);
+    },
+  });
+  await ui.ready;
+  ui.edit("saved text");
+  await ui.flushDraft();
+  await ui.click("save-document");
+  expect(writes).toHaveLength(1);
+  expect(ui.unload()).toBe(true);
+  oldWrite.resolve();
+  await tick();
+  expect(writes).toHaveLength(2);
+  expect(writes[1].savedText).toBe("saved text");
+  expect(ui.unload()).toBe(true);
+  cleanWrite.resolve();
+  await tick();
+  expect(ui.unload()).toBe(false);
+  expect(await ui.flushDraft()).toMatchObject({ name: "saved.md", text: "saved text", savedText: "saved text" });
+});
+
+test("failed clean recovery reports unavailable without holding file controls or clean close forever", async () => {
+  const completion = deferred<void>();
+  const ui = harness({
+    save: async () => ({ name: "saved.md", target: 1 }),
+    draftSave: async () => { await completion.promise; throw new Error("draft failure"); },
+  });
+  await ui.ready;
+  ui.edit("exported text");
+  await ui.click("save-document");
+  expect(ui.unload()).toBe(true);
+  expect(ui.node("#save-document").disabled).toBe(false);
+  completion.resolve();
+  await tick();
+  expect(ui.node("#status").textContent).toBe("saved.md saved.");
+  expect(ui.node("#draft-state").textContent).toContain("Draft recovery unavailable");
+  expect(ui.unload()).toBe(false);
+});
+
+test("immediate save recovery does not persist an unfinished IME composition", async () => {
+  const completion = deferred<any>();
+  const writes: any[] = [];
+  const ui = harness({
+    save: () => completion.promise,
+    draftSave: async state => { writes.push({ ...state }); },
+  });
+  await ui.ready;
+  ui.edit("submitted");
+  const saving = ui.click("save-document");
+  ui.compose(true);
+  ui.edit("unfinished composition");
+  completion.resolve({ name: "saved.md", target: 1 });
+  await saving;
+  await ui.flushDraft();
+  expect(writes).toEqual([]);
+  expect(ui.unload()).toBe(true);
+  ui.edit("finished composition");
+  ui.compose(false);
+  await ui.flushDraft();
+  expect(writes).toHaveLength(1);
+  expect(writes[0]).toMatchObject({ text: "finished composition", savedText: "submitted" });
+});
+
 test("an outdated draft failure does not replace the current status or block newer drafts", async () => {
   const completion = deferred<void>();
   let count = 0;

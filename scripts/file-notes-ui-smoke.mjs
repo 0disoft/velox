@@ -24,6 +24,16 @@ const server = createServer(async (request, response) => {
 await new Promise(done => server.listen(0, "127.0.0.1", done));
 const url = "http://127.0.0.1:" + server.address().port;
 const result = { nativeDialogs: "mocked", draftStorage: "real IndexedDB", views: [], passed: false };
+async function waitForDraft(page, text, savedText) {
+  const deadline = Date.now() + 5000;
+  let draft;
+  while (Date.now() < deadline) {
+    draft = await page.evaluate(() => window.FileNotesStorage.load());
+    if (draft?.text === text && (savedText === undefined || draft.savedText === savedText)) return draft;
+    await new Promise(resolve => setTimeout(resolve, 30));
+  }
+  throw new Error("The expected recovery snapshot did not commit within five seconds.");
+}
 let browser;
 try {
   browser = await chromium.launch({ channel: "msedge", headless: true });
@@ -52,8 +62,7 @@ try {
       assert.equal(await editor.inputValue(), "one\ntwo\n");
       assert.equal(await page.locator("#save-state").textContent(), "No save target");
       await editor.fill("one\ntwo\n\uD55C\uAE00\n");
-      await page.waitForFunction(() => document.querySelector("#draft-state").textContent === "Draft saved");
-      const draft = await page.evaluate(() => window.FileNotesStorage.load());
+      const draft = await waitForDraft(page, "one\r\ntwo\r\n\uD55C\uAE00\r\n", "one\r\ntwo\r\n");
       assert.equal(draft.text, "one\r\ntwo\r\n\uD55C\uAE00\r\n");
       assert.equal(draft.savedText, "one\r\ntwo\r\n");
       await editor.press("Control+f");
@@ -94,6 +103,98 @@ try {
       result.views.push({ viewport, layout, screenshot, restoredAndSaved: true });
     } finally { await context.close(); }
   }
+  const recoveryContext = await browser.newContext();
+  try {
+    await recoveryContext.addInitScript(() => {
+      let storage;
+      // Delay the storage boundary, but retain the actual IndexedDB operations.
+      Object.defineProperty(window, "FileNotesStorage", {
+        get: () => storage,
+        set: value => {
+          storage = Object.freeze({ ...value, save: async state => {
+            if (window.__holdDraft) {
+              await new Promise(resolve => { window.__resumeDraft = resolve; });
+            }
+            return value.save(state);
+          } });
+        },
+      });
+      window.velox = {
+        invoke: async method => method === "file.openText"
+          ? { name: "opened.md", text: "opened\r\ntext" } : null,
+        saveTextAs: async () => ({ name: "saved.md", target: 1 }),
+      };
+    });
+    const page = await recoveryContext.newPage();
+    const cdp = await recoveryContext.newCDPSession(page);
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.goto(url);
+    await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+    const checks = [];
+    for (const action of ["Save", "New", "Open"]) {
+      const dirty = "old draft before " + action;
+      await page.locator("#editor").fill(dirty);
+      await waitForDraft(page, dirty);
+      await page.evaluate(() => { window.__holdDraft = true; });
+      await page.getByRole("button", { name: action, exact: true }).click();
+      if (action !== "Save") await page.getByRole("button", { name: "Discard changes", exact: true }).click();
+      await page.waitForFunction(() => typeof window.__resumeDraft === "function");
+      const expected = action === "Save" ? dirty : action === "New" ? "" : "opened\r\ntext";
+      assert.equal(await page.locator("#editor").inputValue(), expected.replace(/\r\n/g, "\n"));
+      assert.notEqual(await page.locator("#save-state").textContent(), "Unsaved changes");
+      const oldDraft = await page.evaluate(() => window.FileNotesStorage.load());
+      assert.equal(oldDraft.text, dirty);
+      assert.notEqual(oldDraft.savedText, dirty);
+      assert.equal(await page.getByRole("button", { name: "Save", exact: true }).isEnabled(), true);
+
+      let dialogs = 0;
+      await page.evaluate(() => { window.__reloadMarker = "retained"; });
+      let deadline;
+      const canceled = new Promise((resolve, reject) => {
+        deadline = setTimeout(() => reject(new Error("Pending recovery did not request beforeunload consent.")), 5000);
+        page.once("dialog", async dialog => {
+          try {
+            dialogs++;
+            assert.equal(dialog.type(), "beforeunload");
+            await dialog.dismiss();
+            resolve();
+          } catch (error) { reject(error); }
+        });
+      });
+      try {
+        await cdp.send("Page.reload");
+        await canceled;
+      } finally { clearTimeout(deadline); }
+      assert.equal(dialogs, 1);
+      assert.equal(await page.evaluate(() => window.__reloadMarker), "retained");
+      assert.equal(await page.locator("#editor").inputValue(), expected.replace(/\r\n/g, "\n"));
+
+      await page.evaluate(() => {
+        window.__holdDraft = false;
+        window.__resumeDraft();
+        delete window.__resumeDraft;
+      });
+      await waitForDraft(page, expected, expected);
+      await page.waitForFunction(() => {
+        const event = new Event("beforeunload", { cancelable: true });
+        window.dispatchEvent(event);
+        return !event.defaultPrevented;
+      });
+      const unexpected = async dialog => { dialogs++; await dialog.dismiss(); };
+      page.on("dialog", unexpected);
+      await page.reload();
+      page.off("dialog", unexpected);
+      await page.waitForFunction(() => !document.querySelector("#editor").readOnly);
+      assert.equal(dialogs, 1);
+      assert.equal(await page.locator("#editor").inputValue(), expected.replace(/\r\n/g, "\n"));
+      assert.equal(await page.locator("#save-state").textContent(), "No save target");
+      checks.push({ action, pendingRecoveryWarned: true, canceledReloadPreservedText: true,
+        committedReloadUnprompted: true, cleanBaselineRestored: true });
+    }
+    assert.deepEqual(errors, []);
+    result.cleanRecoveryTransitions = { delay: "controlled storage boundary", checks, pageErrors: errors };
+  } finally { await recoveryContext.close(); }
   const context = await browser.newContext();
   try {
     await context.addInitScript(() => {

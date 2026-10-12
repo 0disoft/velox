@@ -49,6 +49,19 @@ from obsolete writes. Each text field is bounded to 2 MiB of UTF-8 before
 writing; an oversized draft leaves the previous stored draft intact and the
 current editor text available to correct or copy.
 
+Because a buffer that looks clean can still have an older dirty draft as its
+last committed write, the close guard requests confirmation until the serial
+draft queue and any IME composition have settled; it returns without a prompt
+once nothing is pending, so a clean document is not permanently blocked from
+closing. Save, New and a successful Open enqueue an immediate commit, typing
+keeps a short debounce, and the status line shows `Draft pending` while a
+commit is queued or in flight. Editor and file buttons are not disabled by
+pending IndexedDB work. A draft write that finally fails keeps its own
+`Draft recovery unavailable` notice and does not turn a completed native file
+save into a reported failure. This guard covers the browser close path only
+and does not promise recovery after an accepted close, a forced termination or
+power loss.
+
 Native saving remains subject to Windows access controls and Velox's file
 policy. Cancellation, manifest permission denial, expired connections and
 external-change conflicts have distinct status messages. Errors preserve the
