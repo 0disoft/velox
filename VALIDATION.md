@@ -1,5 +1,27 @@
 # Validation
 
+Directory artifact read budgets (2026-10-28): directory inspection and the
+installer's portable-source rescan now apply the existing artifact limits
+(100,000 files, 512 MiB per file, 1 GiB total) before hashing each file.
+Hashing checks the opened size, reads exactly the observed size, and probes
+one additional byte, so growth cannot turn a budgeted hash into an unbounded
+read. Existing scan entry points and valid content summaries are preserved.
+
+The new Windows regression creates a sparse 512 MiB + 1 byte file and holds a
+handle denying content reads. Before the fix inspection failed trying to
+open the file; afterward it rejects the size without opening the contents.
+The test does not read or allocate a 512 MiB fixture body. Focused tests cover
+the last/overflow file and total byte, unchanged sorted summaries including an
+empty file, and size changes between the scan and opened handle.
+`go test ./internal/assettree ./internal/artifactlimits ./internal/inspector
+./internal/installer -count=1`, `go test ./... github.com/jchv/go-webview2/...`,
+`go vet ./... github.com/jchv/go-webview2/...` and `git diff --check` passed.
+The known isolated Go cache was reused. GUI/runtime-switch matrix checks were
+not repeated for this filesystem-only change. This is not an atomic tree
+snapshot; copied-size/digest checks and staged installation inspection remain
+in place. CLI command-contract documentation was updated. No public API, DB,
+dependency, version, runner, repository hygiene, push or release change.
+
 Native generated Folder Browser follow-up (2026-10-12): an isolated current
 source host with SHA-256
 `1788f639fe57f0a3693b0d876ba7ae3e0d456b19c68f5990e5b39e45912900d0`

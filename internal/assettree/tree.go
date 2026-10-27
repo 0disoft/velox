@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/0disoft/velox/internal/artifactlimits"
 	"github.com/0disoft/velox/internal/safefs"
 )
 
@@ -79,18 +80,23 @@ func ValidateResolvedEntry(root, entry string) error {
 }
 
 func Scan(root string) (Tree, error) {
-	return scan(root, true)
+	return scan(root, true, nil)
+}
+
+// ScanArtifact applies the shared artifact budget before reading each file.
+func ScanArtifact(root string) (Tree, error) {
+	return scan(root, true, &artifactlimits.Budget{})
 }
 
 // ScanMetadata validates the complete tree without reading file contents.
 func ScanMetadata(root string) (Tree, error) {
-	return scan(root, false)
+	return scan(root, false, nil)
 }
 
 // RevalidateSnapshot checks shape and sizes without rehashing every source.
 // The builder verifies each planned digest while copying immediately afterward.
 func RevalidateSnapshot(root string, expected Tree) error {
-	current, err := scan(root, false)
+	current, err := ScanMetadata(root)
 	if err != nil {
 		return err
 	}
@@ -107,7 +113,7 @@ func RevalidateSnapshot(root string, expected Tree) error {
 	return nil
 }
 
-func scan(root string, hashContents bool) (Tree, error) {
+func scan(root string, hashContents bool, budget *artifactlimits.Budget) (Tree, error) {
 	info, err := os.Lstat(root)
 	if err != nil {
 		return Tree{}, fmt.Errorf("inspect asset root: %w", err)
@@ -159,9 +165,14 @@ func scan(root string, hashContents bool) (Tree, error) {
 		if !info.Mode().IsRegular() {
 			return fmt.Errorf("asset is not a regular file: %s", filepath.ToSlash(relative))
 		}
+		if budget != nil {
+			if err := budget.Add(filepath.ToSlash(relative), uint64(info.Size())); err != nil {
+				return err
+			}
+		}
 		digest := ""
 		if hashContents {
-			digest, err = hashFile(path)
+			digest, err = hashFile(path, info.Size())
 			if err != nil {
 				return fmt.Errorf("hash asset %s: %w", filepath.ToSlash(relative), err)
 			}
@@ -201,15 +212,22 @@ func Summarize(files []File) Tree {
 	return Tree{Files: files, TotalBytes: total, Digest: hex.EncodeToString(hash.Sum(nil))}
 }
 
-func hashFile(path string) (string, error) {
-	file, _, err := safefs.OpenVerifiedRegular(path)
+func hashFile(path string, expectedSize int64) (string, error) {
+	file, info, err := safefs.OpenVerifiedRegular(path)
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
+	if info.Size() != expectedSize {
+		return "", errors.New("asset changed size before hashing")
+	}
 	hash := sha256.New()
-	if _, err := io.Copy(hash, file); err != nil {
+	if _, err := io.CopyN(hash, file, expectedSize); err != nil {
 		return "", err
+	}
+	var extra [1]byte
+	if n, err := file.Read(extra[:]); n != 0 || err != io.EOF {
+		return "", errors.Join(errors.New("asset changed while hashing"), err)
 	}
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }

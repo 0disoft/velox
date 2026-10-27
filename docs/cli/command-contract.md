@@ -470,13 +470,17 @@ counts; it omits
 wall-clock timings and absolute paths. Build duration belongs to benchmark
 evidence rather than reproducible artifact bytes.
 
-Build and ZIP inspection share limits of 100,000 files, 512 MiB per file,
-and 1 GiB of total uncompressed data, including the host and metadata.
+Build, directory inspection and ZIP inspection share limits of 100,000 files,
+512 MiB per file, and 1 GiB of total uncompressed data, including the host and
+metadata.
 Each runtime configuration and build report is limited to 1 MiB. Known source
 size and file-count violations fail before staging; streaming checks include
 the final metadata bytes and prevent oversized output from being published.
 The same compression-ratio check is applied before ZIP publication and during
 inspection. Existing outputs are preserved when a limit is exceeded.
+Directory inspection and the installer's source rescan check each file's
+metadata against this budget before hashing its contents. Hashing reads at
+most the observed file size plus one byte and rejects observed size changes.
 
 ### velox inspect PATH
 

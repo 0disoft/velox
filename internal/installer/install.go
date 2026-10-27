@@ -102,7 +102,7 @@ func install(source, uninstaller string, env environment) (Result, error) {
 	}
 	defer os.RemoveAll(stage)
 	app := filepath.Join(stage, "app")
-	tree, err := assettree.Scan(source)
+	tree, err := assettree.ScanArtifact(source)
 	if err != nil {
 		return Result{}, err
 	}

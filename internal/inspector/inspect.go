@@ -76,7 +76,7 @@ func inspectDirectory(root string) (Result, error) {
 		return Result{}, closeErr
 	}
 
-	all, err := assettree.Scan(root)
+	all, err := assettree.ScanArtifact(root)
 	if err != nil {
 		return Result{}, err
 	}
