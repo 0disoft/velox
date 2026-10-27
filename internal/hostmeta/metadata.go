@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/0disoft/velox/internal/configio"
 )
 
 const (
@@ -36,7 +37,7 @@ type Artifact struct {
 }
 
 func Load(path string) (Metadata, error) {
-	data, err := os.ReadFile(path)
+	data, err := configio.ReadFile(path)
 	if err != nil {
 		return Metadata{}, fmt.Errorf("read host metadata: %w", err)
 	}

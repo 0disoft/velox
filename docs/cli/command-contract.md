@@ -481,6 +481,11 @@ inspection. Existing outputs are preserved when a limit is exceeded.
 Directory inspection and the installer's source rescan check each file's
 metadata against this budget before hashing its contents. Hashing reads at
 most the observed file size plus one byte and rejects observed size changes.
+On-disk project manifests, runtime configurations and host metadata use the
+same 1 MiB limit. Loaders reject known oversized files before reading their
+contents and cap reads at 1 MiB + 1 byte if a file grows after its size check.
+The CLI's diagnostic line/column reread uses the same bound. Existing loading
+signatures, JSON validation and wrapped filesystem error causes are preserved.
 
 ### velox inspect PATH
 

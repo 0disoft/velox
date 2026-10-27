@@ -19,6 +19,7 @@ import (
 	"github.com/0disoft/velox/internal/buildphase"
 	"github.com/0disoft/velox/internal/buildplan"
 	"github.com/0disoft/velox/internal/buildreport"
+	"github.com/0disoft/velox/internal/configio"
 	"github.com/0disoft/velox/internal/doctor"
 	"github.com/0disoft/velox/internal/hostmeta"
 	"github.com/0disoft/velox/internal/initializer"
@@ -637,7 +638,7 @@ func diagnosticLineColumn(path string, err error) (int, int) {
 	default:
 		return 0, 0
 	}
-	data, readErr := os.ReadFile(path)
+	data, readErr := configio.ReadFile(path)
 	if readErr != nil || offset < 1 || offset > int64(len(data))+1 {
 		return 0, 0
 	}

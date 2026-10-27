@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/0disoft/velox/internal/activationkey"
 	"github.com/0disoft/velox/internal/appidentity"
 	"github.com/0disoft/velox/internal/assettree"
+	"github.com/0disoft/velox/internal/configio"
 	"github.com/0disoft/velox/internal/manifest"
 	"github.com/0disoft/velox/internal/windowlimits"
 )
@@ -80,7 +80,7 @@ func Load(path string) (Resolved, error) {
 		return Resolved{}, fmt.Errorf("resolve config path: %w", err)
 	}
 
-	data, err := os.ReadFile(absPath)
+	data, err := configio.ReadFile(absPath)
 	if err != nil {
 		return Resolved{}, fmt.Errorf("read runtime config: %w", err)
 	}

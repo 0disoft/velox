@@ -1,5 +1,29 @@
 # Validation
 
+Bounded on-disk configuration loading (2026-10-28): manifest, runtime config,
+host metadata and CLI diagnostic location rereads now share configio.ReadFile
+with the existing 1 MiB metadata budget. It checks the opened file's size
+before reading contents and independently caps reads at 1 MiB + 1 byte to
+handle growth after Stat. Oversized input returns ErrTooLarge before JSON
+decoding. Existing Load/Parse signatures, JSON validation and wrapped file
+error causes remain unchanged; direct in-memory Parse callers are unaffected.
+
+Before the fix, all three loaders accepted valid JSON padded to 1 MiB + 1
+byte. New integration tests cover 1 MiB - 1, exactly 1 MiB and 1 MiB + 1 for
+each loader (nine cases). An unending reader proves the streaming guard stops
+after exactly 1,048,577 bytes; focused tests also preserve original read errors
+and the missing-file error cause. These are automated file/reader tests, not
+a measured production OOM or a native GUI run.
+`go test ./internal/configio ./internal/manifest ./internal/runtimeconfig
+./internal/hostmeta ./internal/cli -count=1`,
+`go test ./... github.com/jchv/go-webview2/...`,
+`go vet ./... github.com/jchv/go-webview2/...` and `git diff --check` passed
+using the existing isolated Go cache. GUI and runtime-switch matrix checks
+were not repeated for this read-path change. This bounds bytes, not read
+duration or filesystem snapshot atomicity. The CLI command contract was
+updated. No external API, DB, dependency, version, runner, repository hygiene,
+push or release change.
+
 Directory artifact read budgets (2026-10-28): directory inspection and the
 installer's portable-source rescan now apply the existing artifact limits
 (100,000 files, 512 MiB per file, 1 GiB total) before hashing each file.
