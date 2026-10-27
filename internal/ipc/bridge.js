@@ -61,8 +61,26 @@
     }
   }
 
+  const nativeIsWellFormed = String.prototype.isWellFormed;
+
+  function isWellFormedText(text) {
+    if (typeof nativeIsWellFormed === "function") return nativeIsWellFormed.call(text);
+    // WebView2 92-110 has no isWellFormed. Reject lone UTF-16 surrogates
+    // before TextEncoder can silently replace them with U+FFFD.
+    for (let index = 0; index < text.length; index += 1) {
+      const unit = text.charCodeAt(index);
+      if (unit >= 0xd800 && unit <= 0xdbff) {
+        const low = text.charCodeAt(++index);
+        if (!(low >= 0xdc00 && low <= 0xdfff)) return false;
+      } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   async function uploadText(text, name, commit, extra = {}) {
-    if (typeof text !== "string" || !text.isWellFormed() || text.includes("\0")) {
+    if (typeof text !== "string" || !isWellFormedText(text) || text.includes("\0")) {
       throw createError("INVALID_PARAMS", "Save text must be valid UTF-8 without NUL characters.");
     }
     if (text.length > 2 * 1024 * 1024) {

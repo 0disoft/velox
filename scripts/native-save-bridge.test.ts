@@ -4,7 +4,7 @@ import { runInNewContext } from "node:vm";
 
 const source = readFileSync(new URL("../internal/ipc/bridge.js", import.meta.url), "utf8");
 
-function bridge(failAppend = false) {
+function bridge(failAppend = false, legacy = false) {
   const requests: any[] = [];
   let offset = 0;
   const parts: string[] = [];
@@ -33,7 +33,8 @@ function bridge(failAppend = false) {
     return { v: 1, id: request.id, ok: true, result };
   }};
   window.top = window;
-  runInNewContext(source, { window, TextEncoder });
+  const prelude = legacy ? 'delete String.prototype.isWellFormed;\n' : '';
+  runInNewContext(prelude + source, { window, TextEncoder });
   return { api: window.velox, requests, parts };
 }
 
@@ -45,6 +46,35 @@ test("save helper sends 2 MiB without enlarging transport limits", async () => {
   expect(result.bytes).toBe(text.length);
   expect(requests.at(-2).method).toBe("file.commitSave");
   expect(Object.isFrozen(api)).toBe(true);
+});
+
+test("save helpers work without String.isWellFormed", async () => {
+  const { api, parts, requests } = bridge(false, true);
+  const text = "a".repeat(4095) + "\u{1f600}\ud55c\uae00\r\n";
+  await api.saveText(text, "notes.txt");
+  await api.saveTextAs(text, "notes.txt");
+  await api.saveTextTo(text, 7);
+  expect(parts.join("")).toBe(text.repeat(3));
+  expect(requests.filter((r) => r.method.startsWith("file.commit")).map((r) => r.method))
+    .toEqual(["file.commitSave", "file.commitSaveAs", "file.commitSaveTo"]);
+});
+
+test("legacy validation rejects lone surrogates and retains text size limits", async () => {
+  for (const text of ["\ud800", "\udfff", "\ud800x", "x\udfff", "\ud800\ud800", "\udfff\ud800", "a\0b"]) {
+    const { api, requests } = bridge(false, true);
+    await expect(api.saveText(text)).rejects.toMatchObject({ code: "INVALID_PARAMS" });
+    expect(requests).toHaveLength(0);
+  }
+  for (const text of ["", "\ud800\udc00", "\udbff\udfff", "a".repeat(2 * 1024 * 1024)]) {
+    const { api, parts } = bridge(false, true);
+    await api.saveText(text);
+    expect(parts.join("")).toBe(text);
+  }
+  for (const text of ["a".repeat(2 * 1024 * 1024 + 1), "\ud55c".repeat(699051)]) {
+    const { api, requests } = bridge(false, true);
+    await expect(api.saveText(text)).rejects.toMatchObject({ code: "PAYLOAD_TOO_LARGE" });
+    expect(requests).toHaveLength(0);
+  }
 });
 
 test("connected helpers reuse only a native target token", async () => {
