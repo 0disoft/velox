@@ -76,3 +76,6 @@ The old host reports `7da29a2` and `vcs.modified=true`; it is a local build, not
 released version. Both sides report `0.5.10-alpha.68`; this is not a newer application
 release. Results are single local fixtures, not a general runtime or updater
 claim.
+
+Follow-up: [112 runtime switch trace](webview2-runtime-switch-112-20261028.md) shows the
+15s watchdog failure came from the witness rejecting the unexpected 111 runtime.
