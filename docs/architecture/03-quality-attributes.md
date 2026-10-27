@@ -29,6 +29,9 @@ docs/engineering/03-performance-budget.md.
 - Ready means usable content after DOMContentLoaded and two animation frames.
 - Fresh and warm WebView2 profiles are distinct measurements.
 - Startup claims include failures and environment metadata.
+- Same-profile relaunch evidence on Windows identifies WebView2 SmartScreen
+  reputation work as a local delay source. The Settings8 opt-out removes that
+  delay in the recorded environment; this is not a cross-machine guarantee.
 - ADR 0009 treats startup as a release guardrail and lifecycle diagnostic, not
   a product headline.
 - ADR 0005 fixes the production language unless its explicit safety revisit
@@ -45,6 +48,18 @@ docs/engineering/03-performance-budget.md.
 ## Security
 
 - Local web content remains untrusted.
+- The Windows host restricts navigation to its app-specific virtual
+  `https://<hash>.app.invalid` origin and denies frames, popups and downloads.
+  It sets `ICoreWebView2Settings8.IsReputationCheckingRequired` to false before
+  navigation, removing SmartScreen navigation and download reputation checks
+  for that app-specific WebView2 profile.
+- That opt-out does not vet local content. Windows and Edge-wide
+  SmartScreen, TLS validation, antivirus and Authenticode warnings are
+  unchanged. Local assets remain untrusted and are not tamper-proof; this
+  policy makes no separate claim about individual subresource requests.
+- Remote navigation or download support requires a new review of the
+  SmartScreen decision. Runtimes without Settings8 keep reputation checking
+  enabled.
 - Native capabilities are absent unless explicitly declared and granted.
 - No listening socket, local server, plugin scan, shell, process, or arbitrary
   filesystem API exists in the MVP.
@@ -74,7 +89,9 @@ docs/engineering/03-performance-budget.md.
 - The supported floor is Windows 10 version 1709 x64 or Windows Server 2016
   x64 with Evergreen WebView2 Runtime `92.0.902.49` or newer. This is the
   intersection of the Go runtime floor and the `ICoreWebView2_4` security API
-  required to deny downloads.
+  required to deny downloads. The optional Settings8 opt-out skips on
+  `E_NOINTERFACE` and leaves reputation checking on, so it does not raise this
+  floor.
 - Manifest, IPC, host, and build-result versions reject unsupported required
   versions rather than guessing.
 - Cross-platform support requires a separate ADR and benchmark.

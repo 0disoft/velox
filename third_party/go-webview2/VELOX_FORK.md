@@ -16,6 +16,12 @@ Velox carries only the changes required by its Windows host boundary:
 - bound accepted WebMessages to 64 KiB and reject native conversion failures;
 - deny untrusted top-level navigation and all frame navigation;
 - deny popup and download events;
+- add an opt-in `DisableReputationChecking` option, false by default, and
+  require a `NavigationAllowed` callback plus denied frames, popups and
+  downloads before querying `ICoreWebView2Settings8`;
+- set `IsReputationCheckingRequired` false before the first navigation, release
+  the queried interface, and keep the default when the runtime returns
+  `E_NOINTERFACE`;
 - allow an explicit fixed-runtime folder for missing-runtime conformance tests;
 - expose the main WebView2 browser process ID for lifecycle measurement;
 - expose a phase-only startup observer for benchmark instrumentation without
@@ -37,6 +43,37 @@ Velox carries only the changes required by its Windows host boundary:
   be registered, without terminating the embedding process from the library;
 - release queried `ICoreWebView2_3` interfaces; and
 - remove window context after native window destruction.
+
+## SmartScreen reputation setting
+
+Microsoft documents `IsReputationCheckingRequired` as a SmartScreen switch
+shared by every WebView using the same user-data folder. It defaults to true,
+a false value applies on the next navigation or download, and another WebView
+that leaves the default in place can reset the shared state to true.
+SmartScreen is documented as help for reported phishing and malware sites and
+download decisions, and as unnecessary overhead for app content. SDK
+1.0.1722.45 places `GetIsReputationCheckingRequired` and
+`PutIsReputationCheckingRequired` at slots 35 and 36 of the
+`ICoreWebView2Settings8` vtable after Settings1-7; the fork uses IID
+`9E6B0E8F-86AD-4E81-8147-A9B5EDB68650`.
+
+`DisableReputationChecking` defaults to false. Enabling it requires
+`NavigationAllowed` to be non-nil and `DenyFrames`, `DenyNewWindows` and
+`DenyDownloads` to be true. The fork checks those fields; the callback itself
+must restrict navigation to app-provided content. The call occurs before the
+first navigation. A successful query releases the Settings8 pointer.
+`E_NOINTERFACE` reports unsupported, leaves SmartScreen enabled and does not
+fail construction. Any other HRESULT becomes an initialization error. The
+initial settings reference is released on both success and failure.
+
+The opt-out covers SmartScreen navigation and download reputation in the
+app-specific profile. Local assets remain untrusted and are not tamper-proof.
+Windows and Edge-wide SmartScreen, TLS validation, antivirus and Authenticode
+warnings are unchanged. No separate subresource protection claim is made.
+Remote navigation or downloads would require a policy review. See
+[ICoreWebView2Settings8](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2settings8?view=webview2-1.0.4129.50)
+and the
+[IsSmartScreenRequired specification](https://github.com/MicrosoftEdge/WebView2Feedback/blob/main/specs/IsSmartScreenRequired.md).
 
 Do not merge upstream changes mechanically. Review COM ownership, public API
 changes, generated bindings, loader changes, and license notices before

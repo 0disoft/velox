@@ -65,7 +65,7 @@ builds.
 | Host startup | Pass: `go test ./tests/startup -run '^TestBuiltHostStartup$' -count=1 -v`, 5/5 subcases, 47.18s | `native-startup.log`, `native-startup-status.json` |
 | Immediate relaunch | Pass: 3 pairs, 46.08s, WebView2 155.0.4283.62, profiles released | `native-lifecycle.json`, `native-lifecycle.log` |
 | Installer smoke | Pass: shortcut launch exit 0, browser exit, uninstall, 163 profile files and 5 IndexedDB files preserved | `installer-smoke-status.json`, `installer-smoke.log` |
-| Text Editor draft smoke | **Fail**: no text entered; both attempts stopped before restore and clear | `draft-smoke.log`, `draft-smoke-focus-fixed.log`, `draft-smoke-status.json` |
+| Text Editor draft smoke | **Fail at this receipt** (superseded by the follow-up): no text entered; both attempts stopped before restore and clear | `draft-smoke.log`, `draft-smoke-focus-fixed.log`, `draft-smoke-status.json` |
 
 The consumer ran only the candidate release's `velox.exe`, with this sequence per template,
 with projects `consumer-basic`, `consumer-text-editor` and
@@ -121,17 +121,130 @@ Both host process trees were cleaned with `taskkill` (`cleanupExitCode: 0`).
 Neither run reached restore or clear. The experimental script edits were
 reverted; no shipping script or product fix is inferred.
 
-Draft persistence and recovery are **not verified**. The failures neither
-establish a draft-storage defect nor demonstrate OS keyboard or IME behavior.
-Replacing the check with synthetic DOM value mutation would not be a native
-typing pass. This failed mandatory check keeps beta held.
+Draft persistence and recovery were **not verified at this receipt**. The
+failures neither establish a draft-storage defect nor demonstrate OS keyboard
+or IME behavior. Replacing the check with synthetic DOM value mutation would
+not be a native typing pass. This failed mandatory check kept beta held; the
+follow-up below supersedes the result for the local harness.
 
-## Known Issue
+## Follow-up: 2026-10-27
+
+`258a96f` fixes the draft smoke harness, not the product. It launches the
+host with `windowsHide: false`, waits for the window and `#editor` to be
+visible, focused and active, waits two animation frames, sends CDP
+`Input.insertText`, and asserts the exact editor value before continuing.
+Three consecutive native WebView2 runs passed the three stages: write;
+relaunch, restore and clear; relaunch after clear with no resurrection. Every
+receipt reports `passed: true`, close exit 0 and cleanup exit 0:
+
+- `.cache/text-editor-draft-1793104762829/result.json`
+- `.cache/text-editor-draft-1793104986123/result.json`
+- `.cache/text-editor-draft-1793105012320/result.json`
+
+A final run used a private bundle with the rebuilt host and the original
+candidate CLI and setup executables:
+`.cache/text-editor-draft-1793106602528/result.json`. It passed the same
+three stages without forced termination.
+
+These are CDP-driven native runs against an isolated profile. They are not OS
+IME, manual keyboard or manual UI evidence. The installer smoke still records
+`manualUIVerified: false` and `actualDraftRestoreVerified: false`.
+
+### Relaunch readiness
+
+The baseline and diagnostic runs used the original candidate host. The product
+run used the rebuilt host. Both used the same app-specific virtual origin,
+WebView2 `155.0.4283.62`, Go `1.27.1` and three same-profile pairs. With
+the default reputation setting, immediate-host ready times were
+6,644.45ms, 6,747.0031ms and 6,855.6814ms. The first host's browser process
+exited 6,084.3361, 6,210.7842 and 6,328.1335ms after that host. A diagnostic
+`msSmartScreenProtection` disable, used only for comparison and not by the
+product, measured 417.4746ms to 479.2941ms. The product path below measured
+419.1895ms to 454.3207ms.
+
+| Run | Immediate host ready (ms) | Browser exit after immediate host (ms) | Profile removal (ms) |
+| --- | --- | --- | --- |
+| Default reputation setting | 6,644.45; 6,747.0031; 6,855.6814 | 6,176.6002; 6,183.4495; 6,367.5748 | 6,282.9814; 6,284.4441; 6,456.1052 |
+| Diagnostic SmartScreen off | 417.4746; 479.2941; 478.8425 | 60.3695; 65.0244; 77.4392 | 100.0226; 103.8589; 140.9768 |
+| Product Settings8 path | 443.592; 419.1895; 454.3207 | 61.2008; 63.9437; 67.5260 | 103.0381; 108.3971; 112.8394 |
+
+The product path's first-host browser exits were 74.5098, 72.6771 and
+78.8355ms.
+
+The evidence supports SmartScreen-related browser work in this environment
+keeping the old browser alive and delaying the same-profile controller. It
+does not establish an abnormal COM leak. Netlog showed SmartScreen, certificate
+and network activity, but did not establish TLS or DoH individually as the
+root cause. Shutdown COM work was fast, and an initial message-pump and GPU
+comparison did not explain the delay.
+
+The product host sets `DisableReputationChecking: true`; the fork default is
+false. Enabling it requires a `NavigationAllowed` callback plus
+`DenyFrames`, `DenyNewWindows` and `DenyDownloads`. The fork queries
+`ICoreWebView2Settings8` from SDK 1.0.1722.45 (IID
+`9E6B0E8F-86AD-4E81-8147-A9B5EDB68650`; `Get` and `Put` occupy slots 35
+and 36 after the Settings1-7 methods) and sets
+`IsReputationCheckingRequired` to false before the first navigation.
+`E_NOINTERFACE` leaves the default enabled and does not raise the supported
+floor of 92. Other HRESULT failures fail initialization. Successful queries
+release the Settings8 pointer; the initial settings reference is released on
+both success and failure. The lifecycle receipt is
+`.cache/draft-lifecycle-fix-20261027/settings8-lifecycle-three.json`.
+
+The app-specific `https://<hash>.app.invalid` origin, profile, permissions,
+IPC and navigation restrictions are unchanged. The omitted protection is
+SmartScreen web navigation and download reputation in that app-specific
+WebView2 profile. Windows and Edge-wide SmartScreen, TLS validation,
+antivirus and Authenticode warnings are unchanged. Local assets remain
+untrusted and are not tamper-proof. This receipt makes no separate subresource
+protection claim. Remote navigation or downloads would require a new policy
+review.
+
+### Rebuilt host and bundle
+
+The product change is commit `acf27a3`, after source candidate `739490b`.
+The rebuilt host is 4,937,728 bytes, 3,584 bytes larger than the original
+candidate host at 4,934,144 bytes.
+
+| Artifact | Bytes | SHA-256 |
+| --- | --- | --- |
+| `settings8-host.exe` | 4,937,728 | `57052a425ff10454e198898098dd3c1d4a93e4af7d3296690a6be3b910a904a9` |
+| Private `velox-windows-x64.zip` | 6,950,756 | `e9e2e9e4ef9e32e6eef80f813f6ab03555f6dd762a55229f4466c29f3dd66904` |
+
+The bundle under `.cache/draft-lifecycle-fix-20261027/settings8-release/`
+reuses the original candidate `velox.exe` and `velox-setup.exe` and replaces
+only the host. It is a private verification bundle, not a release payload, and
+does not replace the candidate table above.
+
+Files named without a directory in the table below are under
+`.cache/draft-lifecycle-fix-20261027/`.
+
+| Follow-up check | Result | Evidence |
+| --- | --- | --- |
+| Source tests | Pass: `go test ./... -count=1 -timeout=5m` exit 0; 44 packages `ok`, 10 no-test entries, 0 failures | `source-tests.log` |
+| Fork tests | Pass: `go test github.com/jchv/go-webview2/... -count=1`; 4 packages | `fork-tests.log` |
+| Rebuilt host startup | Pass: 5/5 subcases in 3.87s | `settings8-startup.log` |
+| New host lifecycle | Pass: three pairs | `settings8-lifecycle-three.json` |
+| Private bundle assembly | Pass: `cmd/velox-release`; host replaced, CLI and setup reused | `settings8-release.json` |
+| Bundle draft smoke | Pass: `bun scripts/text-editor-draft-smoke.ts`; three stages, no forced exit | `.cache/text-editor-draft-1793106602528/result.json` |
+| Product vet | Pass: `go vet ./internal/webview2 ./tests/startup` exit 0, empty output | `product-vet.log` |
+| Combined vet | **Fail**: exit 1 from eight existing `possible misuse of unsafe.Pointer` warnings in unchanged fork sections | `vet.log` |
+
+Combined vet is not counted as a pass. Source `go test ./...` ran without
+`VELOX_BUILT_HOST`, so the opt-in native built-host cases were skipped there.
+The rebuilt-host `TestBuiltHostStartup` and three-pair lifecycle results above
+come from separate runs with `VELOX_BUILT_HOST` set. These checks are local
+and do not change the candidate identity. The beta hold, public promotion and
+release decision remain unchanged. This follow-up clears only the local
+draft-smoke and same-profile relaunch blockers for this evidence set.
+
+## Known Issue at This Receipt
 
 Immediate readiness measured 7.2981501s in the startup test and
 7,244.4123 to 8,617.9463ms across the three lifecycle pairs. The multi-second
-relaunch delay remains unresolved; its cause is not established, and profile
-locking is not confirmed as the cause.
+relaunch delay was unresolved at this receipt; its cause was not established,
+and profile locking was not confirmed as the cause. The follow-up records the
+local Settings8 comparison and does not make a release decision.
 
 ## Boundaries
 
