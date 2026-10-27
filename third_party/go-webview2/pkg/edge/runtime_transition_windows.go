@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"sync/atomic"
 	"time"
 	"unsafe"
 
-	"github.com/jchv/go-webview2/internal/w32"
 	"github.com/jchv/go-webview2/webviewloader"
 	"golang.org/x/sys/windows"
 )
@@ -70,12 +68,12 @@ func (e *Chromium) acceptsRuntime(env *ICoreWebView2Environment) bool {
 		defer windows.CoTaskMemFree(unsafe.Pointer(version))
 	}
 	if err := hresult(hr); err != nil {
-		e.failRuntimeTransition(fmt.Errorf("read active WebView2 runtime: %w", err))
+		e.completeInitialization(fmt.Errorf("read active WebView2 runtime: %w", err))
 		return false
 	}
 	actual := strings.Fields(windows.UTF16PtrToString(version))
 	if len(actual) == 0 {
-		e.failRuntimeTransition(fmt.Errorf("active WebView2 runtime returned no version"))
+		e.completeInitialization(fmt.Errorf("active WebView2 runtime returned no version"))
 		return false
 	}
 	if actual[0] == e.runtimeTransition.required {
@@ -92,19 +90,12 @@ func (e *Chromium) retryRuntimeEnvironment(actual string) {
 		log.Printf("WebView2 waiting for runtime transition: active=%s requested=%s", actual, e.runtimeTransition.required)
 		timer, _, err := runtimeSetTimer.Call(e.hwnd, runtimeTransitionTimerID, uintptr(runtimeTransitionPoll/time.Millisecond), 0)
 		if timer == 0 {
-			e.failRuntimeTransition(fmt.Errorf("start WebView2 transition timer: %w", err))
+			e.completeInitialization(fmt.Errorf("start WebView2 transition timer: %w", err))
 			return
 		}
 		e.runtimeTransition.timer = timer
 	}
 	e.runtimeTransition.retryAt = now.Add(runtimeTransitionPoll)
-}
-
-func (e *Chromium) failRuntimeTransition(err error) {
-	e.initializationError = err
-	atomic.StoreUintptr(&e.inited, 1)
-	// A COM completion can run inside GetMessage. Wake that call explicitly.
-	w32.User32PostMessageW.Call(e.hwnd, 0, 0, 0)
 }
 
 func (e *Chromium) stopRuntimeTransitionTimer() {

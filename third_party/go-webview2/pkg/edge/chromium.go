@@ -215,6 +215,18 @@ func (e *Chromium) InitializationError() error {
 	return e.initializationError
 }
 
+// Complete on the UI/COM thread. A native callback can run inside GetMessage,
+// which keeps waiting after that callback returns unless a message is queued.
+func (e *Chromium) completeInitialization(err error) {
+	if err != nil {
+		e.initializationError = err
+	}
+	atomic.StoreUintptr(&e.inited, 1)
+	if e.hwnd != 0 {
+		w32.User32PostMessageW.Call(e.hwnd, 0, 0, 0)
+	}
+}
+
 func (e *Chromium) finishInitialization() bool {
 	if e.destroyed || e.browserProcessExited || e.initializationError != nil || e.webview == nil || atomic.LoadUintptr(&e.inited) == 0 {
 		e.Destroy()
@@ -344,8 +356,7 @@ func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environme
 		return 0
 	}
 	if hresult(res) != nil || env == nil {
-		e.initializationError = fmt.Errorf("creating environment failed with %08x", res)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("creating environment failed with %08x", res))
 		return 0
 	}
 	if !e.acceptsRuntime(env) {
@@ -366,8 +377,7 @@ func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environme
 		uintptr(unsafe.Pointer(e.controllerCompleted)),
 	)
 	if err := hresult(result); err != nil {
-		e.initializationError = fmt.Errorf("create controller: %w", err)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("create controller: %w", err))
 	}
 	return 0
 }
@@ -380,8 +390,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		return 0
 	}
 	if hresult(res) != nil || controller == nil {
-		e.initializationError = fmt.Errorf("creating controller failed with %08x", res)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("creating controller failed with %08x", res))
 		return 0
 	}
 	_, _, _ = controller.vtbl.AddRef.Call(uintptr(unsafe.Pointer(controller)))
@@ -395,8 +404,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		if err == nil {
 			err = errors.New("controller returned an empty WebView")
 		}
-		e.initializationError = fmt.Errorf("get WebView: %w", err)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("get WebView: %w", err))
 		return 0
 	}
 	result, _, _ = e.webview.vtbl.AddWebMessageReceived.Call(
@@ -405,8 +413,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		uintptr(unsafe.Pointer(&e.webMessageToken)),
 	)
 	if err := hresult(result); err != nil {
-		e.initializationError = fmt.Errorf("register WebMessage policy: %w", err)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("register WebMessage policy: %w", err))
 		return 0
 	}
 	e.webMessageRegistered = true
@@ -416,8 +423,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		uintptr(unsafe.Pointer(&e.permissionToken)),
 	)
 	if err := hresult(result); err != nil {
-		e.initializationError = fmt.Errorf("register permission policy: %w", err)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("register permission policy: %w", err))
 		return 0
 	}
 	e.permissionRegistered = true
@@ -427,8 +433,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		uintptr(unsafe.Pointer(&e.webResourceToken)),
 	)
 	if err := hresult(result); err != nil {
-		e.initializationError = fmt.Errorf("register WebResource handler: %w", err)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("register WebResource handler: %w", err))
 		return 0
 	}
 	e.webResourceRegistered = true
@@ -438,14 +443,12 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		uintptr(unsafe.Pointer(&e.navigationCompletedToken)),
 	)
 	if err := hresult(result); err != nil {
-		e.initializationError = fmt.Errorf("register navigation completion: %w", err)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("register navigation completion: %w", err))
 		return 0
 	}
 	e.navigationCompletedRegistered = true
 	if err := e.controller.AddAcceleratorKeyPressed(e.acceleratorKeyPressed, &e.acceleratorToken); err != nil {
-		e.initializationError = fmt.Errorf("register accelerator handler: %w", err)
-		atomic.StoreUintptr(&e.inited, 1)
+		e.completeInitialization(fmt.Errorf("register accelerator handler: %w", err))
 		return 0
 	}
 	e.acceleratorRegistered = true
@@ -459,7 +462,7 @@ func (e *Chromium) CreateCoreWebView2ControllerCompleted(res uintptr, controller
 		return 0
 	}
 
-	atomic.StoreUintptr(&e.inited, 1)
+	e.completeInitialization(nil)
 
 	if e.focusOnInit {
 		e.Focus()

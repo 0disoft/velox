@@ -8,6 +8,18 @@ import (
 	"testing"
 )
 
+func TestInitializationCompletionPreservesPolicyFailure(t *testing.T) {
+	failure := errors.New("mandatory policy registration failed")
+	e := &Chromium{initializationError: failure}
+	e.completeInitialization(nil)
+	if e.InitializationError() != failure || atomic.LoadUintptr(&e.inited) != 1 {
+		t.Fatal("completion erased the earlier policy registration failure")
+	}
+	if e.finishInitialization() || !e.destroyed {
+		t.Fatal("policy failure must still tear down initialization")
+	}
+}
+
 func TestFailedInitializationDoesNotAccessWebView(t *testing.T) {
 	for _, tc := range []struct {
 		name     string

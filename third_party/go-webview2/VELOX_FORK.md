@@ -37,6 +37,8 @@ Velox carries only the changes required by its Windows host boundary:
 - unregister native event handlers during shutdown;
 - reject a zero native window before registering package-owned context;
 - release a partially constructed browser before destroying a failed embed;
+- queue a UI wake message for every asynchronous initialization completion,
+  including failure, so a reentrant callback cannot leave GetMessage blocked;
 - process the native close loop before returning from settings-stage failures;
 - discard queued binding responses after native window shutdown begins;
 - handle ProcessFailed for main-browser exit so later user close can post native
