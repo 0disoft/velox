@@ -15,11 +15,19 @@ import (
 var replaceFile = windows.NewLazySystemDLL("kernel32.dll").NewProc("ReplaceFileW")
 
 func writeSelected(path, text string) (SaveResult, error) {
-	return writeText(path, text, nil)
+	return writeText(path, text, nil, replaceSavedFile)
 }
 
 func writeConnected(path, text string, expected FileVersion) (SaveResult, error) {
-	return writeText(path, text, &expected)
+	return writeText(path, text, &expected, replaceSavedFile)
+}
+
+func replaceSavedFile(path, replacement, backup string) bool {
+	name, _ := windows.UTF16PtrFromString(path)
+	from, _ := windows.UTF16PtrFromString(replacement)
+	toBackup, _ := windows.UTF16PtrFromString(backup)
+	ok, _, _ := replaceFile.Call(uintptr(unsafe.Pointer(name)), uintptr(unsafe.Pointer(from)), uintptr(unsafe.Pointer(toBackup)), 0, 0, 0)
+	return ok != 0
 }
 
 func validateSavePath(path string) error {
@@ -49,7 +57,7 @@ func validateSaveHandle(handle windows.Handle, path string, info *windows.ByHand
 	return err
 }
 
-func writeText(path, text string, expected *FileVersion) (SaveResult, error) {
+func writeText(path, text string, expected *FileVersion, replace func(string, string, string) bool) (SaveResult, error) {
 	if err := ValidateSaveText(text); err != nil {
 		return SaveResult{}, err
 	}
@@ -119,7 +127,6 @@ func writeText(path, text string, expected *FileVersion) (SaveResult, error) {
 	if err := safefs.RejectLinkedComponents(path); err != nil {
 		return SaveResult{}, ErrUnsupported
 	}
-	from, _ := windows.UTF16PtrFromString(tempPath)
 	if exists {
 		// Recheck identity immediately before replacing; do not silently overwrite a changed entry.
 		check, err := windows.CreateFile(name, windows.GENERIC_READ, windows.FILE_SHARE_READ|windows.FILE_SHARE_DELETE, nil, windows.OPEN_EXISTING, windows.FILE_FLAG_OPEN_REPARSE_POINT, 0)
@@ -144,17 +151,17 @@ func writeText(path, text string, expected *FileVersion) (SaveResult, error) {
 		if err := os.Remove(backupPath); err != nil {
 			return SaveResult{}, err
 		}
-		toBackup, _ := windows.UTF16PtrFromString(backupPath)
-		ok, _, _ := replaceFile.Call(uintptr(unsafe.Pointer(name)), uintptr(unsafe.Pointer(from)), uintptr(unsafe.Pointer(toBackup)), 0, 0, 0)
-		if ok == 0 {
+		if !replace(path, tempPath, backupPath) {
 			retain = true
 			return SaveResult{}, ErrRecovery
 		}
-		if err := os.Remove(backupPath); err != nil {
+		if err := discardSaveBackup(backupPath, handle, original); err != nil {
+			retain = true
 			return SaveResult{}, ErrRecovery
 		}
 	} else {
 		// No REPLACE_EXISTING: a file appearing after selection must not be overwritten.
+		from, _ := windows.UTF16PtrFromString(tempPath)
 		if err := windows.MoveFileEx(from, name, windows.MOVEFILE_WRITE_THROUGH); err != nil {
 			return SaveResult{}, err
 		}

@@ -411,6 +411,18 @@ backup cleanup failed: keep editor text and inspect recovery files in the chosen
 folder. The target may already contain the new text. Crash or power-loss
 atomicity and same-user adversarial path replacement are not guaranteed.
 
+Source backup-cleanup correction (2026-10-28): after successful replacement,
+the backup's identity must match the still-open original handle after rename;
+size, last-write time, attributes and link count must match the pre-save
+snapshot. Comparing live handles avoids relying on a pre-rename FAT file ID.
+The backup handle denies concurrent rename/delete opens, and cleanup marks
+that verified handle for deletion rather than deleting a pathname that could
+be rebound. A different file moved into place after preflight is retained in the
+backup and the operation returns the existing `SAVE_RECOVERY_REQUIRED` error;
+the newly written text can already be at the selected path. Backup verification
+reads metadata only. This narrows recovery-data loss during concurrent
+replacement; it does not provide a filesystem transaction or automatic restore.
+
 ### Document-Scoped Save
 
 ADR 0027 provides an explicit alternative to per-call selection:

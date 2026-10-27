@@ -1,5 +1,33 @@
 # Validation
 
+Native save backup ownership (2026-10-28): successful ReplaceFile no longer
+implies that its backup is safe to discard. Cleanup compares the backup with
+the still-open original handle after rename and checks pre-save size, last-write
+time, attributes and link count. The backup handle denies other rename/delete
+opens; deletion is marked on that verified handle. A mismatch retains recovery
+data and returns the existing SAVE_RECOVERY_REQUIRED response. Public save
+signatures, IPC schema and permission checks are unchanged.
+
+The initial native regression failed before the fix: after the final identity
+check, a different file was moved into place, the real ReplaceFile backed it
+up, then cleanup deleted its only remaining contents and returned success.
+The final stronger fixture matches original size and timestamp; the external
+8-byte text and incoming 12-byte text are both retained after the fix.
+Pure comparison tests cover post-rename ID changes, differing live identities,
+changed sizes and changed timestamps. Live-handle comparison accommodates
+FAT's documented rename-dependent IDs; no actual FAT device was exercised.
+Normal new-file/overwrite saves, empty and 2 MiB UTF-8 content, restricted DACLs
+and short-path compatibility pass existing native tests. Backup verification
+adds no content read. These are native filesystem tests in temporary folders,
+not a GUI editor or power-loss test. Complete adversarial path atomicity and
+automatic restoration remain outside this change.
+`go test ./internal/fileopen ./internal/ipc -count=1`,
+`go test ./... github.com/jchv/go-webview2/...`,
+`go vet ./... github.com/jchv/go-webview2/...` and `git diff --check` passed
+using the existing isolated Go cache. The IPC architecture contract was
+updated. No external API, DB, dependency, version, runner or repository hygiene
+change; recovery backups intentionally remain on conflict. No push or release.
+
 Installer operation lease (2026-10-28): install and removal now share a
 per-user/root/app operation lease, acquired before installed ownership is read
 or target state is checked. Windows uses a Global named kernel object whose
