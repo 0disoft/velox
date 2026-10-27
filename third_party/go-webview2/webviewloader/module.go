@@ -51,6 +51,12 @@ func CompareBrowserVersions(v1 string, v2 string) (int, error) {
 // GetInstalledVersion returns the installed version of the webview2 runtime.
 // If there is no version installed, a blank string is returned.
 func GetInstalledVersion() (string, error) {
+	return GetAvailableVersion("")
+}
+
+// GetAvailableVersion queries the loader using the same folder as environment
+// creation. Loader environment/policy overrides still take precedence.
+func GetAvailableVersion(browserExecutableFolder string) (string, error) {
 	// GetAvailableCoreWebView2BrowserVersionString is documented as:
 	//	public STDAPI GetAvailableCoreWebView2BrowserVersionString(PCWSTR browserExecutableFolder, LPWSTR * versionInfo)
 	// where winnt.h defines STDAPI as:
@@ -62,9 +68,17 @@ func GetInstalledVersion() (string, error) {
 	if err := loadFromMemory(); err != nil {
 		return "", err
 	}
+	var folder *uint16
+	if browserExecutableFolder != "" {
+		var err error
+		folder, err = windows.UTF16PtrFromString(browserExecutableFolder)
+		if err != nil {
+			return "", err
+		}
+	}
 	var result *uint16
 	hr64, _, _ := memGetAvailableCoreWebView2BrowserVersionString.Call(
-		0, uint64(uintptr(unsafe.Pointer(&result))))
+		uint64(uintptr(unsafe.Pointer(folder))), uint64(uintptr(unsafe.Pointer(&result))))
 	hr := uintptr(hr64)
 	defer windows.CoTaskMemFree(unsafe.Pointer(result)) // Safe even if result is nil
 	if hr != uintptr(windows.S_OK) {

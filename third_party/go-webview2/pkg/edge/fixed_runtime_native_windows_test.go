@@ -11,6 +11,7 @@ import (
 	"unsafe"
 
 	"github.com/jchv/go-webview2/internal/w32"
+	"github.com/jchv/go-webview2/webviewloader"
 	"golang.org/x/sys/windows"
 )
 
@@ -25,6 +26,10 @@ func TestNativeFixedRuntimeCompatibility(t *testing.T) {
 	expectedSettings := os.Getenv("VELOX_NATIVE_FIXED_SETTINGS8")
 	if expectedVersion == "" || expectedSettings != "available" && expectedSettings != "unavailable" {
 		t.Fatal("fixed runtime requires an expected version and available/unavailable Settings8 expectation")
+	}
+	selectedVersion, err := webviewloader.GetAvailableVersion(folder)
+	if err != nil || selectedVersion != expectedVersion {
+		t.Fatalf("loader-selected version=%q, want %q: %v", selectedVersion, expectedVersion, err)
 	}
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
