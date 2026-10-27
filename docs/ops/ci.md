@@ -130,7 +130,7 @@ without recompression because it is already compressed.
 
 Clarissimi is the single deliberate moving third-party Action. The contributor
 recognition workflow follows the maintainer-promoted
-`0disoft/clarissimi@v0` channel so fixes arrive without a repository edit. Its
+`0disoft/clarissimi@v1` channel so fixes arrive without a repository edit. Its
 pre-merge decision job is read-only and advisory by default. Merged pull
 requests create only a review draft, and promotion creates a second pull
 request after maintainer approval. The proposal jobs persist checkout
