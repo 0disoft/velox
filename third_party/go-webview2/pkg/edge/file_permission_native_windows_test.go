@@ -102,7 +102,7 @@ func seedNativeFileDenial(t *testing.T, e *Chromium, origin string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer releaseIUnknown(uintptr(unsafe.Pointer(profile)))
+	defer releaseIUnknown(unsafe.Pointer(profile))
 	completed := false
 	var failure error
 	vtbl := &struct {

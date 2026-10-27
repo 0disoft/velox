@@ -15,8 +15,9 @@ var (
 	kernel32                   = windows.NewLazySystemDLL("kernel32")
 	Kernel32GetCurrentThreadID = kernel32.NewProc("GetCurrentThreadId")
 
-	shlwapi                  = windows.NewLazySystemDLL("shlwapi")
-	shlwapiSHCreateMemStream = shlwapi.NewProc("SHCreateMemStream")
+	shlwapi                      = windows.NewLazySystemDLL("shlwapi")
+	shlwapiSHCreateMemStream     = shlwapi.NewProc("SHCreateMemStream")
+	shlwapiIUnknownAtomicRelease = shlwapi.NewProc("IUnknown_AtomicRelease")
 
 	user32                   = windows.NewLazySystemDLL("user32")
 	User32LoadImageW         = user32.NewProc("LoadImageW")
@@ -212,4 +213,10 @@ func SHCreateMemStream(data []byte) (uintptr, error) {
 	}
 
 	return ret, nil
+}
+
+// ReleaseNativeIUnknown releases and clears an interface address returned by
+// Windows. Go-owned COM implementations must instead retain a typed pointer.
+func ReleaseNativeIUnknown(object *uintptr) {
+	shlwapiIUnknownAtomicRelease.Call(uintptr(unsafe.Pointer(object)))
 }

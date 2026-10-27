@@ -47,7 +47,7 @@ func (e *Chromium) finishFilePermission(state CoreWebView2PermissionState, err e
 		return
 	}
 	e.filePermissionOperation = nil
-	releaseIUnknown(uintptr(unsafe.Pointer(op.profile)))
+	releaseIUnknown(unsafe.Pointer(op.profile))
 	if notify && !e.destroyed {
 		op.done(state, err)
 	}

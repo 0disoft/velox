@@ -50,7 +50,7 @@ func getFilePermissionProfile(view *ICoreWebView2) (*filePermissionProfile, erro
 	if getter == nil {
 		return nil, errors.New("WebView2 profile interface is unavailable")
 	}
-	defer releaseIUnknown(uintptr(unsafe.Pointer(getter)))
+	defer releaseIUnknown(unsafe.Pointer(getter))
 	var profile *iUnknown
 	hr, _, _ = getter.vtbl.GetProfile.Call(uintptr(unsafe.Pointer(getter)), uintptr(unsafe.Pointer(&profile)))
 	if err := hresult(hr); err != nil {
@@ -59,7 +59,7 @@ func getFilePermissionProfile(view *ICoreWebView2) (*filePermissionProfile, erro
 	if profile == nil {
 		return nil, errors.New("WebView2 profile is unavailable")
 	}
-	defer releaseIUnknown(uintptr(unsafe.Pointer(profile)))
+	defer releaseIUnknown(unsafe.Pointer(profile))
 	var result *filePermissionProfile
 	iid = NewGUID("8F4AE680-192E-4EC8-833A-21CFADAEF628")
 	hr, _, _ = profile.vtbl.QueryInterface.Call(uintptr(unsafe.Pointer(profile)), uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(&result)))
@@ -112,7 +112,7 @@ func readFilePermission(collection *permissionCollection, origin string) (CoreWe
 			return 0, errors.New("permission setting is missing")
 		}
 		kind, uri, value, err := readPermissionSetting(item)
-		releaseIUnknown(uintptr(unsafe.Pointer(item)))
+		releaseIUnknown(unsafe.Pointer(item))
 		if err != nil {
 			return 0, err
 		}
