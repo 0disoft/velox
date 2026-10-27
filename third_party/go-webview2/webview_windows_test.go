@@ -189,3 +189,35 @@ func TestConfigureSettingsReleasesReferenceOnFailure(t *testing.T) {
 var _ browser = (*bindingResponseBrowser)(nil)
 var _ browserSettings = (*settingsProbe)(nil)
 var _ destroyRunner = (*destroyRunnerProbe)(nil)
+
+func TestReputationBypassRequiresClosedLocalContentPolicy(t *testing.T) {
+	if err := validateReputationPolicy(WebViewOptions{}); err != nil {
+		t.Fatal("default caller changed:", err)
+	}
+	closed := WebViewOptions{
+		DisableReputationChecking: true,
+		NavigationAllowed:         func(string) bool { return false },
+		DenyFrames:                true, DenyNewWindows: true, DenyDownloads: true,
+	}
+	if err := validateReputationPolicy(closed); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"navigation", "frames", "popups", "downloads"} {
+		t.Run(name, func(t *testing.T) {
+			options := closed
+			switch name {
+			case "navigation":
+				options.NavigationAllowed = nil
+			case "frames":
+				options.DenyFrames = false
+			case "popups":
+				options.DenyNewWindows = false
+			case "downloads":
+				options.DenyDownloads = false
+			}
+			if err := validateReputationPolicy(options); err == nil {
+				t.Fatal("open policy accepted reputation bypass")
+			}
+		})
+	}
+}

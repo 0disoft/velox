@@ -103,9 +103,12 @@ func openWithProfilePath(config Config, onReady ReadyHandler, prepare func(strin
 		DenyFrames:     true,
 		DenyNewWindows: true,
 		DenyDownloads:  true,
-		PolicyBlocked:  config.PolicyBlocked,
-		StartupPhase:   config.StartupPhase,
-		ShutdownPhase:  config.ShutdownPhase,
+		// Only the app-specific virtual HTTPS origin can navigate. SmartScreen
+		// network work for these local assets otherwise delays profile shutdown.
+		DisableReputationChecking: true,
+		PolicyBlocked:             config.PolicyBlocked,
+		StartupPhase:              config.StartupPhase,
+		ShutdownPhase:             config.ShutdownPhase,
 		WindowOptions: webview.WindowOptions{
 			IconId:     1,
 			Title:      config.Title,

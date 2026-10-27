@@ -140,6 +140,12 @@ type WebViewOptions struct {
 	// DenyDownloads cancels every download and hides the download UI.
 	DenyDownloads bool
 
+	// DisableReputationChecking skips SmartScreen only for local app content.
+	// Callers must enforce a local-only NavigationAllowed callback and deny
+	// frames, popups and downloads. False preserves the WebView2 default.
+	// Older runtimes without Settings8 keep reputation checking enabled.
+	DisableReputationChecking bool
+
 	// PolicyBlocked observes a blocked policy kind without receiving URLs or
 	// message contents. It is intended for conformance instrumentation.
 	PolicyBlocked func(kind string)
@@ -186,6 +192,9 @@ func NewWithOptions(options WebViewOptions) WebView {
 
 // NewWithOptionsAndError distinguishes an early user close from initialization failure.
 func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
+	if err := validateReputationPolicy(options); err != nil {
+		return nil, err
+	}
 	w := &webview{}
 	w.bindings = map[string]interface{}{}
 	w.autofocus = options.AutoFocus
@@ -234,6 +243,13 @@ func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 		destroyBeforeReturn(w)
 		return nil, err
 	}
+	if options.DisableReputationChecking {
+		if _, err := settings.SetReputationCheckingRequired(false); err != nil {
+			settings.Release()
+			destroyBeforeReturn(w)
+			return nil, err
+		}
+	}
 	if err := configureSettings(settings, options.Debug); err != nil {
 		destroyBeforeReturn(w)
 		return nil, err
@@ -245,6 +261,13 @@ func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 	w.closeConsentReady = true
 
 	return w, nil
+}
+
+func validateReputationPolicy(options WebViewOptions) error {
+	if options.DisableReputationChecking && (options.NavigationAllowed == nil || !options.DenyFrames || !options.DenyNewWindows || !options.DenyDownloads) {
+		return errors.New("disabling reputation checking requires local-only navigation and denied frames, popups and downloads")
+	}
+	return nil
 }
 
 type rpcMessage struct {
