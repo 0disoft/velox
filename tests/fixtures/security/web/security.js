@@ -79,9 +79,15 @@ async function exercisePolicies() {
   document.body.append(download);
   download.click();
 
-  if (typeof Notification !== "undefined") {
-    Notification.requestPermission().catch(() => {});
-  }
+  // Older WebView2 versions can deny notifications without PermissionRequested.
+  // Wait for a baseline permission request before navigation can cancel it.
+  await new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      () => reject(new Error("geolocation permission was granted")),
+      error => error.code === 1 ? resolve() : reject(new Error("geolocation denial was not confirmed")),
+      { timeout: 3000 },
+    );
+  });
 
   window.location.href = "https://example.invalid/blocked";
 }

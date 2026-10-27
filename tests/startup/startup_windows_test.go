@@ -1,6 +1,7 @@
 package startup_test
 
 import (
+	"context"
 	"debug/pe"
 	"encoding/json"
 	"errors"
@@ -235,11 +236,16 @@ func requiredExecutable(t *testing.T, environment string) string {
 func testUnavailableRuntime(t *testing.T, host hostAdapter, missingRuntime string) {
 	t.Helper()
 	profile := filepath.Join(t.TempDir(), "profile")
-	cmd := exec.Command(host.executable, host.arguments(profile)...)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, host.executable, host.arguments(profile)...)
+	cmd.WaitDelay = 2 * time.Second
 	cmd.Env = append(os.Environ(),
 		append(host.environment(profile),
 			"VELOX_BENCH_MODE=1",
 			"VELOX_BENCH_WEBVIEW2_BROWSER_DIR="+missingRuntime,
+			// The loader environment overrides the explicit folder argument.
+			"WEBVIEW2_BROWSER_EXECUTABLE_FOLDER="+missingRuntime,
 		)...,
 	)
 	output, err := cmd.CombinedOutput()

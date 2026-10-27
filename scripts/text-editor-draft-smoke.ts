@@ -23,8 +23,9 @@ const init = spawnSync(cli, ["init", project, "--template", "text-editor", "--js
 if (init.status !== 0 || !JSON.parse(init.stdout).ok) throw Error("Init failed");
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const text = "\ud55c\uae00 draft\nVelox recovery test";
-type Message = { id?: number; method?: string; error?: { message: string }; result?: { result?: { value?: any } } };
-const results: { mode: string; passed: boolean; closeExitCode?: number | null; cleanupExitCode?: number | null; error?: string }[] = [];
+const expectedBrowserVersion = process.env.VELOX_DRAFT_EXPECT_BROWSER_VERSION;
+type Message = { id?: number; method?: string; error?: { message: string }; result?: { product?: string; result?: { value?: any } } };
+const results: { mode: string; passed: boolean; browserProduct?: string; diagnostics?: unknown; closeExitCode?: number | null; cleanupExitCode?: number | null; error?: string }[] = [];
 for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
   const server = createServer();
   await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -41,6 +42,7 @@ for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
   let output = "", ws: WebSocket | undefined, nextID = 0;
   for (const stream of [child.stdout, child.stderr]) stream.on("data", bytes => { output = (output + bytes.toString()).slice(-32768); });
   const result: typeof results[number] = { mode, passed: false };
+  let inspectFailure: (() => Promise<unknown>) | undefined;
   const pending = new Map<number, (message: Message) => void>();
   try {
     let target: { webSocketDebuggerUrl: string } | undefined;
@@ -71,7 +73,23 @@ for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
       if (message.method === "Page.javascriptDialogOpening") void call("Page.handleJavaScriptDialog", { accept: true }).catch(() => {});
       if (message.id && pending.has(message.id)) { pending.get(message.id)!(message); pending.delete(message.id); }
     };
+    result.browserProduct = (await call("Browser.getVersion")).result?.product;
+    if (!result.browserProduct || (expectedBrowserVersion && !result.browserProduct.endsWith("/" + expectedBrowserVersion))) {
+      throw Error("Browser version mismatch: " + result.browserProduct + ", expected " + expectedBrowserVersion);
+    }
     const evaluate = async (expression: string) => (await call("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true })).result?.result?.value;
+    inspectFailure = () => evaluate(`(async () => ({
+      secureContext: isSecureContext, origin: location.origin,
+      readOnly: document.querySelector('#editor')?.readOnly,
+      storage: await new Promise(resolve => {
+        try {
+          const request = indexedDB.open('velox.text-editor', 1);
+          request.onerror = () => resolve({name: request.error?.name, message: request.error?.message});
+          request.onblocked = () => resolve({name: 'blocked'});
+          request.onsuccess = () => { request.result.close(); resolve({name: 'available'}); };
+        } catch (error) { resolve({name: error.name, message: error.message}); }
+      })
+    }))()`);
     async function until(expression: string) {
       const deadline = Date.now() + 8000;
       while (Date.now() < deadline) {
@@ -84,12 +102,16 @@ for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
     await call("Page.enable");
     if (mode === "write") {
       await until('document.querySelector("#editor") && !document.querySelector("#editor").readOnly');
+      await call("Page.bringToFront");
       await evaluate('document.querySelector("#editor").focus()');
       await call("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 250, button: "left", clickCount: 1 });
       await call("Input.dispatchMouseEvent", { type: "mouseReleased", x: 200, y: 250, button: "left", clickCount: 1 });
       await until('document.visibilityState === "visible" && document.hasFocus() && document.activeElement?.id === "editor"');
       await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
-      await call("Input.insertText", { text });
+      // Character events work on older CDP versions that drop bulk insertText.
+      for (const character of text) {
+        await call("Input.dispatchKeyEvent", { type: "char", text: character === "\n" ? "\r" : character });
+      }
       await until('document.querySelector("#editor").value===' + JSON.stringify(text));
       await until('document.querySelector("#draft-state").textContent === "Draft stored"');
       const valid = await evaluate('(async()=>{const d=await window.EditorDrafts.load();return d.text===' + JSON.stringify(text) + '&&Object.keys(d).sort().join(",")==="name,schemaVersion,text,updatedAt"})()');
@@ -114,7 +136,10 @@ for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
     result.closeExitCode = child.exitCode;
     if (child.exitCode !== 0 || !JSON.parse(output).ok) throw Error("Host did not close with one successful envelope");
     result.passed = true;
-  } catch (error) { result.error = error instanceof Error ? error.message : String(error); }
+  } catch (error) {
+    result.error = error instanceof Error ? error.message : String(error);
+    try { result.diagnostics = await inspectFailure?.(); } catch {}
+  }
   finally {
     ws?.close();
     if (child.pid && child.exitCode === null) {
@@ -126,7 +151,7 @@ for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
   }
   if (!result.passed) break;
 }
-const receipt = { version: manifest.releaseVersion, hashes, results, passed: results.length === 3 && results.every(result => result.passed) };
+const receipt = { version: manifest.releaseVersion, hashes, expectedBrowserVersion, results, passed: results.length === 3 && results.every(result => result.passed) };
 await writeFile(join(work, "result.json"), JSON.stringify(receipt, null, 2));
 console.log(JSON.stringify(receipt));
 console.log("draft-evidence=" + join(work, "result.json"));
