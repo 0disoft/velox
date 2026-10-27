@@ -48,10 +48,15 @@ func TestNativeFixedRuntimeCompatibility(t *testing.T) {
 	e.DataPath = filepath.Join(t.TempDir(), "profile")
 	e.BrowserExecutableFolder = folder
 	e.DenyFrames, e.DenyNewWindows, e.DenyDownloads = true, true, true
+	e.DisableReputationChecking = os.Getenv("VELOX_NATIVE_FIXED_REPUTATION_OFF") == "1"
 	e.NavigationAllowed = func(uri string) bool { return strings.HasPrefix(uri, "https://fixture.app.invalid/") }
 	defer e.Destroy()
 	if !e.Embed(window) {
 		t.Fatalf("initialize selected runtime: %v", e.InitializationError())
+	}
+	wantLegacy := e.DisableReputationChecking && needsLegacyReputationOption(expectedVersion)
+	if gotLegacy := e.environmentOptions.strings[0] == legacyReputationArgument; gotLegacy != wantLegacy {
+		t.Fatalf("legacy environment option=%v, want %v", gotLegacy, wantLegacy)
 	}
 	pid, err := e.BrowserProcessID()
 	if err != nil {
@@ -67,6 +72,9 @@ func TestNativeFixedRuntimeCompatibility(t *testing.T) {
 		state, err := windows.WaitForSingleObject(browser, 10000)
 		if err != nil || state != windows.WAIT_OBJECT_0 {
 			t.Errorf("selected browser did not exit: state=%x error=%v", state, err)
+		}
+		if refs := callbackReferenceCount(e); refs != 0 {
+			t.Errorf("native interfaces retained callback owner after shutdown: %d", refs)
 		}
 	}()
 	var image [32768]uint16
@@ -107,5 +115,5 @@ func TestNativeFixedRuntimeCompatibility(t *testing.T) {
 	if err != nil || supported != (expectedSettings == "available") {
 		t.Fatalf("Settings8: supported=%v expected=%s error=%v", supported, expectedSettings, err)
 	}
-	t.Logf("selected runtime verified: version=%s executable=%s Settings8=%v", actualVersion, actual, supported)
+	t.Logf("selected runtime verified: version=%s executable=%s Settings8=%v legacyReputationOption=%v", actualVersion, actual, supported, wantLegacy)
 }

@@ -38,6 +38,7 @@ func (e *Chromium) callbackPointers() []unsafe.Pointer {
 		unsafe.Pointer(e.processFailed),
 		unsafe.Pointer(e.filePermissionRead),
 		unsafe.Pointer(e.filePermissionSet),
+		unsafe.Pointer(e.environmentOptions),
 	}
 }
 

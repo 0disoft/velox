@@ -53,11 +53,11 @@ const (
 	CoreWebView2PermissionStateDeny
 )
 
-func createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, userDataFolder *uint16, environmentOptions uintptr, environmentCompletedHandle *iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler) (uintptr, error) {
+func createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, userDataFolder *uint16, options *environmentOptions, environmentCompletedHandle *iCoreWebView2CreateCoreWebView2EnvironmentCompletedHandler) (uintptr, error) {
 	return webviewloader.CreateCoreWebView2EnvironmentWithOptions(
 		browserExecutableFolder,
 		userDataFolder,
-		environmentOptions,
+		uintptr(unsafe.Pointer(options)),
 		uintptr(unsafe.Pointer(environmentCompletedHandle)),
 	)
 }

@@ -64,11 +64,13 @@ type Chromium struct {
 	initializationError           error
 	destroyed                     bool
 
-	environment *ICoreWebView2Environment
+	environment        *ICoreWebView2Environment
+	environmentOptions *environmentOptions
 
 	// Settings
-	DataPath                string
-	BrowserExecutableFolder string
+	DataPath                  string
+	BrowserExecutableFolder   string
+	DisableReputationChecking bool
 
 	// permissions
 	permissions      map[CoreWebView2PermissionKind]CoreWebView2PermissionState
@@ -104,6 +106,7 @@ type WebResourceRequestHandler func(uri string) (WebResourceResponse, bool)
 
 func NewChromium() *Chromium {
 	e := &Chromium{}
+	e.environmentOptions = &environmentOptions{vtbl: &environmentOptionsCallbacks, impl: e}
 	e.filePermissionRead = &filePermissionHandler{&filePermissionReadVtbl, e, filePermissionReadIID}
 	e.filePermissionSet = &filePermissionHandler{&filePermissionSetVtbl, e, filePermissionSetIID}
 	// Embed pins the native-visible callback graph before publishing any pointer.
@@ -153,7 +156,8 @@ func (e *Chromium) Embed(hwnd uintptr) bool {
 	if !e.retainCallbackOwner() {
 		return false
 	}
-	res, err := createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, windows.StringToUTF16Ptr(dataPath), 0, e.envCompleted)
+	options := e.legacyReputationOptions()
+	res, err := createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, windows.StringToUTF16Ptr(dataPath), options, e.envCompleted)
 	if err != nil {
 		log.Printf("Error calling Webview2Loader: %v", err)
 		e.Destroy()

@@ -143,7 +143,8 @@ type WebViewOptions struct {
 	// DisableReputationChecking skips SmartScreen only for local app content.
 	// Callers must enforce a local-only NavigationAllowed callback and deny
 	// frames, popups and downloads. False preserves the WebView2 default.
-	// Older runtimes without Settings8 keep reputation checking enabled.
+	// Runtimes 92-111 use a creation-time option; newer runtimes use Settings8.
+	// Unknown versions retain reputation checking when Settings8 is unavailable.
 	DisableReputationChecking bool
 
 	// PolicyBlocked observes a blocked policy kind without receiving URLs or
@@ -204,6 +205,7 @@ func NewWithOptionsAndError(options WebViewOptions) (WebView, error) {
 	chromium.MessageCallback = w.msgcb
 	chromium.DataPath = options.DataPath
 	chromium.BrowserExecutableFolder = options.BrowserExecutableFolder
+	chromium.DisableReputationChecking = options.DisableReputationChecking
 	chromium.MessageSourceAllowed = options.MessageSourceAllowed
 	chromium.MaxWebMessageBytes = options.MaxWebMessageBytes
 	chromium.NavigationAllowed = options.NavigationAllowed
