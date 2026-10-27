@@ -37,8 +37,41 @@ func TestBrowserDataPath(t *testing.T) {
 	}
 }
 
-func TestPrepareProfilePathKeepsExistingShortPaths(t *testing.T) {
-	for _, path := range []string{`C:\profile`, `C:\` + strings.Repeat("a", maxProfileLinkPath-7), `\\server\share\` + strings.Repeat("a", 180)} {
+func TestPrepareProfilePathUsesLegacyCompatibleLocalSpelling(t *testing.T) {
+	root, err := os.MkdirTemp("", "vps-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if filepath.Dir(root) != filepath.Clean(os.TempDir()) || !strings.HasPrefix(filepath.Base(root), "vps-") {
+			t.Error("unsafe profile fixture cleanup path")
+			return
+		}
+		if err := os.RemoveAll(root); err != nil {
+			t.Error(err)
+		}
+	})
+	for _, path := range []string{root, filepath.Join(root, "한글"), filepath.Join(root, strings.Repeat("a", maxProfileLinkPath-len(root)-5))} {
+		if err := os.MkdirAll(path, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		got, lease, err := prepareProfilePath(path, browserDataPath, func() (string, error) {
+			t.Fatal("short local profile must not prepare another directory")
+			return "", nil
+		})
+		if err != nil || lease != nil || got != filepath.Clean(path) {
+			t.Fatalf("legacy browser spelling = %q, want %q; lease=%v error=%v", got, filepath.Clean(path), lease, err)
+		}
+		original, _ := os.Stat(browserDataPath(path))
+		selected, err := os.Stat(got)
+		if err != nil || !os.SameFile(original, selected) {
+			t.Fatalf("profile directory changed: %v", err)
+		}
+	}
+}
+
+func TestPrepareProfilePathKeepsUnsupportedPaths(t *testing.T) {
+	for _, path := range []string{`\\server\share\profile`, `\\.\C:\profile`, `\\server\share\` + strings.Repeat("a", 180)} {
 		got, lease, err := prepareProfilePath(path, browserDataPath, func() (string, error) {
 			t.Fatal("an existing short or remote path must not prepare a link root")
 			return "", nil
@@ -65,6 +98,9 @@ func TestPrepareProfilePathUsesSameDirectoryAndReleasesLease(t *testing.T) {
 		t.Fatalf("prepare long profile: %v", err)
 	}
 	defer lease.Close()
+	if strings.HasPrefix(path, `\\?\`) {
+		t.Fatal("short pinned link retained the IndexedDB-incompatible prefix")
+	}
 	original, err := os.Stat(profile)
 	if err != nil {
 		t.Fatal(err)

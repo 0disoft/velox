@@ -68,7 +68,7 @@ func prepareProfilePath(profile string, resolve func(string) string, cacheDir fu
 	// Keep the existing path for short profiles and unsupported drive types.
 	// The budget reserves room for Chromium's nested storage filenames.
 	if len(spelling)-1 <= maxProfileLinkPath {
-		return path, nil, nil
+		return shortBrowserProfilePath(path), nil, nil
 	}
 	if _, err := localProfilePath(profile); err != nil {
 		return path, nil, nil
@@ -83,5 +83,25 @@ func prepareProfilePath(profile string, resolve func(string) string, cacheDir fu
 		// browser profile. Do not expose paths or native errors in startup output.
 		return "", nil, ErrProfileUnavailable
 	}
-	return link.path, link, nil
+	return shortBrowserProfilePath(link.path), link, nil
+}
+
+// WebView2 92 cannot open IndexedDB with an extended-length profile spelling.
+// The caller has already bounded this path; strip the prefix only after proving
+// the DOS spelling names the same existing directory. Native file operations
+// and the pinned junction lease retain their extended-length paths.
+func shortBrowserProfilePath(path string) string {
+	plain, extended := strings.CutPrefix(path, `\\?\`)
+	if !extended || !filepath.IsAbs(plain) || len(filepath.VolumeName(plain)) != 2 {
+		return path
+	}
+	original, err := os.Stat(path)
+	if err != nil || !original.IsDir() {
+		return path
+	}
+	alias, err := os.Stat(plain)
+	if err != nil || !os.SameFile(original, alias) {
+		return path
+	}
+	return plain
 }

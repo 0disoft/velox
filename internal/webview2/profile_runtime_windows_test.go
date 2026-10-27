@@ -80,7 +80,7 @@ func testRuntimeProfileStorage(t *testing.T, existingDraft, terminate bool) {
 		}
 		defer lease.Close()
 		cleanupSafe = false
-		seeded, exited := runStorageProbeChild(t, profile, lease.path, "production-write")
+		seeded, exited := runStorageProbeChild(t, profile, shortBrowserProfilePath(lease.path), "production-write")
 		cleanupSafe = exited
 		if !exited || seeded.Status != "verified" || seeded.Origin != trustedOrigin("dev.velox.storage-probe") {
 			t.Fatalf("existing dependency-view draft not committed: %+v exited=%v", seeded, exited)
@@ -204,9 +204,11 @@ func TestNativeRuntimeProfileStartupFailureReleasesLease(t *testing.T) {
 	if err := os.WriteFile(entry, []byte("test"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	missingRuntime := filepath.Join(fixture, "missing-runtime")
+	t.Setenv("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", missingRuntime)
 	view, err := openWithProfilePath(Config{Title: "Velox Isolated Startup Failure Probe", AppID: "dev.velox.profile-test", AppVersion: "1",
 		Width: 640, Height: 480, DataPath: profile, AssetRoot: fixture, EntryPath: entry,
-		BrowserExecutableFolder: filepath.Join(fixture, "missing-runtime")}, func(string) error { return nil },
+		BrowserExecutableFolder: missingRuntime}, func(string) error { return nil },
 		func(string) (string, *profileLink, error) { return lease.path, lease, nil })
 	if view != nil {
 		view.Close()
