@@ -79,6 +79,11 @@ func install(source, uninstaller string, env environment) (Result, error) {
 	if err := appidentity.Validate(inspected.App.ID); err != nil {
 		return Result{}, err
 	}
+	release, err := acquireOperation(env.root, inspected.App.ID)
+	if err != nil {
+		return Result{}, err
+	}
+	defer release()
 	target := filepath.Join(env.root, inspected.App.ID)
 	record := Record{SchemaVersion: stateSchema, App: inspected.App, Directory: target}
 	if err := safefs.RejectLinkedComponents(target); err != nil {
@@ -162,6 +167,16 @@ func uninstall(appID string, env environment) (Result, error) {
 	if err := appidentity.Validate(appID); err != nil {
 		return Result{}, err
 	}
+	release, err := acquireOperation(env.root, appID)
+	if err != nil {
+		return Result{}, err
+	}
+	defer release()
+	return uninstallLocked(appID, env)
+}
+
+// Caller holds the operation lease, including installation rollback.
+func uninstallLocked(appID string, env environment) (Result, error) {
 	target := filepath.Join(env.root, appID)
 	record, err := readState(target, appID)
 	if errors.Is(err, os.ErrNotExist) {

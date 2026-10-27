@@ -1,5 +1,30 @@
 # Validation
 
+Installer operation lease (2026-10-28): install and removal now share a
+per-user/root/app operation lease, acquired before installed ownership is read
+or target state is checked. Windows uses a Global named kernel object whose
+handle lifetime owns the lease; overlapping operations fail immediately.
+Install retains it through rollback and cleanup. Rollback calls the already
+locked removal helper, preserving original ownership and per-file guards.
+
+A deterministic filesystem regression failed before the change: removal A
+read ownership, removal B completed and reinstalled the identical artifact,
+then A resumed and successfully deleted the new installation. It now rejects
+B and preserves the installation. Another test checks install/removal exclusion
+during environment validation and release after that validation fails. A real
+Windows child test verifies process exclusion, case-folded root identity,
+independent apps, idempotent release and reacquisition after forced termination
+without child defers. Existing publication rollback and native registration,
+shortcut, interrupted-process and guarded-removal tests also pass.
+`go test ./internal/installer -count=1`,
+`go test ./... github.com/jchv/go-webview2/...`,
+`go vet ./... github.com/jchv/go-webview2/...` and `git diff --check` passed
+using the existing isolated Go cache. Setup GUI and separate Windows login
+sessions were not exercised. The lock is cooperative: older Setup builds
+without it do not participate. No persistent lock file, external API, DB,
+record schema, dependency, version or runner change. Installer operations and
+CLI contract docs were updated. No push, release or existing app replacement.
+
 Bounded on-disk configuration loading (2026-10-28): manifest, runtime config,
 host metadata and CLI diagnostic location rereads now share configio.ReadFile
 with the existing 1 MiB metadata budget. It checks the opened file's size

@@ -19,6 +19,32 @@ An install does not expand the application runtime. The static-only asset model,
 the closed IPC v1 method table, and the no-consumer-compiler boundary are
 unchanged.
 
+## Operation Serialization
+
+Source-only follow-up (2026-10-28): installation and removal share one operation
+lease per user SID, normalized absolute installation root and application ID.
+Windows uses a named kernel mutex in the Global namespace, with its handle
+lifetime as the lease rather than thread-affine mutex ownership. An overlapping
+operation fails immediately with a retry-after-completion message. Different
+applications remain independent. Install holds the lease through publication,
+rollback and cleanup; removal acquires it before reading the ownership record.
+Rollback reuses the install lease rather than attempting to acquire it again.
+
+This prevents a stale removal from deleting a byte-identical replacement:
+previously A could read ownership, B could remove and reinstall, then A could
+resume and delete B's new installation because paths, sizes and hashes matched.
+The deterministic regression reproduced that deletion in temporary directories.
+A native child-process test also verifies cross-process exclusion, case-folded
+root identity, independent apps and release after forced process termination.
+Installer package tests and full Go tests/vet pass; no actual Setup UI or
+separate Windows login-session run was performed.
+
+The Global namespace design follows Microsoft's
+[kernel object namespace documentation](https://learn.microsoft.com/en-us/windows/win32/termserv/kernel-object-namespaces).
+Only Setup builds containing this lease participate; older binaries do not
+honor it. No persistent lock files, ownership schema or registry values are
+added, and no existing installed application is replaced by this source change.
+
 ## Setup Template
 
 `velox-setup.exe` is a standalone, unsigned, prebuilt Windows x64 GUI

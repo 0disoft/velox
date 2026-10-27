@@ -451,6 +451,10 @@ Source Setup reuses the portable inspection completed during payload extraction
 for its app-name/version messages instead of repeating a full UI-only scan.
 The installer still revalidates the source at entry, checks copied size/hash
 and verifies staging; extraction metadata is not trusted installation authority.
+Source Setup serializes installation and removal for the same user,
+installation root and app ID. Overlapping operations fail immediately and can
+be retried after completion. Installation rollback retains the same operation
+lease. Older Setup binaries without the lease do not participate.
 No option, exit code, JSON, payload or ownership-record format changes. This
 source optimization is not included in public alpha.68 Setup executables.
 
