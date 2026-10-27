@@ -35,7 +35,8 @@ for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
   const child = spawn(cli, ["run", "--config", join(project, "velox.json"), "--json"], {
     cwd: root, env: { ...process.env, VELOX_DATA_DIR: profile,
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: "--remote-debugging-address=127.0.0.1 --remote-debugging-port=" + port },
-    stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
+    // This input smoke needs a visible, focused WebView2 rather than a hidden GUI.
+    stdio: ["ignore", "pipe", "pipe"], windowsHide: false,
   });
   let output = "", ws: WebSocket | undefined, nextID = 0;
   for (const stream of [child.stdout, child.stderr]) stream.on("data", bytes => { output = (output + bytes.toString()).slice(-32768); });
@@ -86,7 +87,10 @@ for (const mode of ["write", "restore-clear", "cleared-relaunch"]) {
       await evaluate('document.querySelector("#editor").focus()');
       await call("Input.dispatchMouseEvent", { type: "mousePressed", x: 200, y: 250, button: "left", clickCount: 1 });
       await call("Input.dispatchMouseEvent", { type: "mouseReleased", x: 200, y: 250, button: "left", clickCount: 1 });
+      await until('document.visibilityState === "visible" && document.hasFocus() && document.activeElement?.id === "editor"');
+      await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
       await call("Input.insertText", { text });
+      await until('document.querySelector("#editor").value===' + JSON.stringify(text));
       await until('document.querySelector("#draft-state").textContent === "Draft stored"');
       const valid = await evaluate('(async()=>{const d=await window.EditorDrafts.load();return d.text===' + JSON.stringify(text) + '&&Object.keys(d).sort().join(",")==="name,schemaVersion,text,updatedAt"})()');
       if (!valid) throw Error("Draft content/authority boundary mismatch");
