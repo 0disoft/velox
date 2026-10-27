@@ -127,7 +127,11 @@ func (e *Chromium) legacyReputationOptions() *environmentOptions {
 	if !e.DisableReputationChecking || e.NavigationAllowed == nil || !e.DenyFrames || !e.DenyNewWindows || !e.DenyDownloads {
 		return nil
 	}
-	version, err := webviewloader.GetAvailableVersion(e.BrowserExecutableFolder)
+	version := e.runtimeTransition.required
+	var err error
+	if version == "" {
+		version, err = webviewloader.GetAvailableVersion(e.BrowserExecutableFolder)
+	}
 	if err != nil || !needsLegacyReputationOption(version) {
 		return nil // Unknown/newer runtimes retain the Settings8/default path.
 	}

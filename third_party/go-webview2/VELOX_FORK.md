@@ -24,6 +24,9 @@ Velox carries only the changes required by its Windows host boundary:
   `E_NOINTERFACE`;
 - allow an explicit fixed-runtime folder for missing-runtime conformance tests;
 - expose the main WebView2 browser process ID for lifecycle measurement;
+- compare the requested runtime with the environment's actual version before
+  creating a controller; pump UI messages and retry a mismatched environment
+  every 100ms for up to 30s, keeping the existing profile and allowing close;
 - expose a phase-only startup observer for benchmark instrumentation without
   changing WebView2 initialization decisions;
 - expose a phase-only shutdown observer around handler removal, controller
@@ -109,6 +112,16 @@ changes, generated bindings, loader changes, and license notices before
 updating the pinned source revision. Native callback objects share an explicit
 `runtime.Pinner` and reference-counted owner; Go collector or pointer-rule
 changes still require a fresh lifetime review before adoption.
+
+Runtime transition selection is refreshed on each retry so Evergreen updates
+during the wait do not strand an obsolete target. Discovery failure at initial
+startup keeps the SDK selection path; during an active transition it retains
+the last known target and original deadline. Rejected environments are borrowed
+COM callback arguments and are never retained or given controllers. The UI-thread
+timer is removed on initialization completion, error, timeout and Destroy; no
+browser is terminated and no profile is reset. Same-version startup adds no wait.
+The opt-in `VELOX_NATIVE_RUNTIME_TRANSITION=1` test exercises native retry, timeout
+(with a shortened test deadline), cancellation, callback drain and profile release.
 
 The maintained fork requires Go 1.26.0 and uses `golang.org/x/sys v0.48.0`,
 aligned with the Velox root module. This dependency refresh preserves the

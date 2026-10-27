@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync/atomic"
+	"time"
 	"unsafe"
 
 	"github.com/jchv/go-webview2/internal/w32"
@@ -66,6 +67,7 @@ type Chromium struct {
 
 	environment        *ICoreWebView2Environment
 	environmentOptions *environmentOptions
+	runtimeTransition  runtimeTransition
 
 	// Settings
 	DataPath                  string
@@ -156,21 +158,42 @@ func (e *Chromium) Embed(hwnd uintptr) bool {
 	if !e.retainCallbackOwner() {
 		return false
 	}
-	options := e.legacyReputationOptions()
-	res, err := createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, windows.StringToUTF16Ptr(dataPath), options, e.envCompleted)
-	if err != nil {
-		log.Printf("Error calling Webview2Loader: %v", err)
-		e.Destroy()
-		return false
-	} else if res != 0 {
-		log.Printf("Result: %08x", res)
+	defer e.stopRuntimeTransitionTimer()
+	create := func() bool {
+		// Resolve again on a retry: Evergreen may update while the old browser
+		// exits. Keep the original transition deadline across those updates.
+		e.prepareRuntimeTransition()
+		options := e.legacyReputationOptions()
+		res, err := createCoreWebView2EnvironmentWithOptions(browserExecutableFolder, windows.StringToUTF16Ptr(dataPath), options, e.envCompleted)
+		if err != nil {
+			e.initializationError = fmt.Errorf("create WebView2 environment: %w", err)
+			return false
+		}
+		if err := hresult(res); err != nil {
+			e.initializationError = fmt.Errorf("create WebView2 environment: %w", err)
+			return false
+		}
+		return true
+	}
+	if !create() {
 		e.Destroy()
 		return false
 	}
 	var msg w32.Msg
 	for {
-		if atomic.LoadUintptr(&e.inited) != 0 {
+		if e.destroyed || atomic.LoadUintptr(&e.inited) != 0 {
 			break
+		}
+		if e.runtimeTransition.expired(time.Now()) {
+			e.initializationError = fmt.Errorf("wait for requested WebView2 runtime %s: %w", e.runtimeTransition.required, windows.ERROR_TIMEOUT)
+			break
+		}
+		if e.runtimeTransition.retryDue(time.Now()) {
+			e.runtimeTransition.retryAt = time.Time{}
+			if !create() {
+				break
+			}
+			continue
 		}
 		r, _, _ := w32.User32GetMessageW.Call(
 			uintptr(unsafe.Pointer(&msg)),
@@ -226,6 +249,7 @@ func (e *Chromium) Destroy() {
 		return
 	}
 	e.destroyed = true
+	e.stopRuntimeTransitionTimer()
 	e.finishFilePermission(0, nil, false)
 	defer e.releaseCallbackOwner()
 	e.markShutdown("chromium-destroy-entered")
@@ -322,6 +346,9 @@ func (e *Chromium) EnvironmentCompleted(res uintptr, env *ICoreWebView2Environme
 	if hresult(res) != nil || env == nil {
 		e.initializationError = fmt.Errorf("creating environment failed with %08x", res)
 		atomic.StoreUintptr(&e.inited, 1)
+		return 0
+	}
+	if !e.acceptsRuntime(env) {
 		return 0
 	}
 	_, _, _ = env.vtbl.AddRef.Call(uintptr(unsafe.Pointer(env)))

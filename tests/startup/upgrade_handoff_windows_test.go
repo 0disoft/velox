@@ -38,16 +38,11 @@ func TestBuiltHostUpgradeHandoff(t *testing.T) {
 		t.Fatal(err)
 	}
 	var runs []hostRun
-	observedExits := make(map[int]time.Time)
 	unobservedStart := false
 	defer func() {
 		cleanupSafe = !unobservedStart
 		for index, run := range runs {
-			exitedAt, observed := observedExits[index]
-			var err error
-			if !observed {
-				exitedAt, err = awaitBrowserExitAt(run, 10*time.Second)
-			}
+			exitedAt, err := awaitBrowserExitAt(run, 10*time.Second)
 			if err != nil {
 				cleanupSafe = false
 				t.Error(err)
@@ -67,9 +62,8 @@ func TestBuiltHostUpgradeHandoff(t *testing.T) {
 		t.Fatal(err)
 	}
 	configPath := filepath.Join(fixture, "velox.runtime.json")
-	waitForPrevious := upgradeRequiresBrowserExit(
-		os.Getenv("VELOX_UPGRADE_PREVIOUS_BROWSER_DIR"), os.Getenv("VELOX_BENCH_WEBVIEW2_BROWSER_DIR"),
-		os.Getenv("VELOX_UPGRADE_PREVIOUS_VERSION"), os.Getenv("VELOX_UPGRADE_NEXT_VERSION"))
+	// Launch immediately after each host exits. Runtime handoff belongs to the
+	// product; a fixture-side browser-exit wait would hide regressions there.
 	for index, executable := range []string{previousPath, nextPath, nextPath} {
 		mode, version := "read", os.Getenv("VELOX_UPGRADE_NEXT_VERSION")
 		if index == 0 {
@@ -126,45 +120,5 @@ func TestBuiltHostUpgradeHandoff(t *testing.T) {
 		if body, err := os.ReadFile(marker); err != nil || string(body) != "original profile" {
 			t.Fatalf("profile marker changed: %q %v", body, err)
 		}
-		if index == 0 && waitForPrevious {
-			// A new environment can attach to the still-running old browser even
-			// when a different fixed folder was selected. Observe its real exit
-			// before changing runtimes; keep same-runtime relaunches immediate.
-			exitedAt, err := awaitBrowserExitAt(run, 10*time.Second)
-			if err != nil {
-				t.Fatal(err)
-			}
-			observedExits[index] = exitedAt
-			t.Logf("runtime-change-browser-exit-wait=%s", exitedAt.Sub(run.HostExitedAt))
-		}
-	}
-}
-
-func upgradeRequiresBrowserExit(previousFolder, nextFolder, previousVersion, nextVersion string) bool {
-	if previousFolder == "" {
-		previousFolder = nextFolder // The old fixture inherits the next folder.
-	}
-	return !strings.EqualFold(filepath.Clean(previousFolder), filepath.Clean(nextFolder)) ||
-		(previousVersion != "" && nextVersion != "" && previousVersion != nextVersion)
-}
-
-func TestUpgradeRuntimeChangeBoundary(t *testing.T) {
-	for _, tc := range []struct {
-		name, previousFolder, nextFolder, previousVersion, nextVersion string
-		wait                                                           bool
-	}{
-		{"same", `C:\runtime111`, `C:\runtime111`, "111", "111", false},
-		{"case-and-clean", `C:\RUNTIME111\.`, `c:\runtime111`, "111", "111", false},
-		{"inherited-folder", "", `C:\runtime111`, "111", "111", false},
-		{"different-folder", `C:\runtime111`, `C:\runtime112`, "111", "112", true},
-		{"default-version-changed", "", "", "111", "112", true},
-		{"fixed-to-default", `C:\runtime111`, "", "111", "155", true},
-		{"unspecified", "", "", "", "", false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := upgradeRequiresBrowserExit(tc.previousFolder, tc.nextFolder, tc.previousVersion, tc.nextVersion); got != tc.wait {
-				t.Fatalf("wait for previous browser = %t, want %t", got, tc.wait)
-			}
-		})
 	}
 }
