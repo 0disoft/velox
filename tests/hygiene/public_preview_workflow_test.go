@@ -185,14 +185,10 @@ func TestAlpha67PublicationKeepsPreparationHistorical(t *testing.T) {
 }
 
 func TestAlpha68PublicationKeepsPreparationHistorical(t *testing.T) {
-	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
-	if !strings.Contains(version, `const Version = "0.5.10-alpha.68"`) {
-		t.Fatal("published source version is not alpha.68")
-	}
 	for _, relative := range []string{"README.md", "docs/ops/product-readiness.md"} {
 		doc := readNormalized(t, repositoryPath(strings.Split(relative, "/")...))
-		if !strings.Contains(doc, "Source version: `0.5.10-alpha.68` (published unsigned prerelease)") || !strings.Contains(doc, "alpha68-publication.md") {
-			t.Errorf("%s does not identify the published source version and record", relative)
+		if !strings.Contains(doc, "alpha68-publication.md") {
+			t.Errorf("%s does not retain the alpha.68 publication record", relative)
 		}
 	}
 	preparation := readNormalized(t, repositoryPath("docs", "ops", "alpha68-preparation.md"))

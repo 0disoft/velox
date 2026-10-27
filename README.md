@@ -97,7 +97,7 @@ exact downloaded bytes; see
 adds no installer, folder-browser, hosted-verifier, stress or adoption evidence.
 Beta remains held under the product workflow checklist.
 
-Source version: `0.5.10-alpha.68` (published unsigned prerelease).
+Source version: `0.5.10-alpha.69` (unpublished release candidate).
 Public asset identities and scope are in
 [alpha68-publication.md](docs/ops/alpha68-publication.md). Its
 [tag CI](docs/ops/alpha68-tag-evidence.md) skipped publication; the verified

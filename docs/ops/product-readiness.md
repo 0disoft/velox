@@ -4,7 +4,7 @@
 - Decision: ADR 0019
 - Owner: Project maintainer
 - Public preview: `0.5.10-alpha.68` (published unsigned prerelease)
-- Source version: `0.5.10-alpha.68` (published unsigned prerelease)
+- Source version: `0.5.10-alpha.69` (unpublished release candidate)
 
 Alpha.68 publishes template discovery, CLI guidance and text-editor find.
 Tag CI `37628664660/1` passed two independent release builds and basic
