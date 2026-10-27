@@ -46,35 +46,54 @@ Velox carries only the changes required by its Windows host boundary:
 
 ## SmartScreen reputation setting
 
-Microsoft documents `IsReputationCheckingRequired` as a SmartScreen switch
-shared by every WebView using the same user-data folder. It defaults to true,
-a false value applies on the next navigation or download, and another WebView
-that leaves the default in place can reset the shared state to true.
-SmartScreen is documented as help for reported phishing and malware sites and
-download decisions, and as unnecessary overhead for app content. SDK
-1.0.1722.45 places `GetIsReputationCheckingRequired` and
-`PutIsReputationCheckingRequired` at slots 35 and 36 of the
-`ICoreWebView2Settings8` vtable after Settings1-7; the fork uses IID
-`9E6B0E8F-86AD-4E81-8147-A9B5EDB68650`.
+Microsoft documents `IsReputationCheckingRequired` as a SmartScreen switch shared
+by every WebView using the same user-data folder, and defaults it to true. The
+[IsSmartScreenRequired specification](https://github.com/MicrosoftEdge/WebView2Feedback/blob/main/specs/IsSmartScreenRequired.md)
+documents `--disable-features=msSmartScreenProtection` for runtimes that predate
+that property. 111.0.1661.62 is one: `ICoreWebView2Settings8` returns
+`E_NOINTERFACE`, so the runtime-settings path changes nothing there.
 
 `DisableReputationChecking` defaults to false. Enabling it requires
 `NavigationAllowed` to be non-nil and `DenyFrames`, `DenyNewWindows` and
-`DenyDownloads` to be true. The fork checks those fields; the callback itself
-must restrict navigation to app-provided content. The call occurs before the
-first navigation. A successful query releases the Settings8 pointer.
-`E_NOINTERFACE` reports unsupported, leaves SmartScreen enabled and does not
-fail construction. Any other HRESULT becomes an initialization error. The
-initial settings reference is released on both success and failure.
+`DenyDownloads` to be true; `webview.go` validates the same fields. The fork then
+chooses a path from the version the loader reports for the exact
+`BrowserExecutableFolder`:
+
+- 112 and newer, regardless of distribution: query Settings8 from SDK 1.0.1722.45
+  (IID `9E6B0E8F-86AD-4E81-8147-A9B5EDB68650`; get and put at slots 35 and 36 after
+  Settings1-7) and set `IsReputationCheckingRequired` false before the first
+  navigation. `E_NOINTERFACE` leaves SmartScreen enabled and does not fail
+  construction; any other HRESULT becomes an initialization error. Each queried
+  reference is released.
+- 92 through 111: pass the fork's own `ICoreWebView2EnvironmentOptions` object
+  (IID `2FDE08A8-1E9A-4766-8C05-95A9CEB9D1C5`; three `IUnknown` slots plus four
+  SDK 1.0.1722.45 get/put pairs) to
+  `CreateCoreWebView2EnvironmentWithOptions`, with
+  `AdditionalBrowserArguments` set to `--disable-features=msSmartScreenProtection`
+  and `TargetCompatibleBrowserVersion` set to the loader-selected version.
+  A failed or unknown version query leaves the flag off, so unrecognized versions
+  keep default protections.
+
+String getters return `SHStrDupW` task-memory allocations owned by the caller,
+the SSO getter writes a four-byte `BOOL`, and every property validates its
+output pointer with an HRESULT. The object is pinned and reference-counted with
+the native callback owner, so a cancelled initialization still releases it. The
+legacy option exists only at `CreateCoreWebView2EnvironmentWithOptions`: it is
+fixed when the browser starts and has no runtime setter, so it cannot be turned
+back on while that browser survives. Settings8 applies from the next navigation
+or download, and another WebView that leaves the default can reset the shared
+state. Velox enables either path only for the app-specific dedicated profile and
+never mutates process environment variables, the registry, the installed
+Evergreen runtime or machine-wide SmartScreen.
 
 The opt-out covers SmartScreen navigation and download reputation in the
 app-specific profile. Local assets remain untrusted and are not tamper-proof.
 Windows and Edge-wide SmartScreen, TLS validation, antivirus and Authenticode
-warnings are unchanged. No separate subresource protection claim is made.
-Remote navigation or downloads would require a policy review. See
+warnings are unchanged. Remote navigation or downloads would require a policy
+review. See the
 [ICoreWebView2Settings8](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2settings8?view=webview2-1.0.4129.50)
-and the
-[IsSmartScreenRequired specification](https://github.com/MicrosoftEdge/WebView2Feedback/blob/main/specs/IsSmartScreenRequired.md).
-
+reference and the
+[111 relaunch evidence](../../docs/ops/webview2-111-relaunch-20261027.md).
 Pointer audit follow-up (`d265926`, `c7173e6`, `024a678`): COM release retains
 an `unsafe.Pointer` through `runtime.KeepAlive`; native streams use
 `IUnknown_AtomicRelease`. DPI/min-max message payloads use bounded native memory

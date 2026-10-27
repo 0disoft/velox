@@ -63,6 +63,10 @@ SmartScreen-off control was run, so that cause is unproven. Single samples make
 these descriptive only; the product change adds no unsupported flags or browser
 termination.
 
+Follow-up: [111 relaunch investigation](webview2-111-relaunch-20261027.md)
+isolates the delay with an A/B/A experiment and records the guarded legacy
+fix: immediate-relaunch median 7092.05ms to 603.68ms across the recorded samples.
+
 ## Draft recovery
 
 With the final harness all three phases pass on 92, 111, 112 and 155:
