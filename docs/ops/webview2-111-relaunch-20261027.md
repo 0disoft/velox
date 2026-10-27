@@ -96,3 +96,6 @@ The final host is `velox-host-final.exe` (SHA-256
 a clean build of `ef87a4d`. The local bundle reports `0.5.10-alpha.68` and is not a
 published release; `release/velox-windows-x64.zip` is 4,925,586 bytes with SHA-256
 `92e14d672db87162ae49da99dbca4d81a51ad1b1c182747032f11a1f3328be4f`.
+
+Follow-up: [upgrade handoff evidence](webview2-upgrade-handoff-20261028.md) records
+the remaining first-launch wait and profile-preservation checks.
