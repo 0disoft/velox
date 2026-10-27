@@ -228,9 +228,12 @@ Files named without a directory in the table below are under
 | Private bundle assembly | Pass: `cmd/velox-release`; host replaced, CLI and setup reused | `settings8-release.json` |
 | Bundle draft smoke | Pass: `bun scripts/text-editor-draft-smoke.ts`; three stages, no forced exit | `.cache/text-editor-draft-1793106602528/result.json` |
 | Product vet | Pass: `go vet ./internal/webview2 ./tests/startup` exit 0, empty output | `product-vet.log` |
-| Combined vet | **Fail**: exit 1 from eight existing `possible misuse of unsafe.Pointer` warnings in unchanged fork sections | `vet.log` |
+| Combined vet | **Fail at this receipt**: exit 1 from eight existing `possible misuse of unsafe.Pointer` warnings in unchanged fork sections; resolved in the linked follow-up | `vet.log` |
 
-Combined vet is not counted as a pass. Source `go test ./...` ran without
+Combined vet remains a failed historical result. The eight warnings were
+subsequently resolved; see the [pointer audit](native-pointer-audit-20261027.md)
+for checkptr reproduction, the Go source compatibility change and passing vet.
+Source `go test ./...` ran without
 `VELOX_BUILT_HOST`, so the opt-in native built-host cases were skipped there.
 The rebuilt-host `TestBuiltHostStartup` and three-pair lifecycle results above
 come from separate runs with `VELOX_BUILT_HOST` set. These checks are local

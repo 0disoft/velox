@@ -75,6 +75,16 @@ Remote navigation or downloads would require a policy review. See
 and the
 [IsSmartScreenRequired specification](https://github.com/MicrosoftEdge/WebView2Feedback/blob/main/specs/IsSmartScreenRequired.md).
 
+Pointer audit follow-up (`d265926`, `c7173e6`, `024a678`): COM release retains
+an `unsafe.Pointer` through `runtime.KeepAlive`; native streams use
+`IUnknown_AtomicRelease`. DPI/min-max message payloads use bounded native memory
+copies with complete byte-count checks. **Go source compatibility change:**
+`WebView.Window()` returns `uintptr` instead of upstream's `unsafe.Pointer`;
+external Go callers and implementations must adapt. Test strings use typed
+`SHStrDupW` output with the COM task-memory ownership contract. The eight vet
+warnings are resolved; this is not a complete memory-safety finding. See the
+[audit and verification limits](../../docs/ops/native-pointer-audit-20261027.md).
+
 Do not merge upstream changes mechanically. Review COM ownership, public API
 changes, generated bindings, loader changes, and license notices before
 updating the pinned source revision. Native callback objects share an explicit
