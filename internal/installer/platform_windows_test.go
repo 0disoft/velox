@@ -14,7 +14,7 @@ import (
 func TestWindowsInstallShortcutRegistrationAndRemoval(t *testing.T) {
 	source, setup, _ := fixture(t)
 	root := t.TempDir()
-	registryRoot := `Software\VeloxInstallerTests\` + filepath.Base(root) + `\`
+	registryRoot := testRegistrationNamespace(root) + `\`
 	env := windowsEnvironment(filepath.Join(root, "apps"), filepath.Join(root, "menu"), registryRoot)
 	t.Cleanup(func() {
 		_ = registry.DeleteKey(registry.CURRENT_USER, registryRoot+"dev.velox.test")
@@ -57,7 +57,7 @@ func TestWindowsInstallShortcutRegistrationAndRemoval(t *testing.T) {
 func TestWindowsInterruptedAfterShortcutPublication(t *testing.T) {
 	source, setup, _ := fixture(t)
 	root := t.TempDir()
-	registryRoot := `Software\VeloxInstallerTests\` + filepath.Base(root) + `\`
+	registryRoot := testRegistrationNamespace(root) + `\`
 	env := windowsEnvironment(filepath.Join(root, "apps"), filepath.Join(root, "menu"), registryRoot)
 	t.Cleanup(func() {
 		_ = registry.DeleteKey(registry.CURRENT_USER, registryRoot+"dev.velox.test")

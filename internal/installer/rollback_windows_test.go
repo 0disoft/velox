@@ -15,7 +15,7 @@ func TestWindowsRollbackPreservesForeignPublication(t *testing.T) {
 		t.Run(kind, func(t *testing.T) {
 			source, setup, _ := fixture(t)
 			root := t.TempDir()
-			registryRoot := `Software\VeloxInstallerTests\` + filepath.Base(root) + `\`
+			registryRoot := testRegistrationNamespace(root) + `\`
 			keyPath := registryRoot + "dev.velox.test"
 			linkPath := filepath.Join(root, "menu", "dev.velox.test.lnk")
 			t.Cleanup(func() {

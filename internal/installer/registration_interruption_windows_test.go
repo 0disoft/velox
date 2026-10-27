@@ -23,7 +23,7 @@ func TestWindowsRegistryProcessInterruptionAndReinstall(t *testing.T) {
 		t.Run(fmt.Sprintf("after-%d-writes", cut), func(t *testing.T) {
 			source, setup, _ := fixture(t)
 			root := t.TempDir()
-			registryRoot := `Software\VeloxInstallerTests\` + filepath.Base(root) + `\`
+			registryRoot := testRegistrationNamespace(root) + `\`
 			keyPath := registryRoot + "dev.velox.test"
 			t.Cleanup(func() {
 				_ = registry.DeleteKey(registry.CURRENT_USER, keyPath)
@@ -145,7 +145,7 @@ func TestWindowsRegistrationInterruptionHelper(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := filepath.Dir(filepath.Dir(directory))
-	keyPath := `Software\VeloxInstallerTests\` + filepath.Base(root) + `\dev.velox.test`
+	keyPath := testRegistrationNamespace(root) + `\dev.velox.test`
 	key, existing, err := registry.CreateKey(registry.CURRENT_USER, keyPath, registry.SET_VALUE)
 	if err != nil || existing {
 		t.Fatalf("isolated registration creation: existing=%v error=%v", existing, err)

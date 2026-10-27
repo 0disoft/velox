@@ -61,7 +61,7 @@ func TestWindowsPartialRegistrationRecovery(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			source, setup, _ := fixture(t)
 			root := t.TempDir()
-			registryRoot := `Software\VeloxInstallerTests\` + filepath.Base(root) + `\`
+			registryRoot := testRegistrationNamespace(root) + `\`
 			env := windowsEnvironment(filepath.Join(root, "apps"), filepath.Join(root, "menu"), registryRoot)
 			path := registryRoot + "dev.velox.test"
 			t.Cleanup(func() {

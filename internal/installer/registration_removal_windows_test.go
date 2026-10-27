@@ -15,7 +15,7 @@ import (
 func registrationRemovalFixture(t *testing.T) (Record, string, string) {
 	t.Helper()
 	root := t.TempDir()
-	registryRoot := `Software\VeloxInstallerTests\removal-` + filepath.Base(root) + `\`
+	registryRoot := testRegistrationNamespace(root) + `\`
 	record := Record{SchemaVersion: stateSchema, Directory: filepath.Join(root, "app"),
 		App: buildreport.App{ID: "dev.velox.test", Name: "Test", Version: "1.0.0"}}
 	path := registryRoot + record.App.ID

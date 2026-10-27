@@ -26,7 +26,7 @@ func TestWindowsRegistrationPreservesChangedTypesAndFlags(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			root := t.TempDir()
-			path := `Software\VeloxInstallerTests\values-` + filepath.Base(root)
+			path := testRegistrationNamespace(root)
 			key, existed, err := registry.CreateKey(registry.CURRENT_USER, path, registry.ALL_ACCESS)
 			if err != nil || existed {
 				t.Fatalf("fresh isolated key: existed=%v err=%v", existed, err)

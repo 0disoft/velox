@@ -47,7 +47,7 @@ func TestWindowsRemovalPreservesShortcutChangedAfterValidation(t *testing.T) {
 			source, setup, _ := fixture(t)
 			root := t.TempDir()
 			menu := filepath.Join(root, "menu")
-			registryRoot := `Software\VeloxInstallerTests\` + filepath.Base(root) + `\`
+			registryRoot := testRegistrationNamespace(root) + `\`
 			env := windowsEnvironment(filepath.Join(root, "apps"), menu, registryRoot)
 			installed, err := install(source, setup, env)
 			if err != nil {
