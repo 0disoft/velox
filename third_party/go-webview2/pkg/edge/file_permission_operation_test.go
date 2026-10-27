@@ -4,7 +4,6 @@ package edge
 
 import (
 	"testing"
-	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -47,14 +46,7 @@ func permissionFixture(items ...*permissionTestSetting) *permissionTestCollectio
 			GetKind:       NewComProc(func(p *permissionTestSetting, out *CoreWebView2PermissionKind) uintptr { *out = p.kind; return 0 }),
 			GetState:      NewComProc(func(p *permissionTestSetting, out *CoreWebView2PermissionState) uintptr { *out = p.state; return 0 }),
 			GetOrigin: NewComProc(func(p *permissionTestSetting, out **uint16) uintptr {
-				data, _ := windows.UTF16FromString(p.origin)
-				memory, _, _ := windows.NewLazySystemDLL("ole32.dll").NewProc("CoTaskMemAlloc").Call(uintptr(len(data) * 2))
-				if memory == 0 {
-					return 0x8007000e
-				}
-				copy(unsafe.Slice((*uint16)(unsafe.Pointer(memory)), len(data)), data)
-				*out = (*uint16)(unsafe.Pointer(memory))
-				return 0
+				return assignTaskString(out, p.origin)
 			}),
 		}
 	}

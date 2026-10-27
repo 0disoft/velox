@@ -4,9 +4,6 @@ package edge
 
 import (
 	"testing"
-	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 func TestFileSystemPermissionKeepsBrowserConsentAndDefaultDenials(t *testing.T) {
@@ -57,17 +54,7 @@ func TestFileSystemPermissionKeepsBrowserConsentAndDefaultDenials(t *testing.T) 
 					if tc.uriResult != 0 || tc.origin == "" {
 						return tc.uriResult
 					}
-					value, err := windows.UTF16FromString(tc.origin)
-					if err != nil {
-						return failed
-					}
-					ptr, _, _ := windows.NewLazySystemDLL("ole32.dll").NewProc("CoTaskMemAlloc").Call(uintptr(len(value) * 2))
-					if ptr == 0 {
-						return failed
-					}
-					*out = (*uint16)(unsafe.Pointer(ptr))
-					copy(unsafe.Slice(*out, len(value)), value)
-					return 0
+					return assignTaskString(out, tc.origin)
 				}),
 				PutState: NewComProc(func(_ uintptr, value CoreWebView2PermissionState) uintptr { writes++; state = value; return 0 }),
 			}}

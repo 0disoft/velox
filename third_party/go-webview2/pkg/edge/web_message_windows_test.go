@@ -4,9 +4,6 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf16"
-	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 func TestDecodeWebMessageUTF8Limits(t *testing.T) {
@@ -89,7 +86,7 @@ func TestMessageReceivedChecksOriginAndSizeWithoutEcho(t *testing.T) {
 					if tc.sourceResult != 0 {
 						return tc.sourceResult
 					}
-					return assignWebMessageString(out, tc.source)
+					return assignTaskString(out, tc.source)
 				}),
 				TryGetWebMessageAsString: NewComProc(func(_ uintptr, out **uint16) uintptr {
 					reads++
@@ -99,7 +96,7 @@ func TestMessageReceivedChecksOriginAndSizeWithoutEcho(t *testing.T) {
 					if tc.nilMessage {
 						return 0
 					}
-					return assignWebMessageString(out, tc.message)
+					return assignTaskString(out, tc.message)
 				}),
 			}}
 			sender := &ICoreWebView2{vtbl: &iCoreWebView2Vtbl{
@@ -118,18 +115,4 @@ func TestMessageReceivedChecksOriginAndSizeWithoutEcho(t *testing.T) {
 			}
 		})
 	}
-}
-
-func assignWebMessageString(out **uint16, value string) uintptr {
-	units, err := windows.UTF16FromString(value)
-	if err != nil {
-		return 0x80070057
-	}
-	ptr, _, _ := windows.NewLazySystemDLL("ole32.dll").NewProc("CoTaskMemAlloc").Call(uintptr(len(units) * 2))
-	if ptr == 0 {
-		return 0x8007000e
-	}
-	*out = (*uint16)(unsafe.Pointer(ptr))
-	copy(unsafe.Slice(*out, len(units)), units)
-	return 0
 }
