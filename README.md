@@ -51,18 +51,26 @@ an immutable public release without a source checkout or consumer toolchain.
 Report ordinary failures with the [bug report template](https://github.com/0disoft/velox/issues/new?template=bug-report.md);
 report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
-The current unsigned preview is [v0.5.10-alpha.68](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.68),
-from source `5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`. It adds template
-discovery, expanded CLI help, shell-quoted init guidance and text-editor find
-with the empty-query close fix. [Tag CI 37628664660](https://github.com/0disoft/velox/actions/runs/37628664660)
-passed reproducible producer builds and basic checkout-free consumer packaging.
-Its four files were published without another producer, then downloaded
-without authentication and matched against CI and GitHub digests. ZIP SHA-256:
-`b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8`.
-No native/UI/installer/stress or adoption claim is added for these public bytes;
-see [the alpha.68 publication record](docs/ops/alpha68-publication.md).
+The current unsigned preview is [v0.5.10-alpha.69](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.69),
+from source `d56c3ce5c0e008e7f6566308d2c5e6c6308587ec`. It adds runtime handoff
+and draft/profile recovery fixes, safer installer removal and save recovery,
+bounded input checks, and text-editor literal replace, grapheme-aware cursor
+feedback and persisted word-wrap/font-size settings. [Tag CI 40554795110](https://github.com/0disoft/velox/actions/runs/40554795110)
+(attempt 1) passed two byte-identical Go 1.26.0 producer builds and a
+checkout-free consumer job. The four published files matched CI and GitHub
+metadata through unauthenticated downloads. ZIP SHA-256:
+`46160a05bd65c82639878b40a7fceb79d9d1847e94121efb0576145e77b69949`,
+6,027,217 bytes. No native/UI/installer/stress or adoption claim is added for
+these public bytes; see [the alpha.69 publication record](docs/ops/alpha69-publication.md).
 
-The previous unsigned preview, alpha.67, added manifest-watch restart notices,
+The previous unsigned preview is
+[v0.5.10-alpha.68](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.68),
+from source `5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`. It added template
+discovery, expanded CLI help, shell-quoted init guidance and text-editor find
+with the empty-query close fix. Its [publication record](docs/ops/alpha68-publication.md)
+retains the source, digest and verification boundary.
+
+An earlier unsigned preview, alpha.67, added manifest-watch restart notices,
 stderr notices alongside JSON output and the opt-in tray-app starter. Its
 [publication record](docs/ops/alpha67-publication.md) retains the earlier
 asset identities and verification boundaries.
@@ -97,13 +105,9 @@ exact downloaded bytes; see
 adds no installer, folder-browser, hosted-verifier, stress or adoption evidence.
 Beta remains held under the product workflow checklist.
 
-Source version: `0.5.10-alpha.69` (unpublished release candidate).
-Public asset identities and scope are in
-[alpha68-publication.md](docs/ops/alpha68-publication.md). Its
-[tag CI](docs/ops/alpha68-tag-evidence.md) skipped publication; the verified
-files were subsequently published without another producer.
-The [local preparation](docs/ops/alpha68-preparation.md) retains different
-Go 1.27.1 hashes; it is not the public Go 1.26.0 bundle.
+Source version: `0.5.10-alpha.69` (published unsigned prerelease).
+Its asset identities and evidence boundaries are in
+[alpha69-publication.md](docs/ops/alpha69-publication.md).
 The earlier [alpha.66 publication record](docs/ops/alpha66-publication.md)
 retains that version's asset identities and verification boundaries.
 
@@ -129,7 +133,7 @@ smaller build and runtime surface.
 
 ## Current Product Boundary
 
-Supported in the published alpha.68 preview:
+Supported in the published alpha.69 preview:
 
 - Windows x64.
 - Static web assets.
@@ -158,7 +162,7 @@ Explicitly deferred:
 
 ## Capabilities and Permissions
 
-The table covers the published alpha.68 preview. Native script capabilities
+The table covers the published alpha.69 preview. Native script capabilities
 are separate opt-ins in `security.permissions`; manifest settings and CLI
 flags need no script permission.
 
@@ -227,7 +231,7 @@ velox --help
 velox init --help
 ```
 
-The published alpha.68 CLI also lists each starter's purpose, permissions, and generation
+The published alpha.69 CLI lists each starter's purpose, permissions, and generation
 command without creating files or launching a host:
 
 ```sh
@@ -235,8 +239,8 @@ velox templates
 velox templates --json
 ```
 
-`templates`, expanded help and shell-quoted init run/build hints ship in
-public alpha.68. Alpha.67 retains the older help and has no `templates` command.
+`templates`, expanded help and shell-quoted init run/build hints were introduced
+in public alpha.68. Alpha.67 retains the older help and has no `templates` command.
 
 ```powershell
 velox init .\hello --json
@@ -269,68 +273,66 @@ permissions; the next Save selects a destination again. Existing generated
 projects are not upgraded. See the
 [draft recovery record](docs/ops/text-editor-drafts.md) for bounds and checks.
 
-Source text-editor draft scheduling now retains only the in-flight operation
+Published alpha.69 text-editor generation retains only the in-flight operation
 and latest waiting snapshot when storage is slow. Clearing drops obsolete
 waiting edits and still commits before later writes; failed operations do not
 block future work. The draft format, debounce and close protection are unchanged.
-This is not in public alpha.68 and does not upgrade existing generated editors.
+Existing generated editors are not upgraded.
 
-The source CLI now sets `app.singleInstance: true` for new text-editor projects
+The published alpha.69 CLI sets `app.singleInstance: true` for new text-editor projects
 so duplicate launches reuse the existing window rather than compete for its
-one draft record. This default is not in public alpha.68. For an existing
-editor, add `"singleInstance": true` inside `app` in `velox.json` and rebuild;
+one draft record. For an existing editor, add `"singleInstance": true` inside
+`app` in `velox.json` and rebuild;
 keep the app ID and profile unchanged to retain its draft. Close all existing
 instances before launching the rebuilt app. Disabling this setting permits
 concurrent windows to overwrite or clear the same draft.
 
-Source text-editor generation also preserves file line endings. Opening a
+Published alpha.69 text-editor generation preserves file line endings. Opening a
 CRLF file uses the textarea's normalized value as the clean baseline. Unedited
 files retain their exact text, including mixed LF/CRLF/CR endings; after an edit,
 newlines follow the first ending in that document. New documents and old LF
 drafts retain LF. Drafts use the same existing four-field record, with endings
 preserved in `text`. Saving checks the serialized UTF-8 size before native
-access, including CRLF expansion. This is not in public alpha.68 and does not
-upgrade existing generated projects.
+access, including CRLF expansion. Existing generated projects are not upgraded.
 
-Source text-editor Save/Save as also suggest `Untitled.txt` when the document
+Published alpha.69 text-editor Save/Save as suggest `Untitled.txt` when the document
 name exceeds the native 240-byte UTF-8 limit, including long Korean names.
 The displayed name and draft stay unchanged on cancellation or failure;
 only a successful save adopts the chosen name. The final destination must
-still satisfy native filename validation. This is not in public alpha.68.
+still satisfy native filename validation.
 
-New alpha.68 text-editor projects also include document finding: Ctrl+F,
+Alpha.68 introduced document finding in new text-editor projects: Ctrl+F,
 previous/next matches, a match count, Match case and Escape to close.
 Search is literal with wraparound and does not change the document or draft.
-This web-only addition ships in public alpha.68 and does not upgrade existing
-projects. There is no replace action, preview, new permission or dependency.
+Alpha.69 adds literal replacement without adding a permission or dependency.
+Existing generated projects are not upgraded.
 
-The source CLI additionally generates Ctrl+H literal replace controls for
+Alpha.69 text-editor generation adds Ctrl+H literal replace controls for
 the current match or all matches, with the target count shown before the
 action. A memory-only Undo action restores the last replacement as one
 transaction; direct typing or a successful New/Open/Restore clears it.
 Changes update dirty state and drafts without changing the native save
-target. Input and output are bounded to 2 MiB UTF-8. This source-only addition
-is not in public alpha.68 and does not upgrade existing projects.
+target. Input and output are bounded to 2 MiB UTF-8. Existing generated
+projects are not upgraded.
 
-Source text-editor generation also displays logical line, grapheme column
+Alpha.69 text-editor generation displays logical line, grapheme column
 and selected grapheme count in the footer. Combining marks, decomposed Korean
 and emoji sequences count as one character. Cursor movement reuses a cached
 index; larger edits defer and split indexing work, and IME composition waits
-until completion. This is also source-only, with no host or dependency change.
+until completion. This adds no host or dependency change.
 
-The source starter also has a Word wrap icon toggle, on by default. Turn it
+The published alpha.69 starter has a Word wrap icon toggle, on by default. Turn it
 off to scroll long lines horizontally without changing text, selection,
 logical position, drafts, saved state or replacement Undo. The setting lasts
-for the current window, including New/Open, but is not stored across launches.
-This source-only addition is not in public alpha.68 or existing generated apps.
+across launches, including New/Open. Existing generated apps are not upgraded.
 
-Source text-editor generation also has font decrease, increase and reset
+Published alpha.69 text-editor generation has font decrease, increase and reset
 controls with a current-size readout. The editor defaults to 18px and supports
 14-28px in 2px steps; the rest of the app does not zoom. This display-only,
-session-only setting preserves text, selection, drafts, save state and Undo.
-It adds no host, dependency or storage change and is not in public alpha.68.
+persistent setting preserves text, selection, drafts, save state and Undo.
+Existing generated apps are not upgraded.
 
-The published alpha.68 CLI retains the opt-in tray starter introduced in alpha.67:
+The published alpha.69 CLI retains the opt-in tray starter introduced in alpha.67:
 
 ```sh
 velox init my-tray --template tray-app
@@ -344,7 +346,7 @@ icon, no bundled font, history, scheduler or additional host code. The basic
 starter and existing generated projects are unchanged.
 Scope and verification are in the [tray starter record](docs/ops/tray-app-starter.md).
 
-The published alpha.68 supports `velox run --watch --config velox.json`:
+The published alpha.69 supports `velox run --watch --config velox.json`:
 stable HTML/CSS/JavaScript saves and common image/font path, size and
 modification-time changes trigger full-page reloads without enabling
 DevTools. Keep the downloaded CLI/host pair together. App `beforeunload`
@@ -359,14 +361,14 @@ also emits bounded JavaScript error metadata to local stderr, including with
 install no diagnostic channel. Scope, privacy and native receipts are in
 [Development Diagnostics](docs/ops/development-diagnostics.md).
 
-Source-only GUI hosts now show fixed native startup-error guidance for invalid
+Published alpha.69 GUI hosts show fixed native startup-error guidance for invalid
 configuration/assets, profile-folder preparation, WebView2 initialization,
 display scaling and instance locking. Notices do not expose paths or document
 contents, and never reset a profile. stderr and exit codes remain available;
 early user close and help do not show an error, and explicit benchmark mode
-suppresses modal notices. This is not included in public alpha.68 hosts.
+suppresses modal notices.
 
-The published alpha.68 CLI detects stable edits to the selected manifest in
+The published alpha.69 CLI detects stable edits to the selected manifest in
 `run --watch`. Valid edits print a restart-required notice; invalid or unreadable
 settings print a nonfatal error. The running app, permissions and original
 asset directory stay unchanged until a manual restart. Normal runs and packaged
@@ -461,7 +463,7 @@ signed channel. ADR 0016 closes M4 on technical distribution evidence, ADR
 with product workflow gates. AI evaluation is optional and cannot authorize
 beta promotion. Passing product checks does not claim human adoption. Provider-approved signing and authenticated
 provenance are not M4 gates. The current published preview is
-`0.5.10-alpha.68`.
+`0.5.10-alpha.69`.
 Neither same-repository verification nor the maintainer-controlled consumer
 repository counts as independent adoption.
 

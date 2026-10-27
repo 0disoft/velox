@@ -3,18 +3,34 @@
 - Status: Alpha active; beta not approved
 - Decision: ADR 0019
 - Owner: Project maintainer
-- Public preview: `0.5.10-alpha.68` (published unsigned prerelease)
-- Source version: `0.5.10-alpha.69` (unpublished release candidate)
+- Public preview: `0.5.10-alpha.69` (published unsigned prerelease)
+- Source version: `0.5.10-alpha.69` (published unsigned prerelease)
 
-Alpha.68 publishes template discovery, CLI guidance and text-editor find.
-Tag CI `37628664660/1` passed two independent release builds and basic
-checkout-free consumer packaging with Go 1.26.0. Its four verified assets
-were published without another producer; unauthenticated public downloads
-matched CI and GitHub digests. See [alpha68-publication.md](alpha68-publication.md).
-The [local preparation](alpha68-preparation.md) and
+## Alpha.69 Published Preview: 2026-10-28
+
+Unsigned prerelease
+[`v0.5.10-alpha.69`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.69),
+release ID `425812692`, was published at `2026-10-27T18:05:15Z`. The annotated
+tag object `2382e082f13d352c07fee3c2e4a76aac2cbf62d4` targets source
+`d56c3ce5c0e008e7f6566308d2c5e6c6308587ec`. Tag CI
+`40554795110/1` passed two byte-identical Go 1.26.0 producer builds and the
+checkout-free consumer. The separate quick run `40555567736/1` passed its full
+tests and native startup/security, permission-recovery and lifecycle checks from
+test-only main `a8f500c`; it produced its own artifact and is not GUI evidence
+for the tag bytes.
+
+All four public files matched CI and GitHub metadata through unauthenticated
+downloads. The extracted public CLI passed source-free `init`, `validate`,
+`doctor`, two builds and `inspect`; both app ZIPs hashed
+`e95c0d62150c4c4cb87ff6822e5da2be5f111b30cca19d50e66e9fb245a1f3a3`. This is
+`same-repository-public-download` with `externalUserAttempt: false`. No GUI
+editor, picker or installer ran against the tag or public bytes. Beta remains
+held; see [alpha69-publication.md](alpha69-publication.md).
+
+Alpha.68 remains the previous published preview with template discovery, CLI
+guidance and text-editor find. Its [publication record](alpha68-publication.md),
+[local preparation](alpha68-preparation.md) and
 [tag CI record](alpha68-tag-evidence.md) retain their historical boundaries.
-Beta remains held; no native UI or installer interaction ran against these
-published bytes.
 
 Alpha.67 tag CI `37471273685` passed reproducible producer and basic checkout-
 free consumer packaging; its four verified assets were published and matched
@@ -26,10 +42,10 @@ below is retained separately, not relabeled for the new published binaries.
 
 | Check | Required evidence | Current boundary |
 | --- | --- | --- |
-| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.68 tag CI 37628664660 passed basic checkout-free packaging; four public downloads matched CI and GitHub digests. No native launch or public picker/draft behavior check ran against these bytes. Earlier alpha.66 native follow-up remains historical; see alpha68-publication.md and alpha66-public-native.md |
+| Public consumer path | Exact release URL and ZIP digest; source-free init, validate, doctor, build twice, inspect, launch | alpha.69 tag CI 40554795110/1 passed the checkout-free consumer; four public downloads matched CI and GitHub metadata. The public CLI passed init, validate, doctor, two builds and inspect outside checkout. No native launch, GUI, picker or installer interaction ran against these bytes; see alpha69-publication.md |
 | File Notes behavior | Real open, edit, save, save-as cancellation, permission denial, close/reopen and draft recovery using disposable files | Native cancellation/retry, denied-write protection, post-denial draft restoration and manual Save as with exact disk readback passed; same-file retry interaction was not separately observed |
 | Development loop | Source run, edit/reload, default debug-off, preserved profile and app ID | The exact public alpha.66 CLI/host passed HTML/CSS/JS reloads, image/font rendered changes, canceled-input preservation, retry and normal close using the existing native watch smoke with debug off and private profile/HTTPS origin preserved. Normal/debug diagnostic isolation also passed. See alpha66-public-native.md. Earlier alpha.65 and alpha.62/64 results remain historical |
-| Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Public alpha.62 passed three pre-ready close/relaunch/profile-release pairs and hosted 50-pair/100-launch stress run 35081507786. Multi-second relaunch delay remains; the stress run does not repeat initialization cancellation or cover every Windows/WebView2 version; see [lifecycle record](alpha61-lifecycle.md) |
+| Windows lifecycle | Bounded shutdown, immediate relaunch, initialization cancellation, no residual process/profile lock; bind runtime and source/artifact versions | Quick `40555567736/1` passed native startup/security, permission recovery and lifecycle from its own test-only main artifact. Public alpha.62 retains the three-pair and hosted 50-pair stress evidence. The multi-second relaunch delay remains, and no lifecycle GUI test ran against alpha.69 tag/public bytes; see [alpha61-lifecycle.md](alpha61-lifecycle.md) |
 | Security and data integrity | No unresolved critical issue; permission, origin, overwrite and recovery checks pass | Preserve existing security gates and unsigned-alpha warnings |
 
 A visible window or readiness callback does not prove working file pickers,

@@ -1,5 +1,46 @@
 # Validation
 
+Alpha.69 publication (2026-10-28): unsigned prerelease
+[`v0.5.10-alpha.69`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.69)
+is release ID `425812692`, `draft: false`, `prerelease: true`, published at
+`2026-10-27T18:05:15Z`. The annotated tag object
+`2382e082f13d352c07fee3c2e4a76aac2cbf62d4` peels to source
+`d56c3ce5c0e008e7f6566308d2c5e6c6308587ec`.
+
+Tag CI [40554795110/1](https://github.com/0disoft/velox/actions/runs/40554795110)
+passed two byte-identical producer builds with Go 1.26.0 and the checkout-free
+consumer job. Its four verified assets have ZIP SHA-256
+`46160a05bd65c82639878b40a7fceb79d9d1847e94121efb0576145e77b69949`
+(6,027,217 bytes). Verification covered 16 manifest entries, 17 SPDX file
+hashes, provenance source/run/ZIP, PE subsystem 3 for the CLI and 2 for host and
+Setup, CLI version `0.5.10-alpha.69`, and `vcs.modified=false`. No additional
+tag producer or tag move was performed.
+
+The initial separate quick run `40554797712` failed in a Windows fixture before
+its path expectation used the same short/long spelling. Main `a8f500c` changes
+only four lines in `internal/cli/build_output_test.go` to normalize the fixture
+root with `filepath.EvalSymlinks(root)`; the tag-to-main product diff is empty.
+Follow-up quick run `40555567736/1` passed the full Go tests, pin verification,
+native startup/security, file-permission recovery, lifecycle, one consumer and
+summary checks. It built its own artifact with different VCS metadata, so it is
+not GUI evidence for the tag ZIP or public bytes.
+
+All four public files were downloaded over unauthenticated HTTP; sizes and
+hashes matched CI and GitHub metadata. The extracted public CLI, run outside a
+source checkout in a temporary directory, passed `init`, `validate`, `doctor`,
+two `build` runs and `inspect`. Both app ZIPs were
+`e95c0d62150c4c4cb87ff6822e5da2be5f111b30cca19d50e66e9fb245a1f3a3` and all
+three executables reported Authenticode `NotSigned`. This is
+`same-repository-public-download` evidence with `externalUserAttempt: false`;
+it is not an independent adoption result.
+
+No GUI editor, picker or installer was exercised against the tag or public
+bytes; no hosted public-verifier dispatch, fuzz, stress, history or benchmark
+repeat ran. The release changes no API, database, permission, dependency,
+repository-hygiene configuration or runner contract. Exact assets, checks and
+skipped boundaries are in
+[alpha69-publication.md](docs/ops/alpha69-publication.md).
+
 Native save backup ownership (2026-10-28): successful ReplaceFile no longer
 implies that its backup is safe to discard. Cleanup compares the backup with
 the still-open original handle after rename and checks pre-save size, last-write
@@ -2143,9 +2184,16 @@ The release record preserves that failure and the local startup-smoke failure
 followed by an unchanged passing rerun. No beta or independent-adoption claim
 follows from publication.
 
-The current public preview is `v0.5.10-alpha.68`, source
-`5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`; tag CI `37628664660/1` and
+The current public preview is `v0.5.10-alpha.69`, source
+`d56c3ce5c0e008e7f6566308d2c5e6c6308587ec`; tag CI `40554795110/1` and
 public-byte checks passed. ZIP SHA-256:
+`46160a05bd65c82639878b40a7fceb79d9d1847e94121efb0576145e77b69949`
+(6,027,217 bytes). See
+[alpha69-publication.md](docs/ops/alpha69-publication.md).
+
+The previous public preview is `v0.5.10-alpha.68`, source
+`5ffedc8d6e17b16e6e13ca8c57f21c06d76dfe8c`; its tag CI `37628664660/1` and
+public-byte checks remain historical. ZIP SHA-256:
 `b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8`.
 See [alpha68-publication.md](docs/ops/alpha68-publication.md). Prior alpha.67
 identity and scope remain in [alpha67-publication.md](docs/ops/alpha67-publication.md).

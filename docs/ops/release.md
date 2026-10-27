@@ -84,6 +84,45 @@ room result as the final technical M4 gate while preserving
 It remains read-only as a one-shot receipt. Future release verification uses
 the repository-owned public-preview workflow instead of advancing that pin.
 
+## Alpha.69 Published Preview: 2026-10-28
+
+Unsigned prerelease
+[`v0.5.10-alpha.69`](https://github.com/0disoft/velox/releases/tag/v0.5.10-alpha.69)
+is release ID `425812692`, `draft: false`, `prerelease: true`, published at
+`2026-10-27T18:05:15Z`. The annotated tag object
+`2382e082f13d352c07fee3c2e4a76aac2cbf62d4` targets source
+`d56c3ce5c0e008e7f6566308d2c5e6c6308587ec`. Tag CI
+[40554795110/1](https://github.com/0disoft/velox/actions/runs/40554795110)
+passed two byte-identical producer builds with Go 1.26.0 and the checkout-free
+consumer job. No second tag producer or tag move was performed.
+
+The separate quick run `40555567736/1` passed the full Go tests, pin
+verification, native startup/security, file-permission recovery, lifecycle,
+one consumer and summary checks from main
+`a8f500cee18f5d5ebc844f1daa23c1e9bf112667`. Its only difference from the tag is
+four lines in `internal/cli/build_output_test.go` that use
+`filepath.EvalSymlinks(root)` to normalize a Windows fixture path. Product
+source is unchanged. That quick run produced its own artifact and is not GUI
+evidence for the tag ZIP.
+
+All four published files matched CI and GitHub metadata through unauthenticated
+downloads. Public verification covered 16 release-manifest entries, 17 SPDX
+file hashes, provenance source/run/ZIP, PE subsystem 3 for the CLI and 2 for
+host and Setup, CLI version `0.5.10-alpha.69`, and `vcs.modified=false`. The
+ZIP is 6,027,217 bytes, SHA-256
+`46160a05bd65c82639878b40a7fceb79d9d1847e94121efb0576145e77b69949`.
+The extracted public CLI passed source-free `init`, `validate`, `doctor`, two
+`build` runs and `inspect`; both app ZIPs were
+`e95c0d62150c4c4cb87ff6822e5da2be5f111b30cca19d50e66e9fb245a1f3a3`, and all
+three executables were Authenticode `NotSigned`.
+
+This is `same-repository-public-download` evidence with
+`externalUserAttempt: false`, not an independent adoption result. No GUI
+editor, picker or installer ran against the tag or public bytes. No hosted
+public-verifier dispatch, fuzz, stress, history or benchmark repeat occurred.
+Beta remains held. Exact assets, the retained first quick-run failure and
+skipped checks are in [alpha69-publication.md](alpha69-publication.md).
+
 ## Alpha.68 Published Preview: 2026-10-07
 
 Unsigned prerelease `v0.5.10-alpha.68` publishes template discovery, expanded
@@ -628,8 +667,8 @@ exists.
 ## Channels
 
 Planned channels are alpha, beta, and stable. `0.5.10-alpha.1` remains the first
-published preview and `0.5.10-alpha.68` is the current unsigned developer preview
-at immutable tag `v0.5.10-alpha.68`. Public artifacts and executables use the
+published preview and `0.5.10-alpha.69` is the current unsigned developer preview
+at tag `v0.5.10-alpha.69`. Public artifacts and executables use the
 Velox identity fixed by ADR 0015. ADR 0019 defines the product workflow checks
 required before beta technical readiness. AI evaluation is optional. Actual
 beta or stable promotion, signing, and publication remain separate maintainer

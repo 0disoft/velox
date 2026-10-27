@@ -111,28 +111,33 @@ func TestPublicPreviewResultSchemaKeepsSameRepositoryEvidenceNonExternal(t *test
 }
 
 func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
+	version := readNormalized(t, repositoryPath("internal", "buildinfo", "version.go"))
+	if !strings.Contains(version, `const Version = "0.5.10-alpha.69"`) {
+		t.Fatal("published source version is not alpha.69")
+	}
 	checks := map[string][]string{
 		"README.md": {
-			"v0.5.10-alpha.68",
-			"37628664660",
-			"b8e916c41c0d9fa6bc8ce21c6254e8adab8121c37d183da7a9e2cea99ba05bf8",
+			"v0.5.10-alpha.69",
+			"40554795110",
+			"46160a05bd65c82639878b40a7fceb79d9d1847e94121efb0576145e77b69949",
+			"Source version: `0.5.10-alpha.69` (published unsigned prerelease)",
 		},
 		"VALIDATION.md": {
-			"The current public preview is `v0.5.10-alpha.68`",
+			"The current public preview is `v0.5.10-alpha.69`",
 			"same-repository-public-download",
 			"externalUserAttempt: false",
 		},
 		"docs/ops/release.md": {
 			"unsigned developer previews",
-			"v0.5.10-alpha.68",
-			"37628664660",
+			"v0.5.10-alpha.69",
+			"40554795110",
 			"34584656621",
 			"34453983275",
 			"intermittent failure remains unexplained",
 		},
 		"docs/product/03-risk-register.md": {
 			"Public verifier run 35079337819",
-			"Current preview `v0.5.10-alpha.68`",
+			"Current preview `v0.5.10-alpha.69`",
 		},
 	}
 	for relative, required := range checks {
@@ -148,7 +153,8 @@ func TestCurrentAlphaPreviewEvidenceIsSynchronized(t *testing.T) {
 	readiness := readNormalized(t, repositoryPath("docs", "ops", "product-readiness.md"))
 	for _, marker := range []string{
 		"- Status: Alpha active; beta not approved",
-		"- Public preview: `0.5.10-alpha.68` (published unsigned prerelease)",
+		"- Public preview: `0.5.10-alpha.69` (published unsigned prerelease)",
+		"- Source version: `0.5.10-alpha.69` (published unsigned prerelease)",
 	} {
 		if !strings.Contains(readiness, marker) {
 			t.Errorf("published channel is not synchronized: missing %q", marker)
