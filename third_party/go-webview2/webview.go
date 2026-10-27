@@ -377,7 +377,10 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 		case w32.WMSize:
 			w.browser.Resize()
 		case wmDPIChanged:
-			w.applyDPIChange((*w32.Rect)(unsafe.Pointer(lp)))
+			var rect w32.Rect
+			if readWindowMessage(lp, unsafe.Pointer(&rect), unsafe.Sizeof(rect)) {
+				w.applyDPIChange(&rect)
+			}
 		case w32.WMActivate:
 			if wp == w32.WAInactive {
 				break
@@ -409,7 +412,10 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 				w.Terminate()
 			}
 		case w32.WMGetMinMaxInfo:
-			lpmmi := (*w32.MinMaxInfo)(unsafe.Pointer(lp))
+			var lpmmi w32.MinMaxInfo
+			if !readWindowMessage(lp, unsafe.Pointer(&lpmmi), unsafe.Sizeof(lpmmi)) {
+				return 0
+			}
 			if w.maxsz.X > 0 && w.maxsz.Y > 0 {
 				lpmmi.PtMaxSize = scalePointForDPI(w.maxsz, windowDPI(hwnd))
 				lpmmi.PtMaxTrackSize = lpmmi.PtMaxSize
@@ -417,6 +423,7 @@ func wndproc(hwnd, msg, wp, lp uintptr) uintptr {
 			if w.minsz.X > 0 && w.minsz.Y > 0 {
 				lpmmi.PtMinTrackSize = scalePointForDPI(w.minsz, windowDPI(hwnd))
 			}
+			writeWindowMessage(lp, unsafe.Pointer(&lpmmi), unsafe.Sizeof(lpmmi))
 		default:
 			r, _, _ := w32.User32DefWindowProcW.Call(hwnd, msg, wp, lp)
 			return r
@@ -642,8 +649,8 @@ func (w *webview) Terminate() {
 	_, _, _ = w32.User32PostThreadMessageW.Call(w.mainthread, w32.WMQuit, 0, 0)
 }
 
-func (w *webview) Window() unsafe.Pointer {
-	return unsafe.Pointer(w.hwnd)
+func (w *webview) Window() uintptr {
+	return w.hwnd
 }
 
 func (w *webview) Navigate(url string) {

@@ -4,7 +4,6 @@ package webview2
 
 import (
 	"testing"
-	"unsafe"
 
 	webview "github.com/jchv/go-webview2"
 )
@@ -34,7 +33,7 @@ func (f *fakeWebView) Destroy() {
 
 func (f *fakeWebView) BrowserProcessID() (uint32, error) { return 42, nil }
 
-func (f *fakeWebView) Window() unsafe.Pointer { return nil }
+func (f *fakeWebView) Window() uintptr { return 0 }
 
 func (f *fakeWebView) SetTitle(string) {}
 

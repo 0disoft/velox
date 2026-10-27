@@ -12,8 +12,8 @@ type fixedTestView struct {
 	hwnd uintptr
 }
 
-func (v *fixedTestView) Window() unsafe.Pointer {
-	return *(*unsafe.Pointer)(unsafe.Pointer(&v.hwnd))
+func (v *fixedTestView) Window() uintptr {
+	return v.hwnd
 }
 
 func TestFixedWindowNativeStyleCommandsAndIPC(t *testing.T) {

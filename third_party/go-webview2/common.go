@@ -1,7 +1,5 @@
 package webview2
 
-import "unsafe"
-
 // This is copied from webview/webview.
 // The documentation is included for convenience.
 
@@ -53,10 +51,9 @@ type WebView interface {
 	// BrowserProcessID returns the main WebView2 browser process identifier.
 	BrowserProcessID() (uint32, error)
 
-	// Window returns a native window handle pointer. When using GTK backend the
-	// pointer is GtkWindow pointer, when using Cocoa backend the pointer is
-	// NSWindow pointer, when using Win32 backend the pointer is HWND pointer.
-	Window() unsafe.Pointer
+	// Window returns the Windows HWND as an opaque integer handle. It is not a
+	// Go memory pointer and must not be dereferenced.
+	Window() uintptr
 
 	// SetTitle updates the title of the native window. Must be called from the UI
 	// thread.

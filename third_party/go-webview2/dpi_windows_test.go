@@ -50,16 +50,46 @@ func TestDPIChangedAppliesSuggestedBounds(t *testing.T) {
 	defer func() { deleteWindowContext(w.hwnd); w32.User32DestroyWindow.Call(w.hwnd) }()
 	b.resizes = 0
 	r := w32.Rect{Left: -100, Top: 40, Right: 500, Bottom: 440}
-	wndproc(w.hwnd, wmDPIChanged, 144|144<<16, uintptr(unsafe.Pointer(&r)))
+	sendMessage := dpiUser32.NewProc("SendMessageW")
+	sendMessage.Call(w.hwnd, wmDPIChanged, 144|144<<16, uintptr(unsafe.Pointer(&r)))
 	var actual w32.Rect
 	dpiUser32.NewProc("GetWindowRect").Call(w.hwnd, uintptr(unsafe.Pointer(&actual)))
 	if actual != r || b.resizes == 0 || b.moves == 0 {
 		t.Fatalf("rect=%+v resize=%d move=%d", actual, b.resizes, b.moves)
 	}
 	w.minsz = w32.Point{X: 200, Y: 100}
-	var limits w32.MinMaxInfo
-	wndproc(w.hwnd, w32.WMGetMinMaxInfo, 0, uintptr(unsafe.Pointer(&limits)))
-	if limits.PtMinTrackSize != scalePointForDPI(w.minsz, windowDPI(w.hwnd)) {
-		t.Fatal("logical minimum not scaled")
+	limits := w32.MinMaxInfo{
+		PtReserved: w32.Point{X: 1, Y: 2}, PtMaxSize: w32.Point{X: 1200, Y: 900},
+		PtMaxPosition: w32.Point{X: -10, Y: 20}, PtMaxTrackSize: w32.Point{X: 1400, Y: 1000},
+	}
+	want := limits
+	want.PtMinTrackSize = scalePointForDPI(w.minsz, windowDPI(w.hwnd))
+	sendMessage.Call(w.hwnd, w32.WMGetMinMaxInfo, 0, uintptr(unsafe.Pointer(&limits)))
+	if limits != want {
+		t.Fatalf("window limits=%+v, want %+v", limits, want)
+	}
+}
+
+func TestWindowMessageRejectsUnreadablePayload(t *testing.T) {
+	b := &dpiBrowser{}
+	w := &webview{hwnd: 1, browser: b, minsz: w32.Point{X: 200, Y: 100}}
+	setWindowContext(w.hwnd, w)
+	defer deleteWindowContext(w.hwnd)
+	for _, message := range []uintptr{wmDPIChanged, w32.WMGetMinMaxInfo} {
+		for _, address := range []uintptr{0, 1, ^uintptr(0)} {
+			if result := wndproc(w.hwnd, message, 0, address); result != 0 {
+				t.Fatal("invalid payload was not ignored")
+			}
+		}
+	}
+	if b.resizes != 0 || b.moves != 0 {
+		t.Fatal("invalid payload changed window state")
+	}
+}
+
+func TestWindowReturnsOpaqueHandle(t *testing.T) {
+	w := &webview{hwnd: 1}
+	if got := w.Window(); got != 1 {
+		t.Fatal("handle changed")
 	}
 }
