@@ -18,6 +18,10 @@ func TestBuildHumanOutputLocatesArtifactsOutsideWorkingDirectory(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("build exit=%d output=%q", code, stdout.String())
 	}
+	root, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, want := range []string{
 		"Directory: " + filepath.Join(root, "dist", "com.example.hello"),
 		"Archive: " + filepath.Join(root, "dist", "com.example.hello.zip"),
